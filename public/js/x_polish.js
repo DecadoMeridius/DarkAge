@@ -97,3 +97,17 @@ updateDrops = function (m, dt) {
   }
   _updateDropsX(m, dt);
 };
+
+/* pickup popups merge: several pieces of the same item reaching you shortly after each other show one
+   growing "+N Wood" instead of a stack of overlapping "+1 Wood" texts */
+const _floatTextX = floatText;
+floatText = function (x, y, txt, c) {
+  const m = /^\+(\d+) (.+)$/.exec(txt);
+  if (m) {
+    const f = FX.find(f => f.item === m[2] && f.t > .35 && Math.abs(f.x - x) < 24);
+    if (f) { f.n += +m[1]; f.txt = '+' + f.n + ' ' + m[2]; f.t = 1.1; return; }
+    const stack = FX.filter(f => f.item && f.t > .2 && Math.abs(f.x - x) < 24).length; // other items' popups: stack above them, not on top
+    _floatTextX(x, y - stack * 9, txt, c); const g2 = FX[FX.length - 1]; g2.item = m[2]; g2.n = +m[1]; return;
+  }
+  _floatTextX(x, y, txt, c);
+};

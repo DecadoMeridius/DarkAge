@@ -32,7 +32,7 @@ function scytheSwing(m, tx, ty, lvl) {
     }
   }
   const [fx, fy] = facePt(); if (fib) popTo(m, fx, fy, 'fiber', fib); if (hay) popTo(m, fx, fy, 'hay', hay);
-  if (fib || hay) { addXP('foraging', fib * .5); floatText(S.p.x, S.p.y - 30, '+' + fib + ' fibre, +' + hay + ' hay', '#e0c060'); noiseBurst(.07, .04, 2500); CHUNK.clear(); }
+  if (fib || hay) { addXP('foraging', fib * .5); noiseBurst(.07, .04, 2500); CHUNK.clear(); }
   return fib + crops > 0;
 }
 
