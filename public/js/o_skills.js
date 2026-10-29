@@ -157,6 +157,7 @@ useTool = function () {
   }
   return _useToolS();
 };
+const SMALL_NODES = new Set(['twig', 'stone', 'bush', 'weed']); // debris: no final-hit bonus
 function gatherTick() {
   const G = GATHER; if (!G) return;
   const [ix, iy] = keyVec();
@@ -173,11 +174,13 @@ function gatherTick() {
   if (Math.random() < ((S.tools[G.k] || 1) - 1) * .1) n++; // better tools: an extra log or ore 10% of the time per upgrade
   popTo(G.m, (G.x + .5) * 16, (G.y + .5) * 16, id, n); if (D.xp) addXP(D.xp[0], D.xp[1] / (G.o.total || (G.o.total = units)));
   if (--G.o.left > 0) return;
-  // the final hit fells the tree or splits the stone: a bonus of 40% of the node's yield, +1 per tool upgrade, and half its XP again
-  const fin = Math.max(1, Math.round((G.o.total || units) * .4)) + ((S.tools[G.k] || 1) - 1);
+  // the final hit fells the tree or splits the stone (not small twigs, pebbles or bushes): a bonus of 40% of the node's yield, +1 per tool upgrade, and half its XP again
+  const fin = SMALL_NODES.has(G.o.k) ? 0 : Math.max(1, Math.round((G.o.total || units) * .4)) + ((S.tools[G.k] || 1) - 1);
+  if (fin) {
   popTo(G.m, (G.x + .5) * 16, (G.y + .5) * 16, id, fin, 1); if (D.xp) addXP(D.xp[0], D.xp[1] * .5); SHAKE = Math.max(SHAKE, .12);
   floatText((G.x + .5) * 16, G.y * 16 - 4, D.tool === 'axe' ? 'Felled!' : 'Split!', '#ffd040'); // the pieces show their own +N when they reach you
   for (let i = 0; i < 10; i++) PARTS.push({ x: (G.x + .5) * 16, y: (G.y + .5) * 16, vx: (Math.random() - .5) * 110, vy: -Math.random() * 90, t: .6, c: D.tool === 'axe' ? '#b07a48' : '#a8a294' });
+  }
   // depleted: run the original break-up for its extras (hardwood, sap, ladders, stumps...) without the main drop or XP again
   const saveDrop = D.drop, saveXp = D.xp; D.drop = saveDrop.slice(1); D.xp = null;
   try { hitObj(G.m, G.x, G.y, G.o, 1e9); } finally { D.drop = saveDrop; D.xp = saveXp; }
