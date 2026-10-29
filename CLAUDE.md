@@ -227,6 +227,9 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - The backpack window starts with the 10 hotbar slots. Drag bag → hotbar (the hotbar points at the item), hotbar ↔ hotbar (swap, tools too), hotbar → bag or right click (off the hotbar). A tool taken off becomes a bag item `tool_<kind>` (type `tool`, one per slot, can't be dropped); dragging or clicking it puts it back. `ensureToolRefs` restores any tool that is nowhere. Equipping a weapon no longer writes `S.hot[5]`.
 - The cottage is placed anywhere like other buildings (no fixed lot); the tent stays until it's finished.
 
+## Ember Multitool (`public/js/x_multitool.js`)
+- The last tool tier (6, "Ember"): axe, pickaxe and scythe in one hotbar tool (`S.tools.multi`, kind `multi`, icon `ic_multi`). Brann forges it (Tool upgrades) once axe, pickaxe and scythe are mythril: 30,000g, 3 Ember Runes, 5 Starmetal, 10 Mythril Bars. `useTool` picks the sub-tool from the target (axe objects → axe, pick objects and placed machines → pickaxe, everything else → a 7x3 scythe sweep) and runs it at tier 6; gathering keeps `GATHER.k = 'multi'`. Skill levels still gate nodes.
+
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
 

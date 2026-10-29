@@ -90,6 +90,16 @@ def shapes():
         blob(s, poly([(22, 4), (14, 3), (7, 5), (2, 11), (8, 8), (14, 7), (22, 8)]))
         s.fill(line(21, 4, 13, 4) | line(13, 4, 6, 7), C(0)[3]); return fin(s)
 
+    @reg('multi')
+    def _():  # the ember multitool: axe blade, pick spike and a scythe hook on one rune-bound haft
+        s = I(); handle(s, 7, 30, 19, 8)
+        blob(s, poly([(19, 7), (28, 3), (30, 12), (22, 13)]))                      # axe blade (right)
+        blob(s, poly([(18, 9), (10, 5), (3, 6), (9, 8), (16, 11)]))                # pick spike (left)
+        blob(s, poly([(20, 6), (19, 1), (13, 1), (8, 3), (14, 3), (18, 4)]), 1)   # scythe hook on top
+        s.fill(line(29, 4, 30, 11), C(0)[3]); s.fill(line(19, 2, 13, 2), C(1)[3])
+        s.fill(rect(16, 15, 3, 3), '#ff8a2a'); s.set(17, 16, '#ffe08a')             # ember rune on the haft
+        return fin(s)
+
     @reg('can')
     def _():
         s = I(); blob(s, rect(6, 12, 16, 15), 0); s.fill(line(22, 16, 29, 10) | line(22, 17, 29, 11), C(0)[1])

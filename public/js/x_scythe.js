@@ -9,7 +9,7 @@
 const SCYTHE_AREA = [null, [1, 1], [3, 1], [3, 2], [5, 2], [5, 3]]; // [width, depth] per tool level
 const needsScythe = C => !!C && (C.kind === 'veg' || C.kind === 'grain' || !!C.as);
 function scytheTiles(tx, ty, lvl) {
-  const [w, dep] = SCYTHE_AREA[Math.min(5, Math.max(1, lvl))], d = DIRV[S.p.dir], px = -d[1], py = d[0], out = [], h = (w - 1) / 2;
+  const [w, dep] = SCYTHE_AREA[Math.min(SCYTHE_AREA.length - 1, Math.max(1, lvl))], d = DIRV[S.p.dir], px = -d[1], py = d[0], out = [], h = (w - 1) / 2;
   for (let i = 0; i < dep; i++) for (let j = -h; j <= h; j++) out.push([tx + d[0] * i + px * j, ty + d[1] * i + py * j]);
   return out;
 }

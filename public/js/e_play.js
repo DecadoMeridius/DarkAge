@@ -77,7 +77,7 @@ function areaTiles(tx, ty, lvl) {
   return out;
 }
 const selKind = () => S.hot[S.sel];
-const isTool = k => ['hoe', 'can', 'axe', 'pick', 'rod', 'scythe', 'weapon'].includes(k);
+const isTool = k => ['hoe', 'can', 'axe', 'pick', 'rod', 'scythe', 'multi', 'weapon'].includes(k);
 /* ---- interactions ---- */
 function findInteract() {
   const m = cur, [tx, ty] = faceTile(), [fx, fy] = facePt();
