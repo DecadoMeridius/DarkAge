@@ -74,3 +74,26 @@ addEventListener('keydown', e => {
 }, true);
 addEventListener('blur', () => { if (!GPAUSE && !TITLE && !MODAL && S && SETTINGS.autoPause !== false) setPause(true); }); // alt-tab pauses
 { const b = el('button', { id: 'pausebtn', class: 'btn ghost', title: 'Pause (Pause key)' }, 'Pause'); b.onclick = e => { e.stopPropagation(); setPause(true); b.blur(); }; const c = document.getElementById('clock'); if (c) c.after(b); }
+
+/* gathered resources pop out of the tree, rock or grass as real pieces (logs, stones, fibre, hay),
+   arc through the air, then home in on you and are picked up: popTo(map, x, y, item, n, big) */
+function popTo(m, x, y, id, n, big) {
+  const pieces = Math.min(n, big ? 8 : 4), per = Math.floor(n / pieces); let extra = n - per * pieces;
+  for (let i = 0; i < pieces; i++) {
+    const a = Math.random() * 6.283, sp = (big ? 40 : 22) + Math.random() * 30;
+    m.ents.push({ type: 'drop', id, n: per + (extra-- > 0 ? 1 : 0), x, y, z: 6, vz: (big ? 90 : 70) + Math.random() * 50, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .6, t: 0, home: 1 });
+  }
+}
+const _updateDropsX = updateDrops;
+updateDrops = function (m, dt) {
+  for (const d of m.ents) {
+    if (d.type !== 'drop') continue;
+    if (d.vx || d.vy) { d.x += d.vx * dt; d.y += d.vy * dt; const k = d.z > 0 ? .985 : .8; d.vx *= k; d.vy *= k; if (Math.abs(d.vx) + Math.abs(d.vy) < 1) d.vx = d.vy = 0; }
+    if (d.home && d.t > .45 && d.z <= 0 && m === cur) { // fly to the player, faster the longer it flies
+      const dx = S.p.x - d.x, dy = S.p.y - 4 - d.y, dd = Math.hypot(dx, dy) || 1, sp = Math.min(260, 70 + (d.t - .45) * 380);
+      d.x += dx / dd * Math.min(dd, sp * dt); d.y += dy / dd * Math.min(dd, sp * dt);
+    }
+    if (d.t < 0) d.home = 0; // the bag was full: it stays on the ground like any drop
+  }
+  _updateDropsX(m, dt);
+};

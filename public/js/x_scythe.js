@@ -31,7 +31,7 @@ function scytheSwing(m, tx, ty, lvl) {
       if (C && s.crop.age >= C.d) { harvest(m, x, y); crops++; }
     }
   }
-  if (fib) give('fiber', fib); if (hay) give('hay', hay);
+  const [fx, fy] = facePt(); if (fib) popTo(m, fx, fy, 'fiber', fib); if (hay) popTo(m, fx, fy, 'hay', hay);
   if (fib || hay) { addXP('foraging', fib * .5); floatText(S.p.x, S.p.y - 30, '+' + fib + ' fibre, +' + hay + ' hay', '#e0c060'); noiseBurst(.07, .04, 2500); CHUNK.clear(); }
   return fib + crops > 0;
 }
