@@ -176,8 +176,18 @@ These come from the original game and were checked against the rebuilt systems: 
 ## Riding
 The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`): thigh along the saddle, leg down the horse's flank, mirrored when facing left.
 
-## Saves in the browser
-Saves live in `localStorage`, which is per address. The dev server is pinned to port 5173 (`strictPort` in `vite.config.js`) so the address never changes. The in-app browser pane's storage can be wiped when a Claude session restarts, so it is not a safe place to keep a long playthrough; the Electron build (`npm run app`) stores saves with the app.
+## Saves, autosave and the test sandbox (`public/js/x_saves.js`, `x_sandbox.js`)
+- **Slots:** up to 8 saves, each in `localStorage` key `emberhollow_slot_<id>` (with a `_bak` copy of the previous save), listed in `emberhollow_slots` (name, in-game date, gold, generation, real time saved). The title screen has Continue (newest), Load game (list with delete) and New game (a new slot, never overwrites). `S.slot` is the current slot. The old single save `emberhollow_v2` was copied into slot 1 and is left untouched as a backup.
+- **Autosave** every 500 ticks (5 minutes) on a saveable map with no window open, plus the existing morning save.
+- Saves live per address: the dev server is pinned to `localhost:5173`. The desktop build serves the game from `app://game/` (`electron/main.cjs`), so its saves are separate from the browser's.
+- **Test sandbox** (title screen button): a throwaway game where `saveGame` does nothing and Delete/Save are hidden; a yard with every station (and an ember core for power), a supply crate and the bank holding every ingredient, automation tier 5, skills 75, 1,000,000 gold. At a station each recipe gets a Get button that moves its ingredients from the supply crate into the backpack.
+- **Testing without touching the player's save:** use `http://[::1]:5173` (a different origin, so different storage) for automated tests.
+
+## Crafting jobs (`public/js/x_craftjobs.js`)
+- Crafting at a station is a timed batch (`JOB`, `JOB_TICKS`: workbench 2, furnace 3, anvil 4, kitchen 3, tanning 3 ticks per item). The window stays open with a progress bar and Cancel; it runs in real time (0.6 s steps) while the window is open and on the game tick when closed, until you walk away. No tool swing. Recipes have Make, x5, x10 and x100, capped at what the materials allow; repeating the running recipe extends the batch.
+
+## Building the desktop app
+- `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
 
 ## Inventory (implemented in `public/js/l_pack.js`)
 - `S.pack` is the backpack: 28 slots of `{ k, n }` (k = item key, `id` or `id#quality`). Weapons, armour and rings take one slot each; everything else stacks in one slot (`SINGLE` set). `S.inv` is a read-only view (key -> total) so older code keeps reading it; all writes go through `give` / `take` / `takeK`.

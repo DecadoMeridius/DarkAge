@@ -19,7 +19,27 @@
   "build": {
     "appId": "com.decado.emberhollow",
     "productName": "Emberhollow",
-    "files": ["dist/**", "electron/**"],
-    "win": { "target": ["nsis", "portable"] }
+    "files": [
+      "dist/**",
+      "electron/**"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "signAndEditExecutable": false
+    },
+    "directories": {
+      "output": "release"
+    },
+    "portable": {
+      "artifactName": "Emberhollow-portable-${version}.exe"
+    },
+    "nsis": {
+      "artifactName": "Emberhollow-setup-${version}.exe",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
