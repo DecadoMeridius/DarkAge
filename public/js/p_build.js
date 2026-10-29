@@ -10,13 +10,13 @@
    from your backpack; once everything is in, interact again to start hammering. Work
    runs on the game tick and the site rises through foundation, frame, walls and roof.
    Construction is a new life skill trained by hammering.
-   The farmhouse upgrades from the tent: build the Cottage blueprint on the house lot. */
+   The farmhouse upgrades from the tent: build the Cottage blueprint anywhere on the farm. */
 
 SKN.construction = 'Construction'; if (!SK.includes('construction')) SK.push('construction'); if (!LIFE.includes('construction')) LIFE.push('construction');
 for (const k in BUILD) BUILD[k].lv[-1] = [0, {}, 0]; // capFor() reads lv[level - 1]; an unbuilt building (level 0) holds nothing
 
 const BP = {
-  cottage: { n: 'Cottage', kind: 'house', act: 'house', w: 7, h: 5, gold: 1000, cost: { wood: 150, stone: 80 }, work: 60, lot: [6, 4], desc: 'Your farmhouse. Replaces the tent; has a bed, kitchen and storage.' },
+  cottage: { n: 'Cottage', kind: 'house', act: 'house', w: 7, h: 5, gold: 1000, cost: { wood: 150, stone: 80 }, work: 60, lot: [6, 4], desc: 'Your farmhouse, placed wherever you like. Once it is finished the tent is packed away; it has a bed, kitchen and storage.' },
   coop: { n: 'Coop', kind: 'coop', act: 'coop', w: 6, h: 5, gold: 1500, cost: { wood: 100, stone: 50 }, work: 40, build: 'coop', desc: 'Houses chickens, ducks and rabbits.' },
   barn: { n: 'Barn', kind: 'barn', act: 'barn', w: 7, h: 6, gold: 3000, cost: { wood: 200, stone: 100 }, work: 60, build: 'barn', desc: 'Houses cows, goats, sheep and pigs.' },
   stable: { n: 'Stable', kind: 'stable', act: 'stable', w: 6, h: 5, gold: 4000, cost: { wood: 150, hardwood: 20 }, work: 50, build: 'stable', desc: 'Houses horses.' },
@@ -111,11 +111,10 @@ let PLACING = null;
 function startPlacing(k) {
   if (MODAL) { MODAL.lock = false; closeModal(); }
   PLACING = k;
-  if (k === 'cottage') { toast('The cottage goes on the house lot behind your tent.'); }
   if (cur.id !== 'farm') toast('Go to your farm to place the ' + BP[k].n.toLowerCase() + '. Esc cancels.');
   else toast('Place the ' + BP[k].n.toLowerCase() + ': left click to place, right click to cancel.');
 }
-function placeAt() { const B = BP[PLACING], [mx, my] = mouseTile(); return PLACING === 'cottage' ? B.lot : [mx - Math.floor(B.w / 2), my - B.h + 1]; }
+function placeAt() { const B = BP[PLACING], [mx, my] = mouseTile(); return [mx - Math.floor(B.w / 2), my - B.h + 1]; } // anywhere on the farm, the cottage too
 function placeOk(m, x, y, B, ignoreTent) {
   if (x < 1 || y < 1 || x + B.w >= m.w - 1 || y + B.h >= m.h - 2) return false;
   for (let j = y; j < y + B.h + 1; j++) for (let i = x; i < x + B.w; i++) {
@@ -128,7 +127,7 @@ function placeOk(m, x, y, B, ignoreTent) {
 }
 function placeNow() {
   const m = cur, B = BP[PLACING], [x, y] = placeAt();
-  if (!placeOk(m, x, y, B, PLACING === 'cottage')) { toast("It doesn't fit there.", 'bad'); SFX.bad(); return; }
+  if (!placeOk(m, x, y, B)) { toast("It doesn't fit there.", 'bad'); SFX.bad(); return; }
   const s = { k: PLACING, x, y, stage: 0, delivered: {}, work: 0 };
   S.structures.push(s); if (!B.obj) placeStructure(m, s); else { const b = addB(m, x, y, B.w, B.h, 'site', 'site'); b.struct = s; b.spr = siteSprite(s); }
   if (PLACING !== 'cottage' && B.build === undefined) delete S.blue[PLACING]; // repeatable blueprints (shed, well) are used up
@@ -204,7 +203,7 @@ addEventListener('keydown', e => { if (e.key === 'Escape' && PLACING) { PLACING 
 const _pcCursorDrawB = pcCursorDraw;
 pcCursorDraw = function (m) {
   if (PLACING && m.id === 'farm' && !PAUSED) {
-    const B = BP[PLACING], [x, y] = placeAt(), ok = placeOk(m, x, y, B, PLACING === 'cottage'), spr = B.obj ? (PIX.get('well') || SPR.well) : buildingSpr(B.w, B.h, B.kind);
+    const B = BP[PLACING], [x, y] = placeAt(), ok = placeOk(m, x, y, B), spr = B.obj ? (PIX.get('well') || SPR.well) : buildingSpr(B.w, B.h, B.kind);
     g.globalAlpha = .55; D(spr, x * 16, y * 16, B.w * 16, B.h * 16); g.globalAlpha = .28;
     g.fillStyle = ok ? '#5ad85a' : '#e8402a'; g.fillRect(x * 16, y * 16, B.w * 16, B.h * 16); g.globalAlpha = 1;
     return;

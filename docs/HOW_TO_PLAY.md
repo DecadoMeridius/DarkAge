@@ -41,7 +41,7 @@ This guide gets you through your first days. You'll find out the rest by playing
 | **H** | Show or hide the key help |
 | **Esc** | Close a window, or open Options (volume, zoom, key rebinding, saving) |
 
-You face the mouse. A dashed square shows the tile your next action hits. You can rebind every key in **Options**.
+You face the mouse. A dashed square shows the tile your next action hits. In the backpack (**I**) you can drag items and tools onto the hotbar, rearrange it, or drag tools back into your bag. You can rebind every key in **Options**.
 
 ## 4. A day on the farm
 

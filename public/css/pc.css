@@ -177,3 +177,13 @@ select { font: 600 14px Fredoka, sans-serif; padding: 3px 6px; background: #fffa
 @media (max-width: 760px) { .encywrap { grid-template-columns: 1fr; } }
 .treecv { width: auto !important; height: auto !important; max-width: 100% !important; max-height: calc(min(860px, 92vh) - 240px) !important; }
 body:has(#modal:not([hidden])) #pausebtn, body:has(#pauseov) #pausebtn { display: none; }
+
+/* hotbar row in the backpack */
+.hotwrap { margin-bottom: 10px; padding: 8px 10px; }
+.hotwrap h3 { margin: 0; } .hotwrap .note { margin: 2px 0 6px; }
+.hotrow { display: grid; grid-template-columns: repeat(10, 60px); gap: 6px; }
+.hotrow .cell { width: 60px !important; height: 60px !important; cursor: grab; }
+.hotrow .hic { width: 40px; height: 40px; image-rendering: pixelated; }
+.hotrow .hk { position: absolute; left: 4px; top: 2px; font: 600 11px Fredoka, sans-serif; font-style: normal; color: #7a5a3a; }
+.hotrow .cell.on { outline: 2px solid #e0a040; }
+@media (max-width: 760px) { .hotrow { grid-template-columns: repeat(5, 60px); } }

@@ -73,7 +73,7 @@ There is no light map. `pixGrade` in `h_pixel.js` multiplies the frame by one fl
 
 ## Construction (`public/js/p_build.js`, design doc Phase 4)
 - **Nothing pre-built:** new games start with a tent (rest and save) and a campfire; the greenhouse stays a ruin to repair. Player buildings live in `S.structures` and are re-placed on the farm every time it is generated. Saves from before this keep their farmhouse, coop, barn and stable as finished structures (migrated once in `genFarm`).
-- **Blueprints (`BP`)**: plans bought from Hale (Carpenter → Buildings), then blueprints made at a workbench (see `x_blueprints.js` below): Cottage (farmhouse, built on the house lot, replaces the tent), Coop, Barn, Stable, Storage Shed (bank chest on the farm), Well (refills the watering can), Silo. The old upgrade list now only shows buildings that exist (it used to build level 1 for free).
+- **Blueprints (`BP`)**: plans bought from Hale (Carpenter → Buildings), then blueprints made at a workbench (see `x_blueprints.js` below): Cottage (farmhouse, placed anywhere, replaces the tent when finished), Coop, Barn, Stable, Storage Shed (bank chest on the farm), Well (refills the watering can), Silo. The old upgrade list now only shows buildings that exist (it used to build level 1 for free).
 - **Placement:** a ghost follows the cursor, green where it fits and red where it doesn't (no water, soil, objects or buildings, and the tile row in front kept clear). LMB places, RMB or Esc cancels.
 - **Build sites:** interact to deliver materials from the backpack, then Hammer. Work runs on the game tick through Foundation, Frame, Walls, Roof (`siteSprite` reveals the finished sprite in stages with timber scaffolding), then the site becomes the real building and `S.build[...]` is set. Construction is a new life skill trained by hammering. Moving stops the work.
 - **Paths:** Stone Path and Gravel Path (workbench) paint farm tiles; stored in `S.paths`.
@@ -220,6 +220,10 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 ## Scythe and tool upgrades (`public/js/x_scythe.js`)
 - The scythe is a hotbar tool (`S.tools.scythe`, `isTool`, `TOOLN`, icon `ic_scythe`, a low sweep in `y_anim`). One swing covers `SCYTHE_AREA[level]` in front of you (1, 3, 3x2, 5x2, 5x3): every weed or tall grass gives 1 fibre and 1 hay (into the silos while they have room), and ripe crops in the swath are harvested. Vegetables, grains and field crops (`needsScythe`) can only be harvested with it; fruit and flowers by hand. Older saves get it on the hotbar.
 - Tool upgrades: axes and pickaxes gather faster (+7% success per level) and give an extra log or ore 10% of the time per upgrade (`gatherTick` in `o_skills.js`); hoes and cans cover more tiles; rods widen the catch zone.
+
+## Hotbar in the backpack (`public/js/x_hotbar.js`)
+- The backpack window starts with the 10 hotbar slots. Drag bag → hotbar (the hotbar points at the item), hotbar ↔ hotbar (swap, tools too), hotbar → bag or right click (off the hotbar). A tool taken off becomes a bag item `tool_<kind>` (type `tool`, one per slot, can't be dropped); dragging or clicking it puts it back. `ensureToolRefs` restores any tool that is nowhere. Equipping a weapon no longer writes `S.hot[5]`.
+- The cottage is placed anywhere like other buildings (no fixed lot); the tent stays until it's finished.
 
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
