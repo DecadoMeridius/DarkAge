@@ -1,8 +1,7 @@
 /* ================= The scythe =================
    A new tool on the hotbar (key kind 'scythe', upgraded at Brann's like the others). Left click
    sweeps the area in front of you: every weed and tuft of tall grass it cuts always gives one
-   fibre and one hay (hay goes into your silos while they have room, otherwise into the bag;
-   better scythes sometimes give an extra fibre), and every ripe crop it touches is harvested.
+   fibre and one hay, straight into the bag (better scythes sometimes give an extra fibre), and every ripe crop it touches is harvested.
    Vegetables, grains and field crops can only be harvested with the scythe; fruit and flowers
    are still picked by hand. The swath grows with the tool: basic 1 tile, copper 3 wide,
    iron 3x2, gold 5x2, mythril 5x3. Older saves get a scythe in a free (or the last) hotbar slot. */
@@ -15,13 +14,13 @@ function scytheTiles(tx, ty, lvl) {
   return out;
 }
 function scytheSwing(m, tx, ty, lvl) {
-  SFX.swing(); let fib = 0, hay = 0, silo = 0, crops = 0;
+  SFX.swing(); let fib = 0, hay = 0, crops = 0;
   for (const [x, y] of scytheTiles(tx, ty, lvl)) {
     if (!inb(m, x, y)) continue;
     const o = getO(m, x, y), i = y * m.w + x, s = m.soil[i];
     if (o && (o.k === 'weed' || o.k === 'tgrass')) {
       setO(m, x, y, null); fib++; if (Math.random() < (lvl - 1) * .1) fib++;
-      if (S.build.silo && m.farm !== undefined && S.silo < 240 * S.build.silo) { S.silo++; silo++; } else hay++;
+      hay++;
       if (Math.random() < .015) dropItem(m, (x + .5) * 16, (y + .5) * 16, pickR(['herb', 'wild_leek', 'turnip_seed', 'wheat_seed']), 1);
       for (let k = 0; k < 4; k++) PARTS.push({ x: (x + .5) * 16, y: (y + .6) * 16, vx: (Math.random() - .5) * 50, vy: -Math.random() * 50, t: .4, c: GRASS[Math.min(2, S.season)][0] });
       continue;
@@ -33,7 +32,7 @@ function scytheSwing(m, tx, ty, lvl) {
     }
   }
   if (fib) give('fiber', fib); if (hay) give('hay', hay);
-  if (fib || silo || hay) { addXP('foraging', fib * .5); floatText(S.p.x, S.p.y - 30, '+' + fib + ' fibre, +' + (hay + silo) + ' hay' + (silo ? ' (silo)' : ''), '#e0c060'); noiseBurst(.07, .04, 2500); CHUNK.clear(); }
+  if (fib || hay) { addXP('foraging', fib * .5); floatText(S.p.x, S.p.y - 30, '+' + fib + ' fibre, +' + hay + ' hay', '#e0c060'); noiseBurst(.07, .04, 2500); CHUNK.clear(); }
   return fib + crops > 0;
 }
 

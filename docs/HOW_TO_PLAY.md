@@ -89,7 +89,7 @@ Walk up to a station and interact. Pick a recipe and press **Make**, or **×5 / 
 - Interact with the site to deliver materials, then **hammer** it (left click) through Foundation → Frame → Walls → Roof.
 - You need buildings for animals: chickens need a coop, cows a barn. Buy animals at **Odile's Stables**.
 - Once your cottage is finished, the tent is packed away and you wake up next to your bed.
-- A **silo** stores hay from cut grass for the winter. Grow **Meadow Grass** (hay) and **Flax** (fibre) from Mara's *Field seeds*.
+- A **silo** stores up to 240 hay for the winter: put hay in from your bag, and animals eat from it first. Grow **Meadow Grass** (hay) and **Flax** (fibre) from Mara's *Field seeds*.
 
 ## 7. Skills and progress
 

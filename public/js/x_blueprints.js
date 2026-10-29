@@ -5,9 +5,10 @@
    places a build site (the blueprint is used up), right click or Esc cancels and keeps it.
    Wells, storage sheds and silos can be built as often as you like; the cottage, coop, barn,
    stable and market stall once each (one blueprint at a time).
-   SILO: a real building now (3x4, bld_silo_3x4). Each silo stores 240 hay from cut grass; interact
-   to take hay out or put hay in. Animals eat from the silos in winter. It is no longer an instant
-   upgrade in Hale's list; a silo bought that way in an older save keeps counting.
+   SILO: a real building now (3x4, bld_silo_3x4). Each silo stores 240 hay; nothing goes in on its own:
+   interact to store hay from your bag or take it out. Animals eat from the silos first in winter. It is
+   no longer an instant upgrade in Hale's list; a silo bought that way in an older save (no building)
+   becomes free silo plans, and any hay it held is put in your bag (or the bank).
    FIELD SEEDS (Mara's Pantry tab): Meadow Grass (spring to autumn, regrows, harvests into hay) and
    Flax (spring and summer, harvests into fibre). They aren't counted as crops in Collections.
    HOME: once the cottage is built you wake up next to your bed, and a game loaded on the farm's
@@ -63,18 +64,20 @@ renderBuild = function (b) {
 };
 
 /* the silo */
-const siloCount = () => S.structures.filter(s => s.k === 'silo' && s.stage >= 4).length + (S.siloOld || 0);
-function siloSync() {
+const siloCount = () => S.structures.filter(s => s.k === 'silo' && s.stage >= 4).length;
+function siloSync() { // only built silos count; a silo bought the old way (no building) becomes free plans, and its hay comes back
   if (!S || !S.structures) return;
-  if (S.siloOld === undefined) S.siloOld = S.build.silo > 0 && !S.structures.some(s => s.k === 'silo') ? 1 : 0;
+  if (S.siloOld) { S.blue.silo = 1; delete S.siloOld; }
+  if (S.build.silo > 0 && !siloCount()) S.blue.silo = 1;
   S.build.silo = siloCount();
+  if (!S.build.silo && S.silo > 0) { const n = S.silo; S.silo = 0; GIVE_NO_DROP = true; const left = give('hay', n) || 0; GIVE_NO_DROP = false; if (left) S.bank.hay = (S.bank.hay || 0) + left; toast(n + ' hay from the old silo store was put in your ' + (left ? 'bag and bank' : 'bag') + '.'); }
 }
 const _finishSiteBP = finishSite;
-finishSite = function (b) { const k = b.struct && b.struct.k; _finishSiteBP(b); if (k === 'silo') { siloSync(); toast('Cut tall grass on the farm to fill it with hay.'); } };
+finishSite = function (b) { const k = b.struct && b.struct.k; _finishSiteBP(b); if (k === 'silo') { siloSync(); toast('Store hay in it from your bag; animals eat from it in winter.'); } };
 function openSilo() {
   siloSync(); const cap = 240 * S.build.silo;
   openModal('Silo', [{ id: 's', label: 'Hay', render: b => {
-    b.append(el('p', { class: 'note' }, 'Your silos hold ' + S.silo + ' / ' + cap + ' hay. Cutting tall grass on the farm fills them; animals eat from them in winter.'));
+    b.append(el('p', { class: 'note' }, 'Your silos hold ' + S.silo + ' / ' + cap + ' hay. Store hay from your bag here; animals eat from the silos first in winter.'));
     const sb = el('div', { class: 'sbar' }, el('i', { style: 'width:' + Math.round(S.silo / Math.max(1, cap) * 100) + '%' })); b.append(sb);
     const mv = (n, out) => { if (out) { n = Math.min(n, S.silo); if (n <= 0) return; const left = give('hay', n) || 0; S.silo -= n - left; } else { n = Math.min(n, cnt('hay'), cap - S.silo); if (n <= 0) return; take('hay', n); S.silo += n; } SFX.pop(); refresh(); };
     b.append(el('div', { class: 'acts wrap' }, el('button', { class: 'btn', on: () => mv(10, 1) }, 'Take 10'), el('button', { class: 'btn ghost', on: () => mv(100, 1) }, 'Take 100'),
