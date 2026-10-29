@@ -170,6 +170,7 @@ function gatherTick() {
   if (Math.random() > chance) return;
   const [id] = D.drop[0], units = Math.max(1, G.o.left);
   let n = 1; if (Math.random() < perkCount(G.skill, 'bounty') * .06 || (id === 'wood' && hasPerk('forester') && Math.random() < .12)) n = 2;
+  if (Math.random() < ((S.tools[G.k] || 1) - 1) * .1) n++; // better tools: an extra log or ore 10% of the time per upgrade
   give(id, n); if (D.xp) addXP(D.xp[0], D.xp[1] / (G.o.total || (G.o.total = units)));
   if (--G.o.left > 0) return;
   // depleted: run the original break-up for its extras (hardwood, sap, ladders, stumps...) without the main drop or XP again

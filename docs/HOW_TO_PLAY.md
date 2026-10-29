@@ -52,12 +52,13 @@ You face the mouse. A dashed square shows the tile your next action hits. You ca
 ### Your first crops
 1. Walk **east** off the farm to the village and buy seeds at **Mara's General Store**.
 2. Use the **hoe** on grass-free ground to till it, **plant** the seeds, then **water** them with the watering can every day.
-3. When a crop is ripe, harvest it with **right click**.
+3. When a crop is ripe, cut vegetables and grain with the **scythe** (left click). Pick fruit and flowers with **right click**.
 4. Sell things in the **shipping bin** on your farm (paid overnight) or in shops.
 
 ### Clearing and gathering
 - **Axe** on trees gives logs, **pickaxe** on rocks gives stone and ore. You keep chopping or mining automatically until the tree or rock is used up. Walking away stops it.
-- Weeds, sticks and stones on the farm clear with your tools: the axe for wood, the pickaxe for stone, the hoe or a weapon for weeds.
+- Weeds, sticks and stones on the farm clear with your tools: the axe for wood, the pickaxe for stone, the **scythe** for weeds and tall grass. Every weed or tuft the scythe cuts gives a fibre and a hay.
+- **Upgrade tools** at Brann's: axes and pickaxes work faster and give more logs and ore, scythes cut a wider area, hoes and cans cover more tiles.
 - If you're knocked out, or still awake at 2:00, you lose 10% of your gold (at most 2,500).
 
 ## 5. Crafting
@@ -120,7 +121,6 @@ Walk up to a station and interact. Pick a recipe and press **Make**, or **×5 / 
 ## 11. Tips
 
 - Read tooltips: hover over hotbar slots and items.
-- Upgrade your tools at **Brann's** smithy. Better tools work faster.
 - Build **automation** (belts, smelters, mills) once you have Hale's plans, and your farm keeps working while you explore.
 
 ## Found a bug?

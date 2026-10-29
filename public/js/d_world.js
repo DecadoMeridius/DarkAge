@@ -10,9 +10,9 @@ function newState(seed) {
   return {
     v: 2, seed: seed || (Math.floor(Math.random() * 1e9) | 1), day: 1, season: 0, year: 1, time: 360, weather: 'sun', gold: 500,
     p: { map: 'farm', x: 9.5 * 16, y: 10.5 * 16, dir: 0, hp: 100, st: 120 },
-    inv: { turnip_seed: 15, potato_seed: 5, wood: 15, arrow: 0 }, invQ: {}, hot: ['hoe', 'can', 'axe', 'pick', 'rod', 'weapon', 'turnip_seed', 'potato_seed', null, null], sel: 0,
+    inv: { turnip_seed: 15, potato_seed: 5, wood: 15, arrow: 0 }, invQ: {}, hot: ['hoe', 'can', 'axe', 'pick', 'rod', 'scythe', 'weapon', 'turnip_seed', 'potato_seed', null], sel: 0,
     eq: { weapon: 'wood_sword', helm: null, body: null, boots: null, shield: null, ring1: null, ring2: null },
-    tools: { hoe: 1, can: 1, axe: 1, pick: 1, rod: 1 }, water: 20, sk, perks: {}, pendingPerk: [],
+    tools: { hoe: 1, can: 1, axe: 1, pick: 1, rod: 1, scythe: 1 }, water: 20, sk, perks: {}, pendingPerk: [],
     animals: [], nid: 1, rideId: null, mounted: false,
     stats: { harvest: 0, bought: 0, deepest: 0, fish: 0, forged: {}, bestBred: 0, cupMax: 0, kills: 0, crafted: 0, traitBred: 0, shipped: {}, caught: {}, randShards: 0 },
     qdone: {}, board: null, bin: {}, horseShop: [], buffs: [], build: { coop: 1, barn: 1, stable: 1, silo: 0, greenhouse: 0 }, silo: 0,

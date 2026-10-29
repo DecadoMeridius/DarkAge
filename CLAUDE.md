@@ -217,6 +217,10 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **Passive tree** is redrawn to fit its window and has a fourth branch, **Life** (`LTREE`, `S.tree.life`): energy, tool energy savings, life-skill XP, extra harvests, sell prices, speed. Life points = life-skill levels gained / 8, separate from combat points.
 - **Quests** are on the 1-99 scale: "Master of Emberhollow" is now every life skill 60 (40,000g), plus milestone quests appended in `t_balance.js` (indices are kept because `S.qdone` is by index).
 
+## Scythe and tool upgrades (`public/js/x_scythe.js`)
+- The scythe is a hotbar tool (`S.tools.scythe`, `isTool`, `TOOLN`, icon `ic_scythe`, a low sweep in `y_anim`). One swing covers `SCYTHE_AREA[level]` in front of you (1, 3, 3x2, 5x2, 5x3): every weed or tall grass gives 1 fibre and 1 hay (into the silos while they have room), and ripe crops in the swath are harvested. Vegetables, grains and field crops (`needsScythe`) can only be harvested with it; fruit and flowers by hand. Older saves get it on the hotbar.
+- Tool upgrades: axes and pickaxes gather faster (+7% success per level) and give an extra log or ore 10% of the time per upgrade (`gatherTick` in `o_skills.js`); hoes and cans cover more tiles; rods widen the catch zone.
+
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
 

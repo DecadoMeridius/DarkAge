@@ -77,7 +77,7 @@ function areaTiles(tx, ty, lvl) {
   return out;
 }
 const selKind = () => S.hot[S.sel];
-const isTool = k => ['hoe', 'can', 'axe', 'pick', 'rod', 'weapon'].includes(k);
+const isTool = k => ['hoe', 'can', 'axe', 'pick', 'rod', 'scythe', 'weapon'].includes(k);
 /* ---- interactions ---- */
 function findInteract() {
   const m = cur, [tx, ty] = faceTile(), [fx, fy] = facePt();
@@ -90,7 +90,7 @@ function findInteract() {
     const r = objInteract(m, x, y, o); if (r) return r;
   }
   const s = m.soil[ty * m.w + tx];
-  if (s && s.crop) { const C = CROPS[s.crop.k]; if (s.crop.dead) return { label: 'Clear', fn: () => { s.crop = null; } }; if (s.crop.age >= C.d) return { label: 'Harvest', fn: () => harvest(m, tx, ty) }; }
+  if (s && s.crop) { const C = CROPS[s.crop.k]; if (s.crop.dead) return { label: 'Clear', fn: () => { s.crop = null; } }; if (s.crop.age >= C.d) return needsScythe(C) ? { label: 'Use scythe', fn: () => toast('Cut ' + C.n.toLowerCase() + ' with your scythe (left click with it selected).') } : { label: 'Harvest', fn: () => harvest(m, tx, ty) }; }
   const t = getT(m, tx, ty), k = selKind();
   if (TER[t].water && k === 'can') return { label: 'Refill', fn: useTool };
   if ((TER[t].water || TER[t].lava) && k === 'rod') return { label: 'Cast', fn: useTool };
@@ -137,8 +137,9 @@ function useTool() {
   if (k === 'weapon') { attack(); return; }
   if (!isTool(k)) { useItem(k); return; }
   if (S.p.st <= 0 && k !== 'rod') { toast('Too tired to work. Eat or sleep.', 'bad'); SFX.bad(); return; }
-  const lvl = S.tools[k] || 1, cost = b => Math.max(.5, b - (S.sk[{ hoe: 'farming', can: 'farming', axe: 'woodcutting', pick: 'mining', rod: 'fishing' }[k]].l - 1) * .15);
+  const lvl = S.tools[k] || 1, cost = b => Math.max(.5, b - (S.sk[{ hoe: 'farming', can: 'farming', axe: 'woodcutting', pick: 'mining', rod: 'fishing', scythe: 'farming' }[k]].l - 1) * .15);
   const [ax, ay, o] = mainOf(m, tx, ty), t = getT(m, tx, ty);
+  if (k === 'scythe') { if (scytheSwing(m, tx, ty, lvl)) useStamina(cost(1)); return; }
   if (o && (o.k === 'weed' || o.k === 'tgrass')) { cutGrass(m, ax, ay, o); return; }
   if (k === 'hoe') {
     if (o && o.k === 'dig') { digSpot(m, ax, ay); useStamina(cost(2)); return; }

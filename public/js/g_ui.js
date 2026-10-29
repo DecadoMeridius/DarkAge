@@ -203,7 +203,7 @@ function greet(b, id) {
   b.append(el('div', { class: 'greet f-panel' }, c, el('div', { class: 'rtxt' }, el('b', null, N.n + '  ', el('span', { class: 'hearts' }, '♥'.repeat(h) + '♡'.repeat(Math.max(0, 10 - h)))), el('p', null, '"' + line + '"')), el('button', { class: 'btn ghost' + (f.g === dayIndex() ? ' off' : ''), on: () => { if (f.g === dayIndex()) { toast('One gift a day is plenty.'); return; } openMenu('bag'); MODAL.title = 'Gift for ' + N.n; MODAL.opts.giftTo = id; drawModal(); } }, 'Give a gift')));
 }
 function talkNPC(id) { doorAction(NPCS[id].shop, id); }
-const TOOLN = { hoe: 'Hoe', can: 'Watering Can', axe: 'Axe', pick: 'Pickaxe', rod: 'Fishing Rod' };
+const TOOLN = { hoe: 'Hoe', can: 'Watering Can', axe: 'Axe', pick: 'Pickaxe', scythe: 'Scythe', rod: 'Fishing Rod' };
 const UPC = [null, null, ['copper_bar', 5, 500], ['iron_bar', 5, 1500], ['gold_bar', 5, 4000], ['mythril_bar', 5, 10000]];
 function doorAction(act, who) {
   const G = (id) => (b) => { if (who || id) greet(b, who || id); };
@@ -221,7 +221,7 @@ function doorAction(act, who) {
   if (act === 'fisher') return openModal('Corwin\'s Hut', [{ id: 's', label: 'Sell fish', render: b => { G('corwin')(b); b.append(el('p', { class: 'note' }, 'Corwin pays 10% over the odds for anything with fins.')); sellList(b, 'fisher', id => IT[id].t === 'fish'); } }, { id: 'buy', label: 'Tackle', render: b => { const L = el('div', { class: 'list' }); [['treasure_map', 800], ['sushi', 500], ['smoker', 1500], ['clam', 120]].forEach(([id, p]) => L.append(buyRow(id, p))); b.append(L); } }]);
 }
 function renderUpgrades(b) {
-  b.append(el('p', { class: 'note' }, 'Better tools hit harder and break tougher blockers. Iron hoes and cans cover a line of three, gold a 3×3, mythril even more. Better rods widen the catch zone; iron rods can fish lava.'));
+  b.append(el('p', { class: 'note' }, 'Better axes and pickaxes work faster, give more logs and ore (an extra one 10% of the time per upgrade) and break tougher rocks and stumps. Better scythes cut a wider swath: copper 3 wide, iron 3×2, gold 5×2, mythril 5×3. Iron hoes and cans cover a line of three, gold a 3×3, mythril even more. Better rods widen the catch zone; iron rods can fish lava.'));
   const L = el('div', { class: 'list' });
   for (const t in TOOLN) { const l = S.tools[t], nx = l + 1, c = UPC[nx]; const disc = hasPerk('tinker') ? .5 : 1;
     const row = el('div', { class: 'rrow' }, icon('tool:' + t + ':' + l, 32), el('div', { class: 'rtxt' }, el('b', null, TIER_TOOL[l] + ' ' + TOOLN[t]), el('small', null, c ? 'Upgrade to ' + TIER_TOOL[nx] + ': ' + Math.round(c[2] * disc) + 'g and ' + Math.ceil(c[1] * disc) + ' ' + IT[c[0]].n + 's (you have ' + cnt(c[0]) + ').' : 'Fully upgraded.')));

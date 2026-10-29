@@ -41,7 +41,7 @@ function setupSandbox() {
   S.gold = 1000000; S.autoTier = 5; S.flags = S.flags || {}; S.flags.wb = 1; S.look = Object.assign({}, DEFAULT_LOOK, S.look || {}, { name: 'Tester' });
   ensureLife(); for (const k of SK) if (S.sk[k]) { S.sk[k].tx = XPT[75]; S.sk[k].L = 75; S.sk[k].l = 8; }
   ensureCombat(); for (const c in S.csk) S.csk[c].xp = XPT[60];
-  S.tools = { hoe: 5, can: 5, axe: 5, pick: 5, rod: 5 };
+  S.tools = { hoe: 5, can: 5, axe: 5, pick: 5, rod: 5, scythe: 5 };
   // a cleared yard south of the tent
   const X0 = 12, X1 = 46, Y0 = 13, Y1 = 30;
   for (let y = Y0; y <= Y1; y++) for (let x = X0; x <= X1; x++) { if (!inb(m, x, y) || m.solidB[y * m.w + x]) continue; if (getO(m, x, y)) delObj(m, x, y); delete m.soil[y * m.w + x]; if (TER[getT(m, x, y)].solid || TER[getT(m, x, y)].water) continue; setT(m, x, y, 'g'); }

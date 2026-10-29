@@ -47,6 +47,7 @@ function playerAction() {
       const ic = itemIcon('tool:' + tl + ':' + (S.tools[tl] || 1));
       if (tl === 'can') { if (Math.random() < .5) { const [fx, fy] = facePt(); PARTS.push({ x: fx + (Math.random() - .5) * 6, y: fy - 4, vx: 0, vy: 30, t: .25, c: '#7ac8f0' }); } return { pose: 'pour', item: ic, ang: base + .9 * side, size: 12 }; }
       if (tl === 'rod') return { pose: t < .4 ? 'wind' : 'cast', item: ic, ang: t < .4 ? base - 2.4 * side : lerpc(base - 1.6 * side, base - .4 * side, (t - .4) / .3), size: 14 };
+      if (tl === 'scythe') return { pose: t < .3 ? 'wind' : 'strike', item: ic, ang: t < .3 ? base - 2.2 * side : lerpc(base - 2 * side, base + 1.4 * side, (t - .3) / .4), size: 15 }; // a low sweep
       const low = tl === 'hoe' ? .9 : .4; // axe, pickaxe, hoe, hammering: overhead, then down
       return { pose: t < .45 ? 'wind' : 'strike', item: ic, ang: t < .45 ? base - 2.4 * side : lerpc(base - 1.8 * side, base + low * side, (t - .45) / .25), size: 13 };
     }

@@ -84,6 +84,12 @@ def shapes():
     def _():
         s = I(); handle(s, 6, 29, 22, 6); blob(s, poly([(18, 4), (28, 6), (28, 12), (24, 10)])); return fin(s)
 
+    @reg('scythe')
+    def _():
+        s = I(); handle(s, 8, 30, 20, 5); s.fill(line(11, 20, 16, 21) | line(11, 21, 16, 22), WOOD[1])  # snath and grip
+        blob(s, poly([(22, 4), (14, 3), (7, 5), (2, 11), (8, 8), (14, 7), (22, 8)]))
+        s.fill(line(21, 4, 13, 4) | line(13, 4, 6, 7), C(0)[3]); return fin(s)
+
     @reg('can')
     def _():
         s = I(); blob(s, rect(6, 12, 16, 15), 0); s.fill(line(22, 16, 29, 10) | line(22, 17, 29, 11), C(0)[1])
