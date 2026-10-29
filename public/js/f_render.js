@@ -111,7 +111,7 @@ function render(dt) {
   g.textAlign = 'center'; g.lineJoin = 'round';
   for (const f of FX) { f.t -= dt; f.y -= dt * 16; g.globalAlpha = Math.min(1, f.t * 2); g.font = '600 ' + (f.big ? '11' : '8') + 'px Fredoka, sans-serif'; g.strokeStyle = 'rgba(59,42,32,.9)'; g.lineWidth = 2.2; g.strokeText(f.txt, f.x, f.y); g.fillStyle = f.c; g.fillText(f.txt, f.x, f.y); }
   g.globalAlpha = 1; FX = FX.filter(f => f.t > 0);
-  if (fishing) { const [fx, fy] = facePt(), d = DIRV[S.p.dir], bx = fx + d[0] * 12, by = fy + d[1] * 12 + 6; g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = .4; g.beginPath(); g.moveTo(S.p.x + d[0] * 8, S.p.y - 22); g.quadraticCurveTo((S.p.x + bx) / 2, Math.min(S.p.y - 26, by - 10), bx, by - (fishing.phase === 'bite' ? 0 : Math.sin(gameT * 4))); g.stroke(); g.fillStyle = '#e8342a'; g.beginPath(); g.arc(bx, by + (fishing.phase === 'bite' ? 1.5 : 0), 1.6, 0, 6.283); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(bx, by - .8, .9, Math.PI, 0); g.fill(); if (fishing.phase === 'bite') { g.font = '700 16px Fredoka, sans-serif'; g.strokeStyle = INK; g.lineWidth = 3; g.strokeText('!', S.p.x, S.p.y - 38); g.fillStyle = '#ffd040'; g.fillText('!', S.p.x, S.p.y - 38); } }
+  if (fishing && fishing.phase === 'bite') { g.font = '700 16px Fredoka, sans-serif'; g.strokeStyle = INK; g.lineWidth = 3; g.strokeText('!', S.p.x, S.p.y - 38); g.fillStyle = '#ffd040'; g.fillText('!', S.p.x, S.p.y - 38); } // rod, line and bobber are drawn with the player (y_anim.js)
   pcCursorDraw(m);
   ambient(m, dt, cxp, cyp, vw, vh);
   // ---- time of day and weather: one flat colour grade over the whole screen (no light map) ----

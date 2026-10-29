@@ -54,12 +54,23 @@ function playerAction() {
     return { pose: 'pour' }; // sowing, placing
   }
   if (pl.eatT > 0) return { pose: 'eat', item: itemIcon(pl.eatId), ang: -Math.PI / 4, size: 9, crumbs: 1 };
-  if (fishing) return { pose: 'cast', item: itemIcon('tool:rod:' + (S.tools.rod || 1)), ang: base - .5 * side, size: 14, fishing: 1 };
+  if (fishing) return { pose: 'cast', fishing: 1 }; // the rod itself is drawn as a line (drawFishing)
   if (typeof GUARD !== 'undefined' && GUARD > 0) return { pose: 'block', item: itemIcon(S.eq.shield || S.eq.weapon), ang: base - .6 * side, size: 12, guard: 1 };
   if (pl.moving) return { frame: 'w' + Math.floor(gameT * 12) % 8, held: 1 };
   return { frame: (gameT % 2.6) > 1.9 ? 'idle1' : 0, held: 1 };
 }
 
+function drawFishing(p) { // a rod held out over the water, one sagging line, one bobber where the cast landed
+  const d = DIRV[p.dir], [hx, hy] = handAt('cast', p.dir), up = p.dir === 3;
+  const tip = d[0] ? [hx + d[0] * 13, hy - 9] : [hx + 3, hy + (up ? -15 : 9)];
+  for (let k = 0; k <= 12; k++) { const t = k / 12; px2(hx + (tip[0] - hx) * t, hy + (tip[1] - hy) * t, t < .35 ? '#5a3a22' : '#9a6a40', 1, 1); }
+  const [fx, fy] = facePt(), bx = fx + d[0] * 12, by = fy + d[1] * 12 + 6, ph = fishing.phase;
+  const dip = ph === 'bite' ? 1.5 + Math.sin(gameT * 30) * .5 : ph === 'reel' ? 0 : Math.sin(gameT * 4) * .5, shake = ph === 'reel' ? Math.sin(gameT * 40) : 0;
+  g.strokeStyle = 'rgba(240,240,230,.85)'; g.lineWidth = .5; g.beginPath(); g.moveTo(tip[0], tip[1]);
+  if (ph === 'reel') g.lineTo(bx + shake, by + dip); else g.quadraticCurveTo((tip[0] + bx) / 2, Math.max(tip[1], by) + 5, bx, by + dip); g.stroke();
+  px2(bx - 1, by - 1 + dip, '#f4f0e8', 2, 1); px2(bx - 1, by + dip, '#e8342a', 2, 1.5); px2(bx - .5, by - 1.5 + dip, '#2a1c18', 1, .5);
+  if (ph === 'bite' && gameT - (fishing.rt || 0) > .45) { fishing.rt = gameT; FXL.push({ k: 'ring', x: bx, y: by + 1, t: 0, T: .4, r: 5, c: '#cfeefa' }); } // a ripple every half second
+}
 drawPlayer = function () {
   const p = S.p, P = playerPal(); if (!HC_P) HC_P = 'pl' + Math.random().toString(36).slice(2, 7);
   if (pl.inv > 0 && pl.inv < .72 && Math.floor(gameT * 20) % 2) return; // invulnerability blink
@@ -103,14 +114,7 @@ drawPlayer = function () {
   if (A.smear) { const [a0, a1, al] = A.smear, cx = p.x, cy = p.y - 15; for (let q = 0; q <= 20; q++) { const an = lerpc(a0, a1, q / 20); for (const r of [12, 14]) px2(cx + Math.cos(an) * r, cy + Math.sin(an) * r * .8, 'rgba(255,255,245,' + (al * (q / 20) * (r === 14 ? .9 : .5)).toFixed(2) + ')', 1, 1); } }
   if (A.crumbs && Math.random() < .2) PARTS.push({ x: p.x + (Math.random() - .5) * 4, y: p.y - 21, vx: (Math.random() - .5) * 16, vy: 10, t: .3, c: '#e8c890' });
   if (A.guard) { const r = 11 + Math.sin(gameT * 10) * 1; for (let q = 0; q < 24; q++) { const an = q / 24 * Math.PI * 2; if ((q + Math.floor(gameT * 12)) % 3) px2(p.x + Math.cos(an) * r, p.y - 15 + Math.sin(an) * r * .9, 'rgba(160,210,255,.7)'); } }
-  if (A.fishing) {
-    const [hx, hy] = handAt('cast', p.dir), d = DIRV[p.dir], tip = [hx + Math.cos(A.ang) * 10, hy + Math.sin(A.ang) * 10 - 4];
-    const bx = p.x + d[0] * 40, by = p.y + d[1] * 30 + (d[1] ? 0 : 4), ph = fishing.phase, dip = ph === 'bite' ? 2 + Math.sin(gameT * 30) : Math.sin(gameT * 3) * .5;
-    g.strokeStyle = 'rgba(240,240,230,.8)'; g.lineWidth = .5; g.beginPath(); g.moveTo(tip[0], tip[1]);
-    if (ph === 'reel') g.lineTo(bx + Math.sin(gameT * 40), by); else g.quadraticCurveTo((tip[0] + bx) / 2, Math.max(tip[1], by) + 6, bx, by + dip); g.stroke();
-    px2(bx - 1, by - 1 + dip, '#e8342a', 2, 1); px2(bx - 1, by + dip, '#f4f0e8', 2, 1);
-    if (ph === 'bite' && Math.random() < .3) FXL.push({ k: 'ring', x: bx, y: by + 1, t: 0, T: .4, r: 5, c: '#cfeefa' });
-  }
+  if (A.fishing) drawFishing(p);
   if (pl.burn > 0 && Math.random() < .3) PARTS.push({ x: p.x + (Math.random() - .5) * 8, y: p.y - 10 - Math.random() * 14, vx: 0, vy: -24, t: .4, c: '#ff8a3a' });
 };
 
