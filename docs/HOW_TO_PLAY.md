@@ -34,6 +34,8 @@ This guide gets you through your first days. You'll find out the rest by playing
 | **T** or **Tab** | Passive tree (combat) |
 | **Z / X / C** | Combat abilities |
 | **J** | Quests and storylines |
+| **U** | Encyclopedia: every item, where it comes from and what it's used in |
+| **Pause** | Pause the game (or the Pause button by the clock) |
 | **M** | Map |
 | **N** / **P** / **F** / **O** | Animals / Friends / Family / Collections |
 | **H** | Show or hide the key help |
@@ -72,17 +74,26 @@ Everything is made at a **station**:
 
 Walk up to a station and interact. Pick a recipe and press **Make**, or **×5 / ×10 / ×100** to make a batch. A progress bar runs while you wait, and walking away stops it. Many recipes need several ingredients (a cake needs flour, eggs, milk and butter; a sword needs bars and a grip). Press **B** for a list of every recipe and where it's made.
 
+**Learning recipes:** at the start you only know the basics: parts, metal bars, wooden and copper gear, simple meals, fences and paths. You buy the rest once:
+- **Smithing patterns** (all weapons and armour of one metal) at **Brann's smithy**, and the regional metals at each region's forge.
+- **Cookbook pages** (one dish each) from **Pip** at the tavern, and local dishes at the regional inns.
+- **Item plans** (sprinklers, kegs, jars, fertilisers…) from **Hale**.
+
 ## 6. Building
 
-- Buy building **blueprints** from **Hale** at the carpenter's in the village: Cottage (your real house), Coop, Barn, Stable, Shed, Well, Market stall...
-- Place the blueprint with the mouse: **green** means it fits, **red** means it doesn't. That makes a **build site**.
+- Buy a building's **plans** once from **Hale** at the carpenter's: Cottage (your real house), Coop, Barn, Stable, Shed, Well, Silo, Market stall...
+- Make its **blueprint** at your workbench (1 wood, 1 fibre). Wells, sheds and silos can be built as often as you like.
+- Use the blueprint from your hotbar on the farm: **green** means it fits, **red** means it doesn't. Left click places a **build site**, right click cancels.
 - Interact with the site to deliver materials, then **hammer** it (left click) through Foundation → Frame → Walls → Roof.
 - You need buildings for animals: chickens need a coop, cows a barn. Buy animals at **Odile's Stables**.
+- Once your cottage is finished, the tent is packed away and you wake up next to your bed.
+- A **silo** stores hay from cut grass for the winter. Grow **Meadow Grass** (hay) and **Flax** (fibre) from Mara's *Field seeds*.
 
 ## 7. Skills and progress
 
 - Every action trains a skill (Farming, Mining, Woodcutting, Fishing, Cooking, Smithing, Crafting, Construction...), from level 1 to 99. Higher levels unlock better ores, trees and recipes.
 - Every 10 levels a skill lets you **pick a passive bonus** from three.
+- Life-skill levels also earn **life points** for the *Life* branch of the passive tree (**T**): more energy, cheaper tool use, more XP, bigger harvests, better prices.
 - Better gear comes in tiers: copper → iron → steel → gold → … and later regional metals. Each tier needs the matching combat level.
 
 ## 8. Fighting

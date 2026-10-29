@@ -175,7 +175,7 @@ function animalQ(qlt, aff) { const sc = qlt * .5 + aff * .3 + S.sk.husbandry.l *
 function cutGrass(m, x, y, o) {
   if (o.k === 'weed') { hitObj(m, x, y, o, 9); return; }
   setO(m, x, y, null); for (let i = 0; i < 5; i++) PARTS.push({ x: (x + .5) * 16, y: (y + .6) * 16, vx: (Math.random() - .5) * 50, vy: -Math.random() * 50, t: .4, c: GRASS[Math.min(2, S.season)][0] });
-  if (S.build.silo && m.farm !== undefined && S.silo < 240 && Math.random() < .5) { S.silo++; floatText((x + .5) * 16, y * 16, '+hay', '#e0c060'); } else if (Math.random() < .35) dropItem(m, (x + .5) * 16, (y + .5) * 16, 'fiber', 1);
+  if (S.build.silo && m.farm !== undefined && S.silo < 240 * S.build.silo && Math.random() < .5) { S.silo++; floatText((x + .5) * 16, y * 16, '+hay', '#e0c060'); } else if (Math.random() < .35) dropItem(m, (x + .5) * 16, (y + .5) * 16, 'fiber', 1);
   if (Math.random() < .015) dropItem(m, (x + .5) * 16, (y + .5) * 16, pickR(['herb', 'wild_leek', 'turnip_seed', 'wheat_seed']), 1);
   noiseBurst(.05, .03, 2500);
 }

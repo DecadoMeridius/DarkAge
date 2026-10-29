@@ -73,7 +73,7 @@ There is no light map. `pixGrade` in `h_pixel.js` multiplies the frame by one fl
 
 ## Construction (`public/js/p_build.js`, design doc Phase 4)
 - **Nothing pre-built:** new games start with a tent (rest and save) and a campfire; the greenhouse stays a ruin to repair. Player buildings live in `S.structures` and are re-placed on the farm every time it is generated. Saves from before this keep their farmhouse, coop, barn and stable as finished structures (migrated once in `genFarm`).
-- **Blueprints (`BP`)** are bought from Hale (Carpenter → Buildings): Cottage (farmhouse, built on the house lot, replaces the tent), Coop, Barn, Stable, Storage Shed (bank chest on the farm), Well (refills the watering can). Shed and Well blueprints are used up per placement; the others are one each. The old upgrade list now only shows buildings that exist (it used to build level 1 for free).
+- **Blueprints (`BP`)**: plans bought from Hale (Carpenter → Buildings), then blueprints made at a workbench (see `x_blueprints.js` below): Cottage (farmhouse, built on the house lot, replaces the tent), Coop, Barn, Stable, Storage Shed (bank chest on the farm), Well (refills the watering can), Silo. The old upgrade list now only shows buildings that exist (it used to build level 1 for free).
 - **Placement:** a ghost follows the cursor, green where it fits and red where it doesn't (no water, soil, objects or buildings, and the tile row in front kept clear). LMB places, RMB or Esc cancels.
 - **Build sites:** interact to deliver materials from the backpack, then Hammer. Work runs on the game tick through Foundation, Frame, Walls, Roof (`siteSprite` reveals the finished sprite in stages with timber scaffolding), then the site becomes the real building and `S.build[...]` is set. Construction is a new life skill trained by hammering. Moving stops the work.
 - **Paths:** Stone Path and Gravel Path (workbench) paint farm tiles; stored in `S.paths`.
@@ -197,6 +197,25 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **Wind:** trees and grown fruit trees switch to a second frame with the canopy one art px over (`swayFrame`, made once per sprite); tall grass cycles its three frames. Phases live in a `WeakMap`, not in saves; gusts are more frequent in rain or snow.
 - **Knockout:** `faint` now plays 1.7 s first (recoil, lying down with stars, fade to black), then runs the old faint (and the death check in `x_family.js`).
 - **Carrying:** a crop, fruit, forage, fish, animal product, artisan good, gem or artifact in the selected slot is shown above your head.
+
+## Blueprints, silo, field seeds, home (`public/js/x_blueprints.js`)
+- Hale sells building **plans** (`S.blue[k]`, kept for good). A plan adds a workbench recipe `bp_<k>` (1 wood, 1 fibre); the blueprint item is used from the hotbar/backpack on the farm (`useItem` → `startPlacing`), and placing a site uses it up (`BP_ITEM`). Wells, sheds and silos (`BP_MULTI`) can be built any number of times; cottage, coop, barn, stable and stall once.
+- **Silo** is a building site now (`BP.silo`, sprite `bld_silo_3x4` in `buildings.py`), no longer an instant upgrade. `S.build.silo` = number of finished silos (+ `S.siloOld` for one bought the old way); each holds 240 hay. Interact to take or store hay.
+- **Field seeds** (Mara → Field seeds): Meadow Grass (regrows, harvests into hay) and Flax (fibre). They are non-enumerable `CROPS` entries with `as: [item, min, max]`, so Collections and the seasonal seed list skip them.
+- Once the cottage is built you wake beside your bed (`wakeHome` after `endDay`, and on load from the default farm spot). The tent is removed when the cottage finishes.
+
+## Recipe knowledge (`public/js/x_unlocks.js`)
+- Only basics are known at first (`recipeKnown`): parts, bars, wood/leather/copper gear (`BASIC_TIERS`), simple meals (`BASIC_FOOD`), fences, paths, stations. Machines stay gated by automation tiers.
+- Learned with gold, stored in `S.known`: smithing **patterns** per tier (`tier:<tk>`, Brann's Patterns tab; regional tiers at their forge), **cookbook** pages per dish (Pip; regional dishes at their inn), **item plans** for workbench extras (`WORKSHOP`, Hale).
+- Unknown recipes are hidden from station windows by swapping `RC` during `renderCraft`; `canCraft` refuses them. Older saves learn everything they own or have made (`migrateKnown`); the sandbox knows all.
+- Recipe rows name each ingredient (`g_ui.js` renderCraft).
+
+## Encyclopedia, pause, sounds, tree (`x_ency.js`, `x_polish.js`, `x_settings.js`, `x_tree.js`)
+- **Encyclopedia** (U, Satchel tab): every item by category with search; a card with stats, where it comes from (recipes, crops, drops from `EN[k].drops`, type hints) and what uses it. The satchel is wider; its tab row scrolls with the wheel.
+- **Pause**: Pause key (rebindable) or the button by the clock; alt-tab pauses too (`setPause`, `GPAUSE`).
+- **Sounds**: rain is one looping low-passed hiss (`rainLoop`), mine drips and crickets are soft and low, music bells are rarer, the mine piece has no high pings, and `SFX.pick` is a soft thud.
+- **Passive tree** is redrawn to fit its window and has a fourth branch, **Life** (`LTREE`, `S.tree.life`): energy, tool energy savings, life-skill XP, extra harvests, sell prices, speed. Life points = life-skill levels gained / 8, separate from combat points.
+- **Quests** are on the 1-99 scale: "Master of Emberhollow" is now every life skill 60 (40,000g), plus milestone quests appended in `t_balance.js` (indices are kept because `S.qdone` is by index).
 
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.

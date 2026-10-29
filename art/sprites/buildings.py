@@ -1054,6 +1054,41 @@ def stall(awn='#c8342a', goods=None):
     return s
 
 
+def silo():
+    """A round board silo on a stone footing with a copper dome (3x4 tiles)."""
+    W, H = 96, 128
+    s = Canvas(W, H)
+    cx, r0, top = W // 2, 26, 38
+    wall = rect(cx - r0, top, 2 * r0, H - top - 14)
+    s.shade(wall, None, 'cyl', colors=['#4a1a16', '#6a261e', '#8a3428', '#a8482e', '#c4603e'])
+    for y in range(top + 6, H - 14, 8):  # board courses
+        for x in range(cx - r0, cx + r0):
+            s.blend(x, y, '#2a0e0a', .35)
+    for y in (top + 18, top + 52):  # iron hoops
+        s.shade(rect(cx - r0, y, 2 * r0, 3), None, 'cyl', colors=['#2a2a30', '#44444c', '#6a6a74', '#9090a0'])
+    s.shade(rect(cx - r0 - 3, H - 16, 2 * r0 + 6, 14), None, 'form', colors=['#4a4640', '#6a645a', '#8e887e', '#b0aa9e'])
+    for x in range(cx - r0 - 1, cx + r0 + 3, 9):
+        s.fill(rect(x, H - 15, 1, 12), '#4a4640')
+    s.fill(rect(cx - r0 - 3, H - 9, 2 * r0 + 6, 1), '#5a5650')
+    dome = {(x, y) for x, y in ellipse(cx, top, r0 + 3, 26) if y <= top}
+    s.shade(dome, None, 'sphere', colors=['#26443c', '#356456', '#4e8672', '#72a892', '#a2ccb8'])
+    for k in range(-r0, r0 + 1, 8):  # standing seams
+        s.fill(line(cx + k // 3, top - 25, cx + k, top), '#2e5248')
+    s.shade(rect(cx - r0 - 4, top - 1, 2 * r0 + 8, 4), None, 'cyl_side', colors=['#1e342e', '#2e5248', '#4e8672', '#72a892'])
+    s.shade(rect(cx - 4, top - 31, 8, 6), None, 'cyl', colors=['#26443c', '#4e8672', '#72a892', '#a2ccb8'])  # vent cap
+    s.fill(rect(cx - 6, top + 26, 12, 10), '#2a160e'); s.fill(rect(cx - 6, top + 26, 12, 1), '#c4603e')  # hay hatch
+    s.fill(rect(cx - 2, top + 26, 1, 10), '#5a3622')
+    s.fill(rect(cx - 9, H - 46, 18, 32), '#3a2214')  # door
+    for x in range(cx - 9, cx + 9, 6):
+        s.fill(rect(x, H - 46, 1, 32), '#24140c')
+    s.fill(rect(cx - 9, H - 46, 18, 2), '#7a4c2c'); s.fill(line(cx - 8, H - 44, cx + 8, H - 16), '#5a3622')
+    for k in range(5):  # straw poking out under the hatch
+        s.set(cx - 4 + k * 2, top + 37, '#e0c060')
+    s.outline()
+    s.meta = {}
+    return s
+
+
 def winterize(c):
     """Snow on whatever faces the sky: the top 3-7 px of every column's silhouette."""
     W, H = c.w, c.h
@@ -1081,6 +1116,7 @@ for st_, (awn, goods) in {'hm': ('#2a4a8a', ['#f2d878', '#8a8a94', '#c8b080', '#
     SPRITES[f'bld_{st_}_stall_3x2'] = (lambda a=awn, g=goods: stall(a, g))
     SPRITES[f'bld_dg_{st_}_5x4'] = (lambda st_=st_: mine(5, 4, st_))
 SPRITES['bld_ew_tent_4x3'] = lambda: tent('ew_tent', 4, 3)
+SPRITES['bld_silo_3x4'] = silo
 for k, w, h in SIZES:
     for lv in range(2, LEVELS.get(k, 1) + 1):
         SPRITES[f'bld_{k}_{w}x{h}_l{lv}'] = (lambda k=k, w=w, h=h, lv=lv: building(k, w, h, lv))

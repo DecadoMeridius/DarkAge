@@ -56,8 +56,11 @@ musicTick = function (dt, mode) {
   if (beat % 4 === 0) snd(degFreq(D, chord, -2), stepLen * 3.5, D.drums === 3 ? 'sine' : 'triangle', .03); // bass
   if (beat === 6 && D.bpm > 90) snd(degFreq(D, chord + 4, -2), stepLen * 1.5, 'triangle', .02);
   const phrase = D.mel[(bar >> 1) % 4], n = phrase[(bar % 2) * 8 + beat];
-  if (n !== null && n !== undefined) { snd(degFreq(D, chord + n), stepLen * (D.bpm > 110 ? 1.4 : 1.9), D.lead, D.lead === 'square' || D.lead === 'sawtooth' ? .009 : .016); if (D.bells && beat % 4 === 2) snd(degFreq(D, chord + n, 1), stepLen * 3, 'sine', .006); }
+  if (n !== null && n !== undefined) { snd(degFreq(D, chord + n), stepLen * (D.bpm > 110 ? 1.4 : 1.9), D.lead, D.lead === 'square' || D.lead === 'sawtooth' ? .009 : .016); if (D.bells && beat === 2 && bar % 2 === 0) snd(degFreq(D, chord + n), stepLen * 3, 'sine', .004); }
   if (D.drums === 1) { if (beat % 2 === 1) noiseBurst(.03, .008, 6000); if (beat === 0 || beat === 4) snd(70, .1, 'sine', .03, -30); }
   if (D.drums === 2) { if (beat % 2 === 0) snd(60, .12, 'sine', .04, -30); if (beat === 2 || beat === 6) noiseBurst(.08, .02, 1800); noiseBurst(.02, .006, 7000); }
-  if (D.drums === 3 && beat === 0 && Math.random() < .5) snd(1800 + Math.random() * 400, .05, 'sine', .006, -900);
+  if (D.drums === 3 && beat === 0 && (s >> 3) % 2 === 0) snd(degFreq(D, chord, -3), .3, 'sine', .02); // a low thud every other bar (no high pings)
 };
+
+/* softer gathering and harvest sound: the old one was a bright square-wave ping every gather tick */
+SFX.pick = () => { snd(330, .05, 'triangle', .03, -80); noiseBurst(.05, .035, 1800); };

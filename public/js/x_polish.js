@@ -54,3 +54,23 @@ drawPlayer = function () {
     const ic = itemIcon(parseK(id)[0]); if (ic) D(ic, S.p.x - 5, S.p.y - 44 + (pl.moving && Math.floor(gameT * 12) % 8 > 3 ? 1 : 0), 10, 10);
   }
 };
+
+/* pause: the Pause key (rebindable in Options) or the button under the clock. Stops time, ticks and
+   enemies; a click or the key again resumes. */
+let GPAUSE = false;
+function setPause(on) {
+  if (on && (TITLE || MODAL || !S || GPAUSE)) return;
+  if (!on && !GPAUSE) return;
+  GPAUSE = on; PAUSED = on; INPUT.keys = {}; MOUSE.down = false;
+  let ov = document.getElementById('pauseov');
+  if (on && !ov) { ov = el('div', { id: 'pauseov' }, el('div', { class: 'f-panel' }, el('h2', null, 'Paused'), el('p', { class: 'note' }, 'Click or press ' + KEYNAME(SETTINGS.binds.pause || 'pause') + ' to carry on.'))); ov.onclick = () => setPause(false); document.body.append(ov); }
+  if (!on && ov) ov.remove();
+}
+ACTIONS.push(['pause', 'Pause', 'pause']); buildKeymap();
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === 'pause' && !e.repeat) { e.preventDefault(); e.stopImmediatePropagation(); setPause(!GPAUSE); return; }
+  if (GPAUSE) { e.preventDefault(); e.stopImmediatePropagation(); if (k === 'escape') setPause(false); }
+}, true);
+addEventListener('blur', () => { if (!GPAUSE && !TITLE && !MODAL && S && SETTINGS.autoPause !== false) setPause(true); }); // alt-tab pauses
+{ const b = el('button', { id: 'pausebtn', class: 'btn ghost', title: 'Pause (Pause key)' }, 'Pause'); b.onclick = e => { e.stopPropagation(); setPause(true); b.blur(); }; const c = document.getElementById('clock'); if (c) c.after(b); }

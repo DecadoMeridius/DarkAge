@@ -152,3 +152,28 @@ select { font: 600 14px Fredoka, sans-serif; padding: 3px 6px; background: #fffa
 
 /* settings sliders in the game colours */
 #modal input[type=range] { accent-color: #c8642a; }
+
+/* pause */
+#pausebtn { position: fixed; top: 14px; right: 214px; z-index: 15; padding: 4px 10px; font-size: 13px; }
+#pauseov { position: fixed; inset: 0; z-index: 80; background: rgba(20, 14, 12, .45); display: grid; place-items: center; cursor: pointer; }
+#pauseov .f-panel { padding: 18px 28px; text-align: center; }
+
+/* wider windows; the tab row scrolls sideways (wheel) with a thin bar */
+#modal .panel { width: min(1320px, 96vw) !important; height: min(860px, 92vh) !important; }
+#mtabs { scrollbar-width: thin !important; padding-bottom: 2px !important; }
+#mtabs::-webkit-scrollbar { display: block !important; height: 6px; }
+#mtabs::-webkit-scrollbar-thumb { background: #b08a5a; }
+.needs { display: flex; flex-wrap: wrap; gap: 2px 12px; }
+
+/* encyclopedia */
+.encywrap { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(300px, 420px); gap: 12px; align-items: start; }
+.encygrid { display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start; }
+.encycell { width: 44px; height: 44px; padding: 4px !important; }
+.encycell.on { outline: 2px solid #e0a040; }
+.encycell.dim canvas { opacity: .45; filter: grayscale(.6); }
+.encycard { padding: 12px; position: sticky; top: 0; }
+.encycard h4 { margin: 10px 0 4px; }
+.encycard ul { margin: 0; padding-left: 18px; }
+@media (max-width: 760px) { .encywrap { grid-template-columns: 1fr; } }
+.treecv { width: auto !important; height: auto !important; max-width: 100% !important; max-height: calc(min(860px, 92vh) - 240px) !important; }
+body:has(#modal:not([hidden])) #pausebtn, body:has(#pauseov) #pausebtn { display: none; }

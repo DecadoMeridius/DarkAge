@@ -36,22 +36,37 @@ function ambientTick(dt) {
   BUS_MODE = 'amb';
   try {
     const t = S.time, night = t >= 1200 || t < 330, b = cur.bio ? BIOMES[cur.bio[Math.floor(S.p.y / 16) * cur.w + Math.floor(S.p.x / 16)]] : null;
-    if (cur.dark) { if (Math.random() < .15) snd(1800 + Math.random() * 600, .05, 'sine', .006, -900); return; } // drips in the mines
+    if (cur.dark) { if (Math.random() < .05) snd(420 + Math.random() * 120, .09, 'sine', .004, -160); return; } // a soft low drip now and then in the mines
     if (cur.indoor) return;
-    if (S.weather === 'rain') { noiseBurst(.5, .016, 1500); return; }
+    if (S.weather === 'rain') return; // rain is the steady hiss in rainLoop
     const cold = S.season === 3 || ['frost', 'tundra', 'glacier', 'peaks'].includes(b);
     if (cold && Math.random() < .5) noiseBurst(.9, .01 + Math.random() * .008, 300);
     if (!night && S.season < 2 && !cold && Math.random() < .35) { // birdsong: two or three quick slides
       const f = 2200 + Math.random() * 1600, n = 2 + Math.floor(Math.random() * 2);
       for (let i = 0; i < n; i++) snd(f + i * 140, .07, 'sine', .012, Math.random() < .5 ? 600 : -500, i * .09);
     }
-    if (night && S.season > 0 && S.season < 3 && Math.random() < .6) for (let i = 0; i < 3; i++) snd(4200, .025, 'square', .0025, 0, i * .05); // crickets
+    if (night && S.season > 0 && S.season < 3 && Math.random() < .3) for (let i = 0; i < 2; i++) snd(2600, .03, 'sine', .0018, 0, i * .07); // crickets, soft
     if (b === 'coast' || b === 'isles' || b === 'reef') noiseBurst(1.1, .012, 500); // surf
     for (let y = -3; y <= 3; y++) for (let x = -3; x <= 3; x++) { const o = getO(cur, Math.floor(S.p.x / 16) + x, Math.floor(S.p.y / 16) + y); if (o && (o.k === 'campfire' || (o.on && /forge|furnace|smelter|kiln|oven/.test(o.k)))) { noiseBurst(.06, .02, 2500); return; } }
   } finally { BUS_MODE = 'sfx'; }
 }
+/* rain: one looping, low-passed noise that fades in and out (the old short bursts sounded like crackling) */
+let RAIN = null;
+function rainLoop(dt) {
+  if (!AC || !SOUND_ON) return;
+  const want = S && !TITLE && !PAUSED && cur && !cur.dark && S.weather === 'rain' ? (cur.indoor ? .012 : .03) : 0;
+  if (!RAIN) { if (!want) return; BUS_MODE = 'amb'; try {
+    const len = AC.sampleRate * 2, b = AC.createBuffer(1, len, AC.sampleRate), ch = b.getChannelData(0); let last = 0;
+    for (let i = 0; i < len; i++) { last = last * .6 + (Math.random() * 2 - 1) * .4; ch[i] = last; }
+    const src = AC.createBufferSource(), lp = AC.createBiquadFilter(), hp = AC.createBiquadFilter(), gn = AC.createGain();
+    src.buffer = b; src.loop = true; lp.type = 'lowpass'; lp.frequency.value = 1400; hp.type = 'highpass'; hp.frequency.value = 250; gn.gain.value = 0;
+    src.connect(hp); hp.connect(lp); lp.connect(gn); gn.connect(audioOut()); src.start(); RAIN = { src, gn, v: 0 };
+  } finally { BUS_MODE = 'sfx'; } }
+  RAIN.v += (want - RAIN.v) * Math.min(1, dt * .8); RAIN.gn.gain.value = RAIN.v;
+  if (!want && RAIN.v < .0005) { try { RAIN.src.stop(); } catch (e) {} RAIN = null; }
+}
 const _updateS = update;
-update = function (dt) { _updateS(dt); ambientTick(dt); if (PARTS.length > 400 * PARTICLE_K) PARTS.splice(0, PARTS.length - Math.floor(400 * PARTICLE_K)); };
+update = function (dt) { _updateS(dt); ambientTick(dt); rainLoop(dt); if (PARTS.length > 400 * PARTICLE_K) PARTS.splice(0, PARTS.length - Math.floor(400 * PARTICLE_K)); };
 
 /* ---- graphics ---- */
 const _pixZoomS = pixZoom;

@@ -95,7 +95,7 @@ function renderCraft(b) {
   const list = el('div', { class: 'list' });
   RC.filter(r => (st === 'all' || r[3] === st) && (!MODAL.opts.ready || !canCraft(r))).forEach(r => {
     const why = canCraft(r), needs = el('div', { class: 'needs' });
-    for (const k in r[2]) { const have = needHave(k), n = r[2][k]; needs.append(el('span', { class: 'need' + (have >= n ? '' : ' no') }, icon(k[0] === '$' ? CATI[k] : k, 18), (k[0] === '$' ? CATN[k] + ' ' : '') + have + '/' + n)); }
+    for (const k in r[2]) { const have = needHave(k), n = r[2][k]; needs.append(el('span', { class: 'need' + (have >= n ? '' : ' no') }, icon(k[0] === '$' ? CATI[k] : k, 18), (k[0] === '$' ? CATN[k] : IT[k].n) + ' ' + have + '/' + n)); }
     const acts = el('div', { class: 'acts' }, el('button', { class: 'btn' + (why ? ' off' : ''), on: () => { doCraft(r); refresh(); } }, 'Make'));
     if (!canCraft(r, 5) && (IT[r[0]].t === 'bar' || IT[r[0]].t === 'ammo' || IT[r[0]].t === 'fert' || r[3] === 'kitchen')) acts.append(el('button', { class: 'btn ghost', on: () => { doCraft(r, 5); refresh(); } }, '×5'));
     list.append(el('div', { class: 'rrow' + (why ? ' dim' : '') }, icon(r[0], 32), el('div', { class: 'rtxt' }, el('b', null, IT[r[0]].n + (r[1] > 1 ? ' ×' + r[1] : '')), needs, why && why !== 'Missing materials' ? el('small', { class: 'why' }, why) : el('small', null, itemDesc(r[0]).split('. ').slice(1, 2).join(''))), acts));

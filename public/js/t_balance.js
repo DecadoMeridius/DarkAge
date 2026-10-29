@@ -93,3 +93,15 @@ window.simPacing = function (days = 28, opts = {}) {
   }
   return log;
 };
+
+/* quests on the 1-99 scale: "level 10 in every skill" was the old 1-10 scale and paid 30,000g.
+   Entries stay at their index (S.qdone is by index); skill milestones are added at the end. */
+{
+  const allLife = L => LIFE.every(k => lifeL(k) >= L), i = QUESTS.findIndex(q => q[0] === 'Master of Emberhollow');
+  if (i >= 0) QUESTS[i] = ['Master of Emberhollow', 'Reach level 60 in every life skill', () => allLife(60), 40000];
+  QUESTS.push(['Jack of all trades', 'Reach level 10 in every life skill', () => allLife(10), 1500],
+    ['Specialist', 'Reach level 40 in any life skill', () => LIFE.some(k => lifeL(k) >= 40), 3000],
+    ['Seasoned fighter', 'Reach combat level 30', () => typeof combatLevel === 'function' && combatLevel() >= 30, 3000],
+    ['Journeyman', 'Reach level 30 in every life skill', () => allLife(30), 8000],
+    ['Grandmaster', 'Reach level 99 in any skill', () => LIFE.some(k => lifeL(k) >= 99), 25000]);
+}
