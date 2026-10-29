@@ -111,3 +111,20 @@ floatText = function (x, y, txt, c) {
   }
   _floatTextX(x, y, txt, c);
 };
+
+/* aiming at a tree, rock or ore vein you can't work yet: the cursor turns red and a label says what it
+   is and the level it needs ("Maple · Woodcutting 10") */
+const TREE_N = { oak: 'Oak', maple: 'Maple', birch: 'Birch', pine: 'Pine', dead: 'Dead tree', palm: 'Palm', stonepine: 'Stone pine', mangrove: 'Mangrove', frostwood: 'Frostwood', charwood: 'Charwood' };
+const _pcCursorDrawX = pcCursorDraw;
+pcCursorDraw = function (m) {
+  _pcCursorDrawX(m);
+  if (TITLE || PAUSED || !MOUSE.in || !S || !S.p || fishing || (typeof PLACING !== 'undefined' && PLACING)) return;
+  const [tx, ty] = faceTile(); if (!inb(m, tx, ty)) return;
+  const [ax, ay, o] = mainOf(m, tx, ty), D = o && OBJ[o.k]; if (!D || !D.drop || !D.xp || D.place) return;
+  const skill = D.xp[0], need = nodeReq(o); if (lifeL(skill) >= need) return;
+  const X = tx * 16, Y = ty * 16; g.fillStyle = 'rgba(232,64,40,.9)';
+  for (const [x0, y0, w, h] of [[X, Y, 4, 1], [X, Y, 1, 4], [X + 12, Y, 4, 1], [X + 15, Y, 1, 4], [X, Y + 15, 4, 1], [X, Y + 12, 1, 4], [X + 12, Y + 15, 4, 1], [X + 15, Y + 12, 1, 4]]) g.fillRect(x0, y0, w, h);
+  const name = o.k === 'tree' ? TREE_N[o.kind || 'oak'] || 'Tree' : IT[D.drop[0][0]] ? IT[D.drop[0][0]].n.replace(/ Ore$/, '') + (D.ore ? ' vein' : '') : o.k;
+  const txt = name + ' · ' + SKN[skill] + ' ' + need, ly = (ay + (D.h || 1)) * 16 + 9; // under the node: canopies are drawn over this pass
+  g.save(); g.font = '600 8px Fredoka, sans-serif'; g.textAlign = 'center'; g.lineWidth = 2.4; g.strokeStyle = 'rgba(42,28,24,.95)'; g.strokeText(txt, (ax + .5) * 16, ly); g.fillStyle = '#ff9a7a'; g.fillText(txt, (ax + .5) * 16, ly); g.restore();
+};
