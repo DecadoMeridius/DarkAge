@@ -117,7 +117,7 @@ function render(dt) {
   // ---- time of day and weather: one flat colour grade over the whole screen (no light map) ----
   g.setTransform(1, 0, 0, 1, 0, 0); pixGrade(m, W, H); if (typeof nightLights === 'function') nightLights(m, Z, cxp, cyp, W, H); // windows and flames stay bright after dark
   if (m.outdoor && (S.weather === 'rain' || S.weather === 'snow') && !(m.bio && BIOMES[m.bio[Math.floor(S.p.y / 16) * m.w + Math.floor(S.p.x / 16)]] === 'ash')) {
-    while (WEATHER.length < 130) WEATHER.push({ x: Math.random() * W, y: Math.random() * H, s: .6 + Math.random() * .6 });
+    while (WEATHER.length < 130 * (typeof PARTICLE_K !== 'undefined' ? PARTICLE_K : 1)) WEATHER.push({ x: Math.random() * W, y: Math.random() * H, s: .6 + Math.random() * .6 });
     g.strokeStyle = S.weather === 'rain' ? 'rgba(190,215,240,.5)' : 'rgba(255,255,255,.9)'; g.fillStyle = '#fff'; g.lineWidth = DPR;
     for (const p of WEATHER) { if (S.weather === 'rain') { p.y += 620 * p.s * dt * DPR; p.x -= 90 * dt * DPR; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - 3 * DPR, p.y + 12 * DPR); g.stroke(); } else { p.y += 40 * p.s * dt * DPR; p.x += Math.sin(gameT + p.s * 9) * 20 * dt * DPR; g.beginPath(); g.arc(p.x, p.y, 1.4 * DPR * p.s, 0, 6.283); g.fill(); } if (p.y > H) { p.y = -10; p.x = Math.random() * W * 1.2; } }
     
@@ -192,7 +192,7 @@ function ambient(m, dt, cxp, cyp, vw, vh) {
   let kind = null; if (m.outdoor) { const b = m.bio ? BIOMES[m.bio[Math.floor(S.p.y / 16) * m.w + Math.floor(S.p.x / 16)]] : null; if (b === 'frost') kind = 'snow'; else if (b === 'ash') kind = 'ember'; else if (S.season === 2 && (b === 'forest' || m.id === 'farm' || b === 'meadow')) kind = 'leaf'; else if (S.season === 1 && (S.time > 1140 || S.time < 300)) kind = 'firefly'; else if (S.season === 1 && b !== 'coast') kind = 'butterfly'; else if (S.season === 3 && b !== 'ash' && S.weather !== 'snow') kind = 'snowmote'; else if (S.season === 0 && b !== 'coast') kind = 'petal'; }
   if (m.dark) kind = 'dust';
   if (!kind) { AMB.length = 0; return; }
-  const N = kind === 'snow' ? 70 : kind === 'firefly' ? 18 : 26;
+  const N = Math.round((kind === 'snow' ? 70 : kind === 'firefly' ? 18 : 26) * (typeof PARTICLE_K !== 'undefined' ? PARTICLE_K : 1));
   while (AMB.length < N) AMB.push({ x: cxp + Math.random() * vw, y: cyp + Math.random() * vh, s: Math.random(), k: kind });
   for (const p of AMB) {
     if (p.k !== kind) { p.k = kind; }

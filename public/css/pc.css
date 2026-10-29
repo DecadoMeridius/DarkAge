@@ -149,3 +149,6 @@ select { font: 600 14px Fredoka, sans-serif; padding: 3px 6px; background: #fffa
 .deed .rtxt small { display: block; }
 .stationrow { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 8px; }
 .stationrow > div { min-width: 180px; }
+
+/* settings sliders in the game colours */
+#modal input[type=range] { accent-color: #c8642a; }

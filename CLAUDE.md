@@ -186,6 +186,12 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 ## Crafting jobs (`public/js/x_craftjobs.js`)
 - Crafting at a station is a timed batch (`JOB`, `JOB_TICKS`: workbench 2, furnace 3, anvil 4, kitchen 3, tanning 3 ticks per item). The window stays open with a progress bar and Cancel; it runs in real time (0.6 s steps) while the window is open and on the game tick when closed, until you walk away. No tool swing. Recipes have Make, x5, x10 and x100, capped at what the materials allow; repeating the running recipe extends the batch.
 
+## Settings (`public/js/x_settings.js`, Phase 15)
+- Stored for the whole game in `localStorage` `emberhollow_settings` (not per save). Options tab (Esc): master, music, effects and ambience volumes (gain buses; every sound goes through `audioOut()` in `a_core.js`, `BUS_MODE` picks the bus); zoom (auto or fixed 2/4/6/8, still even), particles (full/low/off, `PARTICLE_K`), FPS counter, fullscreen; and rebinding for 22 actions.
+- Rebinding works by translation: a capture-phase listener turns the bound key into the action's default key (`KEYMAP`) and swallows the default key if it was moved (`SUPPRESS`), so modules keep reading their default keys. Esc is fixed.
+- Ambience (`ambientTick`): birdsong on spring/summer days, crickets on warm nights, wind in winter and cold biomes, rain, surf on the coast, crackle near fires and lit furnaces, drips in mines.
+- Performance (measured at 1889x1206): ~164 fps median everywhere (farm yard, village day and winter night, Wilds, Highmarch), p95 frame about 7 ms.
+
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
 

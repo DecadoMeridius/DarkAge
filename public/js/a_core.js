@@ -70,16 +70,18 @@ function outline(c, col = '#2b1810', inner) {
 function tint(c, col, amt) { return mk(c.width, c.height, x => { x.drawImage(c, 0, 0); x.globalCompositeOperation = 'source-atop'; x.globalAlpha = amt; x.fillStyle = col; x.fillRect(0, 0, c.width, c.height); }); }
 
 /* ---- audio ---- */
+// every sound goes through audioOut(): the settings module (x_settings.js) routes it to the music, effects or ambient volume
+function audioOut() { return (typeof AUDIO_BUS === 'function' && AUDIO_BUS()) || AC.destination; }
 let AC = null, SOUND_ON = true, MUSIC_ON = true;
 function snd(f, d = .08, type = 'square', v = .05, slide = 0, delay = 0) {
   if (!SOUND_ON || !AC) return;
   try {
     const t0 = AC.currentTime + delay, o = AC.createOscillator(), gn = AC.createGain();
     o.type = type; o.frequency.setValueAtTime(f, t0); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t0 + d);
-    gn.gain.setValueAtTime(v, t0); gn.gain.exponentialRampToValueAtTime(.0001, t0 + d); o.connect(gn); gn.connect(AC.destination); o.start(t0); o.stop(t0 + d + .02);
+    gn.gain.setValueAtTime(v, t0); gn.gain.exponentialRampToValueAtTime(.0001, t0 + d); o.connect(gn); gn.connect(audioOut()); o.start(t0); o.stop(t0 + d + .02);
   } catch (e) { }
 }
-function noiseBurst(d = .1, v = .05, hp = 800) { if (!SOUND_ON || !AC) return; try { const b = AC.createBuffer(1, AC.sampleRate * d, AC.sampleRate), ch = b.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / ch.length); const s = AC.createBufferSource(), f = AC.createBiquadFilter(), gn = AC.createGain(); f.type = 'highpass'; f.frequency.value = hp; gn.gain.value = v; s.buffer = b; s.connect(f); f.connect(gn); gn.connect(AC.destination); s.start(); } catch (e) { } }
+function noiseBurst(d = .1, v = .05, hp = 800) { if (!SOUND_ON || !AC) return; try { const b = AC.createBuffer(1, AC.sampleRate * d, AC.sampleRate), ch = b.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / ch.length); const s = AC.createBufferSource(), f = AC.createBiquadFilter(), gn = AC.createGain(); f.type = 'highpass'; f.frequency.value = hp; gn.gain.value = v; s.buffer = b; s.connect(f); f.connect(gn); gn.connect(audioOut()); s.start(); } catch (e) { } }
 const SFX = {
   hit: () => { snd(180, .08, 'square', .05, -90); noiseBurst(.06, .05, 1500); }, chop: () => { noiseBurst(.07, .08, 400); snd(120, .06, 'triangle', .07, -40); },
   pick: () => { snd(900, .04, 'square', .025, 400); noiseBurst(.05, .05, 2500); }, coin: () => { snd(988, .06, 'square', .03); snd(1318, .1, 'square', .03, 0, .06); },

@@ -214,3 +214,4 @@ The game is meant to be played slowly, bit by bit, over months.
 - Sound and music, settings menu (graphics quality, keybinds).
 - Windows installer.
 - Performance pass.
+- **In progress:** settings with audio buses, ambience, zoom/particles/FPS/fullscreen and key rebinding (`x_settings.js`); 8 save slots with autosave; installer and portable exe (`release/`); performance measured at ~164 fps, p95 7 ms.
