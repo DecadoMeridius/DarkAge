@@ -192,6 +192,12 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - Ambience (`ambientTick`): birdsong on spring/summer days, crickets on warm nights, wind in winter and cold biomes, rain, surf on the coast, crackle near fires and lit furnaces, drips in mines.
 - Performance (measured at 1889x1206): ~164 fps median everywhere (farm yard, village day and winter night, Wilds, Highmarch), p95 frame about 7 ms.
 
+## Music and small polish (`public/js/x_music.js`, `x_polish.js`)
+- **Music** (`SONGS`, `compose`, `moodNow`): a piece per mood (spring, summer, autumn, winter on the farm; village; wild; alpine, sea, frost, ash for the regions; night; home indoors; mine; battle when fighting or near a boss), composed from a seed: key, scale, tempo, a four-chord progression, bass, a pad on each bar, a melody from a two-bar motif in an A A' B A shape, and percussion where it fits. Changes wait for the end of the bar (battle cuts in at once). Notes go through the music bus.
+- **Wind:** trees and grown fruit trees switch to a second frame with the canopy one art px over (`swayFrame`, made once per sprite); tall grass cycles its three frames. Phases live in a `WeakMap`, not in saves; gusts are more frequent in rain or snow.
+- **Knockout:** `faint` now plays 1.7 s first (recoil, lying down with stars, fade to black), then runs the old faint (and the death check in `x_family.js`).
+- **Carrying:** a crop, fruit, forage, fish, animal product, artisan good, gem or artifact in the selected slot is shown above your head.
+
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
 
