@@ -76,6 +76,7 @@ Everything is made at a **station**:
 Walk up to a station and interact. Pick a recipe and press **Make**, or **×5 / ×10 / ×100** to make a batch. A progress bar runs while you wait, and walking away stops it. Many recipes need several ingredients (a cake needs flour, eggs, milk and butter; a sword needs bars and a grip). Press **B** for a list of every recipe and where it's made.
 
 **Learning recipes:** at the start you only know the basics: parts, metal bars, wooden and copper gear, simple meals, fences and paths. You buy the rest once:
+
 - **Smithing patterns** (all weapons and armour of one metal) at **Brann's smithy**, and the regional metals at each region's forge.
 - **Cookbook pages** (one dish each) from **Pip** at the tavern, and local dishes at the regional inns.
 - **Item plans** (sprinklers, kegs, jars, fertilisers…) from **Hale**.
