@@ -577,8 +577,8 @@ function endDay(fainted) {
   if (newSeason) { let died = 0; for (const k in MAPS.farm.soil) { const s = MAPS.farm.soil[k]; if (s.crop && !CROPS[s.crop.k].s.includes(S.season) && !s.crop.dead) { s.crop.dead = true; died++; } } if (died) report.push(['bad', died + ' out-of-season crops withered.']); report.push(['star', SEASONS[S.season] + ' has arrived!']); }
   S.weather = S.season === 3 ? (Math.random() < .3 ? 'snow' : 'sun') : (Math.random() < .22 ? 'rain' : 'sun');
   if (S.weather === 'rain') for (const k in MAPS.farm.soil) MAPS.farm.soil[k].wet = true;
-  for (const id of ['farm', 'village', 'wilds']) {
-    const m = MAPS[id];
+  for (const id of ['farm', 'village', 'wilds', ...(typeof REGIONS !== 'undefined' ? Object.keys(REGIONS) : [])]) { // stumps regrow in the regions too
+    const m = MAPS[id]; if (!m) continue;
     for (let i = 0; i < m.o.length; i++) { const o = m.o[i]; if (!o) continue;
       if (o.k === 'stump' && o.regrow !== undefined && id !== 'farm') { o.regrow--; if (o.regrow <= 0) m.o[i] = { k: o.was || 'tree', kind: o.kind, snow: o.snow }; }
       if (o.k === 'beehive' && S.season < 3 && !o.ready) { o.cd = (o.cd || 3) - 1; if (o.cd <= 0) o.ready = 1; }

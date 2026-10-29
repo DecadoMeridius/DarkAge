@@ -185,13 +185,14 @@ function gatherTick() {
   const saveDrop = D.drop, saveXp = D.xp; D.drop = saveDrop.slice(1); D.xp = null;
   try { hitObj(G.m, G.x, G.y, G.o, 1e9); } finally { D.drop = saveDrop; D.xp = saveXp; }
   if (G.m.wild && D.tool === 'pick') (S.respawn = S.respawn || []).push({ map: G.m.id, x: G.x, y: G.y, o: { k: G.o.k, v: G.o.v, cave: G.o.cave }, at: worldMin() + 1440 });
+  if (G.m.wild && G.o.k === 'stump') (S.respawn = S.respawn || []).push({ map: G.m.id, x: G.x, y: G.y, o: { k: G.o.was || 'tree', kind: G.o.kind }, at: worldMin() + 5 * 1440 }); // a dug-out stump grows back as a sapling would, in 5 days
   GATHER = null;
 }
 const worldMin = () => dayIndex() * 1440 + S.time;
 function respawnTick() {
   if (!S.respawn || !S.respawn.length) return;
   const now = worldMin();
-  S.respawn = S.respawn.filter(r => { if (now < r.at) return true; const m = MAPS[r.map]; if (!m) return false; if (getO(m, r.x, r.y) || Math.hypot(S.p.x / 16 - r.x, S.p.y / 16 - r.y) < 2 && cur === m) return true; putObj(m, r.x, r.y, r.o); return false; });
+  S.respawn = S.respawn.filter(r => { if (now < r.at) return true; const m = MAPS[r.map]; if (!m) return PERSIST.includes(r.map); /* a saved region not loaded yet keeps its regrowth */ if (getO(m, r.x, r.y) || Math.hypot(S.p.x / 16 - r.x, S.p.y / 16 - r.y) < 2 && cur === m) return true; putObj(m, r.x, r.y, r.o); return false; });
 }
 
 EVT.on('tick', n => { if (!S || PAUSED) return; ensureLife(); gatherTick(); jobTick(); if (n % 10 === 0) respawnTick(); });
