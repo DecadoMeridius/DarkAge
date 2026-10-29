@@ -1,0 +1,477 @@
+"""Human template sprites for the player and NPCs (palette-swapped in the game).
+
+Natural proportions (about 4.5 heads tall), hand-placed cel shading: each part gets a
+lit left edge, a base, a shaded right edge and a darker underside, instead of
+rounded blob shading. Pixels are channel codes RGB(255, channel, level), level 0..3
+dark -> light; h_pixel.js swaps them for ramps from the character's palette.
+Real colours (eyes, whites, mouth) pass through; #2b1d18 is the swappable eye colour.
+
+Frame 32x64 art px (16x32 world), feet on row 62. dir 0 front, 2 right, 3 back;
+dir 1 is dir 2 mirrored in the game. Body frames f 0..3 walk; other layers are
+drawn per dir and bobbed 1px on the step frames.
+"""
+from px import Canvas, rect, ellipse, poly, line
+
+CH = {n: i for i, n in enumerate(['skin', 'hair', 'shirt', 'pants', 'shoe', 'acc', 'helm', 'plume', 'cape', 'hood', 'apron', 'beard', 'robe', 'hat', 'crown', 'belt'])}
+EYE, WHITE, MOUTH = '#2b1d18', '#f4ece0', '#9a5048'
+
+
+def code(ch, lvl):
+    return (255, CH[ch], lvl, 255)
+
+
+def cel(s, mask, ch, light='left'):
+    """Flat cel shading: lit edge toward the light, base fill, shaded far edge and underside."""
+    mask = {p for p in mask if 0 <= p[0] < 32 and 0 <= p[1] < 64}
+    for x, y in mask:
+        lvl = 2
+        if (x + 1, y) not in mask or (x + 2, y) not in mask and light == 'left':
+            lvl = 1
+        if (x, y + 1) not in mask:
+            lvl = min(lvl, 1)
+        if (x - 1, y) not in mask and light == 'left':
+            lvl = 3
+        if (x + 1, y) not in mask and (x, y + 1) not in mask:
+            lvl = 0
+        s.px[x, y] = code(ch, lvl)
+
+
+def flat(s, mask, ch, lvl):
+    s.fill(mask, code(ch, lvl))
+
+
+def hline(s, x0, x1, y, ch, lvl):
+    flat(s, {(x, y) for x in range(x0, x1 + 1)}, ch, lvl)
+
+
+# ---- body ------------------------------------------------------------------
+HEAD_F = {(x, y) for x in range(10, 22) for y in range(7, 21)
+          if not ((y < 9 and (x < 11 or x > 20)) or (y > 17 and (x < 11 or x > 20)) or (y > 19 and (x < 12 or x > 19)))}
+HEAD_S = {(x, y) for x in range(11, 22) for y in range(7, 21)
+          if not ((y < 9 and (x < 12 or x > 20)) or (y > 18 and x < 13) or (y > 19 and x > 19))} | {(22, 14), (22, 15)}
+
+
+def legs_front(s, f):
+    step = {1: 1, 3: -1}.get(f, 0)
+    for x0, side in ((10, 1), (17, -1)):
+        lift = 2 if step * side > 0 else 0
+        cel(s, rect(x0, 39, 5, 18 - lift), 'pants')
+        cel(s, rect(x0 - 1, 56 - lift, 7, 6) - {(x0 - 1, 56 - lift)}, 'shoe')
+        hline(s, x0 - 1, x0 + 5, 61 - lift, 'shoe', 0)
+
+
+def body(d, f):
+    s = Canvas(32, 64)
+    step = {1: 1, 3: -1}.get(f, 0)
+    if d in (0, 3):
+        legs_front(s, f)
+        cel(s, poly([(8, 22), (24, 22), (23, 40), (9, 40)]), 'shirt')  # torso, shoulders 16 wide
+        for x0, side in ((5, 1), (24, -1)):
+            sw = -step * side
+            cel(s, rect(x0, 23 + sw, 3, 14), 'shirt')
+            cel(s, rect(x0, 37 + sw, 3, 4), 'skin')  # hands
+        if d == 0:
+            flat(s, {(14, 22), (15, 23), (16, 23), (17, 22)}, 'skin', 2)  # open collar
+            hline(s, 12, 19, 22, 'acc', 2); hline(s, 13, 18, 23, 'acc', 1)
+            hline(s, 9, 22, 32, 'shirt', 1)  # shirt hem fold
+        cel(s, rect(14, 19, 4, 4), 'skin')  # neck
+        cel(s, HEAD_F, 'skin')
+        if d == 0:
+            for ex in (12, 18):
+                s.set(ex, 13, WHITE); s.set(ex + 1, 13, EYE); s.set(ex + 1, 14, EYE); s.set(ex, 14, WHITE)
+                hline(s, ex, ex + 1, 11, 'hair', 1)  # brows
+            flat(s, {(15, 15), (15, 16), (16, 16)}, 'skin', 1)  # nose
+            s.fill({(14, 18), (15, 18), (16, 18), (17, 18)}, MOUTH)
+            flat(s, {(10, 13), (21, 13)}, 'skin', 1)  # ears
+    else:  # side, facing right
+        for side, x0 in ((-1, 13), (1, 15)):
+            off = step * side * 2
+            cel(s, rect(x0 + off, 39, 5, 17), 'pants')
+            cel(s, rect(x0 + off, 55, 7, 7), 'shoe')
+            hline(s, x0 + off, x0 + off + 6, 61, 'shoe', 0)
+        cel(s, poly([(11, 22), (21, 22), (21, 40), (11, 40)]), 'shirt')
+        hline(s, 11, 21, 32, 'shirt', 1)
+        sw = step * 2
+        cel(s, poly([(14 + sw // 2, 23), (17 + sw // 2, 23), (17 + sw, 37), (14 + sw, 37)]), 'shirt')
+        cel(s, rect(14 + sw, 37, 3, 4), 'skin')
+        cel(s, rect(14, 19, 4, 4), 'skin')
+        hline(s, 15, 19, 22, 'acc', 2)
+        cel(s, HEAD_S, 'skin')
+        s.set(19, 13, EYE); s.set(19, 14, EYE); s.set(20, 13, WHITE)
+        hline(s, 18, 20, 11, 'hair', 1)
+        flat(s, {(22, 14), (22, 15), (21, 16)}, 'skin', 1)
+        s.fill({(19, 18), (20, 18)}, MOUTH)
+        flat(s, {(14, 13), (14, 14), (13, 14)}, 'skin', 1)  # ear
+    return s
+
+
+# ---- hair ------------------------------------------------------------------
+def hair(style, d, layer):
+    s = Canvas(32, 64)
+    if style == 'bald':
+        return s
+    side = d == 2
+    if layer == 'back':
+        if style == 'long':
+            cel(s, rect(9, 12, 14, 18) if not side else rect(10, 12, 8, 18), 'hair')
+        if style == 'pony' and d in (2, 3):
+            cel(s, rect(10, 14, 4, 14) if side else rect(14, 18, 4, 14), 'hair')
+        return s
+    if d == 3:
+        cap = {(x, y) for x in range(9, 23) for y in range(5, 20) if not (y < 7 and (x < 11 or x > 20))}
+    elif side:
+        cap = {(x, y) for x in range(10, 22) for y in range(5, 13) if not (y < 7 and (x < 12 or x > 20))} | rect(10, 12, 5, 6)
+        cap -= {(x, 12) for x in range(16, 22)}
+    else:
+        cap = {(x, y) for x in range(9, 23) for y in range(5, 11) if not (y < 7 and (x < 11 or x > 20))}
+        cap |= rect(9, 10, 2, 7) | rect(21, 10, 2, 7)  # sideburns
+        cap |= {(x, 11) for x in range(11, 17)} | {(11, 12), (12, 12)}  # side-swept fringe
+    if style == 'spiky':
+        for k in range(5):
+            x0 = 9 + k * 3
+            cap |= poly([(x0, 6), (x0 + 1.5, 1 + (k % 2) * 2), (x0 + 3, 6)])
+    if style == 'long' and d == 0:
+        cap |= rect(8, 10, 3, 20) | rect(21, 10, 3, 20)
+    cel(s, cap, 'hair')
+    for x in range(10, 22, 3):  # strand lines
+        if (x, 7) in cap:
+            s.px[x, 7] = code('hair', 3)
+    if style == 'bun':
+        cel(s, rect(13, 1, 6, 5) if not side else rect(9, 3, 5, 5), 'hair')
+    return s
+
+
+# ---- gear and costume ------------------------------------------------------
+def helm(d):
+    s = Canvas(32, 64)
+    dome = {(x, y) for x in range(8, 24) for y in range(4, 15) if not (y < 7 and (x < 10 or x > 21))}
+    if d != 3:
+        dome |= rect(8, 14, 3, 6) | rect(21, 14, 3, 6) if d == 0 else rect(9, 14, 5, 6)
+    cel(s, dome, 'helm')
+    hline(s, 8, 23, 14, 'helm', 0); hline(s, 8, 23, 13, 'helm', 3)
+    if d == 0:
+        flat(s, rect(15, 14, 2, 5), 'helm', 2)
+    return s
+
+
+def plume(d):
+    s = Canvas(32, 64)
+    cel(s, poly([(14, 5), (18, 5), (21, 0), (13, 0)]) if d != 2 else poly([(11, 6), (15, 5), (9, 0), (5, 2)]), 'plume')
+    return s
+
+
+def hat(d):
+    s = Canvas(32, 64)
+    cel(s, rect(5, 9, 22, 3), 'hat')
+    cel(s, {(x, y) for x in range(10, 22) for y in range(2, 10) if not (y < 4 and (x < 11 or x > 20))}, 'hat')
+    hline(s, 10, 21, 8, 'hat', 0)
+    return s
+
+
+def crown(d):
+    s = Canvas(32, 64)
+    m = rect(10, 5, 12, 3) | poly([(10, 5), (11, 1), (12, 5)]) | poly([(15, 5), (16, 0), (17, 5)]) | poly([(20, 5), (21, 1), (22, 5)])
+    cel(s, m, 'crown')
+    s.set(16, 6, '#e8342a'); s.set(12, 6, '#4ad8e8'); s.set(20, 6, '#4ad8e8')
+    return s
+
+
+def hood(d, layer):
+    s = Canvas(32, 64)
+    outer = {(x, y) for x in range(7, 25) for y in range(4, 24) if not (y < 7 and (x < 10 or x > 21))}
+    if layer == 'back':
+        cel(s, outer, 'hood')
+    else:
+        face = {(x, y) for x in range(10, 22) for y in range(9, 21)} if d == 0 else {(x, y) for x in range(15, 23) for y in range(9, 21)} if d == 2 else set()
+        cel(s, outer - face, 'hood')
+    return s
+
+
+def beard(d):
+    s = Canvas(32, 64)
+    if d == 3:
+        return s
+    m = (rect(10, 15, 2, 4) | rect(20, 15, 2, 4) | rect(11, 18, 10, 4) | rect(13, 22, 6, 2)) if d == 0 else (rect(16, 15, 6, 6) | rect(17, 21, 4, 2))
+    cel(s, m, 'beard')
+    if d == 0:
+        s.fill({(14, 18), (15, 18), (16, 18), (17, 18)}, MOUTH)
+        hline(s, 13, 18, 17, 'beard', 1)
+    return s
+
+
+def apron(d):
+    s = Canvas(32, 64)
+    if d == 3:
+        hline(s, 9, 22, 33, 'apron', 1)
+        return s
+    m = poly([(11, 26), (21, 26), (22, 50), (10, 50)]) if d == 0 else poly([(17, 26), (21, 26), (22, 50), (17, 50)])
+    cel(s, m, 'apron')
+    if d == 0:
+        flat(s, line(11, 26, 9, 22) | line(21, 26, 23, 22), 'apron', 1)
+    return s
+
+
+def robe(d):
+    s = Canvas(32, 64)
+    m = poly([(8, 22), (24, 22), (26, 60), (6, 60)]) if d != 2 else poly([(11, 22), (21, 22), (23, 60), (9, 60)])
+    cel(s, m, 'robe')
+    hline(s, 9 if d != 2 else 11, 22 if d != 2 else 21, 33, 'robe', 0)
+    return s
+
+
+def belt(d):
+    s = Canvas(32, 64)
+    x0, x1 = (9, 22) if d != 2 else (11, 21)
+    hline(s, x0, x1, 37, 'belt', 1); hline(s, x0, x1, 38, 'belt', 0)
+    if d == 0:
+        s.fill({(15, 37), (16, 37), (15, 38), (16, 38)}, '#e8c040')
+    return s
+
+
+def cape(d):
+    s = Canvas(32, 64)
+    if d == 3:
+        cel(s, poly([(7, 22), (25, 22), (26, 56), (6, 56)]), 'cape')
+    elif d == 2:
+        cel(s, poly([(10, 22), (13, 22), (9, 54), (6, 52)]), 'cape')
+    else:
+        cel(s, rect(6, 24, 2, 26) | rect(24, 24, 2, 26), 'cape')
+    return s
+
+
+def ribs(d):
+    s = Canvas(32, 64)
+    bone = '#e8e4d8'
+    s.fill(rect(15, 23, 2, 15), bone)
+    if d != 3:
+        x0, x1 = (10, 21) if d == 0 else (12, 20)
+        for y in range(25, 37, 3):
+            s.fill(rect(x0, y, x1 - x0 + 1, 1), bone); s.fill(rect(x0 + 1, y + 1, x1 - x0 - 1, 1), '#3a3640')
+    return s
+
+
+def ears(d):
+    s = Canvas(32, 64)
+    if d == 2:
+        cel(s, poly([(14, 15), (9, 8), (13, 17)]), 'skin')
+    elif d == 0:
+        cel(s, poly([(10, 15), (5, 8), (10, 17)]), 'skin'); cel(s, poly([(21, 15), (26, 8), (21, 17)]), 'skin')
+    return s
+
+
+def ride():
+    """Seated on a horse, facing right: torso upright, thigh forward along the saddle,
+    shin hanging down the horse's flank. Feet end near row 52 (the horse's belly)."""
+    s = Canvas(32, 64)
+    cel(s, rect(13, 38, 9, 5), 'pants')            # thigh along the saddle
+    cel(s, rect(18, 41, 4, 10), 'pants')           # shin down the side
+    cel(s, rect(18, 50, 7, 4), 'shoe'); hline(s, 18, 24, 53, 'shoe', 0)
+    cel(s, poly([(11, 22), (21, 22), (21, 40), (11, 40)]), 'shirt')
+    hline(s, 11, 21, 32, 'shirt', 1)
+    cel(s, poly([(15, 23), (18, 23), (22, 33), (19, 34)]), 'shirt')  # arm reaching for the reins
+    cel(s, rect(20, 32, 3, 3), 'skin')
+    cel(s, rect(14, 19, 4, 4), 'skin')
+    hline(s, 15, 19, 22, 'acc', 2)
+    cel(s, HEAD_S, 'skin')
+    s.set(19, 13, EYE); s.set(19, 14, EYE); s.set(20, 13, WHITE)
+    hline(s, 18, 20, 11, 'hair', 1)
+    flat(s, {(22, 14), (22, 15), (21, 16)}, 'skin', 1)
+    s.fill({(19, 18), (20, 18)}, MOUTH)
+    flat(s, {(14, 13), (14, 14), (13, 14)}, 'skin', 1)
+    return s
+
+
+def _all():
+    out = {}
+    for d in (0, 2, 3):
+        for f in range(4):
+            out[f'hb_body_{d}_{f}'] = (lambda d=d, f=f: body(d, f))
+        for st in ('short', 'long', 'pony', 'bun', 'spiky'):
+            out[f'hb_hair_{st}_{d}_front'] = (lambda st=st, d=d: hair(st, d, 'front'))
+            out[f'hb_hair_{st}_{d}_back'] = (lambda st=st, d=d: hair(st, d, 'back'))
+        for n, fn in (('helm', helm), ('plume', plume), ('hat', hat), ('crown', crown), ('beard', beard), ('apron', apron), ('robe', robe), ('belt', belt), ('cape', cape), ('ribs', ribs), ('ears', ears)):
+            out[f'hb_{n}_{d}'] = (lambda fn=fn, d=d: fn(d))
+        out[f'hb_hood_{d}_back'] = (lambda d=d: hood(d, 'back'))
+        if d == 2:
+            out['hb_ride_2'] = ride
+        out[f'hb_hood_{d}_front'] = (lambda d=d: hood(d, 'front'))
+    return out
+
+
+# ---- Phase 14: an 8-frame walk and action poses ----------------------------------
+# hb_body_<d>_w<0..7>   walk cycle (legs and arms on a sine, 1px bob on the passing frames)
+# hb_body_<d>_<pose>    idle1 (breath in), wind (tool or weapon raised), strike (brought down),
+#                       thrust (lead arm straight out), draw (bow drawn), cast (rod held out),
+#                       pour (can tipped), eat (hand to mouth), block (forearms up), hurt (recoil),
+#                       tuck (curled up for the dodge roll; drawn alone, rotated in the game)
+# The hand position of each pose is in POSE_HAND (art px), mirrored in the game for dir 1.
+import math
+
+POSES = ('idle1', 'wind', 'strike', 'thrust', 'draw', 'cast', 'pour', 'eat', 'block', 'hurt')
+POSE_HAND = {  # (x, y) of the leading hand per dir, art px in the 32x64 frame
+    'wind': {0: (25, 6), 2: (10, 6), 3: (7, 6)}, 'strike': {0: (17, 37), 2: (26, 37), 3: (16, 34)},
+    'thrust': {0: (18, 31), 2: (29, 27), 3: (16, 28)}, 'draw': {0: (16, 28), 2: (29, 26), 3: (16, 26)},
+    'cast': {0: (18, 27), 2: (26, 15), 3: (16, 24)}, 'pour': {0: (17, 34), 2: (24, 33), 3: (16, 33)},
+    'eat': {0: (16, 19), 2: (21, 18), 3: (16, 22)}, 'block': {0: (16, 27), 2: (23, 24), 3: (16, 27)},
+    'hurt': {0: (26, 30), 2: (9, 32), 3: (6, 30)}, 'idle1': {0: (26, 38), 2: (16, 39), 3: (6, 38)},
+}
+
+
+def head(s, d, dx=0, dy=0):
+    """The head and neck of body(), shifted for leaning poses."""
+    sh = lambda m: {(x + dx, y + dy) for x, y in m}
+    cel(s, sh(rect(14, 19, 4, 4)), 'skin')
+    if d in (0, 3):
+        cel(s, sh(HEAD_F), 'skin')
+        if d == 0:
+            for ex in (12, 18):
+                s.set(ex + dx, 13 + dy, WHITE); s.set(ex + 1 + dx, 13 + dy, EYE); s.set(ex + 1 + dx, 14 + dy, EYE); s.set(ex + dx, 14 + dy, WHITE)
+                hline(s, ex + dx, ex + 1 + dx, 11 + dy, 'hair', 1)
+            flat(s, sh({(15, 15), (15, 16), (16, 16)}), 'skin', 1)
+            s.fill(sh({(14, 18), (15, 18), (16, 18), (17, 18)}), MOUTH)
+            flat(s, sh({(10, 13), (21, 13)}), 'skin', 1)
+    else:
+        hline(s, 15 + dx, 19 + dx, 22 + dy, 'acc', 2)
+        cel(s, sh(HEAD_S), 'skin')
+        s.set(19 + dx, 13 + dy, EYE); s.set(19 + dx, 14 + dy, EYE); s.set(20 + dx, 13 + dy, WHITE)
+        hline(s, 18 + dx, 20 + dx, 11 + dy, 'hair', 1)
+        flat(s, sh({(22, 14), (22, 15), (21, 16)}), 'skin', 1)
+        s.fill(sh({(19, 18), (20, 18)}), MOUTH)
+        flat(s, sh({(14, 13), (14, 14), (13, 14)}), 'skin', 1)
+
+
+def arm(s, pts, hand, d):
+    cel(s, poly(pts), 'shirt')
+    cel(s, rect(*hand), 'skin')
+
+
+def walk(d, f):
+    """8-frame walk: legs and arms follow a sine, so every frame is a real in-between."""
+    s = Canvas(32, 64)
+    st = math.sin(f / 8 * math.tau)
+    if d in (0, 3):
+        for x0, side in ((10, 1), (17, -1)):
+            lift = round(max(0, st * side) * 3)
+            cel(s, rect(x0, 39, 5, 18 - lift), 'pants')
+            cel(s, rect(x0 - 1, 56 - lift, 7, 6) - {(x0 - 1, 56 - lift)}, 'shoe')
+            hline(s, x0 - 1, x0 + 5, 61 - lift, 'shoe', 0)
+        cel(s, poly([(8, 22), (24, 22), (23, 40), (9, 40)]), 'shirt')
+        for x0, side in ((5, 1), (24, -1)):
+            sw = -round(st * side * 2)
+            cel(s, rect(x0, 23 + sw, 3, 14), 'shirt'); cel(s, rect(x0, 37 + sw, 3, 4), 'skin')
+        if d == 0:
+            flat(s, {(14, 22), (15, 23), (16, 23), (17, 22)}, 'skin', 2)
+            hline(s, 12, 19, 22, 'acc', 2); hline(s, 13, 18, 23, 'acc', 1); hline(s, 9, 22, 32, 'shirt', 1)
+        head(s, d)
+    else:
+        for side, x0 in ((-1, 13), (1, 15)):
+            off = round(st * side * 3)
+            lift = 1 if st * side > .6 else 0
+            cel(s, rect(x0 + off, 39, 5, 17 - lift), 'pants')
+            cel(s, rect(x0 + off, 55 - lift, 7, 7), 'shoe'); hline(s, x0 + off, x0 + off + 6, 61 - lift, 'shoe', 0)
+        cel(s, poly([(11, 22), (21, 22), (21, 40), (11, 40)]), 'shirt'); hline(s, 11, 21, 32, 'shirt', 1)
+        sw = round(st * 3)
+        cel(s, poly([(14 + sw // 2, 23), (17 + sw // 2, 23), (17 + sw, 37), (14 + sw, 37)]), 'shirt'); cel(s, rect(14 + sw, 37, 3, 4), 'skin')
+        head(s, d)
+    return s
+
+
+def stance(s, d, wide=1):
+    """Feet planted for an action."""
+    if d in (0, 3):
+        for x0 in (10 - wide, 17 + wide):
+            cel(s, rect(x0, 39, 5, 18), 'pants'); cel(s, rect(x0 - 1, 56, 7, 6) - {(x0 - 1, 56)}, 'shoe'); hline(s, x0 - 1, x0 + 5, 61, 'shoe', 0)
+    else:
+        for x0 in (11, 17):
+            cel(s, rect(x0, 39, 5, 17), 'pants'); cel(s, rect(x0, 55, 7, 7), 'shoe'); hline(s, x0, x0 + 6, 61, 'shoe', 0)
+
+
+def torso(s, d, dx=0, dy=0):
+    if d in (0, 3):
+        cel(s, poly([(8 + dx, 22 + dy), (24 + dx, 22 + dy), (23 + dx, 40), (9 + dx, 40)]), 'shirt')
+        if d == 0:
+            hline(s, 12 + dx, 19 + dx, 22 + dy, 'acc', 2); hline(s, 9 + dx, 22 + dx, 32, 'shirt', 1)
+    else:
+        cel(s, poly([(11 + dx, 22 + dy), (21 + dx, 22 + dy), (21, 40), (11, 40)]), 'shirt'); hline(s, 11, 21, 32, 'shirt', 1)
+
+
+def pose(d, p):
+    s = Canvas(32, 64)
+    if p == 'tuck':  # a ball: back, knees and head tucked; rotated in 90° steps in the game
+        cel(s, ellipse(16, 46, 10, 9), 'shirt')
+        cel(s, ellipse(20, 50, 6, 5), 'pants')
+        cel(s, rect(23, 50, 4, 4), 'shoe')
+        cel(s, ellipse(12, 40, 5, 5), 'skin')
+        cel(s, ellipse(11, 38, 5, 4), 'hair')
+        return s
+    side = d == 2
+    lean = {'wind': -1, 'strike': 1, 'thrust': 1, 'hurt': -2, 'draw': 0}.get(p, 0) if side else 0
+    up = -1 if p in ('idle1', 'wind') else 1 if p == 'strike' else 0
+    stance(s, d, 2 if p in ('strike', 'thrust', 'draw') else 1)
+    back_arms, front_arms = [], []
+    if not side:
+        L = {  # front/back view arms: (shoulder polygon, hand rect)
+            'idle1': [([(5, 22), (8, 22), (8, 36), (5, 36)], (5, 36, 3, 4)), ([(24, 22), (27, 22), (27, 36), (24, 36)], (24, 36, 3, 4))],
+            'wind': [([(5, 22), (8, 22), (9, 8), (6, 8)], (6, 4, 3, 4)), ([(24, 22), (27, 22), (26, 8), (23, 8)], (23, 4, 3, 4))],
+            'strike': [([(6, 23), (9, 23), (15, 35), (13, 36)], (13, 35, 3, 3)), ([(23, 23), (26, 23), (19, 36), (17, 35)], (16, 35, 3, 3))],
+            'thrust': [([(5, 23), (8, 23), (8, 36), (5, 36)], (5, 36, 3, 4)), ([(23, 23), (26, 23), (20, 31), (18, 29)], (16, 29, 4, 3))],
+            'draw': [([(6, 23), (9, 23), (17, 28), (15, 29)], (15, 27, 3, 3)), ([(23, 23), (26, 23), (22, 26), (21, 24)], (19, 23, 3, 3))],
+            'cast': [([(6, 23), (9, 23), (17, 27), (15, 28)], (15, 26, 3, 3)), ([(23, 23), (26, 23), (20, 28), (18, 27)], (17, 26, 3, 3))],
+            'pour': [([(6, 23), (9, 23), (16, 33), (14, 34)], (14, 33, 3, 3)), ([(23, 23), (26, 23), (19, 34), (17, 33)], (17, 33, 3, 3))],
+            'eat': [([(5, 23), (8, 23), (8, 36), (5, 36)], (5, 36, 3, 4)), ([(23, 23), (26, 23), (19, 22), (18, 20)], (15, 18, 3, 3))],
+            'block': [([(6, 23), (9, 23), (12, 29), (10, 30)], (10, 26, 3, 3)), ([(23, 23), (26, 23), (22, 30), (20, 29)], (19, 26, 3, 3))],
+            'hurt': [([(5, 23), (8, 23), (3, 34), (1, 33)], (1, 33, 3, 3)), ([(24, 23), (27, 23), (30, 34), (28, 35)], (28, 33, 3, 3))],
+        }[p]
+        if d == 3:  # from behind, arms reaching forward are hidden by the body
+            for pts, hand in L:
+                if p in ('wind', 'hurt', 'idle1'):
+                    back_arms.append((pts, hand))
+                else:
+                    sx = pts[0][0]
+                    back_arms.append(([(sx, 23), (sx + 3, 23), (sx + 3, 30), (sx, 30)], None))
+        else:
+            front_arms = L
+        torso(s, d, 0, up)
+        for pts, hand in back_arms:
+            cel(s, poly(pts), 'shirt')
+            if hand:
+                cel(s, rect(*hand), 'skin')
+        head(s, d, 0, up)
+        for pts, hand in front_arms:
+            arm(s, pts, hand, d)
+        if d == 0:
+            flat(s, {(14, 22 + up), (15, 23 + up), (16, 23 + up), (17, 22 + up)}, 'skin', 2)
+        return s
+    A = {  # side view, facing right: leading arm (shoulder at 14..17, 23)
+        'idle1': ([(14, 22), (17, 22), (17, 36), (14, 36)], (14, 36, 3, 4)),
+        'wind': ([(14, 23), (17, 23), (12, 8), (9, 9)], (8, 4, 4, 4)),
+        'strike': ([(14, 23), (17, 23), (26, 35), (23, 37)], (24, 35, 4, 4)),
+        'thrust': ([(14, 25), (14, 28), (27, 28), (27, 25)], (27, 25, 3, 4)),
+        'draw': ([(14, 25), (14, 28), (27, 27), (27, 24)], (27, 24, 3, 4)),
+        'cast': ([(14, 23), (17, 23), (25, 16), (23, 14)], (24, 13, 4, 4)),
+        'pour': ([(14, 23), (17, 23), (23, 33), (20, 34)], (21, 32, 4, 3)),
+        'eat': ([(14, 23), (17, 23), (20, 22), (18, 19)], (19, 17, 3, 3)),
+        'block': ([(14, 23), (17, 23), (22, 26), (20, 28)], (21, 22, 3, 5)),
+        'hurt': ([(14, 23), (17, 23), (11, 33), (9, 32)], (8, 31, 3, 3)),
+    }[p]
+    if p == 'draw':  # the string hand, pulled back to the chest
+        cel(s, rect(11, 25, 6, 3), 'shirt'); cel(s, rect(10, 24, 3, 4), 'skin')
+    torso(s, d, lean, up)
+    head(s, d, lean, up)
+    pts, hand = A
+    arm(s, [(x + (lean if y < 30 else 0), y + up) for x, y in pts], (hand[0] + lean, hand[1] + up, hand[2], hand[3]), d)
+    return s
+
+
+def _anim():
+    out = {}
+    for d in (0, 2, 3):
+        for f in range(8):
+            out[f'hb_body_{d}_w{f}'] = (lambda d=d, f=f: walk(d, f))
+        for p in POSES:
+            out[f'hb_body_{d}_{p}'] = (lambda d=d, p=p: pose(d, p))
+    out['hb_body_0_tuck'] = lambda: pose(0, 'tuck')
+    return out
+
+
+SPRITES = {**_all(), **_anim()}

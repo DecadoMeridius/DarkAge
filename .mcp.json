@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pixelart": {
+      "command": "uv",
+      "args": ["run", "--directory", "C:/Users/sebas/Desktop/emberhollow/tools/pixelart-mcp-main", "python", "-m", "pixelart_mcp"]
+    }
+  }
+}

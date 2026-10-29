@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.zip
+eh3d/
+tools/pixelart-mcp-main/.venv/
+art/out/
+__pycache__/
+.claude/settings.local.json
+release/
+*.log
