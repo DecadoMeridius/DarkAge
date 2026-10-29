@@ -230,6 +230,11 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 ## Ember Multitool (`public/js/x_multitool.js`)
 - The last tool tier (6, "Ember"): axe, pickaxe and scythe in one hotbar tool (`S.tools.multi`, kind `multi`, icon `ic_multi`). Brann forges it (Tool upgrades) once axe, pickaxe and scythe are mythril: 30,000g, 3 Ember Runes, 5 Starmetal, 10 Mythril Bars. `useTool` picks the sub-tool from the target (axe objects → axe, pick objects and placed machines → pickaxe, everything else → a 7x3 scythe sweep) and runs it at tier 6; gathering keeps `GATHER.k = 'multi'`. Skill levels still gate nodes.
 
+## The wild keeps changing (`public/js/x_wildregrow.js`)
+- In the Wilds and the regions (`m.wild`), regrowth moves: a felled tree's stump disappears after 5 nights and a new tree of the same kind grows elsewhere in the same biome (same ground if possible); mined rocks and ores come back after a day somewhere else; dug-out stumps after 5 days. `wildSpot` never uses roads/paths, towns (`m.safe`), warps or tiles in view of the player.
+- Biome treasure chests (`w0`-`w5` in the Wilds, `<region>_c<n>` caches) restock a week after opening in a new random spot in their biome (`S.restock`); story and landmark chests stay put. The farm and the village regrow in place as before.
+- **Auto tool:** left-clicking a tree, rock, ore, grass, weed or ripe vegetable first selects the matching hotbar tool (the multitool if it's there); a seed or item in hand on soil is kept (`toolFor` in `x_multitool.js`).
+
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
 

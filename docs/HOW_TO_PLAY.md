@@ -59,6 +59,8 @@ You face the mouse. A dashed square shows the tile your next action hits. In the
 - **Axe** on trees gives logs, **pickaxe** on rocks gives stone and ore. You keep chopping or mining automatically until the tree or rock is used up. Walking away stops it. The final hit that fells the tree or splits the stone gives a bonus pile. Some trees and rocks need a higher level (red maples need Woodcutting 10): aim at one and a red label tells you what it needs.
 - Weeds, sticks and stones on the farm clear with your tools: the axe for wood, the pickaxe for stone, the **scythe** for weeds and tall grass. Every weed or tuft the scythe cuts gives a fibre and a hay.
 - Late in the game Brann can forge the **Ember Multitool**: axe, pickaxe and scythe in one, a tier above mythril.
+- Clicking a tree, rock, grass or a ripe vegetable picks the right tool from your hotbar for you.
+- In the Wilds and the regions, trees and rocks you clear grow back **somewhere else** in the same area, and treasure chests restock a week after you open them, in a new hidden spot.
 - **Upgrade tools** at Brann's: axes and pickaxes work faster and give more logs and ore, scythes cut a wider area, hoes and cans cover more tiles.
 - If you're knocked out, or still awake at 2:00, you lose 10% of your gold (at most 2,500).
 

@@ -44,3 +44,28 @@ renderUpgrades = function (b) {
   } }, 'Forge'));
   L.append(row);
 };
+
+/* clicking a resource picks the right tool from the hotbar first: axe for trees, stumps and logs,
+   pickaxe for rocks and ores, scythe for grass, weeds and ripe vegetables (the multitool for all of
+   them when it's on the hotbar). Seeds or other items in hand keep working on soil. */
+function toolFor(m, tx, ty) {
+  if (!inb(m, tx, ty)) return null;
+  const [, , o] = mainOf(m, tx, ty), D = o && OBJ[o.k];
+  if (o && (o.k === 'weed' || o.k === 'tgrass')) return 'scythe';
+  if (D && !D.place && (D.tool === 'axe' || D.tool === 'pick') && o.k !== 'ftree') return D.tool;
+  const s = m.soil[ty * m.w + tx], C = s && s.crop && CROPS[s.crop.k];
+  if (!o && C && s.crop.age >= C.d && needsScythe(C)) return 'scythe';
+  return null;
+}
+const _primaryUseT = primaryUse;
+primaryUse = function () {
+  if (!PAUSED && !TITLE && !fishing && S && cur && !(typeof PLACING !== 'undefined' && PLACING)) {
+    const [tx, ty] = clickTarget(), want = toolFor(cur, tx, ty), held = selKind();
+    const soil = cur.soil[ty * cur.w + tx];
+    if (want && held !== want && held !== 'multi' && (isTool(held) || !held || !soil)) {
+      const slot = S.hot.indexOf('multi') >= 0 ? S.hot.indexOf('multi') : S.hot.indexOf(want);
+      if (slot >= 0 && slot !== S.sel) { S.sel = slot; hudKey = ''; }
+    }
+  }
+  return _primaryUseT();
+};
