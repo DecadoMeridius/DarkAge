@@ -79,7 +79,7 @@ drawPlayer = function () {
     const h = rideHorse(); if (!h) { S.mounted = false; return; }
     const spr = animalSpr('horse', h.coat, pl.moving ? Math.floor(gameT * 10) % 2 : 0), right = p.dir === 2 || (p.dir !== 1 && p.lastH !== 1), bob = pl.moving && Math.floor(gameT * 10) % 2 ? .5 : 0;
     shadow(p.x, p.y, 14); g.save(); g.translate(p.x, p.y); if (!right) g.scale(-1, 1); D(spr, -spr.ww / 2, -spr.wh + 1); const tack = PIX.get('horse_tack'); if (tack) D(tack, -tack.ww / 2, -tack.wh + 1); g.restore(); // saddle and bridle
-    const ps = humanSpr(HC_P, P, 2, 'ride'); g.save(); g.translate(p.x, p.y - bob); if (!right) g.scale(-1, 1); D(ps, -10, -41, 16, 32); g.restore(); return;
+    const ps = humanSpr(HC_P, P, 2, 'ride'); g.save(); g.translate(p.x, p.y - bob); if (!right) g.scale(-1, 1); D(ps, -7.5, -39.5, 16, 32); g.restore(); return;
   }
   const A = playerAction();
   // Lunge afterimages

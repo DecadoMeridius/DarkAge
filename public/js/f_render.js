@@ -165,7 +165,7 @@ function drawPlayer() {
     const h = rideHorse(); if (!h) { S.mounted = false; return; }
     const spr = animalSpr('horse', h.coat, pl.moving ? Math.floor(gameT * 10) % 2 : 0), right = p.dir === 2 || (p.dir !== 1 && p.lastH !== 1);
     shadow(p.x, p.y, 14); g.save(); g.translate(p.x, p.y); if (!right) g.scale(-1, 1); D(spr, -spr.ww / 2, -spr.wh + 1); g.restore();
-    const ps = humanSpr(HC_P, P, 2, 'ride'); g.save(); g.translate(p.x, p.y); if (!right) g.scale(-1, 1); D(ps, -10, -41, 16, 32); g.restore(); return; // seated in the saddle
+    const ps = humanSpr(HC_P, P, 2, 'ride'); g.save(); g.translate(p.x, p.y); if (!right) g.scale(-1, 1); D(ps, -7.5, -39.5, 16, 32); g.restore(); return; // seated in the saddle
   }
   shadow(p.x, p.y, 6.5);
   const spr = humanSpr(HC_P, P, p.dir, f);
