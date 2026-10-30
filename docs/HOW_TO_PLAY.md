@@ -32,6 +32,7 @@ This guide explains every part of the game. Read the first sections to get going
 | **Mouse wheel** / **1–0** | Pick a hotbar slot |
 | **Shift** | Dash (you can't be hit while dashing) |
 | **R** | Ride your horse |
+| **G** | Lower or raise a hitched plough, seed drill or harrow |
 | **Z / X / C** | Combat abilities |
 | **Q** | Guard / parry |
 | **I** | Backpack, equipment and hotbar |
@@ -48,6 +49,9 @@ This guide explains every part of the game. Read the first sections to get going
 | **Esc** | Close a window, or open Options |
 
 - **Aiming:** your character faces the mouse. A dashed square shows the tile your next action hits. It turns red with a label when that tree, rock or ore needs a higher level.
+- **What can I do here?** A small panel under the menu buttons (top right) lists what you can do with whatever is in front of you, each with its key: open a crate, talk, enter a shop (it names the building), hitch an implement, get off your horse.
+- **The menu dock** in the top right has a labelled tile for every window: Bag, Recipes, Skills, Tree, Combat, Animals, Friends, Family, Collections, Lore (the encyclopedia), Map, Quests and Options. The open one is lit; click it again to close.
+- **Shop signs:** every shop has a painted sign by its door (a mug for the tavern, an anvil for the smithy, a horseshoe for the stables...).
 - **Rebinding:** every key can be rebound in **Options**.
 - **The hotbar** is at the top of the backpack (**I**). Drag items and tools onto it, drag slots to rearrange them, and drag a slot back into the bag (or right click it) to take it off.
 
@@ -279,8 +283,8 @@ Combat is **action combat**: you aim with the mouse and every click swings. If y
 - **Shift** dashes. You can't be hit while dashing.
 
 **Reading enemies**
-- **Wind-ups:** an enemy about to attack shows a **red marker on the ground**. Step out of it or dash through it.
-- **Bosses** have their own attacks: shockwave rings, falling rocks, fire pools, ice lanes, tidal waves, charges. The danger zone is always shown first. At half health they get angry and add a new attack.
+- **Wind-ups:** an enemy about to attack crouches or rears back, shows a **"!"** over its head and a **red wedge on the ground** that fills up until it strikes. Step out of it or dash through it.
+- **Bosses** have their own attacks: shockwave rings, falling rocks, fire pools, ice lanes, tidal waves, charges. The danger zone is always shown first, at full size, and fills up until it hits: when it's full, be somewhere else. Quake rings travel outward as a solid band you can dash through. At half health they get angry and add a new attack.
 
 **Abilities and Focus**
 - Hitting builds **Focus**, which you spend on abilities with **Z / X / C**.
