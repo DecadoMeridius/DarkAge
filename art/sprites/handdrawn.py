@@ -4,14 +4,14 @@ Grid letters:  . empty
   b  body region (ch 0)        m  second colour region (ch 1)      d  far-side body (ch 0, a tone darker)
   1 2 3 4  body tones dark->light (ch 0, levels 0-3), placed by hand
   5 6 7 8  second-colour tones (ch 1, levels 0-3)
-  E eye (swappable)  W white  N nose/claw black  T tooth
+  E eye (swappable)  W white  N nose/claw black  T tooth  R red  O fire orange  Y fire yellow
 Region letters are cel shaded flat (light on top edges, shadow on the bottom edges, base inside), like
 the characters; every hand-placed digit wins over that. A selective outline is added at the end.
 """
 from px import Canvas
 from sprites.creatures import C, EYE
 
-FIXED = {'E': EYE, 'W': '#f4ece0', 'N': '#1a1210', 'T': '#f0e8d8'}
+FIXED = {'E': EYE, 'W': '#f4ece0', 'N': '#1a1210', 'T': '#f0e8d8', 'R': '#d8342a', 'O': '#ff8a2a', 'Y': '#ffd860'}
 
 
 def grid_sprite(rows, W, H):
@@ -664,3 +664,139 @@ def dragon_frame(step=0, wing='up', pose='walk'):
 
 register('dragon', [lambda: dragon_frame(0, 'up'), lambda: dragon_frame(1, 'down'), lambda: dragon_frame(2, 'up'), lambda: dragon_frame(3, 'down')],
          [lambda: dragon_frame(0, 'up', 'rear'), lambda: dragon_frame(0, 'down', 'lunge')])
+
+
+# ---------- farm animals (an_*): four-frame walks, diagonal leg pairs, far legs a shade darker ----------
+def legpoly(hx, hy, fx, fy, wt, wb, knee):
+    kx, ky = (hx + fx) / 2 + knee, hy + (fy - hy) * .55
+    return [(hx - wt / 2, hy), (hx + wt / 2, hy), (kx + wb / 2 + .5, ky), (fx + wb / 2, fy), (fx - wb / 2, fy), (kx - wb / 2 - .5, ky)]
+
+
+def quad(W, H, step, back, front, legs, top, det, hoof='N', hh=2):
+    """legs: [(hipx, hipy, footx, wt, wb, knee)] in order far-hind, far-front, near-hind, near-front.
+    back: shapes drawn behind the far legs (tail); top: body/neck/head shapes drawn between far and near legs."""
+    off = [3, 0, -3, 0][step]; lift = [0, 2, 0, 2][step]
+    pairA = {1, 2}   # far-front and near-hind move together
+    shapes = list(back)
+    def leg(i, letter):
+        hx, hy, fx, wt, wb, kn = legs[i]
+        o = off if i in pairA else -off
+        up = lift if (i in pairA) == (step == 1) and step in (1, 3) else 0
+        return ([(round(x), round(y)) for x, y in legpoly(hx, hy, fx + o, H - 1 - up, wt, wb, kn)], letter)
+    shapes += [leg(0, 'd'), leg(1, 'd')] + list(top) + [leg(2, 'b'), leg(3, 'b')] + list(front)
+    g = polygrid(W, H, shapes)
+    hooves = []
+    for i, (hx, hy, fx, wt, wb, kn) in enumerate(legs):
+        o = off if i in pairA else -off
+        up = lift if (i in pairA) == (step == 1) and step in (1, 3) else 0
+        for k in range(hh):
+            hooves.append((H - 1 - up - k, round(fx + o - wb / 2), hoof * max(2, round(wb) + 1)))
+    return grid_sprite(with_detail(g, det + hooves, W), W, H)
+
+
+def horse_f(step):
+    legs = [(17, 38, 15, 7, 4, -2), (48, 38, 48, 6, 4, 1), (22, 38, 21, 7, 4, -2), (53, 38, 53, 6, 4, 1)]
+    body = ([(10, 30), (14, 24), (26, 22), (44, 22), (52, 24), (56, 30), (54, 40), (44, 42), (24, 42), (12, 40)], 'b')
+    neck = ([(46, 26), (50, 12), (54, 6), (60, 6), (58, 16), (56, 32)], 'b')
+    head = ([(53, 8), (57, 4), (62, 5), (68, 13), (69, 19), (65, 22), (59, 18), (55, 14)], 'b')
+    tail = ([(12, 26), (6, 30), (3, 40), (2, 50), (6, 52), (8, 42), (12, 32)], 'm')
+    mane = ([(49, 6), (53, 2), (57, 4), (53, 14), (49, 26), (45, 28), (47, 16)], 'm')
+    det = [(9, 59, 'W'), (10, 59, 'E'), (10, 60, 'E'), (19, 67, 'N'), (17, 63, '1111'), (1, 56, 'm'), (2, 56, 'mm'), (3, 56, 'mm'),
+           (26, 20, '44'), (25, 26, '444'), (25, 36, '44'), (30, 40, '2'), (31, 41, '2'), (32, 42, '2'), (33, 50, '2'), (34, 51, '2'), (12, 52, '4'), (13, 53, '4')]
+    return quad(70, 60, step, [tail], [mane], legs, [body, neck, head], det, hh=3)
+
+
+def cow_f(step):
+    legs = [(15, 32, 14, 8, 5, -1), (41, 32, 41, 7, 5, 1), (20, 32, 20, 8, 5, -1), (45, 32, 46, 7, 5, 1)]
+    body = ([(8, 22), (14, 15), (30, 14), (44, 15), (50, 20), (50, 32), (42, 36), (16, 36), (8, 32)], 'b')
+    head = ([(46, 18), (52, 12), (58, 14), (61, 22), (60, 28), (55, 30), (50, 26), (47, 30)], 'b')
+    muzzle = ([(54, 24), (61, 23), (61, 29), (55, 30)], 'm')
+    tail = ([(8, 18), (6, 24), (5, 34), (4, 37), (7, 38), (7, 30), (9, 20)], 'b')
+    det = [(16, 54, 'W'), (17, 54, 'E'), (17, 55, 'E'), (11, 51, 'TT'), (10, 49, 'TT'), (11, 56, 'TT'), (10, 58, 'TT'), (14, 46, 'mm'), (15, 45, 'mmm'),
+           (26, 57, 'N'), (26, 59, 'N'), (36, 4, 'mmm'), (37, 4, 'mm'),
+           (16, 18, 'mmmmmmm'), (17, 17, 'mmmmmmmmm'), (18, 17, 'mmmmmmmmmm'), (19, 18, 'mmmmmmmm'), (20, 19, 'mmmmm'),          # patches
+           (24, 32, 'mmmm'), (25, 31, 'mmmmmm'), (26, 31, 'mmmmm'), (36, 24, 'mmm'), (37, 23, 'mmmmm'),                     # udder area
+           (16, 30, '444'), (15, 36, '44')]
+    return quad(62, 48, step, [tail], [muzzle], legs, [body, head], det)
+
+
+def goat_f(step):
+    legs = [(14, 26, 13, 5, 3, -1), (34, 26, 34, 5, 3, 1), (18, 26, 17, 5, 3, -1), (37, 26, 38, 5, 3, 1)]
+    body = ([(8, 18), (12, 14), (24, 14), (36, 14), (41, 18), (40, 27), (32, 30), (14, 30), (8, 26)], 'b')
+    neck = ([(36, 18), (40, 8), (45, 8), (43, 22)], 'b')
+    head = ([(40, 7), (45, 4), (49, 7), (53, 13), (51, 16), (46, 14), (42, 12)], 'b')
+    beard = ([(48, 15), (51, 16), (49, 21)], 'm')
+    det = [(8, 46, 'W'), (9, 46, 'E'), (13, 52, 'N'), (3, 43, 'T'), (2, 42, 'T'), (1, 40, 'TT'), (0, 38, 'TT'), (4, 44, 'T'), (3, 42, 'T'),
+           (10, 38, 'm'), (11, 37, 'mm'), (13, 6, 'b'), (12, 5, 'bb'), (11, 5, 'b'),
+           (18, 20, 'mmmmmm'), (19, 19, 'mmmmmmmm'), (20, 19, 'mmmmmmm'), (21, 21, 'mmmm'), (15, 14, '444'), (16, 36, '44')]
+    return quad(54, 44, step, [], [beard], legs, [body, neck, head], det)
+
+
+def sheep_f(step):
+    legs = [(15, 28, 14, 4, 3, -1), (32, 28, 32, 4, 3, 1), (19, 28, 19, 4, 3, -1), (35, 28, 36, 4, 3, 1)]
+    fleece = ([(6, 18), (8, 13), (13, 10), (20, 9), (28, 9), (36, 10), (41, 14), (42, 22), (40, 29), (32, 32), (14, 32), (7, 28)], 'b')
+    head = ([(39, 13), (44, 11), (49, 14), (52, 19), (49, 23), (43, 21)], 'm')
+    det = [(16, 46, 'W'), (17, 46, 'E'), (20, 51, 'N'), (14, 38, 'mm'), (15, 37, 'mmm'), (11, 42, 'bbb'), (10, 41, 'bbbb'),   # face, ear, topknot
+           ] + [(y, x, '4') for y, x in ((12, 12), (11, 18), (11, 25), (12, 32), (16, 9), (15, 16), (14, 23), (15, 30), (16, 37), (20, 12), (19, 19), (19, 27), (20, 34), (24, 15), (23, 22), (24, 30))] \
+              + [(y + 1, x + 1, '2') for y, x in ((12, 12), (11, 18), (11, 25), (12, 32), (16, 9), (15, 16), (14, 23), (15, 30), (16, 37), (20, 12), (19, 19), (19, 27), (20, 34), (24, 15), (23, 22), (24, 30))]
+    leg_pal = legs
+    g = quad(54, 44, step, [], [head], leg_pal, [fleece], det)
+    return g
+
+
+def pig_f(step):
+    legs = [(16, 30, 15, 5, 4, 0), (33, 30, 33, 5, 4, 0), (20, 30, 20, 5, 4, 0), (36, 30, 37, 5, 4, 0)]
+    body = ([(7, 22), (10, 15), (20, 12), (32, 12), (40, 16), (42, 26), (36, 33), (14, 33), (8, 29)], 'b')
+    head = ([(36, 15), (43, 14), (49, 18), (51, 25), (45, 29), (38, 27)], 'b')
+    snout = ([(48, 19), (52, 19), (53, 25), (49, 26)], 'm')
+    ear = ([(38, 15), (43, 9), (45, 17)], 'b')
+    det = [(19, 44, 'W'), (20, 44, 'E'), (21, 50, 'N'), (23, 50, 'N'), (17, 8, 'mm'), (16, 6, 'mm'), (17, 5, 'm'), (18, 6, 'm'),
+           (14, 16, '4444'), (15, 14, '44'), (27, 22, '2222'), (24, 46, '1111')]
+    return quad(54, 40, step, [], [snout, ear], legs, [body, head], det, hoof='m')
+
+
+def chicken_f(step):
+    bob = [0, 1, 0, 1][step]; fwd = [0, 1, 0, -1][step]
+    g = polygrid(36, 36, [([(4, 10), (9, 6), (13, 14), (10, 22), (5, 20)], 'm'),                              # tail fan
+                          ([(9, 18), (14, 14), (24, 14), (29, 18), (27, 27), (19, 31), (12, 28)], 'b'),      # body
+                          ([(22 + fwd, 16 + bob), (24 + fwd, 7 + bob), (29 + fwd, 5 + bob), (32 + fwd, 8 + bob), (31 + fwd, 15 + bob), (28 + fwd, 19 + bob)], 'b'),  # neck + head
+                          ([(13, 19), (21, 18), (24, 22), (19, 26), (13, 24)], 'm')])                         # wing
+    lx = [(15, 20), (16, 19), (15, 20), (14, 21)][step]
+    det = [(30 - k, lx[0] + (k if step == 1 else 0) // 3, 'T') for k in range(0, 4)] + [(30 - k, lx[1], 'T') for k in range(0, 4)]
+    det += [(34, lx[0] - 1, 'TTT'), (34, lx[1], 'TTT'), (31, lx[0], 'T'), (31, lx[1], 'T'), (32, lx[0], 'T'), (32, lx[1], 'T'), (33, lx[0], 'T'), (33, lx[1], 'T')]
+    hx, hy = 29 + fwd, 8 + bob
+    det += [(hy, hx, 'W'), (hy + 1, hx, 'E'), (hy + 1, hx + 3, 'TTT'), (hy + 2, hx + 3, 'TT'), (hy - 4, hx - 3, 'RR'), (hy - 3, hx - 4, 'RRRR'), (hy - 2, hx - 3, 'RRR'),
+            (hy + 5, hx + 1, 'R'), (hy + 6, hx + 1, 'R'), (21, 15, '666'), (22, 14, '6666'), (17, 16, '444'), (16, 20, '44')]
+    return grid_sprite(with_detail(g, det, 36), 36, 36)
+
+
+def duck_f(step):
+    bob = [0, 1, 0, 1][step]
+    g = polygrid(38, 36, [([(3, 16), (8, 18), (26, 18), (31, 22), (27, 29), (12, 30), (6, 26)], 'b'),
+                          ([(24, 20), (25, 12 + bob), (27, 6 + bob), (32, 5 + bob), (34, 9 + bob), (31, 12 + bob), (29, 19)], 'm'),
+                          ([(9, 20), (22, 19), (24, 24), (12, 26)], 'b')])
+    lx = [(15, 21), (16, 20), (15, 21), (14, 22)][step]
+    det = [(30 + k, lx[0], 'T') for k in range(4)] + [(30 + k, lx[1], 'T') for k in range(4)] + [(34, lx[0] - 1, 'TTT'), (34, lx[1] - 1, 'TTT')]
+    det += [(6 + bob, 30, 'W'), (7 + bob, 30, 'E'), (8 + bob, 33, 'TTTTT'), (9 + bob, 33, 'TTTT'), (17, 26, 'WWWW'), (21, 11, '2222222222'), (22, 12, '22222222'), (19, 8, '4444')]
+    return grid_sprite(with_detail(g, det, 38), 38, 36)
+
+
+def rabbit_f(step):
+    # a hop: crouched, pushing off (stretched), airborne, landing
+    shp = [
+        ([(5, 24), (8, 16), (16, 13), (24, 15), (27, 22), (22, 28), (9, 28)], (22, 14), 0),
+        ([(4, 20), (9, 13), (18, 11), (27, 13), (30, 19), (24, 25), (10, 26)], (25, 11), -2),
+        ([(5, 18), (10, 11), (19, 9), (28, 11), (31, 17), (25, 23), (11, 24)], (26, 8), -5),
+        ([(5, 23), (9, 15), (17, 12), (25, 14), (28, 21), (23, 27), (10, 27)], (23, 13), -1),
+    ][step]
+    body, (hx, hy), air = shp
+    g = polygrid(38, 32, [(body, 'b'), ([(hx, hy + 1), (hx + 5, hy - 3), (hx + 11, hy - 1), (hx + 13, hy + 4), (hx + 9, hy + 8), (hx + 3, hy + 7)], 'b'),
+                          ([(hx + 2, hy - 1), (hx + 5, hy - 1), (hx + 4, hy - 13), (hx + 2, hy - 12)], 'b'), ([(hx + 6, hy - 1), (hx + 9, hy - 1), (hx + 9, hy - 12), (hx + 7, hy - 12)], 'b')])
+    feet = {0: [(29, 6, 'mmmmmmmmmm'), (28, 22, 'mmm')], 1: [(29 + air, 2, 'mmmmmmm'), (27, 24, 'mmm')], 2: [(26 + air // 2, 2, 'mmmmmm'), (24 + air // 2, 26, 'mmm')], 3: [(28, 6, 'mmmmmmmm'), (29, 24, 'mmm')]}[step]
+    det = feet + [(hy + 1, hx + 7, 'W'), (hy + 2, hx + 7, 'E'), (hy + 3, hx + 12, 'N'), (hy - 8, hx + 3, '7'), (hy - 7, hx + 3, '7'), (hy - 6, hx + 3, '7'), (hy - 8, hx + 8, '7'), (hy - 7, hx + 8, '7'),
+                  (17 + air // 2, 2, 'WW'), (18 + air // 2, 1, 'WWW'), (19 + air // 2, 2, 'WW'), (15 + air // 2, 12, '444')]
+    return grid_sprite(with_detail(g, det, 38), 38, 32)
+
+
+for _n, _f in (('horse', horse_f), ('cow', cow_f), ('goat', goat_f), ('sheep', sheep_f), ('pig', pig_f), ('chicken', chicken_f), ('duck', duck_f), ('rabbit', rabbit_f)):
+    register(_n, [(lambda f=_f, k=k: f(k)) for k in range(4)], prefix='an_')
