@@ -281,6 +281,51 @@ def ride():
     return s
 
 
+def mask(d):
+    """A bandit's bandana over the nose and mouth, knotted at the back (hood channel)."""
+    s = Canvas(32, 64)
+    if d == 0:
+        cel(s, rect(10, 15, 12, 5) | {(15, 20), (16, 20), (16, 21)}, 'hood')
+        hline(s, 10, 21, 15, 'hood', 3)
+    elif d == 2:
+        cel(s, rect(15, 15, 8, 5), 'hood'); hline(s, 15, 22, 15, 'hood', 3)
+        cel(s, {(12, 15), (11, 16), (12, 17), (11, 18), (10, 19)}, 'hood')  # the knot's tails
+    else:
+        cel(s, rect(11, 15, 10, 2) | {(15, 17), (16, 17), (15, 18), (16, 19)}, 'hood')
+    return s
+
+
+def vest(d):
+    """A leather vest with a cross strap and a buckle (belt channel)."""
+    s = Canvas(32, 64)
+    if d == 0:
+        cel(s, poly([(9, 23), (14, 23), (13, 38), (9, 38)]) | poly([(18, 23), (23, 23), (23, 38), (19, 38)]), 'belt')
+        flat(s, line(10, 24, 21, 35) | line(11, 24, 22, 35), 'belt', 0)
+        s.fill({(16, 30), (17, 30), (16, 31), (17, 31)}, '#c8a040')
+    elif d == 2:
+        cel(s, poly([(11, 23), (21, 23), (21, 38), (11, 38)]) - rect(14, 25, 4, 12), 'belt')
+        flat(s, line(12, 24, 20, 35), 'belt', 0)
+    else:
+        cel(s, poly([(9, 23), (23, 23), (23, 38), (9, 38)]), 'belt')
+        flat(s, line(10, 24, 21, 35) | line(11, 24, 22, 35), 'belt', 0)
+    return s
+
+
+def quiver(d):
+    """A quiver of arrows across the back, fletching over the shoulder."""
+    s = Canvas(32, 64)
+    if d == 0:
+        s.fill({(22, 18), (23, 17), (24, 18), (21, 19), (23, 19)}, '#e8dcc0')
+        flat(s, {(22, 20), (22, 21)}, 'belt', 1)
+    elif d == 2:
+        cel(s, poly([(9, 19), (13, 18), (13, 34), (10, 35)]), 'belt')
+        s.fill({(9, 16), (10, 15), (11, 16), (12, 15), (13, 16)}, '#e8dcc0')
+    else:
+        cel(s, poly([(17, 19), (22, 18), (22, 36), (18, 36)]), 'belt')
+        s.fill({(17, 15), (18, 14), (19, 15), (20, 14), (21, 15), (18, 16), (20, 16)}, '#e8dcc0')
+    return s
+
+
 def _all():
     out = {}
     for d in (0, 2, 3):
@@ -289,7 +334,7 @@ def _all():
         for st in ('short', 'long', 'pony', 'bun', 'spiky'):
             out[f'hb_hair_{st}_{d}_front'] = (lambda st=st, d=d: hair(st, d, 'front'))
             out[f'hb_hair_{st}_{d}_back'] = (lambda st=st, d=d: hair(st, d, 'back'))
-        for n, fn in (('helm', helm), ('plume', plume), ('hat', hat), ('crown', crown), ('beard', beard), ('apron', apron), ('robe', robe), ('belt', belt), ('cape', cape), ('ribs', ribs), ('ears', ears)):
+        for n, fn in (('mask', mask), ('vest', vest), ('quiver', quiver), ('helm', helm), ('plume', plume), ('hat', hat), ('crown', crown), ('beard', beard), ('apron', apron), ('robe', robe), ('belt', belt), ('cape', cape), ('ribs', ribs), ('ears', ears)):
             out[f'hb_{n}_{d}'] = (lambda fn=fn, d=d: fn(d))
         out[f'hb_hood_{d}_back'] = (lambda d=d: hood(d, 'back'))
         if d == 2:

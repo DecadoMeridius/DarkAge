@@ -330,6 +330,9 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - Harpoon (anvil: 3 iron bars, 5 wood, 6 fiber): facing deep water, picks a `BIGFISH` for the water and season (shark, swordfish, tuna, manta at sea; sturgeon in rivers and lakes). Minigame in `#fishgame` (pauses the game, own rAF loop): aim (a sweeping mark over the fish's shadow, 3 throws), then fight (hold to reel, release while it runs, keep tension 0.3-0.78; snaps at 1, shakes loose after 2.4 s slack).
 - Crab trap (workbench: 8 wood, 10 fiber): set in water as a `crabtrap` object; from the next day `trapReady` rolls 1-3 `SHELLFISH` for its water (mud crab, prawn, crayfish, rock lobster, river snail). Hauling: 3-4 timed pulls on a sliding marker; a miss loses one catch. The trap stays set; on an empty one, interacting lifts it back into the bag.
 
+## Enemy outfits (`public/js/x_outfits.js`)
+- New character layers in `human.py`: `hb_mask_<d>` (bandana, hood channel), `hb_vest_<d>` (leather vest, belt channel), `hb_quiver_<d>`; `humanSpr` adds them for `P.mask`, `P.vest`, `P.quiver`. Bandits and archers are masked and in vests (archers with quivers), goblins wear vests, and the Highmarch Raider, Bandit Warlord, Void Knight and Hollow King wear tier helmets and cuirasses (`P.helmS`, `P.armS`).
+
 ## Hand-drawn item icons (`art/sprites/icons_hand.py`)
 - Overrides icons.py's material and food templates (`ic_bar`, `ic_ore`, `ic_gem`, `ic_log`, `ic_fish`, `ic_round`, `ic_bread`, ...) with pixel grids in the same channels (ch 0 item colour, ch 1 second colour). `icon()` grows small designs (nearest on the letter grid) before shading, so outlines stay 1px. `art/preview_module.py <module>` makes a contact sheet of a whole module.
 

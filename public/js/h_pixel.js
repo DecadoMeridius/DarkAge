@@ -198,13 +198,15 @@ humanSpr = function (key, P, dir, f) {
   const bob = f === 1 || f === 3 || wf === 2 || wf === 6 ? 1 : po ? POSE_DY[po] || 0 : 0, lx = po && d === 2 ? POSE_DX[po] || 0 : 0;
   const L = [], add = (n, dy = bob, dx = lx) => { const c = PIX.get(n); if (c) L.push([c, dy, dx]); };
   if (P.cape && d !== 3) add('hb_cape_' + d);
+  if (P.quiver && d !== 3) add('hb_quiver_' + d);
   if (P.hood) add(`hb_hood_${d}_back`); else if (!P.helm) add(`hb_hair_${hs}_${d}_back`);
   add(ride ? 'hb_ride_2' : `hb_body_${d}_${f}`, wf >= 0 ? bob : 0, 0); // 'ride' = seated pose, facing right if (P.ribs) add('hb_ribs_' + d);
-  if (P.robe) add('hb_robe_' + d); if (P.apron) add('hb_apron_' + d); if (P.belt) add('hb_belt_' + d); if (P.armS && !P.robe) add('hb_arm_' + P.armS + '_' + d);
+  if (P.robe) add('hb_robe_' + d); if (P.apron) add('hb_apron_' + d); if (P.belt) add('hb_belt_' + d); if (P.armS && !P.robe) add('hb_arm_' + P.armS + '_' + d); if (P.vest) add('hb_vest_' + d); if (P.quiver && d === 3) add('hb_quiver_3');
   if (P.cape && d === 3) add('hb_cape_3');
   if (P.beard) add('hb_beard_' + d); if (P.ears) add('hb_ears_' + d);
   if (!P.helm && !P.hood && hs !== 'bald') add(`hb_hair_${hs}_${d}_front`);
   if (P.hood) add(`hb_hood_${d}_front`);
+  if (P.mask) add('hb_mask_' + d);
   if (P.helm) add(P.helmS && PIX.has('hb_helm_' + P.helmS + '_' + d) ? 'hb_helm_' + P.helmS + '_' + d : 'hb_helm_' + d); if (P.plume && !P.helmS) add('hb_plume_' + d);
   if (P.hat) add('hb_hat_' + d); if (P.crown) add('hb_crown_' + d);
   if (tuck) { L.length = 0; add('hb_body_0_tuck', 0, 0); } // the roll is the curled body alone
