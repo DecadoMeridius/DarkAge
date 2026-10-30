@@ -1,131 +1,397 @@
 # How to play Emberhollow
 
-You've inherited an overgrown farm at the edge of a valley. You start with a tent, a campfire, a workbench and a wooden sword. You build everything else yourself: the farm, its buildings and machines, your skills and gear. The village and the wild lands beyond are where you find all the rest.
+You've inherited an overgrown farm at the edge of a valley. You start with a tent, a campfire, a workbench and a wooden sword. Everything else you build yourself: the farm, its buildings and machines, your skills, your gear, and in time a family that carries the farm on. The village, the wild lands and four distant regions are where you find everything else.
 
-This guide gets you through your first days. You'll find out the rest by playing.
+This guide explains every part of the game. Read the first sections to get going, and dip into the rest when you get there.
 
 ---
 
-## 1. Installing
+## 1. Installing and saving
 
 1. Download **Emberhollow-portable-<version>.exe** (runs without installing) or **Emberhollow-setup-<version>.exe** (installs with a Start-menu entry) from the release page.
 2. The game isn't code-signed yet, so Windows may show **"Windows protected your PC"**. Click **More info → Run anyway**.
-3. Your saves live with the game on your own PC, so newer versions keep your progress.
+3. Your saves live with the game on your own PC, so new versions keep your progress.
 
-## 2. Starting out
+**Saving**
+- The game **autosaves** every few minutes and every morning when you wake up.
+- You can also save from **Options (Esc)**.
+- There are up to **8 save slots**. **Continue** loads the newest one, and **Load game** lists them all with name, date and gold.
+- **New game** always starts a new slot; it never overwrites an existing one.
 
-- **New game** opens the character creator. Pick your look, then read the letter that welcomes you to the farm.
-- **Continue** loads your newest save. **Load game** lists up to 8 saves with name, date and gold.
-- **Test sandbox** is a throwaway world with every crafting station and every ingredient. Use it to try recipes freely. Nothing you do there is saved.
+**Test sandbox** (title screen): a throwaway world with every crafting station, every ingredient, lots of gold and high skills, for trying recipes freely. Nothing you do there is saved.
 
-## 3. Controls
+## 2. Controls
 
 | Key / mouse | What it does |
 |---|---|
 | **WASD** | Walk |
-| **Left click** | Use the selected tool, weapon or item (hold to repeat). Clicking far away walks you there; clicking a thing walks you to it and uses it. |
-| **Right click** or **E** | Interact: talk, open, harvest, pick up, enter doors |
-| **Mouse wheel** or **1–0** | Pick a hotbar slot |
+| **Left click** | Use the selected tool, weapon or item (hold to repeat). Clicking something far away walks you there and uses it. Clicking a tree, rock, grass or ripe vegetable picks the right tool from your hotbar. |
+| **Right click** or **E** | Interact: talk, open, pick, pick up, enter doors |
+| **Mouse wheel** / **1–0** | Pick a hotbar slot |
 | **Shift** | Dodge roll |
 | **R** | Ride your horse |
-| **I** | Backpack and equipment |
-| **B** | Recipe book (shows where each recipe is made) |
-| **K** | Skills |
-| **T** or **Tab** | Passive tree (combat) |
 | **Z / X / C** | Combat abilities |
-| **J** | Quests and storylines |
-| **U** | Encyclopedia: every item, where it comes from and what it's used in |
-| **Pause** | Pause the game (or the Pause button by the clock) |
+| **I** | Backpack, equipment and hotbar |
+| **B** | Recipe book |
+| **K** | Skills |
+| **T** or **Tab** | Passive tree |
+| **N / P / F / O** | Animals / Friends / Family / Collections |
 | **M** | Map |
-| **N** / **P** / **F** / **O** | Animals / Friends / Family / Collections |
+| **J** | Quests and storylines |
+| **U** | Encyclopedia |
+| **Pause** | Pause (or the Pause button by the clock); switching windows pauses too |
 | **H** | Show or hide the key help |
-| **Esc** | Close a window, or open Options (volume, zoom, key rebinding, saving) |
+| **Esc** | Close a window, or open Options |
 
-You face the mouse. A dashed square shows the tile your next action hits. In the backpack (**I**) you can drag items and tools onto the hotbar, rearrange it, or drag tools back into your bag. You can rebind every key in **Options**.
+- **Aiming:** your character faces the mouse. A dashed square shows the tile your next action hits. It turns red with a label when that tree, rock or ore needs a higher level.
+- **Rebinding:** every key can be rebound in **Options**.
+- **The hotbar** is at the top of the backpack (**I**). Drag items and tools onto it, drag slots to rearrange them, and drag a slot back into the bag (or right click it) to take it off.
 
-## 4. A day on the farm
+## 3. Days, energy and health
 
-- Time runs from 6:00 in the morning. **Go to bed before 2:00**, otherwise you collapse and lose some gold. Sleep in your tent (later your house). Sleeping saves the game, and it also **autosaves** every few minutes.
-- Tools cost **energy**. Eating restores it, and so does sleeping.
-- Every season has 28 days, and crops only grow in their own season.
+- **Time.** A day runs from 6:00 in the morning. **Go to bed before 2:00**, otherwise you collapse and lose 10% of your gold (at most 2,500). Sleep in your tent, or in your bed once you have a cottage.
+- **Seasons.** There are four seasons of 28 days: spring, summer, autumn and winter. Crops, forage, fish and festivals depend on the season.
+- **Weather.** Rain waters your crops for you. Winter brings snow, frozen ponds and hungry animals.
+- **Energy** (the E bar) is used by tools. Eating and sleeping restore it.
+- **Health** (the ♥ bar) drops in fights. Eat food to heal.
+- **Knockouts.** If you're knocked out you wake up at home with half health and energy, and you lose some gold.
 
-### Your first crops
-1. Walk **east** off the farm to the village and buy seeds at **Mara's General Store**.
-2. Use the **hoe** on grass-free ground to till it, **plant** the seeds, then **water** them with the watering can every day.
-3. When a crop is ripe, cut vegetables and grain with the **scythe** (left click). Pick fruit and flowers with **right click**.
-4. Sell things in the **shipping bin** on your farm (paid overnight) or in shops.
+## 4. The farm and farming
 
-### Clearing and gathering
-- **Axe** on trees gives logs, **pickaxe** on rocks gives stone and ore. You keep chopping or mining automatically until the tree or rock is used up. Walking away stops it. The final hit that fells the tree or splits the stone gives a bonus pile. Some trees and rocks need a higher level (red maples need Woodcutting 10): aim at one and a red label tells you what it needs.
-- Weeds, sticks and stones on the farm clear with your tools: the axe for wood, the pickaxe for stone, the **scythe** for weeds and tall grass. Every weed or tuft the scythe cuts gives a fibre and a hay.
-- Late in the game Brann can forge the **Ember Multitool**: axe, pickaxe and scythe in one, a tier above mythril.
-- Clicking a tree, rock, grass or a ripe vegetable picks the right tool from your hotbar for you.
-- In the Wilds and the regions, trees and rocks you clear grow back **somewhere else** in the same area, and treasure chests restock a week after you open them, in a new hidden spot.
-- **Upgrade tools** at Brann's: axes and pickaxes work faster and give more logs and ore, scythes cut a wider area, hoes and cans cover more tiles.
-- If you're knocked out, or still awake at 2:00, you lose 10% of your gold (at most 2,500).
+**Getting started**
+1. Buy seeds at **Mara's General Store** in the village (east of the farm, at the end of the dirt road).
+2. Use the **hoe** to till grass or dirt.
+3. **Plant** seeds on the tilled soil.
+4. **Water** each crop every day with the watering can. Refill it at any water, or at a well you build.
 
-## 5. Crafting
+**Growing and harvesting**
+- **Growth.** A watered crop grows one day each morning. Crops that are out of season die when the season changes.
+- **Harvesting.** Cut ripe **vegetables and grain** with the **scythe**. Pick **fruit and flowers** by hand with right click. Some crops regrow after harvest.
+- **Quality.** Crops come in normal, silver, gold and ember quality. Higher Farming and fertilised soil (compost, rich compost) give better quality and sell for more.
+- **Selling.** Put crops in the **shipping bin** on your farm (paid overnight) or sell them in shops.
+
+**More for the farm**
+- **Field seeds** (Mara → *Field seeds*): **Meadow Grass** gives hay for your animals and **Flax** gives fibre.
+- **Fruit trees.** Saplings grow for 14 days, then bear fruit in their season. Chop one twice to remove it.
+- **Sprinklers** (workbench plans from Hale) water nearby soil every morning.
+- **The greenhouse** next to your tent is a ruin. Ask Hale to repair it and it grows crops in every season.
+- **Paths.** Stone and gravel paths (workbench) paint your farm's ground.
+
+## 5. Gathering
+
+| Tool | Use it on | You get |
+|---|---|---|
+| **Axe** | Trees, stumps, logs, bushes, twigs | Wood, hardwood, sap |
+| **Pickaxe** | Rocks, boulders, ore veins, gem rocks | Stone, clay, coal, ores, gems |
+| **Scythe** | Tall grass and weeds; it also harvests crops | **Always** 1 fibre and 1 hay per tuft or weed, straight into your bag |
+
+- **Keep going.** Hit a tree or rock once and you keep chopping or mining on your own until it's used up. Walking away stops you.
+- **Pieces fly to you.** Logs, stones and fibre pop out and fly into your bag.
+- **The final hit** that fells a tree or splits a big stone gives a bonus pile.
+- **Level requirements.** Some trees and rocks need a higher skill level. Red **maples** need Woodcutting 10, palms need 15, and the regional trees and ores need much more. Aim at one and a red label tells you what's needed.
+- **Regrowth.** In the Wilds and the regions, what you clear grows back **somewhere else** in the same area. Trees take about 5 days, rocks and ore a day. Your farm only changes when you change it.
+- **Foraging.** Wild plants, mushrooms and berries can be picked by hand in the Wilds.
+
+**Tool upgrades** (Brann's smithy → *Tool upgrades*): copper → iron → gold → mythril, for gold and metal bars.
+
+| Upgraded tool | What it gains |
+|---|---|
+| Axe and pickaxe | Work faster, give an extra log or ore more often (+10% per level), and break tougher stumps and rocks |
+| Scythe | Cuts a wider area: copper 3 wide, iron 3×2, gold 5×2, mythril 5×3 |
+| Hoe and watering can | Cover more tiles at once |
+| Fishing rod | Bigger catch zone; iron and better can fish in lava |
+
+**The Ember Multitool** is the last tool. It's an axe, a pickaxe and a scythe in one, and it picks the right action for whatever you hit (its scythe sweep cuts a 7×3 area). Brann forges it once your axe, pickaxe and scythe are all mythril.
+
+## 6. Fishing
+
+1. Select the **rod** and click facing water to cast.
+2. Wait for the **"!"** over your head, then click to hook the fish.
+3. In the reeling bar, hold the mouse button to raise the green zone and keep the fish inside it until the bar fills.
+
+Every lake, river, coast and region has its own fish, and some only bite in certain seasons or at certain times. Better rods and a higher Fishing level make it easier. Lava fishing needs an iron rod.
+
+## 7. Skills and levelling
+
+- **Skills.** Every action trains a **life skill**: Farming, Husbandry, Foraging, Woodcutting, Mining, Fishing, Cooking, Smithing, Crafting and Construction. Combat has its own skills (section 13). Skills go from **level 1 to 99**, and press **K** to see them.
+- **Unlocks.** Higher levels unlock better ores, trees, recipes and gear. A skill takes about an hour to reach level 10 and hundreds of hours to reach 99.
+- **Passive picks.** Every 10 levels a skill offers you **one of three passive bonuses** to choose from, for example double logs, Swift Hands (faster gathering) or Bountiful (more yield).
+- **Life points.** Life-skill levels also earn **life points** (one per 8 levels gained across all life skills) for the **Life** branch of the passive tree (**T**). It holds more energy, cheaper tool use, more XP, bigger harvests, better prices and walking speed.
+
+## 8. Crafting
 
 Everything is made at a **station**:
 
 | Station | Makes |
 |---|---|
-| **Workbench** (you start with one) | Fences, paths, parts, chests, machines |
-| **Campfire / kitchen** | Food |
+| **Workbench** (you start with one) | Fences, paths, parts, chests, sprinklers, machines, building blueprints |
+| **Campfire / kitchen** (stove, fireplace, tavern) | Food and meals |
 | **Furnace** | Metal bars from ore |
-| **Anvil** | Weapons, armour and tools |
+| **Anvil** | Weapons, armour, rings and machine parts |
 | **Tanning rack** | Leather and leather gear |
 
-Walk up to a station and interact. Pick a recipe and press **Make**, or **×5 / ×10 / ×100** to make a batch. A progress bar runs while you wait, and walking away stops it. Many recipes need several ingredients (a cake needs flour, eggs, milk and butter; a sword needs bars and a grip). Press **B** for a list of every recipe and where it's made.
+- **Making things.** Walk up to a station and interact. Pick a recipe and press **Make**, or **×5 / ×10 / ×100** for a batch. A progress bar runs while the window stays open, and walking away stops it.
+- **Ingredients.** Real recipes need real ingredients:
+  - **Food:** a cake needs flour, eggs, milk and butter; bread needs flour and salt.
+  - **Weapons and armour:** weapons need grips, hafts or bowstrings, and armour needs padding, straps and rivets.
+  - **Parts:** you make these at the workbench and anvil first.
+- **Recipe book.** Press **B** for every recipe you know and where it's made. Press **U** to look up any item: where it comes from and what it's used in.
 
-**Learning recipes:** at the start you only know the basics: parts, metal bars, wooden and copper gear, simple meals, fences and paths. You buy the rest once:
+**Learning recipes.** At the start you only know the basics: parts, metal bars, wooden, leather and copper gear, simple meals, fences, paths and the stations. You buy the rest once:
 
-- **Smithing patterns** (all weapons and armour of one metal) at **Brann's smithy**, and the regional metals at each region's forge.
-- **Cookbook pages** (one dish each) from **Pip** at the tavern, and local dishes at the regional inns.
-- **Item plans** (sprinklers, kegs, jars, fertilisers…) from **Hale**.
+| What you learn | Covers | Where |
+|---|---|---|
+| **Smithing patterns** | All weapons and armour of one metal (iron, steel, silver, gold, mythril and beyond) | **Brann's smithy**; regional metals at each region's forge |
+| **Cookbook pages** | One dish each | **Pip** at the tavern; local dishes at the regional inns |
+| **Item plans** | Sprinklers, kegs, preserve jars, cheese presses, looms, fertilisers, totems and more | **Hale** at the carpenter's |
 
-## 6. Building
+**Using one item on another.** Right click an item in your backpack → *Use*, then click a second item to combine two ingredients (you must be at a workbench).
 
-- Buy a building's **plans** once from **Hale** at the carpenter's: Cottage (your real house), Coop, Barn, Stable, Shed, Well, Silo, Market stall...
-- Make its **blueprint** at your workbench (1 wood, 1 fibre). Wells, sheds and silos can be built as often as you like.
-- Use the blueprint from your hotbar on the farm: **green** means it fits, **red** means it doesn't. Left click places a **build site**, right click cancels.
-- Interact with the site to deliver materials, then **hammer** it (left click) through Foundation → Frame → Walls → Roof.
-- You need buildings for animals: chickens need a coop, cows a barn. Buy animals at **Odile's Stables**.
-- Once your cottage is finished, the tent is packed away and you wake up next to your bed.
-- A **silo** stores up to 240 hay for the winter: put hay in from your bag, and animals eat from it first. Grow **Meadow Grass** (hay) and **Flax** (fibre) from Mara's *Field seeds*.
+## 9. Building
 
-## 7. Skills and progress
+1. **Buy the plans** for a building once from **Hale** (carpenter's → *Buildings*): Cottage, Coop, Barn, Stable, Storage Shed, Well, Silo, Market Stall.
+2. **Make its blueprint** at your workbench for 1 wood and 1 fibre.
+3. **Use the blueprint** from your hotbar on the farm. A ghost of the building follows the mouse: **green** fits and **red** doesn't. Left click places a **build site**, and right click or Esc cancels.
+4. **Deliver the materials** by interacting with the site.
+5. **Hammer** it up. It rises through Foundation → Frame → Walls → Roof and trains **Construction**.
 
-- Every action trains a skill (Farming, Mining, Woodcutting, Fishing, Cooking, Smithing, Crafting, Construction...), from level 1 to 99. Higher levels unlock better ores, trees and recipes.
-- Every 10 levels a skill lets you **pick a passive bonus** from three.
-- Life-skill levels also earn **life points** for the *Life* branch of the passive tree (**T**): more energy, cheaper tool use, more XP, bigger harvests, better prices.
-- Better gear comes in tiers: copper → iron → steel → gold → … and later regional metals. Each tier needs the matching combat level.
+**What each building is for**
+- **Cottage:** your real house, built wherever you like. When it's finished the tent is packed away. You wake beside your bed, and it has a kitchen and a storage chest (your bank).
+- **Coop, Barn and Stable:** house your animals. Hale can upgrade each one for more room and a nicer look.
+- **Well:** refills the watering can.
+- **Storage Shed:** a bank chest on the farm.
+- **Silo:** stores 240 hay. Put hay in from your bag; animals eat from it in winter.
+- **Market Stall:** sells your goods while you're away (section 12).
+- **Build again:** wells, sheds and silos can be built as many times as you like. The others are one each.
 
-## 8. Fighting
+## 10. Animals and breeding
 
-- **Click an enemy** to attack it. You walk into range and attack on a steady rhythm. **Shift** dodges.
-- Hitting builds **Focus**, which you spend on abilities with **Z / X / C**.
-- Combat levels earn **passive points** for the tree (**T**).
-- Bring food. Eat it from the hotbar to heal. If you're knocked out you wake up at home and lose some gold.
-- The **mine** is north of the farm in the Wilds. Every 10th floor has a boss.
+- **Buying.** Buy animals at **Odile's Stables** in the village. Each needs its building:
 
-## 9. Where to go
+  | Building | Animals |
+  |---|---|
+  | Coop | Chickens, ducks, rabbits |
+  | Barn | Cows, goats, sheep, pigs |
+  | Stable | Horses |
 
-- **The village** (east of the farm): Mara (store), Brann (smithy), Hale (carpenter and blueprints), Odile (animals), Pip (tavern), the museum and Lord Ashcombe (sells more land).
-- **The Wilds** (north): forests, caves, shrines, ruins, the mine and world bosses.
-- **The regions** beyond the Wilds (Highmarch, Frostmere, Emberwaste, Saltreach) open as you beat the bosses that guard them. Each has its own town, ores, crops, monsters and a dungeon.
-- **Waystones**: touch one to attune to it, then travel between attuned stones.
+- **Caring.** **Pet** your animals daily (right click) to raise their affection. Happy, well-fed animals give better products each morning: eggs, milk, wool, truffles and more.
+- **Winter.** Animals eat **hay** in winter: from your silos first, then from your bag. Keep it stocked or they go hungry.
+- **Breeding** (**N**, the Animals tab):
+  1. Choose **Breed** on one animal.
+  2. Choose **Pair** on a mate of the other sex.
+  3. After a pregnancy, a young one is born. Its **genes** are the average of its parents' plus a bit of luck, and rare **traits** can appear.
 
-## 10. Stories, friends and family
+  Breed the best to the best to raise your herd's quality.
+- **Horses.** Horses have speed, stamina, strength and agility genes. Press **R** to ride your chosen horse. Horses can enter **races** at Odile's for prize money and cups, and Golden Oats raise a horse's genes.
+- **Horse tools** (ride with one selected on your farm):
 
-- Press **J** for the storylines. They start on their own and tell you who to talk to. Press **Track** on one to get a marker and an arrow.
-- Give villagers gifts and talk to them every day to raise friendship. At high friendship some of them can be courted, married, and you can raise children who carry on the farm.
-- Festivals happen once a season, and birthdays are listed in the Friends tab.
+  | Tool | What it does |
+  |---|---|
+  | Plough | Tills 3 tiles wide |
+  | Seed drill | Sows in-season seeds |
+  | Harrow | Clears weeds and grass |
+  | Cart | Carries up to 400 items |
 
-## 11. Tips
+## 11. Automation
 
-- Read tooltips: hover over hotbar slots and items.
-- Build **automation** (belts, smelters, mills) once you have Hale's plans, and your farm keeps working while you explore.
+You can make the farm run itself: machines on belts, powered by wind and water, in five tiers.
+
+**Tiers.** You buy each tier's plans; then you can craft its machines.
+
+| Tier | Machines | Plans from |
+|---|---|---|
+| 1 | Chutes, stone furnace, crates, kiln, oven, compost bin, treadwheel | You start with these |
+| 2 | Conveyors, sorters, splitters, smelter, mill, windmill, waterwheel, trip hammer, butter churn, seed hopper | Hale |
+| 3 | Cobalt belts, lever crane, blast furnace, reaper | The Highmarch forge |
+| 4 | Filter crane, tide mill, power hammer, storehouse ledger | The Saltreach or Frostmere forge |
+| 5 | Rune belts that need no power, an ember forge that needs no fuel, the ember core, the ember golem | The Emberwaste forge |
+
+**Belts**
+- A **Conveyor** faces the way you face when you place it; interact to rotate it.
+- A **Sorter** sends the item you set straight on and turns the rest right.
+- A **Splitter** alternates straight and right.
+
+**Moving items around**
+- **Storage crates:** belts fill them, and they push items out onto belts leading away.
+- **Cranes:** move items from the tile behind them to the tile in front.
+
+**Machines**
+- Smelters turn ore into bars, mills turn wheat into flour, and ovens bake bread.
+- Kegs, jars, presses, looms and smokers take inputs from belts and push their goods back out.
+- Some machines need **fuel** (wood, charcoal, coal).
+- Others need **power** from a windmill, waterwheel (touching water), treadwheel (fed hay) or tide mill within range.
+
+**Upgrading in place.** Use the next machine on a placed one (chute → conveyor → cobalt belt → rune belt, and so on). Its contents are kept.
+
+**Water and harvesting**
+- **Water channels** that touch water water the soil next to them every morning.
+- The **reaper**, **seed hopper** and **golem** harvest, sow and water for you.
+
+Your machines keep running while you're away and through the night.
+
+## 12. Land and money
+
+**Selling**
+- **The shipping bin:** pays overnight.
+- **Shops:** pay on the spot.
+
+**Prices**
+- Prices drift a little each week.
+- Selling lots of one item lowers its price for a while; it recovers over the following days.
+
+**Shop stock.** Shops have limited stock that refills each morning.
+
+**Market Stall.** Stock it with goods. From 8:00 to 18:00 it sells a few items per hour at 30% above the going price, twice as many at weekends.
+
+**More land.** **Lord Ashcombe's manor** in the village sells more land next to your farm. Each plot is different: meadow, woodland, rocky, lakeside, hillside or marsh. Plots differ in soil quality, resources and special features (ruins with loot, hot springs, fairy rings, ancient trees). You can:
+- **Buy** a plot outright.
+- **Lease** it: 25% down, then 6% a week. Missing a payment closes it again.
+- **Survey** it first to reveal hidden features.
+
+## 13. Fighting
+
+**Attacking**
+- **Click an enemy** to target it. You walk into range and attack on a steady rhythm: daggers are fastest, warhammers slowest.
+- **Shift** dodges.
+- **Bosses** show their big attacks as red marks on the ground: get out of them.
+
+**Abilities.** Hitting builds **Focus**, which you spend on abilities with **Z / X / C**:
+- **Cleave:** hits all around you.
+- **Lunge:** dash and strike.
+- **Guard:** block, then counter.
+- More abilities unlock in the passive tree.
+
+**Combat skills**
+- **Melee, Ranged and Magic:** trained by fighting with that style.
+- **Defence:** trained by taking hits.
+- **Constitution:** your health.
+- **Combat level:** your combat skills combined.
+
+**Gear**
+- Weapons need Melee (bows need Ranged), and armour needs Defence.
+- Every metal tier needs a higher level: wood and copper, then iron, steel, silver, gold, mythril, frostsilver, obsidian, adamant, dragonscale, starforged, plus the four regional metals.
+- Wearing a full set of one metal gives a **set bonus**.
+- Rings add extra bonuses.
+
+**Passive tree (T)**
+- **Combat points.** Each combat level above 3 gives a **combat point** for the Might, Precision and Arcana branches: damage, health, accuracy, critical hits, speed, Focus, keystones and new abilities.
+- **Ability slots.** You pick your three ability slots at the bottom of the tree.
+- **Respec.** Respeccing costs gold and is only possible at the village altar.
+
+**Food heals.** Bring food and eat it from the hotbar.
+
+## 14. Exploring
+
+**The Wilds** (north of the farm) is a big valley:
+- **Biomes:** meadows, forest, highlands, coast, frost and ash, each with its own enemies, plants and ores.
+- **Places to find:** caves, shrines, ruins, a shipwreck, a travelling merchant, and the **mine**.
+- **Chests:** hidden chests restock a week after you open them, in a new spot.
+- **Ember shards:** 30 are scattered around the Wilds and regions; collecting them earns rewards.
+- **The map:** press **M** to see where you've been.
+
+**The mine** has **endless floors**:
+- **Themes:** earth (1–9), ice (10–19), magma (20–29) and void (30+).
+- **Bosses** every 10th floor.
+- **Ladders** lead down.
+- **The elevator** at the entrance takes you back to every 5th floor you've reached.
+
+**World bosses** live in the Wilds: the Bandit Warlord, Old Snapper, the Frost Giant and the Ash Colossus. They return each week.
+
+**The four regions** lie beyond the Wilds and open when you beat the boss that guards each gate (or when a story opens them):
+
+| Region | Where | Landscape |
+|---|---|---|
+| **Highmarch** | North | Pine valleys and snow peaks |
+| **Frostmere** | Northwest | Tundra and glaciers |
+| **Emberwaste** | Northeast | Badlands and cinder fields |
+| **Saltreach** | Across the sea, by Corwin's ferry | Islands and shallows |
+
+Each region has:
+- **Its own resources:** ores, woods, crops, fish and monsters, all stronger and better.
+- **A town:** an inn (meals, rest), a forge (its own metal and patterns) and a market.
+- **A five-floor dungeon** with a boss and a treasure chest at the bottom.
+- **A world boss.**
+
+**Waystones.** Touch one to attune to it, then travel between any stones you've attuned. They stand on the farm, in the village, at the Wilds crossroads, in each town and at each dungeon.
+
+**Shrines.** Four shrines in the Wilds each want an offering and give a permanent reward when restored.
+
+## 15. Quests and stories
+
+**Storylines** (press **J**). There are five:
+- **The Hollow Crown:** the main story, about the old mine and a lost knight.
+- **The Ashcombe Signet**
+- **The Lost Lanterns**
+- **The Salt Smugglers**
+- **The Ember Pilgrims**
+
+**How they work**
+- **Starting.** Each starts on its own and tells you who to talk to.
+- **Tracking.** Press **Track** on one to get a marker over the target and an arrow at your feet.
+- **Choices.** Conversations play in a box at the bottom of the screen; some offer a choice.
+- **Rewards.** Chapters reward gold, items, friendship, and sometimes open a region.
+
+**Milestone quests** reward you for reaching goals: your first harvest, mine depths, bosses, skill levels and more. They're listed under the stories.
+
+**The request board** in the village posts requests for items, with a gold reward.
+
+## 16. Village life
+
+**Villagers**
+- **Schedules:** villagers have their own day. They open their shops, walk around and go home.
+- **Opening hours:** shops keep opening hours (Mara 9–17, for example) and close on festival days.
+- **Gifts:** talk to villagers every day and **give gifts** to raise friendship. Some gifts are loved, some hated.
+- **Birthdays:** gifts given on a villager's birthday count triple. The Friends tab (**P**) lists birthdays and the next festival.
+
+**Festivals**, one per season:
+
+| Festival | Date | What happens |
+|---|---|---|
+| **Blossom Day** | Spring 13 | Egg hunt |
+| **Lantern Night** | Summer 11 | Release lanterns at dusk |
+| **Harvest Fair** | Autumn 16 | Your best produce is judged for a big prize |
+| **Ember Feast** | Winter 25 | Every gift gets one back |
+
+**Museum.** Donate finds there. Collections (**O**) track what you've donated, caught, shipped and found.
+
+## 17. Romance, family and generations
+
+1. **Romance:** Pip, Odile, Hale, Brann and Mara can be romanced. As friendship grows you see **heart scenes**.
+2. **Dating:** at 8 hearts you can **ask them out** (a bouquet), then spend time together once a day.
+3. **Proposing:** at 10 hearts, with an **Ember Pendant** (anvil: gold bars, a ruby and a diamond) and a built cottage, you can **propose**. The wedding follows a few days later.
+4. **Married life:** your spouse lives on the farm mornings and evenings and works at their shop by day. Each morning they help with a chore: watering, tending animals, clearing weeds or cooking.
+5. **Children:** after a week of marriage you can talk about having a child (up to three). Children grow up:
+   - **Baby**
+   - **Child:** brings you forage.
+   - **Teen:** learns the skill you teach them.
+   - **Adult:** helps on the farm.
+6. **Ageing:** you start at 25 and age about 5 years per in-game year. Past 30 you learn faster; past 45 your health and energy slowly drop.
+7. **Generations:** if you have an heir, old age or a bad knockout far from home can end your life. Then your **spouse or an adult child takes over**:
+   - **What carries on:** the same farm, gold, buildings and items.
+   - **What's their own:** their own look and skills (they inherit part of yours).
+   - **Family bonus:** each generation adds to your family's XP bonus.
+
+   Without an heir you can't die. The Family tab (**F**) shows your crest and family tree.
+
+## 18. Options
+
+Press **Esc** for Options:
+- **Volume:** master, music, effects and ambience.
+- **Zoom.**
+- **Particles.**
+- **FPS counter.**
+- **Fullscreen.**
+- **Key rebinding** for every action.
+- **Saving**, and deleting the current save slot.
+
+## 19. Tips
+
+- Hover over items and hotbar slots for tooltips.
+- Press **U** to find out where anything comes from.
+- Keep some food on you when you leave the farm.
+- Upgrade your watering can and hoe early: it saves a lot of energy.
+- Ship a bit of everything: Collections and the Harvest Fair reward variety.
+- Your machines keep working while you explore; build them early.
 
 ## Found a bug?
 
