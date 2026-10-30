@@ -231,3 +231,11 @@ body:has(#modal:not([hidden])) #ctpanel { display: none; }
 #iprompt kbd { min-width: 22px; text-align: center; }
 #fishgame { position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%); padding: 8px 10px; z-index: 55; display: flex; flex-direction: column; gap: 4px; align-items: center; }
 #fishgame canvas { width: 640px; height: 300px; image-rendering: pixelated; border: 2px solid #2a1c18; }
+#topr.dock { display: grid !important; grid-template-columns: repeat(4, 46px); gap: 4px !important; width: auto !important; top: 150px !important; right: 12px !important; }
+#topr.dock .dk { position: relative; overflow: visible !important; width: 46px; height: 46px; padding: 2px 1px 1px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; cursor: pointer; }
+#topr.dock .dk .uiic { image-rendering: pixelated; }
+#topr.dock .dk .dkn { font: 700 9px Fredoka, sans-serif; color: #3a2618; line-height: 1; letter-spacing: .2px; }
+#topr.dock .dk kbd { position: absolute; top: -4px; right: -4px; font-size: 8px; padding: 0 3px; min-width: 0; }
+#topr.dock .dk.on { outline: 2px solid #ffd040; outline-offset: -2px; filter: brightness(1.15); }
+#topr.dock .dk:hover { filter: brightness(1.2); }
+#mtabs .tab .uiic { image-rendering: pixelated; vertical-align: -3px; margin-right: 4px; }

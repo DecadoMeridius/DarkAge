@@ -330,6 +330,9 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - Harpoon (anvil: 3 iron bars, 5 wood, 6 fiber): facing deep water, picks a `BIGFISH` for the water and season (shark, swordfish, tuna, manta at sea; sturgeon in rivers and lakes). Minigame in `#fishgame` (pauses the game, own rAF loop): aim (a sweeping mark over the fish's shadow, 3 throws), then fight (hold to reel, release while it runs, keep tension 0.3-0.78; snaps at 1, shakes loose after 2.4 s slack).
 - Crab trap (workbench: 8 wood, 10 fiber): set in water as a `crabtrap` object; from the next day `trapReady` rolls 1-3 `SHELLFISH` for its water (mud crab, prawn, crayfish, rock lobster, river snail). Hauling: 3-4 timed pulls on a sliding marker; a miss loses one catch. The trap stays set; on an empty one, interacting lifts it back into the bag.
 
+## Menu dock (`public/js/x_dock.js`, icons in `art/sprites/ui_icons.py`)
+- The top-right `#topr` is a 4-column dock with a labelled tile per tab (Bag, Recipes, Skills, Tree, Combat, Animals, Friends, Family, Collect, Lore, Map, Quests, Options), each with a hand-pixelled 16x16 `ui_<tab>` icon; the open tab's tile is lit and a click on it closes the window. The Satchel's tab row shows the same icons (`drawModal` wrapper).
+
 ## Enemy outfits (`public/js/x_outfits.js`)
 - New character layers in `human.py`: `hb_mask_<d>` (bandana, hood channel), `hb_vest_<d>` (leather vest, belt channel), `hb_quiver_<d>`; `humanSpr` adds them for `P.mask`, `P.vest`, `P.quiver`. Bandits and archers are masked and in vests (archers with quivers), goblins wear vests, and the Highmarch Raider, Bandit Warlord, Void Knight and Hollow King wear tier helmets and cuirasses (`P.helmS`, `P.armS`).
 
