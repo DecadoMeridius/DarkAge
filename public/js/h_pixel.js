@@ -115,7 +115,8 @@ paintChunk = function (m, cx, cy) {
 function cliffTop(P, m, X, Y, t, bx, by) {
   const C = t === 'r' ? ['#4a4036', '#6a5e4e', '#8c7e68', '#b0a28a', '#c8bca4'] : (() => { const c = CAVE[m.theme || 'earth']; return [c[3], sh(c[1], -.6), c[1], c[0], c[2]]; })();
   const open = (dx, dy) => inb(m, X + dx, Y + dy) && getT(m, X + dx, Y + dy) !== t;
-  P(bx, by, 32, 32, t === 'r' ? 'rgba(30,24,16,.22)' : 'rgba(10,6,4,.35)');
+  P(bx, by, 32, 32, t === 'r' ? 'rgba(52,44,34,.5)' : 'rgba(10,6,4,.35)'); // a rocky plateau, clearly not walkable grass
+  if (t === 'r') for (let k = 0; k < 5; k++) if (hsh(X * 7 + k, Y, 53) < .6) { const sx = bx + 3 + (hsh(X, Y * 5 + k, 11) * 24 | 0), sy = by + 4 + (hsh(Y, X + k * 3, 19) * 22 | 0), w = 3 + (hsh(k, X, Y) * 4 | 0); P(sx, sy, w, 2, C[2]); P(sx, sy, w - 1, 1, C[3]); P(sx + 1, sy + 2, w, 1, C[0]); }
   if (open(0, -1)) { P(bx, by, 32, 2, C[4]); P(bx, by + 2, 32, 1, C[2]); P(bx, by - 1, 32, 1, 'rgba(20,12,8,.5)'); }
   if (open(-1, 0)) { P(bx, by, 4, 32, C[2]); P(bx, by, 1, 32, C[3]); P(bx + 3, by, 1, 32, C[0]); }
   if (open(1, 0)) { P(bx + 28, by, 4, 32, C[1]); P(bx + 28, by, 1, 32, C[0]); P(bx + 31, by, 1, 32, C[0]); }
@@ -146,12 +147,23 @@ function pixCliffsAndBridges(x, m, cx, cy, M, s) {
       P(x0 + 2, bot, x1 - x0, 4, 'rgba(20,10,5,.32)'); // contact shadow
       P(x0, top, x1 - x0, bot - top, C[0]);
       const r = rng(X * 31 + Y * 7);
-      for (let yy = top + 1; yy < bot - 1; yy++) { // stacked stone courses: lit top row, dark seams
+      if (t !== 'r') for (let yy = top + 1; yy < bot - 1; yy++) { // mine walls: stacked stone courses, lit top row, dark seams
         const row = Math.floor((yy - top - 1) / 6), ry = (yy - top - 1) % 6;
         for (let xx = x0 + 1; xx < x1 - 1; xx++) {
           const seam = ry === 5 || (xx - bx + row * 5 + (hsh(X, row, 3) * 6 | 0)) % 11 === 0;
           const tone = seam ? C[0] : ry === 0 ? C[4] : ry < 3 ? C[3] : ry < 5 ? C[2] : C[1];
           P(xx, yy, 1, 1, tone);
+        }
+      } else { // natural rock: light from above, wandering cracks, a broken ledge, darker toward the foot
+        const cracks = [0, 1, 2].map(k => bx + 4 + (hsh(X * 5 + k, Y, 13) * 24 | 0)), ledge = top + 8 + (hsh(X, Y, 5) * 6 | 0);
+        for (let yy = top + 1; yy < bot - 1; yy++) {
+          const v = yy - top, band = v < 3 ? 4 : v < 7 ? 3 : v < 15 ? 2 : 1;
+          for (let xx = x0 + 1; xx < x1 - 1; xx++) {
+            const crack = cracks.some((c, k) => xx === c + Math.round(Math.sin(v * .5 + k * 2.1 + X) * 1.6) && hsh(k + X, (v / 4) | 0, Y) < .8);
+            const lg = yy === ledge + Math.round(Math.sin(xx * .4 + Y) * 1.2) && hsh(xx >> 2, X, 17) < .7, lit = yy === ledge + 1 + Math.round(Math.sin(xx * .4 + Y) * 1.2);
+            const n = hsh(xx + X * 32, yy, 29), tone = crack || lg ? C[0] : lit ? C[Math.min(4, band + 1)] : n < .07 ? C[Math.max(0, band - 1)] : n > .94 ? C[Math.min(4, band + 1)] : C[band];
+            P(xx, yy, 1, 1, tone);
+          }
         }
       }
       P(x0 + 1, bot - 2, x1 - x0 - 2, 1, C[1]);

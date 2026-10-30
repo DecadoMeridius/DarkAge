@@ -124,7 +124,7 @@ pcCursorDraw = function (m) {
   const skill = D.xp[0], need = nodeReq(o); if (lifeL(skill) >= need) return;
   const X = tx * 16, Y = ty * 16; g.fillStyle = 'rgba(232,64,40,.9)';
   for (const [x0, y0, w, h] of [[X, Y, 4, 1], [X, Y, 1, 4], [X + 12, Y, 4, 1], [X + 15, Y, 1, 4], [X, Y + 15, 4, 1], [X, Y + 12, 1, 4], [X + 12, Y + 15, 4, 1], [X + 15, Y + 12, 1, 4]]) g.fillRect(x0, y0, w, h);
-  const name = o.k === 'tree' ? TREE_N[o.kind || 'oak'] || 'Tree' : IT[D.drop[0][0]] ? IT[D.drop[0][0]].n.replace(/ Ore$/, '') + (D.ore ? ' vein' : '') : o.k;
+  const name = o.k === 'tree' ? TREE_N[o.kind || 'oak'] || 'Tree' : IT[D.drop[0][0]] ? IT[D.drop[0][0]].n.replace(/ Ore$/, '') + (D.ore ? ' vein' : '') : ({ ore_gem: 'Gem vein', crystalnode: 'Crystal' }[o.k] || o.k);
   const txt = name + ' · ' + SKN[skill] + ' ' + need, ly = (ay + (D.h || 1)) * 16 + 9; // under the node: canopies are drawn over this pass
   g.save(); g.font = '600 8px Fredoka, sans-serif'; g.textAlign = 'center'; g.lineWidth = 2.4; g.strokeStyle = 'rgba(42,28,24,.95)'; g.strokeText(txt, (ax + .5) * 16, ly); g.fillStyle = '#ff9a7a'; g.fillText(txt, (ax + .5) * 16, ly); g.restore();
 };

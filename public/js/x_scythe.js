@@ -43,6 +43,6 @@ startGame = function (isNew) {
   if (!S.tools.scythe) S.tools.scythe = 1;
   if (!S.hot.includes('scythe')) {
     let i = S.hot.indexOf(null); if (i < 0) for (let k = S.hot.length - 1; k >= 0; k--) if (!isTool(S.hot[k])) { i = k; break; }
-    if (i >= 0) { S.hot[i] = 'scythe'; hudKey = ''; toast('Hale left you a scythe: it\'s on your hotbar. Cut grass and weeds for fibre and hay, and harvest vegetables with it.', 'lvl'); }
+    if (i >= 0) { S.hot[i] = 'scythe'; hudKey = ''; toast('Hale left you a scythe: it\'s on your hotbar. Cut grass and weeds for fiber and hay, and harvest vegetables with it.', 'lvl'); }
   }
 };

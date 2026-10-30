@@ -89,7 +89,7 @@ There is no light map. `pixGrade` in `h_pixel.js` multiplies the frame by one fl
 
 ## Village life (`public/js/r_life.js`, design doc Phase 6)
 - **Schedules:** `SCHED` gives each villager [minute, place] entries; a place is a village tile, `'shop'` (inside behind the counter) or `'home'` (hidden). `lifeTick` (every 5 ticks) filters `village.npcs` from `allNpcs` and sends walkers along `findPath`; `npcWalk` moves them per frame. Keepers only stand in a shop room during its hours.
-- **Opening hours:** `HOURS` per door action. Outside them you can still walk in, but the counter says when it opens. Shops are shut on festival days (the tavern stays open).
+- **Opening hours:** `HOURS` per door action. Outside them the door stays shut and says when it opens. Shops are shut on festival days (the tavern stays open).
 - **Festivals (`FEST`, one per season):** Blossom Day (Spring 13, egg hunt until noon, 120g per egg), Lantern Night (Summer 11, release lanterns at dusk: friendship with everyone), Harvest Fair (Fall 16, your most valuable crop/fish/artisan good is judged for up to 3000g), Ember Feast (Winter 25, every gift gets one back). The village gets lanterns and flowers (flagged `fest`, cleared next morning) and everyone gathers in the plaza from 9:00. Talk to any villager for the activity.
 - **Birthdays (`BDAY`):** announced in the morning; a gift that day counts triple. The Friends tab lists birthdays and the next festival.
 - **Animals and genetics** are the original system: buy at Odile's, Breed on one animal then Pair on a mate, offspring average their parents' genes plus luck. Tested: two chickens → pregnancy → chick with graded genes.
@@ -309,6 +309,15 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **Building:** build sites pull missing materials from the bank, used-up blueprints leave the hotbar, blueprints have a Place button in the bag, and shops say which plans you need from Hale.
 - **Combat:** meadow and forest enemies hit 40% softer; the V screen names the loadout you're editing; the combat test panel and the ability bar moved off the hearts and toasts; the craft progress bar is sticky.
 - Item descriptions lose trailing full stops (the UI adds its own).
+
+## Playtest 3, second pass (`public/js/x_fix4.js`)
+- **Clicks:** a placeable in hand walks next to a far empty tile and places it there; LMB hints say Walk (empty slot), Cut (scythe), and no Till off the farm. Doors and shop counters act on arrival (checked).
+- **Combat:** `drawHazards` is replaced: every telegraph shows its full zone and fills up until it hits; quake rings are a solid band. Winding-up enemies fill their wedge and show a "!". Knockback or a dash never carries you through a map exit (warps are off for that frame and you are put back). Combat test: Mixed pack uses Hollow Vale enemies at level 10, bosses are a clickable list. A held bow is drawn full size (`playerAction` wrapper).
+- **Animals:** greyed Buy and Breed buttons say why ("Needs a barn", "Grown in 3 d", "Needs 2 ♥"...); animal names never match a villager.
+- **Sandbox:** stations have ground labels instead of solid signposts (`SB_LABELS`), a coop, barn and stable are pre-built, a Next day button sits in the banner, recipes have Get ×5.
+- **Villagers:** talking to a shopkeeper on the street opens a small window (greeting, Shop, Chat, Goodbye; story steps still speak first). The greeting shows a heart progress bar; gifts say how much friendship they gave.
+- **Exploration:** the Wilds and region maps zoom (buttons, mouse wheel) and show waystones; chests list what they held; picked flowers and mushrooms are named; mine ladders have a bobbing arrow; early request-board items are first-week items; gem veins need floor 5+; small windows (`#modal.small`) for the elevator and lost pages; opened chests have a raised lid (`props.py`).
+- **Cliffs:** `r` faces are natural rock (cracks, a broken ledge, darker toward the foot) instead of stone courses; cliff tops get a rocky tint and flat stones (`h_pixel.js`).
 
 ## Inventory (implemented in `public/js/l_pack.js`)
 - `S.pack` is the backpack: 28 slots of `{ k, n }` (k = item key, `id` or `id#quality`). Weapons, armour and rings take one slot each; everything else stacks in one slot (`SINGLE` set). `S.inv` is a read-only view (key -> total) so older code keeps reading it; all writes go through `give` / `take` / `takeK`.

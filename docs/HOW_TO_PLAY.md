@@ -306,7 +306,8 @@ Combat is **action combat**: you aim with the mouse and every click swings. If y
 **The Wilds** (north of the farm) is a big valley:
 - **Biomes:** meadows, forest, highlands, coast, frost and ash, each with its own enemies, plants and ores.
 - **Places to find:** caves, shrines, ruins, a shipwreck, a travelling merchant, and the **mine**.
-- **Chests:** hidden chests restock a week after you open them, in a new spot.
+- **Chests:** hidden chests restock a week after you open them, in a new spot. Opening one lists what it held.
+- **The map (M):** zoom with the buttons or the mouse wheel; blue diamonds are waystones you have touched.
 - **Ember shards:** 30 are scattered around the Wilds and regions; collecting them earns rewards.
 - **The map:** press **M** to see where you've been.
 
@@ -361,7 +362,8 @@ Each region has:
 **Villagers**
 - **Schedules:** villagers have their own day. They open their shops, walk around and go home.
 - **Opening hours:** shops keep opening hours (Mara 9–17, for example) and close on festival days.
-- **Gifts:** talk to villagers every day and **give gifts** to raise friendship. Some gifts are loved, some hated.
+- **Talking:** a shopkeeper you meet in the street greets you first: open their shop, chat, or say goodbye. The greeting shows a bar of progress to the next heart.
+- **Gifts:** talk to villagers every day and **give gifts** to raise friendship. Some gifts are loved, some hated; after a gift you see how much friendship it gave.
 - **Birthdays:** gifts given on a villager's birthday count triple. The Friends tab (**P**) lists birthdays and the next festival.
 
 **Festivals**, one per season:

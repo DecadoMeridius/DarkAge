@@ -377,12 +377,15 @@ def chest(opened):
     s = cv(32, 32)
     shadow(s, 16, 29, 13, 3)
     s.shade(rect(4, 14, 24, 14), None, 'form', colors=WOOD)
-    if opened:
-        s.shade(rect(4, 6, 24, 6), None, 'form', colors=WOOD[1:])
-        s.fill(rect(6, 12, 20, 4), '#1a0e0a'); s.fill({(10, 13), (14, 12), (19, 13)}, '#f2c040')
+    if opened:  # the lid thrown back (its dark underside shows) and an empty, shadowed inside
+        s.shade(rect(4, 2, 24, 6), None, 'form', colors=WOOD[:3])
+        s.fill(rect(5, 7, 22, 1), IRON[1])
+        s.fill(rect(5, 8, 22, 6), '#1a0e0a'); s.fill(rect(5, 8, 22, 1), '#3a2216')
+        s.fill({(9, 12), (10, 12), (20, 13)}, '#8a6a30')
+        s.fill(rect(4, 14, 24, 2) | rect(9, 14, 2, 14) | rect(21, 14, 2, 14), IRON[2])
     else:
         s.shade({p for p in rect(4, 6, 24, 9) if ((p[1] - 15) / 9) ** 2 + ((p[0] + .5 - 16) / 13) ** 2 <= 1.15}, None, 'form', colors=WOOD[1:])
-    s.fill(rect(4, 14, 24, 2) | rect(9, 6, 2, 22) | rect(21, 6, 2, 22), IRON[2])
+        s.fill(rect(4, 14, 24, 2) | rect(9, 6, 2, 22) | rect(21, 6, 2, 22), IRON[2])
     s.fill(rect(14, 16, 4, 5), '#d8b048'); s.set(15, 18, '#2a1a10')
     return done(s)
 

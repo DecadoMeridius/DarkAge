@@ -246,7 +246,7 @@ function genMine(n) {
   const sx = startI % W, sy = (startI / W) | 0; m.t[startI] = 'c'; setT(m, sx, sy + 1, 'c'); setO(m, sx, sy, { k: 'upladder' }); m.start = { x: (sx + .5) * 16, y: (sy + 1.6) * 16 };
   const [D, far] = bfsFar(m, startI);
   if (!bossK) setO(m, far % W, (far / W) | 0, { k: 'ladder' });
-  const w = n < 10 ? [['rock', 10], ['ore_coal', 2.5], ['ore_copper', 5], ['ore_iron', n >= 4 ? 3 : 0], ['ore_gem', .5]] : n < 20 ? [['rock', 9], ['ore_coal', 3], ['ore_iron', 3], ['ore_silver', 3], ['ore_frost', n >= 14 ? 2 : 0], ['crystalnode', 2], ['ore_gem', .8]]
+  const w = n < 10 ? [['rock', 10], ['ore_coal', 2.5], ['ore_copper', 5], ['ore_iron', n >= 4 ? 3 : 0], ['ore_gem', n >= 5 ? .5 : 0]] : n < 20 ? [['rock', 9], ['ore_coal', 3], ['ore_iron', 3], ['ore_silver', 3], ['ore_frost', n >= 14 ? 2 : 0], ['crystalnode', 2], ['ore_gem', .8]]
     : n < 30 ? [['rock', 9], ['ore_coal', 3], ['ore_gold', 3], ['ore_mythril', 2.5], ['ore_obsidian', n >= 24 ? 2 : 0], ['ore_gem', 1]] : [['rock', 8], ['ore_mythril', 2], ['ore_adamant', 3], ['ore_obsidian', 2], ['ore_gem', 1.4], ['ore_star', n >= 35 ? .6 : 0]];
   if (!bossK) for (const i of floors) { if (m.o[i] || D[i] < 3) continue; if (R() < .21) m.o[i] = { k: wpick(w, R()), cave: 1 }; else if (R() < .004) m.o[i] = { k: 'fg', item: th === 'void' ? 'purple_shroom' : 'cave_crystal' }; }
   if (!bossK && (R() < .12 + (hasPerk('prospector') ? .15 : 0) || n % 5 === 3)) { const i = floors[Math.floor(R() * floors.length)]; if (!m.o[i] && D[i] > 6) m.o[i] = { k: 'chest', tier: Math.min(6, 1 + Math.floor(n / 8)), mine: 1 }; }

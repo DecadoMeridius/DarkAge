@@ -56,7 +56,7 @@ const _renderBuildBP = renderBuild;
 renderBuild = function (b) {
   const silo = BUILD.silo; delete BUILD.silo; // the silo is a building site now, not an instant upgrade
   try { _renderBuildBP(b); } finally { if (silo) BUILD.silo = silo; }
-  const note = b.querySelector('p.note'); if (note) note.textContent = 'Buy a building\'s plans once. Then make its blueprint at a workbench (1 wood, 1 fibre), use it on your farm to place the site, deliver the materials and hammer it up. Wells, sheds and silos can be built again and again. Construction level ' + lifeL('construction') + '.';
+  const note = b.querySelector('p.note'); if (note) note.textContent = 'Buy a building\'s plans once. Then make its blueprint at a workbench (1 wood, 1 fiber), use it on your farm to place the site, deliver the materials and hammer it up. Wells, sheds and silos can be built again and again. Construction level ' + lifeL('construction') + '.';
   b.querySelectorAll('.list .rrow button.btn').forEach(btn => {
     if (btn.textContent === 'Place') btn.replaceWith(el('small', { class: 'note' }, 'Plans known: make the blueprint at a workbench'));
     else if (/^Buy \d/.test(btn.textContent)) btn.textContent = 'Buy plans ' + btn.textContent.slice(4);
@@ -108,7 +108,7 @@ harvest = function (m, tx, ty) {
 const _openModalBP = openModal;
 openModal = function (title, tabs, start, opts) {
   if (title === 'Mara\'s General Store') tabs = tabs.concat([{ id: 'field', label: 'Field seeds', render: b => {
-    b.append(el('p', { class: 'note' }, 'Fodder and fibre: grow your own hay for the animals and fibre for the workbench.'));
+    b.append(el('p', { class: 'note' }, 'Fodder and fiber: grow your own hay for the animals and fiber for the workbench.'));
     const L = el('div', { class: 'list' }); for (const k in FIELD) L.append(buyRow(k + '_seed', FIELD[k].seed)); b.append(L);
   } }]);
   return _openModalBP(title, tabs, start, opts);

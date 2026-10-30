@@ -152,11 +152,6 @@ None of them saw a JavaScript error. Each harness command takes about 1 second, 
 - Combat: softer early enemies, loadout named in V, test panel and ability bar moved, sticky craft bar.
 - Text: tent text, "Give a gift", no trailing full stops in descriptions.
 
-**Still open:**
-- Cliffs and brick faces in the wild still need art (rock faces, darker tops).
-- Placement on the cursor tile; doors and counters acting on arrival; E on counters.
-- Filled telegraphs with a fill-up timer, the Mixed pack, bow in hand and brighter projectiles, a boss pushing you off the map, the boss dropdown with the mouse.
-- Workbench blueprint recipes for plans you don't own, reasons on disabled buttons, animal names that match villagers, sandbox wishes.
-- Chat / Shop / Gift choice, gift heart progress, longer dialogue.
-- Wilds map (zoom, roads, POI icons), pickup messages for flowers and chests, opened chests looking open, mine floor-1 issues.
-- Stale hints, "ore_gem" label, Fiber/fibre, title and dialog button jumps.
+**Second pass (`x_fix4.js`), done:** cliff rock faces and tops, placement on the clicked tile, doors and counters on arrival (checked), filled telegraphs and wind-up "!", Mixed pack, bow in hand, no knockback through exits, clickable boss list, reasons on Buy and Breed, animal names, sandbox (labels, buildings, Next day, Get ×5, intro), Chat / Shop / Goodbye on the street, heart progress and gift feedback, map zoom and waystones, chest contents, picked flowers, opened chest sprite, ladder arrows, no gem veins before floor 5, small elevator window, early requests, page counter wording, stale hints, "ore_gem" label, Fiber spelling, dialogue box above the hotbar. Closed shops refusing entry is intended; the docs were corrected.
+
+**Still open:** the title-screen buttons appear once a save exists (left as is), the hooded green figure and the enemy on a mine wall (not reproduced), longer dialogue writing.
