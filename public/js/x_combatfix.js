@@ -136,7 +136,7 @@ const _pcCursorDrawProj = pcCursorDraw;
 pcCursorDraw = function (m) {
   _pcCursorDrawProj(m); if (TITLE) return;
   for (const p of PSHOTS) { g.save(); g.globalAlpha = .5; g.strokeStyle = p.fire ? '#ffb040' : '#fff6e0'; g.lineWidth = 3.5; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - p.vx * .04, p.y - p.vy * .04); g.stroke(); g.restore(); }
-  for (const p of (typeof SKP !== 'undefined' ? SKP : [])) if (p.kind === 'bolt' || p.kind === 'pierce') { g.save(); g.globalAlpha = .4; g.fillStyle = p.kind === 'bolt' ? '#b08aff' : '#bfe8ff'; g.beginPath(); g.arc(p.x, p.y, 7, 0, 6.283); g.fill(); g.restore(); }
+  for (const p of (typeof SKP !== 'undefined' ? SKP : [])) if (p.kind === 'bolt' || p.kind === 'pierce') { g.save(); g.globalAlpha = .4; g.fillStyle = p.cols ? p.cols[1] : p.kind === 'bolt' ? '#b08aff' : '#bfe8ff'; g.beginPath(); g.arc(p.x, p.y, 7, 0, 6.283); g.fill(); g.restore(); }
   const t = ACT.dashTrail; if (t) { g.save(); g.globalAlpha = t.t * 2; g.strokeStyle = '#e8f4ff'; g.lineWidth = 3; g.beginPath(); g.moveTo(t.x, t.y - 12); g.lineTo(S.p.x, S.p.y - 12); g.stroke(); g.restore(); }
 };
 // staff bolts fly further and puff at the end; bows use plain arrows before fire arrows

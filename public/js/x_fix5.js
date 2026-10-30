@@ -792,3 +792,35 @@ actionHit = (f => function (e, mult, a, kb, opts) {
   }
   return f(e, mult, a, kb, o);
 })(actionHit);
+
+// a skill's own slashes, arcs, rings and arrows take its colours: effects made while it's cast are tagged,
+// and their white and pale strokes and fills are swapped for the skill's palette when drawn (alpha kept)
+let CAST_COLS = null;
+function parseCol(c) {
+  if (typeof c !== 'string') return null; let m;
+  if ((m = /^#([0-9a-f]{3})$/i.exec(c))) return [...m[1]].map(h => parseInt(h + h, 16)).concat(1);
+  if ((m = /^#([0-9a-f]{6})$/i.exec(c))) return [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16)).concat(1);
+  if ((m = /^rgba?\(([^)]+)\)$/i.exec(c))) { const p = m[1].split(',').map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; }
+  return null;
+}
+function tintCol(c, cols) { // bright strokes take the skill's main colour, paler ones its deeper one
+  const p = parseCol(c); if (!p) return c;
+  const mx = Math.max(p[0], p[1], p[2]), mn = Math.min(p[0], p[1], p[2]), L = (mx + mn) / 2;
+  if (L < 150 || mx - mn > 110) return c;                    // shadows and already strong colours stay
+  const t = parseCol(L > 200 ? cols[0] : (cols[1] || cols[0])); return 'rgba(' + t[0] + ',' + t[1] + ',' + t[2] + ',' + p[3] + ')';
+}
+const FILL_D = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillStyle'), STROKE_D = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'strokeStyle');
+function tintedDraw(cols, fn) {
+  Object.defineProperty(g, 'fillStyle', { configurable: true, get() { return FILL_D.get.call(g); }, set(v) { FILL_D.set.call(g, tintCol(v, cols)); } });
+  Object.defineProperty(g, 'strokeStyle', { configurable: true, get() { return STROKE_D.get.call(g); }, set(v) { STROKE_D.set.call(g, tintCol(v, cols)); } });
+  try { fn(); } finally { delete g.fillStyle; delete g.strokeStyle; }
+}
+for (const L of [VFX, SKP]) L.push = function (...items) { if (CAST_COLS) for (const v of items) if (v && !v.cols) v.cols = CAST_COLS; return Array.prototype.push.apply(this, items); };
+for (const id in SKILL_FX) {
+  const A = ABIL[id]; if (!A || A._tint) continue; const fn = A.fn, cols = SKILL_FX[id]; A._tint = 1;
+  A.fn = function () {
+    const n0 = PARTS.length; CAST_COLS = cols;
+    try { return fn.apply(this, arguments); }
+    finally { CAST_COLS = null; for (let i = n0; i < PARTS.length; i++) PARTS[i].c = tintCol(PARTS[i].c, cols); }
+  };
+}

@@ -116,10 +116,10 @@ EVT.on('map', () => { VFX.length = 0; SKP.length = 0; });
 const _pcCursorDrawSk = pcCursorDraw;
 pcCursorDraw = function (m) {
   _pcCursorDrawSk(m); if (TITLE) return;
-  for (const v of VFX) { g.save(); v.draw(Math.min(1, v.t / v.T)); g.restore(); }
+  for (const v of VFX) { g.save(); if (v.cols && typeof tintedDraw === 'function') tintedDraw(v.cols, () => v.draw(Math.min(1, v.t / v.T))); else v.draw(Math.min(1, v.t / v.T)); g.restore(); } // a skill's effects take its colours (x_fix5.js)
   for (const p of SKP) {
     if (p.kind === 'fireball') { g.fillStyle = 'rgba(255,120,40,.4)'; g.beginPath(); g.arc(p.x, p.y, 6, 0, 6.283); g.fill(); g.fillStyle = '#ffd060'; g.beginPath(); g.arc(p.x, p.y, 3, 0, 6.283); g.fill(); if (Math.random() < .6) PARTS.push({ x: p.x, y: p.y, vx: (Math.random() - .5) * 20, vy: -10, t: .25, c: '#ff8a2a' }); }
-    else { g.strokeStyle = p.kind === 'pierce' ? '#bfe8ff' : '#e8dcc0'; g.lineWidth = p.kind === 'pierce' ? 2.5 : 1.5; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - p.vx * .03, p.y - p.vy * .03); g.stroke(); }
+    else { g.strokeStyle = p.cols ? p.cols[0] : p.kind === 'pierce' ? '#bfe8ff' : '#e8dcc0'; g.lineWidth = p.kind === 'pierce' ? 2.5 : 1.5; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - p.vx * .03, p.y - p.vy * .03); g.stroke(); }
   }
 };
 

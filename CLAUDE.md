@@ -359,7 +359,9 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **Nothing on cliffs:** loose objects on cliff tiles are cleared when a map loads; walking enemies spawned on a cliff move to open ground (`openTileNear`); drops resting on solid ground are moved off it every tick.
 - **Damage:** action hits are ×0.6, so a wooden sword takes about 3 swings for a slime.
 - **No stun-lock:** an enemy that has started winding up finishes its attack (hits during the wind-up don't knock it back or cancel it; a parry still does), and a combo finisher staggers the same enemy at most once every 2.5 s (`e.poiseT`).
-- **Skill colours (`SKILL_FX`):** every ability gets a burst of coloured motes and a coloured pixel ring when used, and coloured sparks on what it hits.
+- **Skill colours (`SKILL_FX`):**
+  - Every ability gets a burst of coloured motes and a coloured pixel ring when used, and coloured sparks on what it hits.
+  - Its own effects take its colours too. Effects created during a cast are tagged with `cols` (the `VFX` and `SKP` push overrides and new `PARTS`). `tintedDraw` then swaps their white and pale fills and strokes for the palette (`tintCol`, alpha kept).
 
 ## Canoe (`public/js/x_canoe.js`)
 - Made at a workbench (40 wood, 4 hardwood, 12 fiber), worn in the Boat slot (`S.eq.boat`, between the rings). While worn, deep water (`w`) is open to the player's `moveEnt` and `walkTo` (`withWater` lifts `TER.w.solid` for that call); `S.p.boat` follows the tile under you, so you climb in and out at the shore. Drawn seated in the hull with the near gunwale over the legs, a paddle stroking side to side and a wake (`canoe.0/.1` in `implements.py`).
