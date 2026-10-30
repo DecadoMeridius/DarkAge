@@ -824,3 +824,56 @@ for (const id in SKILL_FX) {
     finally { CAST_COLS = null; for (let i = n0; i < PARTS.length; i++) PARTS[i].c = tintCol(PARTS[i].c, cols); }
   };
 }
+
+/* melee skills move the weapon itself: it spins round you in Whirlwind, flies as ghost copies in Blade Storm,
+   is raised and slammed in Ground Slam, thrust ahead in Blade Dash and Lunge, sweeps in Cleave and spins
+   overhead in a Leaping Strike. A fading trail of tinted copies follows it in the skill's colour. */
+let WSPIN = { until: 0, pose: 'strike' };
+const GHOSTS = new Map();
+function ghostIcon(ic, col) {
+  const key = (ic._gid || (ic._gid = Math.random().toString(36).slice(2))) + col; if (GHOSTS.has(key)) return GHOSTS.get(key);
+  const c = mk(ic.width, ic.height, x => { x.drawImage(ic, 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = col; x.globalAlpha = .75; x.fillRect(0, 0, ic.width, ic.height); });
+  c.ww = ic.ww; c.wh = ic.wh; GHOSTS.set(key, c); return c;
+}
+const meleeIcon = () => S && S.eq.weapon && PS && !['bow', 'staff'].includes(PS.wt) ? itemIcon(S.eq.weapon) : null;
+// a weapon swung along a path: pos(k) -> [x, y, ang] for 0..1, the real weapon at the head and ghosts behind
+function swingFx(T, cols, pos, opts = {}) {
+  const ic = meleeIcon(); if (!ic) return; const gh = ghostIcon(ic, cols[0]), sz = opts.size || 17;
+  WSPIN = { until: gameT + T, pose: opts.pose || 'strike' };
+  vfx(k => {
+    for (let j = opts.trail === 0 ? 0 : (opts.trail || 5); j >= 0; j--) {
+      const kk = Math.max(0, k - j * (opts.gap || .035)); const [x, y, a] = pos(kk);
+      g.globalAlpha = j ? (1 - j / ((opts.trail || 5) + 1)) * .55 : 1; heldIcon(j ? gh : ic, x, y, a, sz);
+    }
+    g.globalAlpha = 1;
+  }, T);
+}
+playerAction = (f => function () { if (S && gameT < WSPIN.until && !(pl.roll > 0)) return { pose: WSPIN.pose }; return f(); })(playerAction);
+const MELEE_ANIM = {
+  whirlwind(cols) { // three full turns round you, the body turning with it
+    swingFx(.8, cols, k => { const a = -1.2 + k * 6.283 * 3; return [S.p.x + Math.cos(a) * 15, S.p.y - 9 + Math.sin(a) * 9, a]; }, { trail: 6, gap: .02 });
+    vfx(k => { S.p.dir = [0, 2, 3, 1][Math.floor(k * 12) % 4]; }, .8);
+  },
+  cleave(cols) { const a0 = Math.atan2(DIRV[S.p.dir][1], DIRV[S.p.dir][0]); swingFx(.32, cols, k => { const a = a0 - 1.6 + k * 3.2; return [S.p.x + Math.cos(a) * 12, S.p.y - 10 + Math.sin(a) * 8, a]; }, { trail: 5 }); },
+  groundslam(cols, a) { // up over the head, then down into the ground ahead
+    swingFx(.45, cols, k => k < .45 ? [S.p.x, S.p.y - 22 - k * 8, -Math.PI / 2 - k * 2] : [S.p.x + Math.cos(a) * (6 + (k - .45) * 20), S.p.y - 26 + (k - .45) * 40, -Math.PI / 2 + (k - .45) / .55 * (Math.PI / 2 + a)], { trail: 4, pose: 'wind', size: 19 });
+    after(.2, () => { WSPIN.pose = 'strike'; });
+  },
+  bladedash(cols, a, from) { const [x0, y0] = from; swingFx(.3, cols, k => [x0 + (S.p.x - x0) * Math.min(1, k * 1.6), y0 - 10 + (S.p.y - y0) * Math.min(1, k * 1.6), a], { trail: 6, gap: .05, pose: 'thrust' }); },
+  lunge(cols, a) { swingFx(.28, cols, k => [S.p.x + Math.cos(a) * (2 + Math.sin(k * Math.PI) * 12), S.p.y - 10 + Math.sin(a) * (2 + Math.sin(k * Math.PI) * 8), a], { trail: 4, pose: 'thrust' }); },
+  leap(cols) { swingFx(.5, cols, k => k < .7 ? [S.p.x, S.p.y - 30, k * 6.283 * 2.5] : [S.p.x + 8, S.p.y - 30 + (k - .7) * 70, Math.PI / 2], { trail: 5, gap: .025 }); },
+  bladestorm(cols) { // the six spectral blades are ghost copies of your own weapon
+    const ic = meleeIcon(); if (!ic) return; const gh = ghostIcon(ic, cols[0]);
+    vfx(() => { const T = gameT * 6; for (let i = 0; i < 6; i++) { const a = T + i * 1.047; g.globalAlpha = .9; heldIcon(gh, S.p.x + Math.cos(a) * 24, S.p.y - 8 + Math.sin(a) * 17, a + Math.PI / 2, 14); } g.globalAlpha = 1; }, 4);
+  },
+};
+for (const id in MELEE_ANIM) {
+  const A = ABIL[id]; if (!A || A._wpn) continue; const fn = A.fn, cols = (typeof SKILL_FX !== 'undefined' && SKILL_FX[id]) || ['#fff0c0', '#c8a060']; A._wpn = 1;
+  A.fn = function () {
+    if (!meleeIcon()) return fn.apply(this, arguments);
+    const from = [S.p.x, S.p.y], [mx, my] = mouseWorld(), aim = Math.atan2(my - S.p.y, mx - S.p.x), tgt = typeof TARGET !== 'undefined' && TARGET;
+    const ok = fn.apply(this, arguments);
+    if (ok !== false) { const a = id === 'lunge' && tgt ? Math.atan2(tgt.y - from[1], tgt.x - from[0]) : id === 'bladedash' ? Math.atan2(S.p.y - from[1], S.p.x - from[0]) : aim; MELEE_ANIM[id](cols, a, from); }
+    return ok;
+  };
+}

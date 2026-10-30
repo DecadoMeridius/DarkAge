@@ -363,6 +363,14 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - Every ability gets a burst of coloured motes and a coloured pixel ring when used, and coloured sparks on what it hits.
   - Its own effects take its colours too. Effects created during a cast are tagged with `cols` (the `VFX` and `SKP` push overrides and new `PARTS`). `tintedDraw` then swaps their white and pale fills and strokes for the palette (`tintCol`, alpha kept).
 
+- **Melee skill animations (`MELEE_ANIM`, `swingFx`):** with a melee weapon the equipped weapon itself moves, drawn with `heldIcon` and a fading trail of tinted copies (`ghostIcon`) in the skill's colour. The held weapon is hidden meanwhile (`WSPIN` in the `playerAction` wrapper).
+  - Whirlwind: three turns round you while you turn.
+  - Cleave: a sweep.
+  - Ground Slam: raised, then slammed.
+  - Blade Dash and Lunge: thrusts.
+  - Leaping Strike: spins overhead.
+  - Blade Storm: ghost copies of your own weapon.
+
 ## Canoe (`public/js/x_canoe.js`)
 - Made at a workbench (40 wood, 4 hardwood, 12 fiber), worn in the Boat slot (`S.eq.boat`, between the rings). While worn, deep water (`w`) is open to the player's `moveEnt` and `walkTo` (`withWater` lifts `TER.w.solid` for that call); `S.p.boat` follows the tile under you, so you climb in and out at the shore. Drawn seated in the hull with the near gunwale over the legs, a paddle stroking side to side and a wake (`canoe.0/.1` in `implements.py`).
 
