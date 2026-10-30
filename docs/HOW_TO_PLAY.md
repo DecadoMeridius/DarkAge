@@ -187,14 +187,14 @@ Everything is made at a **station**:
 
   Breed the best to the best to raise your herd's quality.
 - **Horses.** Horses have speed, stamina, strength and agility genes. Press **R** to ride your chosen horse. Horses can enter **races** at Odile's for prize money and cups, and Golden Oats raise a horse's genes.
-- **Horse tools** (ride with one selected on your farm):
+- **Horse tools.** Use one from your backpack to set it down on your farm. Ride up to it and interact to hitch it; it follows behind the horse. Press **G** (or the button on the bar) to lower it and work the ground, **G** again to raise it and just ride. Press **E** with nothing in front of you, or Unhitch, to leave it where it stands. Getting off the horse unhitches it too. On foot, interact with it to pick it up.
 
   | Tool | What it does |
   |---|---|
   | Plough | Tills 3 tiles wide |
   | Seed drill | Sows in-season seeds |
   | Harrow | Clears weeds and grass |
-  | Cart | Carries up to 400 items |
+  | Cart | While hitched, what you pick up goes in it (up to 400 items); unload it at a storage crate |
 
 ## 11. Automation
 

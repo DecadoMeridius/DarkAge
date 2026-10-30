@@ -105,7 +105,7 @@ These come from the original game and were checked against the rebuilt systems: 
 - **Fuel:** `FUEL` burn ticks: wood 8, hardwood 14, charcoal 24, coal 36. Belts insert inputs first, then fuel.
 - **Power** within 7 tiles: Windmill (always), Waterwheel (must touch water), Treadwheel (runs while fed hay, 1 hay per 20 ticks).
 - **Water channels:** a channel touching water or a well carries water along connected channels; soil next to a wet channel is watered every morning (`waterFromChannels`).
-- **Horse tools** (ride with one selected on a farm map): Plough (tills 3 wide), Seed Drill (sows the first in-season seed you carry), Harrow (clears weeds and grass in the 3-wide strip ahead), Cart (what you pick up goes into a 400-item cart; interact with a crate to unload).
+- **Horse tools** (`x_implements.js`): set down on the farm as an `impl` object, hitched while riding (`S.hitch = { k, on }`), drawn behind the horse with traces (`impl_<k>.0/.1` in `art/sprites/implements.py`), G lowers/raises, E with nothing in front or the bar's Unhitch leaves it standing, dismounting unhitches. `implementTick` and the cart run through `asKind` (borrows `selKind`, now a `let`). Plough (tills 3 wide), Seed Drill (sows the first in-season seed you carry), Harrow (clears weeds and grass in the 3-wide strip ahead), Cart (what you pick up goes into a 400-item cart; interact with a crate to unload).
 - **Simulation:** `autoTick` every game tick on the farm and owned plots even while you're elsewhere; `endDay` runs 300 catch-up ticks for the night. Placed pieces return their contents when picked up with the pickaxe.
 - Tested: ore line (crate → smelter → crate, while away), wheat → mill → oven → bread on treadwheel power, keg loaded and emptied by belts, trip hammer → splitter into two crates, channel watering, cart load/unload, plough, seed drill and harrow.
 
@@ -319,7 +319,10 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **Exploration:** the Wilds and region maps zoom (buttons, mouse wheel) and show waystones; chests list what they held; picked flowers and mushrooms are named; mine ladders have a bobbing arrow; early request-board items are first-week items; gem veins need floor 5+; small windows (`#modal.small`) for the elevator and lost pages; opened chests have a raised lid (`props.py`).
 - **Cliffs:** `r` faces are natural rock (cracks, a broken ledge, darker toward the foot) instead of stone courses; cliff tops get a rocky tint and flat stones (`h_pixel.js`).
 
-## Inventory (implemented in `public/js/l_pack.js`)
+## Gear and creature art (`public/js/x_gear.js`, `art/sprites/gear.py`, `armor.py`, `farm_animals.py`, `foes.py`, `foes2.py`)
+- Every tier has its own weapon, shield and tool icons (`gi_<item>`, `gi_tool_<kind>_<level>`), used in the hotbar, bag and hand. Helmets (`hb_helm_<tier>_<d>`, full head, accent in the plume channel) and cuirasses (`hb_arm_<tier>_<d>`, new channels `armor` and `trim`) are drawn on the character; `GEAR_ACC` holds each tier's accent.
+- Farm animals and the horse, the Hollow Vale creatures and the regional ones are redrawn with the same sizes and channels; `art/preview_creatures.py` and `art/preview_armor.py` render preview sheets to `art/out/`.
+ in `public/js/l_pack.js`)
 - `S.pack` is the backpack: 28 slots of `{ k, n }` (k = item key, `id` or `id#quality`). Weapons, armour and rings take one slot each; everything else stacks in one slot (`SINGLE` set). `S.inv` is a read-only view (key -> total) so older code keeps reading it; all writes go through `give` / `take` / `takeK`.
 - A full backpack never deletes items: `give` drops the rest on the ground, and ground pickups stay put until there's room.
 - Worn equipment: weapon, head, body, shield, feet, two rings (RuneScape layout in the Items tab). Gear needs a Combat level per tier (`TIER_REQ`). Swapping checks for backpack space.

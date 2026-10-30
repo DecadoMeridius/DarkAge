@@ -76,7 +76,7 @@ function areaTiles(tx, ty, lvl) {
   if (lvl >= 5) { for (let i = 3; i < 5; i++) out.push([tx + d[0] * i, ty + d[1] * i]); }
   return out;
 }
-const selKind = () => S.hot[S.sel];
+let selKind = () => S.hot[S.sel];
 const isTool = k => ['hoe', 'can', 'axe', 'pick', 'rod', 'scythe', 'multi', 'weapon'].includes(k);
 /* ---- interactions ---- */
 function findInteract() {
