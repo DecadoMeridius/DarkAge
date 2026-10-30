@@ -341,6 +341,17 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - Museum cases show your donations (`furn_display_empty`); lanterns are dark by day (`lantern_off`); the indoor lamp is a table lamp; tilled soil is furrowed earth.
   - Spring maples are green; the manor crest is a quartered shield; Elias's robe is blue; under plate armour the sleeves are mail grey.
   - New icons: log bundle, boot, crown, coin, mask, amphora, flute, brooch, crystal, step cut, brilliant. Artifacts and minerals use them (`SHAPE`). Seed packets show their crop, implements use their own sprite, and the scythe icon has a long crescent blade.
+  - Template outlines are channel level 4 (`px.py` outline, decoded in `pixSwap`), so they take each creature's own colours.
+  - Second pass:
+    - plaza paving wear and moss (`paintChunk`);
+    - Wilds signposts to the mine and coast (`o.guide`, labels float when near);
+    - the riding boot and a deeper side torso (`human.py`);
+    - the passive tree in 3 px blocks;
+    - pixel projectiles;
+    - slimes sorted behind you;
+    - Walk hints;
+    - the sandbox Next day keeps you in place;
+    - cheap crops +25% and 20 starting fibre.
   - Telegraphs and wind-up wedges are drawn on the art-pixel grid (`pxEll`, `pxBand`, `pxWedge`); chimney smoke is stepped pixel squares; the scarf wraps the neck after the head is drawn; a ponytail shows from behind.
 
 ## Canoe (`public/js/x_canoe.js`)

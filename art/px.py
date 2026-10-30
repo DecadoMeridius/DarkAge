@@ -77,6 +77,9 @@ class Canvas:
                 ns = [src[x + dx, y + dy] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
                       if 0 <= x + dx < self.w and 0 <= y + dy < self.h and src[x + dx, y + dy][3] > 128]
                 if ns:
+                    codes = [c for c in ns if c[0] == 255 and c[1] < 32 and c[2] < 4]
+                    if codes:  # a palette-swap template: the outline is level 4 of the neighbour's channel, recoloured in game
+                        out.append((x, y, (255, min(codes, key=lambda c: c[2])[1], 4, 255))); continue
                     n = min(ns, key=lambda c: c[0] + c[1] + c[2])
                     out.append((x, y, craft.darken_for_outline(n[:3]) + (255,)))
         for x, y, c in out:

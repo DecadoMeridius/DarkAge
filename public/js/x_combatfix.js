@@ -127,7 +127,7 @@ KIT_DUR.blink2 = 2;
 if (EN.lich) EN.lich.moves = ['volley', 'summon:skeleton', 'ring', 'blink2', 'spiral', 'volley'];
 if (EN.hollowking) EN.hollowking.moves = ['walk', 'charge', 'slam', 'walk', 'volley', 'quake', 'summon:voidknight'];
 const _drawEntCF = drawEnt;
-drawEnt = function (e) { if (e.type === 'enemy' && e.fade > 0) { g.save(); g.globalAlpha = Math.max(.15, 1 - e.fade); _drawEntCF(e); g.restore(); return; } if (e.type === 'proj') { g.save(); g.globalAlpha = .45; g.fillStyle = e.k === 'fire' ? '#ff8a2a' : e.k === 'ice' ? '#9ad8ff' : e.k === 'void' ? '#b07aff' : '#e8d8b8'; g.beginPath(); g.arc(e.x, e.y, 5, 0, 6.283); g.fill(); g.restore(); } return _drawEntCF(e); };
+drawEnt = function (e) { if (e.type === 'enemy' && e.fade > 0) { g.save(); g.globalAlpha = Math.max(.15, 1 - e.fade); _drawEntCF(e); g.restore(); return; } if (e.type === 'proj') { g.save(); g.globalAlpha = .45; g.fillStyle = e.k === 'fire' ? '#ff8a2a' : e.k === 'ice' ? '#9ad8ff' : e.k === 'void' ? '#b07aff' : '#e8d8b8'; const X = Math.round(e.x * 2) / 2, Y = Math.round(e.y * 2) / 2; g.fillRect(X - 5, Y - 3.5, 10, 7); g.fillRect(X - 3.5, Y - 5, 7, 10); g.restore(); } return _drawEntCF(e); };
 const _bossAICF = bossAI;
 bossAI = function (m, e, dt, dx, dy, d) { if (e.fade > 0 && (e.ai.move || '') !== 'blink2') e.fade = 0; return _bossAICF(m, e, dt, dx, dy, d); };
 

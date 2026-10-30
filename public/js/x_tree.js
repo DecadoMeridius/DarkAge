@@ -54,11 +54,18 @@ renderTree = function (b) {
   const col = n => n[0][0] === 'm' ? '#d8543a' : n[0][0] === 'p' ? '#5aa040' : n[0][0] === 'a' ? '#4a7ad8' : n[0][0] === 'l' ? '#3ab89a' : '#e8c040';
   const can = n => !has(n) && (isL(n) ? lifeLinked(n[0]) && lp > 0 : linked(n[0]) && pts > 0);
   x.fillStyle = '#1e1814'; x.fillRect(0, 0, W, H);
-  for (const [a, bb] of links) { const A = node(a), B = node(bb), on = (a === 'root' || has(A)) && has(B); x.strokeStyle = on ? '#e8c07a' : '#4a3a2e'; x.lineWidth = on ? 4 : 3; x.beginPath(); x.moveTo(...P(A)); x.lineTo(...P(B)); x.stroke(); }
+  // drawn in 3 px blocks: stepped links, pixel discs and diamonds (no smooth vector shapes)
+  const Q = 3, sn = v => Math.floor(v / Q) * Q, blk = (px, py, n = 1) => x.fillRect(sn(px) - Math.floor(n / 2) * Q, sn(py) - Math.floor(n / 2) * Q, Q * n, Q * n);
+  const shape = (px, py, r, dia) => { for (let yy = -r; yy <= r; yy += Q) { const w = dia ? r - Math.abs(yy) : Math.sqrt(Math.max(0, r * r - yy * yy)); x.fillRect(sn(px - w), sn(py + yy), Math.max(Q, sn(px + w) - sn(px - w) + Q), Q); } };
+  for (const [a, bb] of links) {
+    const A = node(a), B = node(bb), on = (a === 'root' || has(A)) && has(B), [x0, y0] = P(A), [x1, y1] = P(B), n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / Q);
+    x.fillStyle = on ? '#e8c07a' : '#4a3a2e'; for (let i = 0; i <= n; i++) blk(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, on ? 2 : 1);
+  }
   for (const n of all) {
-    const [px, py] = P(n), r = n[5] === 'k' ? 15 : n[5] === 'n' || n[5] === 'a' ? 12 : n[5] === 'r' ? 14 : 8, on = n[0] === 'root' || has(n), ok = can(n);
-    x.fillStyle = on ? col(n) : ok ? '#6a5a48' : '#3a2e26'; x.strokeStyle = on ? '#fff0c0' : ok ? '#e8c07a' : '#5a4a3a'; x.lineWidth = n[5] === 'k' ? 4 : 2;
-    x.beginPath(); if (n[5] === 'k' || n[5] === 'a') { x.moveTo(px, py - r); x.lineTo(px + r, py); x.lineTo(px, py + r); x.lineTo(px - r, py); x.closePath(); } else x.arc(px, py, r, 0, 6.283); x.fill(); x.stroke();
+    const [px, py] = P(n), r = n[5] === 'k' ? 15 : n[5] === 'n' || n[5] === 'a' ? 12 : n[5] === 'r' ? 14 : 9, on = n[0] === 'root' || has(n), ok = can(n), dia = n[5] === 'k' || n[5] === 'a';
+    x.fillStyle = on ? '#fff0c0' : ok ? '#e8c07a' : '#5a4a3a'; shape(px, py, r + (n[5] === 'k' ? 6 : 3), dia);
+    x.fillStyle = on ? col(n) : ok ? '#6a5a48' : '#3a2e26'; shape(px, py, r, dia);
+    if (on) { x.fillStyle = 'rgba(255,255,255,.35)'; x.fillRect(sn(px - r / 2), sn(py - r / 2), Q * 2, Q); }
   }
   x.font = '600 15px Fredoka'; x.fillStyle = '#e8d8b8'; x.textAlign = 'center';
   x.fillText('MIGHT', ox + (minX + 1) * sc, oy - .6 * sc); x.fillText('PRECISION', ox + (maxX - 1) * sc, oy - .6 * sc); x.fillText('ARCANA', ox, oy + minY * sc - 22); x.fillStyle = '#7ad8b8'; x.fillText('LIFE', ox + 2.2 * sc, oy + maxY * sc + 4);

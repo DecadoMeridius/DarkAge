@@ -73,8 +73,9 @@ def torso_f(dx=0, dy=0):
 
 
 def torso_s(dx=0, dy=0):
-    return poly([(12 + dx, 22 + dy), (20 + dx, 22 + dy), (21 + dx, 26 + dy), (21 + dx, 32 + dy), (20 + dx, 35 + dy), (21 + dx, 40 + dy),
-                 (11 + dx, 40 + dy), (12 + dx, 35 + dy), (11 + dx, 30 + dy), (11 + dx, 25 + dy)])
+    # a little depth from the side: the back curves out a pixel and the chest a pixel (it read as paper-thin)
+    return poly([(11 + dx, 22 + dy), (20 + dx, 22 + dy), (22 + dx, 26 + dy), (22 + dx, 32 + dy), (21 + dx, 35 + dy), (21 + dx, 40 + dy),
+                 (11 + dx, 40 + dy), (11 + dx, 35 + dy), (10 + dx, 30 + dy), (10 + dx, 25 + dy)])
 
 
 def belt_line(s, d, dy=0):
@@ -319,9 +320,11 @@ def ride():
     """Seated on a horse, facing right: torso upright, thigh forward along the saddle,
     shin hanging down the horse's flank. Feet end near row 52 (the horse's belly)."""
     s = Canvas(32, 64)
-    cel(s, rect(13, 38, 9, 5), 'pants')            # thigh along the saddle
-    cel(s, rect(18, 41, 4, 10), 'pants')           # shin down the side
-    cel(s, rect(18, 50, 7, 4), 'shoe'); hline(s, 18, 24, 53, 'shoe', 0)
+    cel(s, rect(12, 37, 11, 6), 'pants')           # thigh along the saddle
+    cel(s, rect(18, 41, 5, 6), 'pants')            # shin down the side
+    flat(s, {(22, 38), (22, 39)}, 'pants', 3)      # the lit knee
+    cel(s, rect(18, 46, 6, 6), 'shoe')             # a tall riding boot, so the leg reads against the horse
+    cel(s, rect(22, 50, 4, 3), 'shoe'); hline(s, 18, 25, 52, 'shoe', 0); hline(s, 18, 23, 46, 'shoe', 3)
     cel(s, poly([(11, 22), (21, 22), (21, 40), (11, 40)]), 'shirt')
     hline(s, 11, 21, 32, 'shirt', 1)
     cel(s, poly([(15, 23), (18, 23), (22, 33), (19, 34)]), 'shirt')  # arm reaching for the reins

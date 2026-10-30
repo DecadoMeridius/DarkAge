@@ -193,19 +193,15 @@ Fixed in this pass: everything in the fix order except the water distance (kept 
 - the balance numbers (hit cap, Focus gain);
 - the new art.
 
-**Still open:**
-- **World and navigation:**
-  - the plaza is still one repeating paving texture;
-  - nothing points to the coast or the mine;
-  - snags at specific trees and roof corners (the general sliding should cover most).
+**Second pass (the rest of the list):**
+- **World:** the plaza paving has wear and moss patches; signposts at both Wilds entrances point to the Old Mine and the coast.
 - **Art:**
-  - side-facing sprites are thin;
-  - the passive tree is still smooth (only its dropdowns are restyled);
-  - the Lich's orbs are round projectiles;
-  - the grey horse has a reddish outline;
-  - the rider's leg barely shows.
-- **Small issues:**
-  - slimes sometimes draw over the player;
-  - stale LMB hints in town;
-  - Next day in the sandbox sends you home.
-- **Economy:** early-game margins and the fibre gate on early workbench recipes are unchanged.
+  - template outlines take the creature's own colours (no more reddish rim on the grey horse);
+  - the rider has a tall riding boot;
+  - side-facing bodies are a pixel deeper front and back;
+  - the passive tree is drawn in pixel blocks;
+  - enemy orbs and rocks are pixel squares.
+- **Small issues:** slimes sort behind you when overlapping; the LMB hint says Walk where a tool has nothing to work on; the sandbox's Next day keeps you in place.
+- **Economy:** cheap crops sell 25% higher, and a new farm starts with 20 fibre.
+
+Specific snags at single trees and roof corners are covered by the general sliding; reopen them if a playtest still hits one.

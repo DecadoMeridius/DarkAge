@@ -88,6 +88,10 @@ paintChunk = function (m, cx, cy) {
     if (L === 255) { d[o] = 12; d[o + 1] = 8; d[o + 2] = 10; d[o + 3] = 255; continue; } // outside a room
     const tx = (((ox + px_) % 64) + 64) % 64, ty = (((oy + py) % 64) + 64) % 64, to = (ty * 64 + tx) * 4;
     let r = T ? T[to] : 128, gg = T ? T[to + 1] : 128, b = T ? T[to + 2] : 128;
+    if (layers[L] === 'p' && !exact) { // paving: patches of wear and moss in the grout, so the texture doesn't read as one repeating tile
+      const ax = ox + px_, ay = oy + py, w = .9 + fbm(ax * .018, ay * .018, 5, 2) * .2; r *= w; gg *= w; b *= w;
+      if (r + gg + b < 330 && fbm(ax * .05, ay * .05, 23, 2) > .69) { r = r * .7 + 20; gg = gg * .8 + 38; b = b * .6 + 8; }
+    }
     const up = py > 0 ? lay[i - N] : L, up2 = py > 1 ? lay[i - 2 * N] : L, dn = py < N - 1 ? lay[i + N] : L;
     const lf = px_ > 0 ? lay[i - 1] : L, rt = px_ < N - 1 ? lay[i + 1] : L;
     if (wet[L]) {
@@ -237,7 +241,7 @@ function pixSwap(c, ramps, swap) {
   const x = c.getContext('2d'), id = x.getImageData(0, 0, c.width, c.height), a = id.data;
   for (let i = 0; i < a.length; i += 4) {
     if (!a[i + 3]) continue;
-    if (a[i] === 255 && a[i + 1] < ramps.length && a[i + 2] < 4) { const rc = ramps[a[i + 1]][a[i + 2]]; a[i] = rc[0]; a[i + 1] = rc[1]; a[i + 2] = rc[2]; }
+    if (a[i] === 255 && a[i + 1] < ramps.length && a[i + 2] < 5) { const lv = a[i + 2], rc = ramps[a[i + 1]][lv < 4 ? lv : 0], k = lv < 4 ? 1 : .55; a[i] = rc[0] * k; a[i + 1] = rc[1] * k; a[i + 2] = rc[2] * k * (lv < 4 ? 1 : 1.12); } // level 4: the outline, a darker shade of the ramp
     else if (swap && a[i] === swap[0][0] && a[i + 1] === swap[0][1] && a[i + 2] === swap[0][2]) { a[i] = swap[1][0]; a[i + 1] = swap[1][1]; a[i + 2] = swap[1][2]; }
   }
   x.putImageData(id, 0, 0); return c;

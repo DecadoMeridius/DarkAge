@@ -57,7 +57,8 @@ This guide explains every part of the game. Read the first sections to get going
 
 ## 3. Days, energy and health
 
-- **Time.** A day runs from 6:00 in the morning. **Go to bed before 2:00**, otherwise you collapse and lose 10% of your gold (at most 2,500). Sleep in your tent, or in your bed once you have a cottage.
+- **Time.** A day runs from 6:00 in the morning. **Go to bed before 2:00**, otherwise you collapse and lose 10% of your gold (at most 2,500); your lives don't save you from that, and the morning report says what happened. Sleep in your tent, or in your bed once you have a cottage.
+- **The farm notice board** beside the path shows the weather, coming festivals and birthdays, and the village request.
 - **Seasons.** There are four seasons of 28 days: spring, summer, autumn and winter. Crops, forage, fish and festivals depend on the season.
 - **Weather.** Rain waters your crops for you. Winter brings snow, frozen ponds and hungry animals.
 - **Energy** (the E bar) is used by tools. Eating and sleeping restore it.
@@ -121,7 +122,8 @@ Every lake, river, coast and region has its own fish, and some only bite in cert
 
 - **Harpoon.** Made at an anvil. Face deep water and use it: throw when your mark is over the big fish's shadow, then reel while it rests and let the line go when it runs, keeping the tension in the green band. Sharks, swordfish, tuna and manta rays live at sea; sturgeon in rivers and lakes.
 - **Crab traps.** Made at a workbench. Set one in water and come back the next day: haul it up by pulling when the marker crosses the green band. A missed pull lets one catch escape. Crabs, prawns, crayfish, lobsters and snails, depending on the water.
-- **From the canoe** you can fish with the rod, the harpoon and traps, but not use other tools or weapons.
+- **From the canoe** you can fish with the rod, the harpoon and traps (click where you want to cast), but not use other tools or weapons. Creatures can't reach you on the water, so it's a safe place to fish.
+- **Far water.** Clicking water that's out of reach with the rod or watering can walks you to the nearest shore first.
 
 ## 7. Skills and levelling
 
@@ -188,6 +190,7 @@ Everything is made at a **station**:
   | Barn | Cows, goats, sheep, pigs |
   | Stable | Horses |
 
+- **Where they are.** By day they graze in the pasture north-east of the tent; you can also find them inside their building. A bought pair is always one male and one female.
 - **Caring.** **Pet** your animals daily (right click) to raise their affection. Happy, well-fed animals give better products each morning: eggs, milk, wool, truffles and more.
 - **Winter.** Animals eat **hay** in winter: from your silos first, then from your bag. Keep it stocked or they go hungry.
 - **Breeding** (**N**, the Animals tab):
@@ -360,7 +363,8 @@ Each region has:
 
 **How they work**
 - **Starting.** Each starts on its own and tells you who to talk to.
-- **Tracking.** Press **Track** on one to get a marker over the target and an arrow at your feet.
+- **Tracking.** Press **Track** on one to get a marker over the target and an arrow above your head with its name and distance. It finds villagers inside their shops too, and the village map shows a **!**.
+- **New stories** are announced in the morning report on the day they begin.
 - **Choices.** Conversations play in a box at the bottom of the screen; some offer a choice.
 - **Rewards.** Chapters reward gold, items, friendship, and sometimes open a region.
 
@@ -373,7 +377,7 @@ Each region has:
 **Villagers**
 - **Schedules:** villagers have their own day. They open their shops, walk around and go home.
 - **Opening hours:** shops keep opening hours (Mara 9–17, for example) and close on festival days.
-- **Talking:** a shopkeeper you meet in the street greets you first: open their shop, chat, or say goodbye. The greeting shows a bar of progress to the next heart.
+- **Talking:** click a villager and they stop to wait for you. A shopkeeper you meet in the street greets you first: open their shop (only during opening hours), chat, or say goodbye. Chatting gives a little friendship once a day. The greeting shows a bar of progress to the next heart.
 - **Gifts:** talk to villagers every day and **give gifts** to raise friendship. Some gifts are loved, some hated; after a gift you see how much friendship it gave.
 - **Birthdays:** gifts given on a villager's birthday count triple. The Friends tab (**P**) lists birthdays and the next festival.
 
@@ -386,7 +390,7 @@ Each region has:
 | **Harvest Fair** | Autumn 16 | Your best produce is judged for a big prize |
 | **Ember Feast** | Winter 25 | Every gift gets one back |
 
-**Museum.** Donate finds there. Collections (**O**) track what you've donated, caught, shipped and found.
+**Museum.** Donate finds there; they go on show in the display cases. Collections (**O**) track what you've donated, caught, shipped and found.
 
 ## 17. Romance, family and generations
 

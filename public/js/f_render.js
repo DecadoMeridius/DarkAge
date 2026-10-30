@@ -138,12 +138,13 @@ function drawAnimal(a) {
 function drawEnt(e) {
   if (e.type === 'drop') { shadow(e.x, e.y + 1, 5); const ic = itemIcon(e.id === '$' ? 'gold_ore' : e.id); D(ic, e.x - 6, e.y - 12 - e.z + (e.z ? 0 : Math.sin(e.t * 4)), 12, 12); return; }
   if (e.type === 'proj') {
-    const glow = (r, c0, c1) => { const gr = g.createRadialGradient(e.x, e.y, 0, e.x, e.y, r); gr.addColorStop(0, c0); gr.addColorStop(1, c1); g.fillStyle = gr; g.beginPath(); g.arc(e.x, e.y, r, 0, 6.283); g.fill(); };
-    if (e.k === 'fire') { glow(6, 'rgba(255,200,90,.9)', 'rgba(255,90,20,0)'); g.fillStyle = '#fff2b0'; g.beginPath(); g.arc(e.x, e.y, 1.8, 0, 6.283); g.fill(); }
-    else if (e.k === 'ice') { glow(5, 'rgba(220,245,255,.9)', 'rgba(120,200,255,0)'); g.fillStyle = '#fff'; g.beginPath(); g.arc(e.x, e.y, 1.5, 0, 6.283); g.fill(); }
-    else if (e.k === 'void') { glow(5.5, 'rgba(220,120,255,.9)', 'rgba(90,40,160,0)'); g.fillStyle = '#ffd8ff'; g.beginPath(); g.arc(e.x, e.y, 1.4, 0, 6.283); g.fill(); }
+    // orbs on the art-pixel grid: a stepped halo, a body and a bright core (no soft gradients)
+    const X = Math.round(e.x * 2) / 2, Y = Math.round(e.y * 2) / 2, orb = (halo, body, core, n) => { g.fillStyle = halo; g.fillRect(X - n, Y - n + 1, n * 2, n * 2 - 2); g.fillRect(X - n + 1, Y - n, n * 2 - 2, n * 2); g.fillStyle = body; g.fillRect(X - 2, Y - 1.5, 4, 3); g.fillRect(X - 1.5, Y - 2, 3, 4); g.fillStyle = core; g.fillRect(X - 1, Y - 1, 1.5, 1.5); };
+    if (e.k === 'fire') orb('rgba(255,110,30,.45)', '#ff9a2a', '#fff2b0', 3.5);
+    else if (e.k === 'ice') orb('rgba(120,200,255,.45)', '#9ad8ff', '#ffffff', 3);
+    else if (e.k === 'void') orb('rgba(140,60,220,.5)', '#c07aff', '#ffe0ff', 3.5);
     else if (e.k === 'arrow') { const a = Math.atan2(e.vy, e.vx); g.save(); g.translate(e.x, e.y); g.rotate(a); g.strokeStyle = INK; g.lineWidth = 1.4; g.beginPath(); g.moveTo(-6, 0); g.lineTo(4, 0); g.stroke(); g.strokeStyle = '#c8945a'; g.lineWidth = .7; g.stroke(); g.fillStyle = '#d8dee4'; g.beginPath(); g.moveTo(6, 0); g.lineTo(3, -1.6); g.lineTo(3, 1.6); g.fill(); g.restore(); }
-    else { g.fillStyle = '#9a948a'; g.strokeStyle = INK; g.lineWidth = .5; g.beginPath(); g.arc(e.x, e.y, 2.2, 0, 6.283); g.fill(); g.stroke(); }
+    else { const X = Math.round(e.x * 2) / 2, Y = Math.round(e.y * 2) / 2; g.fillStyle = INK; g.fillRect(X - 2.5, Y - 2, 5, 4); g.fillRect(X - 2, Y - 2.5, 4, 5); g.fillStyle = '#9a948a'; g.fillRect(X - 2, Y - 1.5, 4, 3); g.fillStyle = '#c8c2b6'; g.fillRect(X - 1.5, Y - 1.5, 1.5, 1); }
     return;
   }
   const E2 = EN[e.k], spr = enemySpr(e.k, typeof enemyFrame === 'function' ? enemyFrame(e) : Math.floor(e.t * 4) % 2);

@@ -646,3 +646,59 @@ EVT.on('map', id => {
   }
   CHUNK.clear();
 });
+
+/* ---------- the rest of the open list ---------- */
+// signposts where the farm and village roads enter the Wilds: which way to the Old Mine and the coast
+{
+  const dirWord = (dx, dy) => { const a = Math.atan2(-dy, dx) * 180 / Math.PI, k = Math.round(((a + 360) % 360) / 45) % 8; return ['east', 'north-east', 'north', 'north-west', 'west', 'south-west', 'south', 'south-east'][k]; };
+  const placeSigns = () => {
+    const m = MAPS.wilds; if (!m || m._guideSigns || !m.bio) return; m._guideSigns = 1;
+    let cx = 0, cy = 0, n = 0; for (let y = 0; y < m.h; y += 3) for (let x = 0; x < m.w; x += 3) if (BIOMES[m.bio[y * m.w + x]] === 'coast') { cx += x; cy += y; n++; }
+    const coast = n ? [cx / n, cy / n] : null, mine = m.mineDoor ? [m.mineDoor.x, m.mineDoor.y] : null;
+    for (const [ex, ey] of [[60, 146], [100, 146]]) {
+      let spot = null; for (let r = 2; r < 7 && !spot; r++) for (const [dx, dy] of [[r, -2], [-r, -2], [r, -3], [-r, -3]]) { const x = ex + dx, y = ey + dy; if (inb(m, x, y) && passable(m, x, y) && !getO(m, x, y) && !m.solidB[y * m.w + x]) { spot = [x, y]; break; } }
+      if (!spot) continue;
+      const parts = []; if (mine) parts.push('Old Mine: ' + dirWord(mine[0] - spot[0], mine[1] - spot[1])); if (coast) parts.push('the coast: ' + dirWord(coast[0] - spot[0], coast[1] - spot[1]));
+      setO(m, spot[0], spot[1], { k: 'sign', fixed: 1, text: parts.join(' · ') + '.', guide: 1 });
+    }
+  };
+  EVT.on('map', id => { if (id === 'wilds') placeSigns(); });
+  // their words float over them when you're close, so you don't have to read every post
+  pcCursorDraw = (f => function (m) {
+    f(m);
+    if (!m || m.id !== 'wilds' || TITLE) return;
+    const px = Math.floor(S.p.x / 16), py = Math.floor(S.p.y / 16);
+    for (let y = py - 5; y <= py + 5; y++) for (let x = px - 6; x <= px + 6; x++) {
+      const o = inb(m, x, y) && m.o[y * m.w + x]; if (!o || !o.guide) continue;
+      g.save(); g.font = '600 6px Fredoka, sans-serif'; g.textAlign = 'center'; g.lineWidth = 2; g.strokeStyle = 'rgba(42,28,24,.9)'; g.fillStyle = '#fff2c8';
+      g.strokeText(o.text, (x + .5) * 16, y * 16 - 8); g.fillText(o.text, (x + .5) * 16, y * 16 - 8); g.restore();
+    }
+  })(pcCursorDraw);
+}
+// low creatures (slimes) sort a little behind you when you overlap, so they don't draw over the player
+render = (f => function (dt) {
+  if (!cur || !S || TITLE) return f(dt);
+  const moved = [];
+  for (const e of cur.ents) if (e.type === 'enemy' && EN[e.k] && EN[e.k].art === 'slime' && Math.abs(e.x - S.p.x) < 14 && e.y > S.p.y && e.y - S.p.y < 8) { moved.push([e, e.y]); e.y = S.p.y - .5; }
+  try { return f(dt); } finally { for (const [e, y] of moved) e.y = y; }
+})(render);
+// the LMB hint says Walk where a tool has nothing to work on
+hudTick = (f => function (dt) {
+  const r = f(dt);
+  if (!S || TITLE || PAUSED || !cur || fishing || !$('#pL') || !MOUSE.in) return r;
+  const k = selKind(); if (!['axe', 'pick', 'hoe', 'can', 'rod', 'scythe'].includes(k)) return r;
+  const [tx, ty] = clickTarget(); if (!inb(cur, tx, ty)) return r;
+  const idle = !hasTarget(tx, ty) && !(k === 'hoe' && (cur.farm || cur.id === 'greenhouse')) && k !== 'scythe' && !(k === 'can' && cur.soil[ty * cur.w + tx]);
+  if (idle && !inReach(tx, ty)) { const h = '<kbd>LMB</kbd>Walk'; if ($('#pL').innerHTML !== h) $('#pL').innerHTML = h; }
+  return r;
+})(hudTick);
+// the sandbox's Next day keeps you where you were
+endDay = (f => function (fainted) {
+  if (typeof SANDBOX === 'undefined' || !SANDBOX || fainted || !cur) return f(fainted);
+  const id = cur.id, x = S.p.x, y = S.p.y; const r = f(fainted);
+  if (MAPS[id] && id !== 'farm') goMap(id, x, y); else { S.p.x = x; S.p.y = y; }
+  return r;
+})(endDay);
+// early money: cheap crops sell a quarter higher, and a new farm starts with some fibre for the first workbench recipes
+sellPrice = (f => function (id) { const p = f(id), it = IT[id]; return p && it && it.t === 'crop' && it.p < 60 ? Math.round(p * 1.25) : p; })(sellPrice);
+startGame = (f => function (isNew) { const r = f(isNew); if (isNew && !(typeof SANDBOX !== 'undefined' && SANDBOX) && S) give('fiber', 20, 0, true); return r; })(startGame);
