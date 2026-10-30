@@ -254,13 +254,17 @@ def keg_rack():
     return finish(s)
 
 
-def display_case():
+def display_case(empty=False):
     s = base(64, 52)
     s.shade(rect(2, 30, 60, 20), None, 'form', colors=WOOD[1:])
     for x in range(4, 60):
         for y in range(4, 30):
             s.set(x, y, '#cfeef8' if (x - y) % 19 > 2 else '#ffffff')
     s.fill(rect(4, 4, 56, 1) | rect(4, 29, 56, 1) | rect(4, 4, 1, 26) | rect(59, 4, 1, 26) | rect(31, 4, 1, 26), '#8a8478')
+    if empty:  # nothing donated yet: glass over two velvet stands (donations are drawn on them in game)
+        for x0 in (8, 36):
+            s.fill(rect(x0, 24, 20, 5), '#6a2a3a'); s.fill(rect(x0, 24, 20, 1), '#8a3a4a')
+        return finish(s)
     s.shade(ellipse(16, 22, 6, 5), None, 'sphere', colors=['#5a2a6a', '#8a4aaa', '#c88ae0', '#f0d0ff'])  # gem
     s.shade(poly([(40, 26), (44, 12), (48, 12), (52, 26)]), None, 'form', colors=['#5a4a2a', '#a8884a', '#e0c070', '#fff0b0'])  # fossil / relic
     return finish(s)
@@ -428,11 +432,17 @@ def net_rack():
 
 
 def lamp():
+    # an indoor oil lamp on a small round side table (not a street lamp)
     s = base(32, 48)
-    s.fill(rect(15, 14, 3, 30), IRON[1]); s.fill(rect(10, 42, 13, 3), IRON[2])
-    s.shade(rect(11, 4, 11, 11), None, 'form', colors=IRON[1:])
-    s.fill(rect(13, 6, 7, 7), FIRE[3]); s.fill(rect(15, 8, 3, 3), FIRE[4])
-    s.meta = {'light': [16, 9]}
+    s.shade(ellipse(16, 27, 11, 4), None, 'form', colors=WOOD[1:])          # table top
+    s.fill(rect(6, 28, 21, 2), WOOD[1])
+    s.fill(rect(14, 30, 4, 14), WOOD[1]); s.fill(rect(15, 30, 1, 14), WOOD[2])  # leg
+    s.fill(rect(10, 43, 12, 2), WOOD[0]); s.fill(rect(11, 42, 10, 1), WOOD[1])  # foot
+    s.shade(ellipse(16, 22, 6, 3), None, 'sphere', colors=['#6a3a1a', '#a8642a', '#d8984a', '#f0c070'])  # brass oil font
+    s.fill(rect(13, 10, 7, 10), '#e8d8b0'); s.fill(rect(13, 10, 1, 10), '#fff4d8'); s.fill(rect(19, 10, 1, 10), '#c8b088')  # glass chimney
+    s.fill(rect(15, 13, 3, 5), FIRE[3]); s.fill(rect(16, 14, 1, 3), FIRE[4])
+    s.fill(rect(12, 9, 9, 1), '#8a5a2a'); s.fill(rect(12, 20, 9, 1), '#8a5a2a')
+    s.meta = {'light': [16, 15]}
     return finish(s, False)
 
 
@@ -506,7 +516,7 @@ SPRITES = {
     'furn_stove': stove, 'furn_fireplace': fireplace, 'furn_bookshelf': bookshelf, 'furn_dresser': dresser, 'furn_plant': plant,
     'furn_barrel': barrel, 'furn_crate': crate, 'furn_sack': sack, 'furn_shelf_store': shelf_goods,
     'furn_shelf_tavern': lambda: shelf_goods('tavern'), 'furn_shelf_museum': lambda: shelf_goods('museum'),
-    'furn_counter': counter, 'furn_bar': lambda: counter(True), 'furn_kegs': keg_rack, 'furn_display': display_case,
+    'furn_counter': counter, 'furn_bar': lambda: counter(True), 'furn_kegs': keg_rack, 'furn_display': display_case, 'furn_display_empty': lambda: display_case(True),
     'furn_pedestal': pedestal, 'furn_hay': hay, 'furn_trough': trough, 'furn_nestbox': nest_box, 'furn_saddle': saddle_rack,
     'furn_workbench': workbench, 'furn_lumber': lumber, 'furn_anvil': anvil, 'furn_tub': tub, 'furn_weapons': weapon_rack,
     'furn_coal': coal_pile, 'furn_forge': big_forge, 'furn_nets': net_rack, 'furn_lamp': lamp, 'furn_bench': bench,

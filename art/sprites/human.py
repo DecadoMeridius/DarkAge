@@ -53,6 +53,19 @@ HEAD_ROWS_S = {7: (13, 19), 8: (12, 20), 9: (11, 21), 10: (11, 21), 11: (11, 21)
 HEAD_S = {(x, y) for y, (a, b) in HEAD_ROWS_S.items() for x in range(a, b + 1)}
 
 
+def scarf(s, d, dx=0, dy=0):
+    """The scarf, wrapped round the neck after the neck and head are drawn (so nothing covers half of it)."""
+    sh_ = lambda pts: {(x + dx, y + dy) for x, y in pts}
+    if d == 0:
+        hline(s, 12 + dx, 19 + dx, 21 + dy, 'acc', 2); hline(s, 13 + dx, 18 + dx, 22 + dy, 'acc', 1)
+        flat(s, sh_({(17, 23), (17, 24)}), 'acc', 1); flat(s, sh_({(18, 25)}), 'acc', 0)      # the knot's tail
+    elif d == 3:
+        hline(s, 12 + dx, 19 + dx, 21 + dy, 'acc', 2); hline(s, 12 + dx, 19 + dx, 22 + dy, 'acc', 1)
+    else:
+        hline(s, 13 + dx, 18 + dx, 21 + dy, 'acc', 2); hline(s, 13 + dx, 18 + dx, 22 + dy, 'acc', 1)
+        flat(s, sh_({(12, 22), (11, 23), (11, 24)}), 'acc', 1)                                  # a tail at the back of the neck
+
+
 def torso_f(dx=0, dy=0):
     """Front / back torso: sloped shoulders, a chest, a waist, the hips."""
     return poly([(9 + dx, 22 + dy), (23 + dx, 22 + dy), (24 + dx, 25 + dy), (23 + dx, 31 + dy), (22 + dx, 34 + dy), (23 + dx, 40 + dy),
@@ -109,9 +122,9 @@ def body(d, f):
             arm_front(s, x0, 23 + sw, side)
         if d == 0:
             flat(s, {(14, 22), (15, 23), (16, 23), (17, 22)}, 'skin', 2)  # open collar
-            hline(s, 12, 19, 22, 'acc', 2); hline(s, 13, 18, 23, 'acc', 1)
             hline(s, 10, 22, 30, 'shirt', 1)  # a fold across the chest
         cel(s, rect(14, 19, 4, 4), 'skin')  # neck
+        scarf(s, d)
         cel(s, HEAD_F, 'skin')
         if d == 0:
             for ex in (12, 18):
@@ -132,8 +145,8 @@ def body(d, f):
         cel(s, poly([(14 + sw // 2, 23), (17 + sw // 2, 23), (17 + sw, 37), (14 + sw, 37)]), 'shirt')
         cel(s, rect(14 + sw, 37, 3, 4), 'skin')
         cel(s, rect(14, 19, 4, 4), 'skin')
-        hline(s, 15, 19, 22, 'acc', 2)
         cel(s, HEAD_S, 'skin')
+        scarf(s, 2)
         s.set(19, 13, EYE); s.set(19, 14, EYE); s.set(20, 13, WHITE)
         hline(s, 18, 20, 11, 'hair', 1)
         flat(s, {(22, 14), (22, 15), (21, 16)}, 'skin', 1)
@@ -171,7 +184,11 @@ def hair(style, d, layer):
             cap |= poly([(x0, 6), (x0 + 1.5, 1 + (k % 2) * 2), (x0 + 3, 6)])
     if style == 'long' and d == 0:
         cap |= rect(8, 10, 3, 20) | rect(21, 10, 3, 20)
+    if style == 'pony' and d == 3:  # from behind the tail hangs over the back, so it goes on the front layer
+        cap |= rect(14, 18, 4, 10) | rect(15, 28, 2, 2)
     cel(s, cap, 'hair')
+    if style == 'pony' and d == 3:
+        hline(s, 14, 17, 19, 'hair', 0)  # the tie
     for x, y in ((11, 6), (14, 5), (17, 6), (20, 7), (12, 8), (16, 8), (19, 9)):  # strand highlights and partings
         if (x, y) in cap:
             s.px[x, y] = code('hair', 3 if (x + y) % 2 else 1)
@@ -310,8 +327,8 @@ def ride():
     cel(s, poly([(15, 23), (18, 23), (22, 33), (19, 34)]), 'shirt')  # arm reaching for the reins
     cel(s, rect(20, 32, 3, 3), 'skin')
     cel(s, rect(14, 19, 4, 4), 'skin')
-    hline(s, 15, 19, 22, 'acc', 2)
     cel(s, HEAD_S, 'skin')
+    scarf(s, 2)
     s.set(19, 13, EYE); s.set(19, 14, EYE); s.set(20, 13, WHITE)
     hline(s, 18, 20, 11, 'hair', 1)
     flat(s, {(22, 14), (22, 15), (21, 16)}, 'skin', 1)
@@ -415,8 +432,8 @@ def head(s, d, dx=0, dy=0):
             s.fill(sh({(15, 18), (16, 18)}), MOUTH); flat(s, sh({(12, 16), (19, 16)}), 'skin', 1)
             flat(s, sh({(10, 13), (21, 13)}), 'skin', 1)
     else:
-        hline(s, 15 + dx, 19 + dx, 22 + dy, 'acc', 2)
         cel(s, sh(HEAD_S), 'skin')
+        scarf(s, 2, dx, dy)
         s.set(19 + dx, 13 + dy, EYE); s.set(19 + dx, 14 + dy, EYE); s.set(20 + dx, 13 + dy, WHITE)
         hline(s, 18 + dx, 20 + dx, 11 + dy, 'hair', 1)
         flat(s, sh({(22, 14), (22, 15), (21, 16)}), 'skin', 1)
@@ -513,8 +530,9 @@ def walk(d, f):
         hand(s, hx_ - 1, wy, side)
     if d == 0:
         flat(s, {(14, 22 + bob), (15, 23 + bob), (16, 23 + bob), (17, 22 + bob)}, 'skin', 2)
-        hline(s, 12, 19, 22 + bob, 'acc', 2); hline(s, 13, 18, 23 + bob, 'acc', 1); hline(s, 10, 22, 30 + bob, 'shirt', 1)
+        hline(s, 10, 22, 30 + bob, 'shirt', 1)
     head(s, d, 0, bob)
+    scarf(s, d, 0, bob)
     return s
 
 

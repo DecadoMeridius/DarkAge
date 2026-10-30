@@ -45,7 +45,7 @@ const STORIES = {
     ch: [
       { n: 'Grandmother\'s Pages', steps: [
         { t: 'talk', who: 'elias', hint: 'Talk to Elias at the museum.', lines: L('elias', 'Ah, the new farmer. Your grandmother and I argued for forty years about a knight called Aldren.', 'She kept a journal, then tore it to pieces before she died. The pages blew all over the Wilds.', 'Find three of them? I\'d like to know what she was hiding.') },
-        { t: 'cond', test: () => Object.keys(S.pages).length >= 3, hint: () => 'Find 3 lost journal pages in the Wilds (' + Object.keys(S.pages).length + ' found).', at: 'wilds:ruins' },
+        { t: 'cond', test: () => Object.keys(S.pages).length >= 3, hint: () => 'Find 3 of your grandmother’s lost journal pages in the Wilds (' + Math.min(3, Object.keys(S.pages).length) + ' of 3 found).', at: 'wilds:ruins' },
         { t: 'talk', who: 'elias', hint: 'Bring what you\'ve read back to Elias.', lines: L('elias', 'Sir Aldren went down the old mine and never came back. So that part was true.', 'And his squire buried something by the ruins in the Wilds. Your grandmother watched from a hedge, the little spy.', 'Go and look. Gently. It\'s a grave, after all.') },
       ], reward: { gold: 800 } },
       { n: 'The Squire\'s Grave', steps: [
@@ -355,8 +355,7 @@ pcCursorDraw = function (m) {
   const w = trackTarget(); if (!w || w.map !== m.id) return;
   const tx = (w.x + .5) * 16, ty = w.y * 16 - 22 + Math.round(Math.sin(gameT * 4) * 2);
   g.fillStyle = '#2a1c18'; g.fillRect(tx - 3, ty - 6, 7, 9); g.fillStyle = '#ffd040'; g.fillRect(tx - 2, ty - 5, 5, 7); g.fillStyle = '#2a1c18'; g.fillRect(tx, ty - 4, 1, 3); g.fillRect(tx, ty, 1, 1);
-  const dx = tx - S.p.x, dy = ty - S.p.y, d = Math.hypot(dx, dy);
-  if (d > 90) { const a = Math.atan2(dy, dx), ax = Math.round(S.p.x + Math.cos(a) * 22), ay = Math.round(S.p.y - 10 + Math.sin(a) * 16); g.fillStyle = '#ffd040'; for (let k = 0; k < 4; k++) g.fillRect(Math.round(ax - Math.cos(a) * k * 1.5) - (3 - k) / 2, Math.round(ay - Math.sin(a) * k * 1.5) - (3 - k) / 2, 4 - k, 4 - k); }
+  // the arrow toward it is drawn above your head (x_fix3.js)
 };
 const _worldMapCanvasW = worldMapCanvas;
 worldMapCanvas = function () { const c = _worldMapCanvasW(), w = trackTarget(); if (w && w.map === 'wilds') { const x = c.getContext('2d'); x.font = '18px Fredoka, sans-serif'; x.textAlign = 'center'; x.fillStyle = '#2a1c18'; x.fillText('!', w.x * 3 + 1, w.y * 3 + 7); x.fillStyle = '#ffd040'; x.fillText('!', w.x * 3, w.y * 3 + 6); } return c; };

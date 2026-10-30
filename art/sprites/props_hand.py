@@ -149,7 +149,7 @@ def ruinwall():
 
 
 # ---------- an iron lamp post with a hanging lantern ----------
-def lantern():
+def lantern(lit=True):
     s = Canvas(32, 56)
     shadow_ellipse(s, 16, 53, 7, 1)
     box(s, 10, 50, 12, 4, IRON); box(s, 12, 47, 8, 3, IRON)              # base
@@ -164,15 +164,22 @@ def lantern():
     s.set(22, 14, IRON['m']); s.set(22, 15, IRON['m'])                   # hook
     box(s, 18, 16, 9, 2, IRON)                                           # lantern cap
     s.set(21, 15, IRON['l']); s.set(22, 14, IRON['l']); s.set(23, 15, IRON['l'])
-    for y in range(18, 26):                                              # glass and flame
+    for y in range(18, 26):                                              # glass and flame (by day: dark glass, a cold wick)
         s.set(18, y, IRON['d']); s.set(26, y, IRON['d'])
         for x in range(19, 26):
-            s.set(x, y, FIRE['y'] if 20 <= x <= 24 and 19 <= y <= 24 else FIRE['o'])
-    s.set(22, 20, FIRE['w']); s.set(22, 21, FIRE['w']); s.set(21, 22, FIRE['w']); s.set(23, 22, FIRE['w'])
+            if lit:
+                s.set(x, y, FIRE['y'] if 20 <= x <= 24 and 19 <= y <= 24 else FIRE['o'])
+            else:
+                s.set(x, y, '#c8d8d8' if x == 19 and y < 23 else '#7a8a8e' if (x + y) % 5 else '#5a6a70')
+    if lit:
+        s.set(22, 20, FIRE['w']); s.set(22, 21, FIRE['w']); s.set(21, 22, FIRE['w']); s.set(23, 22, FIRE['w'])
+    else:
+        s.set(22, 23, '#3a2a20'); s.set(22, 24, '#3a2a20'); s.set(22, 25, '#c8b890')
     for x in range(18, 27):
         s.set(x, 26, IRON['m'])
     s.set(22, 27, IRON['d'])
-    s.meta = {'light': [22, 21]}
+    if lit:
+        s.meta = {'light': [22, 21]}
     return done(s)
 
 
@@ -231,6 +238,75 @@ def shrine():
     return done(s)
 
 
-SPRITES = {'statue': statue, 'ruinwall': ruinwall, 'lantern': lantern, 'forge': forge, 'shrine': shrine, 'fence': lambda: fence(10)}
+# ---------- the village fountain (128x150): a stone basin over the plaza pond, a two-tier spout ----------
+WATER = {'k': '#1e3a5a', 'd': '#2a5a8a', 'm': '#3a7ab8', 'l': '#6aaee0', 'h': '#c8ecff'}
+
+
+def fountain():
+    s = Canvas(128, 150)
+    cx, cy = 64, 96
+    inE = lambda x, y, rx, ry, oy=0: ((x - cx) / rx) ** 2 + ((y - cy - oy) / ry) ** 2 <= 1
+    shadow_ellipse(s, cx, cy + 34, 62, 10)
+    for x in range(128):                                       # the basin wall, front face, with block joints
+        for y in range(60, 150):
+            if inE(x, y, 61, 33, 10) and not inE(x, y, 61, 33):
+                j = (x // 9 + (1 if y > cy + 30 else 0)) % 2
+                c = STONE['d'] if (x % 9 == 0 and y > cy) or y >= cy + 33 + 8 else STONE['m'] if j else STONE['l']
+                if x > 100:
+                    c = STONE['d'] if c != STONE['l'] else STONE['m']
+                s.set(x, y, c)
+    for x in range(128):                                       # the rim: lit on the far (top) side
+        for y in range(56, 140):
+            if inE(x, y, 61, 33) and not inE(x, y, 52, 27):
+                c = STONE['h'] if y < cy - 20 and x < 90 else STONE['l'] if y < cy else STONE['m']
+                if (x + y) % 11 == 0:
+                    c = STONE['d']
+                s.set(x, y, c)
+    for x in range(128):                                       # the water, darker toward the near wall
+        for y in range(60, 140):
+            if inE(x, y, 51, 26):
+                c = WATER['d'] if y < cy - 16 else WATER['m']
+                if y > cy + 14:
+                    c = WATER['m']
+                if (y - cy) % 6 == 0 and (x + y // 6) % 9 < 4:
+                    c = WATER['l']
+                s.set(x, y, c)
+    for y in range(66, 72):                                    # the far rim's shadow on the water
+        for x in range(30, 98):
+            if inE(x, y, 51, 26) and not inE(x, y, 49, 26, 4):
+                s.set(x, y, WATER['k'])
+    # the pedestal and lower bowl
+    box(s, 58, 54, 12, 44, STONE)
+    for x in range(36, 93):
+        for y in range(50, 66):
+            if ((x - 64) / 28) ** 2 + ((y - 58) / 7) ** 2 <= 1:
+                s.set(x, y, STONE['l'] if y < 56 else STONE['m'] if y < 62 else STONE['d'])
+            if ((x - 64) / 23) ** 2 + ((y - 56) / 4) ** 2 <= 1:
+                s.set(x, y, WATER['m'] if (x + y) % 7 else WATER['l'])
+    # the upper bowl and the spout
+    box(s, 61, 26, 6, 26, STONE)
+    for x in range(48, 81):
+        for y in range(26, 38):
+            if ((x - 64) / 15) ** 2 + ((y - 31) / 5) ** 2 <= 1:
+                s.set(x, y, STONE['l'] if y < 30 else STONE['m'] if y < 34 else STONE['d'])
+            if ((x - 64) / 11) ** 2 + ((y - 29) / 2.5) ** 2 <= 1:
+                s.set(x, y, WATER['l'])
+    box(s, 62, 14, 4, 13, STONE); box(s, 60, 10, 8, 4, STONE)
+    for k in range(3):                                         # water falling from the spout and over the bowls
+        s.set(63 - k, 8 - k, WATER['h']); s.set(65 + k, 8 - k, WATER['h'])
+    for side in (-1, 1):
+        for k in range(16):
+            x = 64 + side * (15 + k // 3); y = 31 + k
+            s.set(x, y, WATER['h'] if k % 3 else WATER['l'])
+        for k in range(26):
+            x = 64 + side * (28 + k // 4); y = 58 + k
+            s.set(x, y, WATER['h'] if k % 4 else WATER['l'])
+    for x, y in ((40, 104), (88, 110), (52, 118), (76, 100)):  # ripples where the water lands
+        for dx in range(-3, 4):
+            s.set(x + dx, y, WATER['h'] if abs(dx) < 3 else WATER['l'])
+    return done(s)
+
+
+SPRITES = {'fountain': fountain, 'statue': statue, 'ruinwall': ruinwall, 'lantern': lantern, 'lantern_off': lambda: lantern(False), 'forge': forge, 'shrine': shrine, 'fence': lambda: fence(10)}
 for _m in range(16):
     SPRITES[f'fence_{_m}'] = (lambda m=_m: fence(m))

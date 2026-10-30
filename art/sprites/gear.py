@@ -565,7 +565,11 @@ def tool_icon(kind, lvl):
             s.shade(poly([(round(x), round(y)) for x, y in (xy(20.5, 1), xy(22, 4.5), xy(23.5, 1))]), None, 'form', colors=m)
         x, y = xy(21.5, 0); s.fill(rect(int(x) - 1, int(y) - 1, 2, 2), trim[2])
     if kind == 'scythe':  # the long blade sweeps down from the top of the snath
-        s.shade(poly([(23, 4), (14, 2), (6, 4), (1, 10), (8, 7), (15, 6), (23, 7)]), None, 'form', colors=m); s.fill(line(22, 4, 13, 3) | line(13, 3, 5, 6), m[3])
+        # a long crescent, heavy at the heel and hooking down to a point, unmistakably not a pick
+        s.shade(poly([(26, 2), (17, 0), (9, 1), (3, 5), (0, 12), (2, 12), (6, 8), (11, 6), (18, 5), (26, 7)]), None, 'form', colors=m)
+        s.fill(line(25, 2, 17, 1) | line(17, 1, 9, 2) | line(9, 2, 4, 5) | line(4, 5, 1, 11), m[3])   # the honed edge
+        s.fill(line(25, 7, 18, 6) | line(18, 6, 11, 7), m[0])                                             # the shadowed back
+        s.fill(rect(24, 3, 3, 4), trim[1])                                                                # the collar on the snath
     if lvl == 5:
         x, y = xy(10, 0); s.set(int(x), int(y), '#7affc0')
     return fin(s)

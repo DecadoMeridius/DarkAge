@@ -185,3 +185,27 @@ None of them saw a JavaScript error.
 7. **Canoe and fishing:** line and bobber in the canoe, enemies kept off water and hits not cancelling casts, a seated paddle pose, harpoon feedback, softer trap misses, stacking traps.
 8. **Art:** pixel combat effects and smoke; the Lich; shaded armour; distinct seed, tool, wood, artifact and mineral icons; the plaza fountain; furrowed tilled soil; lamps only at night and none indoors; the creator fixes.
 9. **UI:** Satchel tabs that fit; windows sized to their content; the Skills screen; map labels; heading-font ligatures; "4 Wood (have 15)".
+
+## Status after the fix pass (2026-10-30, `x_fix5.js`)
+Fixed in this pass: everything in the fix order except the water distance (kept on purpose).
+
+**Done but not playtested at full length:**
+- the balance numbers (hit cap, Focus gain);
+- the new art.
+
+**Still open:**
+- **World and navigation:**
+  - the plaza is still one repeating paving texture;
+  - nothing points to the coast or the mine;
+  - snags at specific trees and roof corners (the general sliding should cover most).
+- **Art:**
+  - side-facing sprites are thin;
+  - the passive tree is still smooth (only its dropdowns are restyled);
+  - the Lich's orbs are round projectiles;
+  - the grey horse has a reddish outline;
+  - the rider's leg barely shows.
+- **Small issues:**
+  - slimes sometimes draw over the player;
+  - stale LMB hints in town;
+  - Next day in the sandbox sends you home.
+- **Economy:** early-game margins and the fibre gate on early workbench recipes are unchanged.

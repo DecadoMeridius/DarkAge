@@ -229,7 +229,7 @@ body:has(#modal:not([hidden])) #ctpanel { display: none; }
 #iprompt { position: fixed; right: 14px; top: 205px; padding: 6px 10px; z-index: 30; display: flex; flex-direction: column; gap: 4px; min-width: 150px; pointer-events: none; }
 #iprompt .iprow { display: flex; gap: 8px; align-items: center; font-weight: 600; }
 #iprompt kbd { min-width: 22px; text-align: center; }
-#fishgame { position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%); padding: 8px 10px; z-index: 55; display: flex; flex-direction: column; gap: 4px; align-items: center; }
+#fishgame { position: fixed; left: 50%; top: 70px; transform: translateX(-50%); padding: 8px 10px; z-index: 55; display: flex; flex-direction: column; gap: 4px; align-items: center; }
 #fishgame canvas { width: 640px; height: 300px; image-rendering: pixelated; border: 2px solid #2a1c18; }
 #topr.dock { display: grid !important; grid-template-columns: repeat(4, 46px); gap: 4px !important; width: auto !important; top: 150px !important; right: 12px !important; }
 #topr.dock .dk { position: relative; overflow: visible !important; width: 46px; height: 46px; padding: 2px 1px 1px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; cursor: pointer; }
@@ -239,3 +239,18 @@ body:has(#modal:not([hidden])) #ctpanel { display: none; }
 #topr.dock .dk.on { outline: 2px solid #ffd040; outline-offset: -2px; filter: brightness(1.15); }
 #topr.dock .dk:hover { filter: brightness(1.2); }
 #mtabs .tab .uiic { image-rendering: pixelated; vertical-align: -3px; margin-right: 4px; }
+
+/* Playtest 4: windows and labels */
+* { font-variant-ligatures: none; font-feature-settings: "liga" 0, "dlig" 0, "clig" 0, "calt" 0; }
+#mtabs { flex-wrap: wrap !important; overflow: visible !important; row-gap: 3px !important; }
+#mtabs .tab { flex: 0 0 auto; }
+.note { color: #5a4030 !important; font-size: 13px; }
+.bagright { display: grid; grid-template-columns: auto 1fr; column-gap: 16px; align-content: start; }
+.bagright > h3, .bagright > .bagtools { grid-column: 1 / -1; }
+.bagright > .pack { grid-column: 1; grid-row: 3; }
+.bagright > .detail, .bagright > p.note { grid-column: 2; grid-row: 3; align-self: start; flex-wrap: wrap; }
+.bagright > .detail .acts { flex-wrap: wrap; }
+#mbody > .list:has(> .srow) { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 6px 10px; }
+#mbody > .list > .srow { background: rgba(255, 248, 230, .55); border: 2px solid #c8a878; padding: 4px 8px; }
+#modal select { background: #f4e6c4; border: 2px solid #6a4a2a; border-radius: 0; font: 600 13px Fredoka, sans-serif; color: #3a2618; padding: 2px 4px; }
+.need { white-space: nowrap; }

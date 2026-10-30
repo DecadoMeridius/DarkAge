@@ -51,12 +51,23 @@ function localMapCanvas(m) {
   }
   x.font = '600 ' + Math.max(10, k + 1) + 'px Fredoka, sans-serif'; x.textAlign = 'center'; x.lineWidth = 3;
   const label = (t, X, Y, col) => { x.strokeStyle = 'rgba(42,28,24,.9)'; x.strokeText(t, X, Y); x.fillStyle = col || '#fff6e0'; x.fillText(t, X, Y); };
-  for (const b of m.bld) { x.fillStyle = '#a8744a'; x.fillRect(b.x * k, b.y * k, b.w * k, b.h * k); x.strokeStyle = '#4a2e1a'; x.lineWidth = 2; x.strokeRect(b.x * k + 1, b.y * k + 1, b.w * k - 2, b.h * k - 2); x.lineWidth = 3;
-    label(BLD_N[b.act] || BLD_N[b.kind] || DOORL[b.act] || '', (b.x + b.w / 2) * k, (b.y + b.h / 2) * k + 4); }
+  // building names: kept inside the map and off each other (centre, then above, then below the building)
+  const taken = [], fs = Math.max(10, k + 1), free = (l, t, r, b2) => !taken.some(q => l < q[2] && r > q[0] && t < q[3] && b2 > q[1]);
+  for (const b of m.bld) { x.fillStyle = '#a8744a'; x.fillRect(b.x * k, b.y * k, b.w * k, b.h * k); x.strokeStyle = '#4a2e1a'; x.lineWidth = 2; x.strokeRect(b.x * k + 1, b.y * k + 1, b.w * k - 2, b.h * k - 2); x.lineWidth = 3; }
+  for (const b of m.bld) {
+    const t = BLD_N[b.act] || BLD_N[b.kind] || DOORL[b.act] || ''; if (!t) continue;
+    const w = x.measureText(t).width + 4, X = Math.max(w / 2 + 2, Math.min(W - w / 2 - 2, (b.x + b.w / 2) * k));
+    const ys = [(b.y + b.h / 2) * k + 4, b.y * k - 4, (b.y + b.h) * k + fs, (b.y + b.h / 2) * k + 4 + fs, (b.y + b.h / 2) * k + 4 - fs];
+    let Y = ys.find(y => y - fs > 0 && y < H && free(X - w / 2, y - fs, X + w / 2, y + 2)); if (Y === undefined) Y = ys[0];
+    taken.push([X - w / 2, Y - fs, X + w / 2, Y + 2]); label(t, X, Y);
+  }
+  // villagers out and about, and the tracked story target
+  for (const n of m.npcs || []) { if (n.home) continue; x.fillStyle = '#fff6e0'; x.beginPath(); x.arc(n.x / 16 * k, n.y / 16 * k, Math.max(3, k * .35), 0, 6.283); x.fill(); x.strokeStyle = '#2a1c18'; x.lineWidth = 1.5; x.stroke(); x.lineWidth = 3; }
+  const tw = typeof trackTarget === 'function' && trackTarget(); if (tw && tw.map === m.id) { x.font = '700 ' + (fs + 8) + 'px Fredoka, sans-serif'; label('!', (tw.x + .5) * k, (tw.y + .5) * k + 6, '#ffd040'); x.font = '600 ' + fs + 'px Fredoka, sans-serif'; }
   for (const w of m.warps) { const X = (w.x + w.w / 2) * k, Y = (w.y + w.h / 2) * k; x.fillStyle = '#ffd040'; x.fillRect(w.x * k, w.y * k, Math.max(k, w.w * k), Math.max(k, w.h * k));
     const east = w.x >= m.w - 2, west = w.x <= 1, ty = Math.min(H - 8, Math.max(16, Y + (w.y === 0 ? 20 : w.y >= m.h - 2 ? -10 : -(w.h * k) / 2 - 6)));
-    x.textAlign = east ? 'right' : west ? 'left' : 'center'; label((east ? '' : west ? '← ' : '↑ ') + placeName(w.to) + (east ? ' →' : ''), east ? W - 4 : west ? 4 : X, ty, '#ffe08a'); x.textAlign = 'center'; }
-  if (cur === m) { const px = S.p.x / 16 * k, py = S.p.y / 16 * k; x.fillStyle = '#e8342a'; x.beginPath(); x.arc(px, py, Math.max(5, k * .6), 0, 6.283); x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 2; x.stroke(); x.lineWidth = 3; label('You', px, py - k - 2, '#ffb0a0'); }
+    x.textAlign = east ? 'right' : west ? 'left' : 'center'; const wt = (east ? '' : west ? '← ' : '↑ ') + placeName(w.to) + (east ? ' →' : ''), ww = x.measureText(wt).width; label(wt, east ? W - 4 : west ? 4 : Math.max(ww / 2 + 2, Math.min(W - ww / 2 - 2, X)), ty, '#ffe08a'); x.textAlign = 'center'; }
+  if (cur === m) { const px = S.p.x / 16 * k, py = S.p.y / 16 * k; x.fillStyle = '#e8342a'; x.beginPath(); x.arc(px, py, Math.max(5, k * .6), 0, 6.283); x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 2; x.stroke(); x.lineWidth = 3; label('You', Math.max(14, Math.min(W - 14, px)), py - k - 2 < 12 ? py + k + 12 : py - k - 2, '#ffb0a0'); }
   return c;
 }
 const _renderMapF = renderMap;

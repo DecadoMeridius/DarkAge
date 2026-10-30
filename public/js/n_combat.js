@@ -92,7 +92,7 @@ equip = function (id) {
 const _itemDescC = itemDesc;
 itemDesc = function (id) {
   const it = IT[id]; let d = _itemDescC(id).replace(/ Requires Combat \d+\./, '');
-  if (it && it.ti !== undefined && (it.t === 'weapon' || it.t === 'armor')) d += ' Requires ' + CSKN[it.magic ? 'magic' : it.t === 'armor' ? 'defence' : it.wt === 'bow' ? 'ranged' : it.wt === 'staff' ? 'magic' : 'melee'] + ' ' + (TIER_REQ_RS[it.ti] || 1) + '.' + (it.t === 'weapon' ? ' Attacks every ' + (WSPEED[it.wt] || 4) + ' ticks.' : '');
+  if (it && it.ti !== undefined && (it.t === 'weapon' || it.t === 'armor')) d += ' Requires ' + CSKN[it.magic ? 'magic' : it.t === 'armor' ? 'defence' : it.wt === 'bow' ? 'ranged' : it.wt === 'staff' ? 'magic' : 'melee'] + ' ' + (TIER_REQ_RS[it.ti] || 1) + '.' + (it.t === 'weapon' ? (typeof ACTION === 'function' && ACTION() && typeof WPN !== 'undefined' && WPN[it.wt] ? ' ' + (1 / WPN[it.wt].cd).toFixed(1) + ' swings a second.' : ' Attacks every ' + (WSPEED[it.wt] || 4) + ' ticks.') : '');
   return d;
 };
 

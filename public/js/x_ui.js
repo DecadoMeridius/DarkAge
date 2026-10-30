@@ -16,7 +16,7 @@
       farm's own trees are oaks and birches (no Woodcutting-10 maples at the start). */
 
 /* ---------- B1 + B4: recipe search and categories ---------- */
-const RCAT = [['all', 'All'], ['bp', 'Blueprints'], ['mach', 'Machines'], ['part', 'Parts'], ['gear', 'Gear'], ['farm', 'Farming'], ['food', 'Food']];
+const RCAT = [['all', 'Every kind'], ['bp', 'Blueprints'], ['mach', 'Machines'], ['part', 'Parts'], ['gear', 'Gear'], ['farm', 'Farming'], ['food', 'Food']];
 function rcatOf(r) {
   const it = IT[r[0]] || {};
   if (r[0].startsWith('bp_')) return 'bp';

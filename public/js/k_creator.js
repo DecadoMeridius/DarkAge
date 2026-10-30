@@ -23,7 +23,9 @@ playerPal = function () {
   return Object.assign(P, { skin: L.skin, hair: L.hair, hs: L.hs, eye: L.eye, acc: L.acc, shirt: b ? P.shirt : L.shirt, pants: b ? P.pants : L.pants, shoe: bt ? P.shoe : L.shoe });
 };
 
+let CC_NAME = null; // what you typed, kept while the creator redraws for each colour you pick
 function openCreator(onDone) {
+  CC_NAME = null;
   S.look = Object.assign({}, DEFAULT_LOOK, S.look || {});
   let dir = 0;
   const draw = (cvs) => {
@@ -38,7 +40,7 @@ function openCreator(onDone) {
       el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => { dir = [2, 3, 1, 0][[0, 2, 3, 1].indexOf(dir)]; draw(cvs); } }, '⟲ Turn'),
         el('button', { class: 'btn ghost', on: () => { for (const k in LOOK_OPTS) S.look[k] = pickR(LOOK_OPTS[k]); refresh(); } }, '🎲 Random')));
     const right = el('div', { class: 'ccright' });
-    const name = el('input', { class: 'ccname', value: S.look.name === 'Farmer' || S.look.name === 'Wren' ? '' : S.look.name, placeholder: 'Your name', maxlength: 16 }); name.addEventListener('focus', () => name.select()); name.addEventListener('input', () => S.look.name = name.value.trim() || 'Farmer');
+    const name = el('input', { class: 'ccname', value: CC_NAME !== null ? CC_NAME : S.look.name === 'Farmer' || S.look.name === 'Wren' ? '' : S.look.name, placeholder: 'Your name', maxlength: 16 }); name.addEventListener('focus', () => name.select()); name.addEventListener('input', () => { CC_NAME = name.value; S.look.name = name.value.trim() || 'Farmer'; });
     right.append(el('div', { class: 'ccrow' }, el('span', null, 'Name'), name));
     for (const k in LOOK_OPTS) {
       const row = el('div', { class: 'ccopts' });

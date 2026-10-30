@@ -22,7 +22,7 @@ LEAF = {
             ['#24502a', '#336e2e', '#4a8a34', '#68a63c', '#8cc04c', '#b4d870'],
             ['#6a2a18', '#9a4422', '#c8682a', '#e0903a', '#f0b450', '#fad67a'],
             None],
-    'maple': [['#4a1422', '#6e1e2a', '#962c30', '#b8463a', '#d06a48', '#e89466'],  # red maple: copper-red in spring,
+    'maple': [['#2a3a1e', '#3e5a26', '#5e7a2e', '#88963a', '#b89e4e', '#e0b878'],  # red maple: fresh yellow-green with warm tips in spring,
               ['#3e1020', '#5e1828', '#842232', '#a83a3c', '#c45a4a', '#dc8460'],  # deep crimson in summer,
               ['#6a1a08', '#a42a0c', '#d64a14', '#f0761e', '#fca03a', '#ffc862'],  # blazing orange in autumn
               None],

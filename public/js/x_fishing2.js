@@ -49,7 +49,7 @@ useItem = (f => function (id) {
     const w = waterAhead(); if (!w) { toast('Set the trap in water.'); return; }
     if (getO(cur, w[0], w[1])) { toast('Something is already there.'); return; }
     take('crab_trap'); setO(cur, w[0], w[1], { k: 'crabtrap', t: dayIndex(), loc: fishLocs()[0] || 'pond' }); SFX.splash();
-    toast('Trap set. Come back tomorrow to haul it up.'); return;
+    const n = cur.o.filter(q => q && q.k === 'crabtrap').length; toast('Trap set' + (n > 1 ? ' (' + n + ' here)' : '') + '. Come back tomorrow to haul it up.'); return;
   }
   return f(id);
 })(useItem);
@@ -108,8 +108,9 @@ function startHarpoon(b) {
         this.sweep += this.sdir * dt * (.45 + d * .08); if (this.sweep > 1 || this.sweep < 0) { this.sdir = -this.sdir; this.sweep = clamp(this.sweep, 0, 1); }
         fgHint('Click or Space when your mark is over the fish. Throws left: ' + this.throws);
         if (this.press) {
-          if (Math.abs(this.sweep - this.fx) < .07 - d * .006) { this.phase = 'fight'; SFX.bite(); this.flash = .3; }
-          else { this.throws--; SFX.splash(); this.flash = -.3; if (this.throws <= 0) { toast('The ' + IT[id].n.toLowerCase() + ' dives out of reach.', 'bad'); fgClose(); } }
+          const off = this.sweep - this.fx;
+          if (Math.abs(off) < .1 - d * .005) { this.phase = 'fight'; SFX.bite(); this.flash = .3; this.msg = 'Hit!'; this.msgT = 1; }
+          else { this.throws--; SFX.splash(); this.flash = -.3; this.msg = Math.abs(off) < .2 ? (off < 0 ? 'Just short, to the left' : 'Just past, to the right') : 'Missed'; this.msgT = 1; if (this.throws <= 0) { toast('The ' + IT[id].n.toLowerCase() + ' dives out of reach.', 'bad'); fgClose(); } }
         }
       } else {
         this.runT -= dt; if (this.runT <= 0) { this.run = !this.run; this.runT = this.run ? .6 + Math.random() * (.6 + d * .2) : 1 + Math.random() * 1.4; }
@@ -128,14 +129,16 @@ function startHarpoon(b) {
           addXP('fishing', 30 + d * 12); toast('You landed a ' + IT[id].n + '!', 'lvl'); SFX.lvl(); fgClose();
         }
       }
-      this.flash = this.flash > 0 ? Math.max(0, this.flash - dt) : Math.min(0, this.flash + dt);
+      this.flash = this.flash > 0 ? Math.max(0, this.flash - dt) : Math.min(0, this.flash + dt); if (this.msgT > 0) this.msgT -= dt;
     },
     draw(x) {
       x.imageSmoothingEnabled = false;
+      const msg = this.msgT > 0 ? this.msg : null;
       x.fillStyle = '#1e4a6e'; x.fillRect(0, 0, 320, 150); x.fillStyle = '#2a5e86'; for (let i = 0; i < 6; i++) x.fillRect((i * 57 + gameT * 20) % 340 - 20, 20 + i * 21, 30, 2);
       const ic = itemIcon(id);
       if (this.phase === 'aim') {
-        const fx = this.fx * 280 + 20; x.globalAlpha = .55; x.filter = 'brightness(0.15)'; if (ic) x.drawImage(ic, fx - 32, 55, 64, 64); x.filter = 'none'; x.globalAlpha = 1;
+        const fx = this.fx * 280 + 20; x.fillStyle = 'rgba(200,236,255,.18)'; x.beginPath(); x.ellipse(fx, 87, 38, 18, 0, 0, 6.283); x.fill(); x.globalAlpha = .7; x.filter = 'brightness(0.3)'; if (ic) x.drawImage(ic, fx - 32, 55, 64, 64); x.filter = 'none'; x.globalAlpha = 1;
+        x.strokeStyle = 'rgba(232,248,255,.45)'; x.lineWidth = 1; x.beginPath(); x.ellipse(fx, 87, 34 + Math.sin(gameT * 4) * 2, 15, 0, 0, 6.283); x.stroke();
         const sx = this.sweep * 280 + 20; x.strokeStyle = this.flash < 0 ? '#ff5a4a' : '#ffe08a'; x.lineWidth = 2; x.beginPath(); x.moveTo(sx, 0); x.lineTo(sx, 150); x.stroke();
         x.beginPath(); x.arc(sx, 87, 12, 0, 6.283); x.stroke();
       } else {
@@ -146,6 +149,7 @@ function startHarpoon(b) {
         x.fillStyle = '#10202e'; x.fillRect(16, 8, 288, 8); x.fillStyle = '#7affd8'; x.fillRect(16, 8, 288 * this.prog, 8);
         x.fillStyle = '#e8dcc0'; x.font = '10px Fredoka, sans-serif'; x.fillText('tension', 16, 112); x.fillText('landed', 16, 28);
       }
+      if (msg) { x.font = '700 16px Fredoka, sans-serif'; x.textAlign = 'center'; x.lineWidth = 3; x.strokeStyle = '#10202e'; x.strokeText(msg, 160, 34); x.fillStyle = msg === 'Hit!' ? '#7affb0' : '#ffb08a'; x.fillText(msg, 160, 34); x.textAlign = 'left'; }
     },
   };
   fgLoop();
@@ -161,7 +165,8 @@ function startHaul(o) {
       this.m += this.mv * dt * (1.1 + this.done * .25); if (this.m > 1 || this.m < 0) { this.mv = -this.mv; this.m = clamp(this.m, 0, 1); }
       fgHint('Pull (click or Space) when the marker is in the green band. ' + (this.pulls - this.done) + ' pulls to go.');
       if (this.press) {
-        if (Math.abs(this.m - this.band) < .09) { this.done++; SFX.ok(); }
+        if (Math.abs(this.m - this.band) < .11) { this.done++; SFX.ok(); }
+        else if (!this.missed) { this.missed = 1; SFX.splash(); toast('The trap swings. Careful: the next slip loses something.'); this.done++; }
         else { SFX.splash(); if (o.catch.length) { const g2 = o.catch.splice(Math.floor(Math.random() * o.catch.length), 1)[0]; this.lost.push(g2); toast('A ' + IT[g2].n.toLowerCase() + ' slips out of the trap.'); } this.done++; }
         this.band = .2 + Math.random() * .6;
         if (this.done >= this.pulls) {
@@ -177,7 +182,7 @@ function startHaul(o) {
       x.strokeStyle = '#e8dcc0'; x.lineWidth = 2; x.beginPath(); x.moveTo(110, 0); x.lineTo(110, ty); x.stroke();
       const ic = itemIcon('crab_trap'); if (ic) x.drawImage(ic, 86, ty - 8, 48, 48);
       x.fillStyle = '#10202e'; x.fillRect(250, 10, 24, 130);
-      x.fillStyle = '#3a8a4a'; x.fillRect(250, 10 + (this.band - .09) * 130, 24, .18 * 130);
+      x.fillStyle = '#3a8a4a'; x.fillRect(250, 10 + (this.band - .11) * 130, 24, .22 * 130);
       x.fillStyle = '#ffe08a'; x.fillRect(246, 10 + this.m * 128, 32, 3);
     },
   };

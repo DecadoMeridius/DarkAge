@@ -297,7 +297,6 @@ function hurtPlayer(dmg, sx, sy, elem) {
   if (elem === 'fire' && !PS.fireres) pl.burn = 3; if (elem === 'ice') pl.chill = 2.5;
   floatText(S.p.x, S.p.y - 26, '-' + d, '#ff6a5a');
   const a = Math.atan2(S.p.y - sy, S.p.x - sx); pl.kbx = Math.cos(a) * 170; pl.kby = Math.sin(a) * 170;
-  if (navigator.vibrate) try { navigator.vibrate(35); } catch (e) { }
   if (S.p.hp <= 0) { S.p.hp = 0; faint('You were knocked out…'); }
 }
 function faint(msg) { const lost = Math.min(2500, Math.round(S.gold * .1)); S.gold -= lost; toast(msg + (lost ? ' You lost ' + lost + 'g.' : ''), 'bad'); endDay(true); }
@@ -485,7 +484,7 @@ function fishAct() {
 }
 function updateFishing(dt) {
   const f = fishing; if (!f) return;
-  if (f.phase === 'wait') { f.t -= dt; if (f.t <= 0) { f.phase = 'bite'; f.t = 1.4; SFX.bite(); floatText(S.p.x, S.p.y - 46, 'Bite! Click!', '#ffd040'); if (navigator.vibrate) try { navigator.vibrate(60); } catch (e) { } } return; }
+  if (f.phase === 'wait') { f.t -= dt; if (f.t <= 0) { f.phase = 'bite'; f.t = 2; SFX.bite(); floatText(S.p.x, S.p.y - 46, 'Bite! Click!', '#ffd040'); } return; }
   if (f.phase === 'bite') { f.t -= dt; if (f.t <= 0) { fishing = null; toast('It got away…'); } return; }
   f.t += dt;
   const zs = Math.min(.5, (.2 + S.sk.fishing.l * .015 + (S.tools.rod - 1) * .03) * (hasPerk('patient') ? 1.25 : 1) * (S.bonus.fishzone ? 1.2 : 1) * (S.buffs.some(b => b.fish) ? 1.15 : 1));

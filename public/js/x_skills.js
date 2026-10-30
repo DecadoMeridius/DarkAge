@@ -149,7 +149,7 @@ function renderCSkills(b) {
       const acts = el('div', { class: 'acts wrap' });
       if (r >= 3) acts.append(el('button', { class: 'btn off' }, 'Max rank')); // keeps the Z X C buttons in place
       if (r < 3) acts.append(el('button', { class: 'btn' + (can ? '' : ' off'), on: () => { if (!can) { toast(!okLvl ? 'You need ' + CSKN[T.style] + ' ' + lvl + '.' : !prev ? 'Learn the skill above first.' : 'No points left in this tree.', 'bad'); return; } S.cskill[id] = r + 1; SFX.lvl(); refresh(); } }, r ? 'Rank up' : 'Learn'));
-      if (r) ['Z', 'X', 'C'].forEach((key, k) => acts.append(el('button', { class: 'btn ghost' + (S.abil[k] === id ? ' on' : ''), on: () => { S.abil[k] = id; hudKey = ''; refresh(); } }, key)));
+      if (r) ['Z', 'X', 'C'].forEach((key, k) => acts.append(el('button', { class: 'btn ghost' + (S.abil[k] === id ? ' on' : '') + (T.need(PS.wt) ? '' : ' off'), title: T.need(PS.wt) ? '' : 'Hold ' + T.needN + ' to put this in its loadout', on: () => { if (!T.need(PS.wt)) { toast('Equip ' + T.needN + ' first: each weapon type keeps its own Z X C loadout.', 'bad'); return; } S.abil[k] = id; hudKey = ''; refresh(); } }, key)));
       card.append(acts); col.append(card);
     });
     cols.append(col);

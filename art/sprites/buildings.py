@@ -576,7 +576,7 @@ SIGN_ICONS = {  # 12x9 hand-pixelled trade symbols painted on the board
     'saw': ["...........k", "kkkkkkkkkkbk", "kSSSSSSSSkbk", "ksksksksskck", ".k.k.k.k.kbk", "..........kk", "............", "............", "............"],
     'urn': ["....kkkk....", "...kaaaak...", "....kAAk....", "..kaaaaaak..", ".kaawwwaaak.", ".kaAAAAAaak.", "..kaaaaaak..", "...kaaaak...", "...kkkkkk..."],
     'fish': ["............", "..kkkkk..k..", ".kooooook.kk", "koOwkoooookOk", "kooooooooOk.", ".kOOOOOOk.kk", "..kkkkk..k..", "............", "............"],
-    'crest': [".kkkkkkkkk..", ".kOOyOOOOk..", ".kOyyyOOOk..", ".kOOyOOOOk..", ".kOOOOrrOk..", "..kOOrrOk...", "...kOOOk....", "....kOk.....", ".....k......"],
+    'crest': ["kkkkkkkkkkk.", "kOOOOkrrrrk.", "kOyOOkryrrk.", "kOOOOkrrrrk.", "kkkkkkkkkkk.", "krrrrkOOOOk.", ".krrrkOOOk..", "..kkrkOkk...", "....kkk....."],  # a quartered shield: straight top and sides
 }
 
 

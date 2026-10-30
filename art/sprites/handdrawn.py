@@ -1184,3 +1184,55 @@ SHARD = {
 BASALT['arm'] = [(1, 0), (8, -1), (9, 10), (8, 20), (11, 26), (11, 33), (-1, 33), (-1, 26), (1, 20), (0, 10)]
 BASALT['tw'] = .64
 GIANT_ROCK['tw'] = .8
+
+# ---------- the Pale Lich (78x120): a hovering robed skull in a crown, a staff with a cold orb ----------
+def lich_f(step, pose='walk'):
+    bob = [0, -1, -2, -1][step] if pose == 'walk' else 0
+    sway = [2, 1, -2, -1][step] if pose == 'walk' else 0
+    up = {'walk': 0, 'wind': -12, 'strike': 5}[pose]
+    fx = {'walk': 0, 'wind': -3, 'strike': 8}[pose]
+    y0 = bob
+    shapes = [
+        # the robe: narrow shoulders, flaring to a ragged hem that drifts with the frame
+        ([(26, 40 + y0), (52, 40 + y0), (60, 70 + y0), (68 + sway, 112 + y0), (10 + sway, 112 + y0), (18, 70 + y0)], 'b'),
+        ([(34, 44 + y0), (44, 44 + y0), (50, 112 + y0), (28, 112 + y0)], 'm'),                       # the dark front panel
+        ([(22, 38 + y0), (56, 38 + y0), (58, 48 + y0), (39, 54 + y0), (20, 48 + y0)], 'd'),          # the mantle over the shoulders
+        # the cowl framing the skull
+        ([(27, 12 + y0), (39, 6 + y0), (51, 12 + y0), (54, 30 + y0), (50, 42 + y0), (28, 42 + y0), (24, 30 + y0)], 'd'),
+        # the skull
+        ([(31, 16 + y0), (39, 12 + y0), (48, 16 + y0), (49, 28 + y0), (45, 34 + y0), (35, 34 + y0), (30, 28 + y0)], 'W'),
+        ([(34, 33 + y0), (45, 33 + y0), (44, 39 + y0), (35, 39 + y0)], 'T'),                          # the jaw
+        # the back arm: a sleeve hanging, a bony hand
+        ([(22, 44 + y0), (28, 46 + y0), (24, 74 + y0), (16, 72 + y0)], 'b'),
+        ([(16, 72 + y0), (24, 74 + y0), (22, 80 + y0), (17, 79 + y0)], 'T'),
+        # the staff, held out front: shaft and a crowned orb
+        ([(62 + fx, 28 + up + y0), (65 + fx, 28 + up + y0), (65 + fx, 116 + y0), (62 + fx, 116 + y0)], 'm'),
+        ([(58 + fx, 26 + up + y0), (69 + fx, 26 + up + y0), (66 + fx, 31 + up + y0), (61 + fx, 31 + up + y0)], 'Y'),
+        ([(63 + fx, 12 + up + y0), (69 + fx, 15 + up + y0), (70 + fx, 21 + up + y0), (66 + fx, 26 + up + y0), (61 + fx, 26 + up + y0), (57 + fx, 21 + up + y0), (58 + fx, 15 + up + y0)], 'I'),
+        # the front arm reaching to the staff
+        ([(48, 44 + y0), (56, 46 + y0), (62 + fx, 56 + up // 2 + y0), (58 + fx, 62 + up // 2 + y0), (46, 54 + y0)], 'b'),
+        ([(58 + fx, 54 + up // 2 + y0), (66 + fx, 54 + up // 2 + y0), (66 + fx, 61 + up // 2 + y0), (58 + fx, 61 + up // 2 + y0)], 'T'),
+        # the crown on the cowl
+        ([(30, 12 + y0), (48, 12 + y0), (48, 15 + y0), (30, 15 + y0)], 'Y'),
+        ([(30, 12 + y0), (31, 4 + y0), (34, 12 + y0)], 'Y'), ([(37, 12 + y0), (39, 1 + y0), (41, 12 + y0)], 'Y'), ([(44, 12 + y0), (47, 4 + y0), (48, 12 + y0)], 'Y'),
+    ]
+    g = polygrid(78, 120, shapes)
+    det = [(21 + y0, 34, 'NNN'), (22 + y0, 33, 'NEEN'), (23 + y0, 34, 'NN'),            # eye sockets with a cold glow
+           (21 + y0, 42, 'NNN'), (22 + y0, 42, 'NEEN'), (23 + y0, 43, 'NN'),
+           (27 + y0, 39, 'NN'), (28 + y0, 39, 'N'),                                       # the nose
+           (35 + y0, 35, 'N.N.N.N.N'), (37 + y0, 36, 'N.N.N.N'),                          # teeth
+           (13 + y0, 38, 'RR'), (13 + y0, 32, 'C'), (13 + y0, 45, 'C'),                   # gems in the crown
+           (47 + y0, 37, 'YYYY'), (48 + y0, 38, 'YY'),                                    # the mantle's clasp
+           (16 + up + y0, 61 + fx, 'J'), (15 + up + y0, 62 + fx, 'JJ'), (17 + up + y0, 61 + fx, 'J')]
+    for k, x in enumerate(range(12, 66, 5)):                                                 # ragged hem
+        L = 3 + (k * 7 + step * 3) % 6
+        for yy in range(112 + y0, 112 + y0 + L):
+            det.append((yy, x + sway + ((yy + k) // 3) % 2, 'bb' if yy - 112 - y0 < L - 1 else 'b'))
+    for yy in range(56, 108, 9):                                                             # folds in the robe
+        det.append((yy + y0, 24 + (yy % 3), '2')); det.append((yy + y0 + 2, 54 - (yy % 4), '2'))
+    if pose == 'strike':                                                                     # the orb flares
+        det += [(12 + up + y0 + dy, 72 + fx, 'I') for dy in (2, 6, 10)] + [(9 + up + y0, 63 + fx, 'II'), (28 + up + y0, 72 + fx, 'J')]
+    return grid_sprite(with_detail(g, det, 78), 78, 120)
+
+
+_reg('lich', lich_f)

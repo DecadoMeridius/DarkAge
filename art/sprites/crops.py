@@ -119,18 +119,34 @@ def dead():
 
 
 def soil(wet):
+    """Tilled earth: soft ridges and wavering furrows with clods, a ragged edge (not a framed board)."""
     s = Canvas(32, 32)
-    pal = ['#3e2616', '#4e321e', '#5a3a24', '#6a4a30'] if wet else ['#7a4e30', '#8a5e3a', '#9a6a44', '#b08050']
+    pal = ['#3a2414', '#4a2e1c', '#583822', '#6a4630', '#7a5438'] if wet else ['#6a4028', '#7a4c30', '#8c5a3a', '#a06c48', '#b8845a']
     r = rng(3 + wet)
-    s.fill(rect(1, 1, 30, 30), pal[2])
-    for k in range(3):  # furrows
-        y = 6 + k * 9
-        s.fill(rect(3, y, 26, 2), pal[0]); s.fill(rect(3, y + 2, 26, 1), pal[3])
-    for _ in range(14):
-        s.set(r.randrange(2, 30), r.randrange(2, 30), pal[1 if r.random() < .5 else 3])
-    s.fill(rect(1, 0, 30, 1) | rect(0, 1, 1, 30), pal[3]); s.fill(rect(1, 31, 30, 1) | rect(31, 1, 1, 30), pal[0])
+    body = {(x, y) for x in range(32) for y in range(32) if not ((x < 2 or x > 29) and (y < 2 or y > 29))}
+    s.fill(body, pal[2])
+    for k in range(4):  # furrows that waver a little, each with a lit ridge above it
+        y0 = 3 + k * 8
+        for x in range(1, 31):
+            y = y0 + round(math.sin(x * .55 + k * 1.7) * .8)
+            s.set(x, y + 2, pal[0]); s.set(x, y + 3, pal[1] if (x + k) % 5 else pal[0])
+            if r.random() < .8:
+                s.set(x, y, pal[3])
+            if r.random() < .25:
+                s.set(x, y - 1, pal[4])
+    for _ in range(10):  # clods and pebbles
+        x, y = r.randrange(2, 29), r.randrange(2, 29)
+        s.set(x, y, pal[4]); s.set(x + 1, y, pal[3]); s.set(x, y + 1, pal[1])
+    for x in range(32):  # a ragged rim where the turned soil meets the grass
+        for y in (0, 31):
+            if (x, y) in body and r.random() < .55:
+                s.set(x, y, pal[1] if y else pal[3])
+    for y in range(32):
+        for x in (0, 31):
+            if (x, y) in body and r.random() < .55:
+                s.set(x, y, pal[1] if x else pal[3])
     if wet:
-        s.fill(ellipse(10, 9, 5, 1.5), '#5a6a7a'); s.set(8, 9, '#8a9aaa')
+        s.fill(ellipse(10, 13, 4, 1), '#4a5664'); s.set(9, 13, '#7a8a9a'); s.fill(ellipse(22, 29, 3, 1), '#4a5664')
     return s
 
 

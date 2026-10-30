@@ -133,13 +133,17 @@ function exitToward(m, map) {
   if (!w) w = W.find(x => x.to === 'farm' || x.to === 'village' || x.to === 'wilds') || W[0];
   return w ? { x: w.x + w.w / 2, y: w.y + w.h / 2 } : null;
 }
-const _pcCursorDrawTrack = pcCursorDraw;
+const _pcCursorDrawTrack = pcCursorDraw, TRK = {};
 pcCursorDraw = function (m) {
   _pcCursorDrawTrack(m);
   const w = typeof trackTarget === 'function' && trackTarget(); if (!w || TITLE) return;
   let tx, ty; if (w.map === m.id) { tx = (w.x + .5) * 16; ty = (w.y + .5) * 16; } else { const e = exitToward(m, w.map); if (!e) return; tx = e.x * 16; ty = e.y * 16; }
-  const dx = tx - S.p.x, dy = ty - S.p.y; if (Math.hypot(dx, dy) < 60) return;
-  const a = Math.atan2(dy, dx), cx = S.p.x + Math.cos(a) * 26, cy = S.p.y - 8 + Math.sin(a) * 20;
+  const dx = tx - S.p.x, dy = ty - S.p.y, dd = Math.hypot(dx, dy); if (dd < 60) return;
+  // above your head, clear of the body: an arrow that turns smoothly, with the distance and the target's name
+  const want = Math.atan2(dy, dx); TRK.a = TRK.a === undefined ? want : TRK.a + Math.atan2(Math.sin(want - TRK.a), Math.cos(want - TRK.a)) * .12;
+  const a = TRK.a, cx = Math.round(S.p.x), cy = Math.round(S.p.y - 48);
+  if (w.map === m.id) { const sid = S.story.track, st = stepOf(sid), who = st && st.who && NPCS[st.who] ? NPCS[st.who].n : STORIES[sid].n;
+    g.save(); g.font = '600 6px Fredoka, sans-serif'; g.textAlign = 'center'; g.lineWidth = 2; g.strokeStyle = '#2a1c18'; const t = who + ' · ' + Math.round(dd / 16) + ' m'; g.strokeText(t, cx, cy - 9); g.fillStyle = '#ffe08a'; g.fillText(t, cx, cy - 9); g.restore(); }
   g.save(); g.translate(cx, cy); g.rotate(a); g.fillStyle = '#2a1c18'; g.beginPath(); g.moveTo(8, 0); g.lineTo(-5, -6); g.lineTo(-2, 0); g.lineTo(-5, 6); g.closePath(); g.fill();
   g.fillStyle = '#ffd040'; g.beginPath(); g.moveTo(6, 0); g.lineTo(-4, -4.5); g.lineTo(-1.5, 0); g.lineTo(-4, 4.5); g.closePath(); g.fill(); g.restore();
   if (w.map !== m.id) { g.save(); g.font = '600 7px Fredoka, sans-serif'; g.textAlign = 'center'; g.lineWidth = 2; g.strokeStyle = '#2a1c18'; const t = 'to ' + (typeof placeName === 'function' ? placeName(w.map) : w.map); g.strokeText(t, cx, cy - 9); g.fillStyle = '#ffe08a'; g.fillText(t, cx, cy - 9); g.restore(); }

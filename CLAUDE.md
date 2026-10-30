@@ -319,6 +319,30 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **Exploration:** the Wilds and region maps zoom (buttons, mouse wheel) and show waystones; chests list what they held; picked flowers and mushrooms are named; mine ladders have a bobbing arrow; early request-board items are first-week items; gem veins need floor 5+; small windows (`#modal.small`) for the elevator and lost pages; opened chests have a raised lid (`props.py`).
 - **Cliffs:** `r` faces are natural rock (cracks, a broken ledge, darker toward the foot) instead of stone courses; cliff tops get a rocky tint and flat stones (`h_pixel.js`).
 
+## Playtest 4 fixes (`public/js/x_fix5.js`, list in `docs/playtest/PLAYTEST_4.md`)
+- **Critical:** an implement is only set down while you still have one; hotbar slots let go of items you no longer have. Animals also stand in their coop, barn or stable room (`animalsOn`, used by `f_render`); a store-bought pair is male and female (`balanceSex`); the sandbox pasture is mown.
+- **Clicks:**
+  - Far clicks with the hoe, can, seeds or fertiliser walk there and act; far water with the can or rod walks to the nearest shore (`shoreWater`). The auto tool leaves a can or rod you picked yourself.
+  - Tall objects are clickable over their whole sprite; a clicked villager waits (`n.waitT`); a keeper behind a counter is reached across it (`counterNear`).
+  - World clicks only land when the canvas is under the mouse. Input is ignored for a moment after a minigame or window closes (`INPUT_GAP`).
+  - The station recipe search takes focus; Esc in a search box closes the window.
+- **Seeing and moving:** sidestep sliding up to 9 px in any direction and `freeSpot` when stuck inside something; tree canopies fade over enemies too; damage numbers are drawn after the night grade (`LAST_WT`); the dock and key prompt fade when you're under them; bosses can't hurt you while shielded.
+- **Riding:** implements work across the horse's movement, not the mouse, and say when they snag; getting off leaves the horse beside you.
+- **Stories:** a story is announced in the morning it begins (`storyState` runs before the report). The tracker shows one arrow above your head with the target's name and distance, and finds villagers inside their shop. The village map shows villagers and the `!`, with labels that avoid each other. A passed-out line goes in the morning report; exhaustion skips lives. There's a night warning on the first trips into the Wilds.
+- **Villagers:** Chat cycles lines (`CHAT`) and gives +15 once a day. The street Shop button is greyed outside opening hours. Keepers leave the counter at closing. The gift picker is just the bag. The farm notice board shows weather, festivals, birthdays and the request.
+- **Combat:**
+  - Combat test: spawns on land, packs come in from 100 px, bosses arrive on the right, Ranged is goblins and archers at level 10, Clear also empties hazards, effects and arrows, and quests and perk picks are off.
+  - Balance: one hit is at most 14% of max health plus defence. Focus is +5 a hit before the tree. Bow and staff get their own starting loadouts. V only slots skills for the weapon you hold.
+- **Canoe and fishing:** enemies lose track of you on the water; climbing in and out says so; seated lower with the rod, line and bobber drawn; a rod in the canoe casts where you click. Harpoon: a wider hit window, hit or miss feedback, and a brighter fish. Traps: the first missed pull is free and the band is wider; the bite window is 2 s.
+- **Placement:** each ghost tile is green or red, and a refusal says why (`tileWhy`). The clock stops while you place. Implements have Set down in the bag.
+- **UI:** the Satchel tabs wrap onto two rows. Item details sit beside the bag. Skills are a card grid. Ligatures are off (Cinzel's Ꝏ). Recipe rows read "4 Wood (have 15)". Short windows are small (`SMALL_WIN`).
+- **Art:**
+  - A hand-drawn Pale Lich (`lich_f` in `handdrawn.py`) and a village fountain over the plaza pond (`fountain` in `props_hand.py`; its tiles are paved and solid).
+  - Museum cases show your donations (`furn_display_empty`); lanterns are dark by day (`lantern_off`); the indoor lamp is a table lamp; tilled soil is furrowed earth.
+  - Spring maples are green; the manor crest is a quartered shield; Elias's robe is blue; under plate armour the sleeves are mail grey.
+  - New icons: log bundle, boot, crown, coin, mask, amphora, flute, brooch, crystal, step cut, brilliant. Artifacts and minerals use them (`SHAPE`). Seed packets show their crop, implements use their own sprite, and the scythe icon has a long crescent blade.
+  - Telegraphs and wind-up wedges are drawn on the art-pixel grid (`pxEll`, `pxBand`, `pxWedge`); chimney smoke is stepped pixel squares; the scarf wraps the neck after the head is drawn; a ponytail shows from behind.
+
 ## Canoe (`public/js/x_canoe.js`)
 - Made at a workbench (40 wood, 4 hardwood, 12 fiber), worn in the Boat slot (`S.eq.boat`, between the rings). While worn, deep water (`w`) is open to the player's `moveEnt` and `walkTo` (`withWater` lifts `TER.w.solid` for that call); `S.p.boat` follows the tile under you, so you climb in and out at the shore. Drawn seated in the hull with the near gunwale over the legs, a paddle stroking side to side and a wake (`canoe.0/.1` in `implements.py`).
 

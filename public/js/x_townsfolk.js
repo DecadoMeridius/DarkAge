@@ -8,7 +8,7 @@
   dress(N.pip && N.pip.P, { vest: 1, belt: '#5a2418' });                            // tavern keeper: vest and apron
   dress(N.odile && N.odile.P, { vest: 1, belt: '#7a4a2a', hat: '#3a2a22' });        // stable master: riding vest and hat
   dress(N.hale && N.hale.P, { apron: '#a8743f', belt: '#4a2e1a' });                 // carpenter: tool apron
-  dress(N.elias && N.elias.P, { robe: '#3a4a6a', belt: '#8a6a3a' });               // curator: a scholar's robe
+  dress(N.elias && N.elias.P, { robe: '#4a64a0', belt: '#8a6a3a' });               // curator: a scholar's robe
   dress(N.corwin && N.corwin.P, { vest: 1, belt: '#6a5a3a' });                      // fisher: oilskin vest under his hat
   if (typeof SCAST === 'object') {
     const C = SCAST;
