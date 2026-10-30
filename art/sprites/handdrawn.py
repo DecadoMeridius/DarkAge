@@ -5,13 +5,14 @@ Grid letters:  . empty
   1 2 3 4  body tones dark->light (ch 0, levels 0-3), placed by hand
   5 6 7 8  second-colour tones (ch 1, levels 0-3)
   E eye (swappable)  W white  N nose/claw black  T tooth  R red  O fire orange  Y fire yellow
+  G g pine greens  C crystal teal  I J ice light / ice shade
 Region letters are cel shaded flat (light on top edges, shadow on the bottom edges, base inside), like
 the characters; every hand-placed digit wins over that. A selective outline is added at the end.
 """
 from px import Canvas
 from sprites.creatures import C, EYE
 
-FIXED = {'E': EYE, 'W': '#f4ece0', 'N': '#1a1210', 'T': '#f0e8d8', 'R': '#d8342a', 'O': '#ff8a2a', 'Y': '#ffd860'}
+FIXED = {'E': EYE, 'W': '#f4ece0', 'N': '#1a1210', 'T': '#f0e8d8', 'R': '#d8342a', 'O': '#ff8a2a', 'Y': '#ffd860', 'G': '#2e5a26', 'g': '#5a8a3a', 'C': '#4ad8b8', 'I': '#c8ecff', 'J': '#7ab8e0'}
 
 
 def grid_sprite(rows, W, H):
@@ -800,3 +801,345 @@ def rabbit_f(step):
 
 for _n, _f in (('horse', horse_f), ('cow', cow_f), ('goat', goat_f), ('sheep', sheep_f), ('pig', pig_f), ('chicken', chicken_f), ('duck', duck_f), ('rabbit', rabbit_f)):
     register(_n, [(lambda f=_f, k=k: f(k)) for k in range(4)], prefix='an_')
+
+
+# ======================= regional creatures and bosses =======================
+def S(pts, k=1, dx=0, dy=0):
+    """Scale hand-picked points (designed small) by k and shift them: crisp at any size."""
+    return [(round(x * k + dx), round(y * k + dy)) for x, y in pts]
+
+
+def SD(det, k=1, dx=0, dy=0):
+    return [(round(y * k + dy), round(x * k + dx), px) for y, x, px in det]
+
+
+POSE = {'walk': (0, 0), 'wind': (-2, 2), 'strike': (3, 0)}
+
+
+def beast(W, H, k, step, pose, legs, back, top, front, det, wt=1, wb=1, hoof='N', hh=2, oy=0):
+    """A four-legged creature from designed points (scaled by k): pose moves the body, legs stay planted."""
+    dx, dy = POSE[pose]
+    dx, dy = dx * k, dy * k
+    legs_k = [(hx * k + dx, hy * k + dy + oy, fx * k + dx * .3, a * k * wt, b * k * wb, kn * k) for hx, hy, fx, a, b, kn in legs]
+    tr = lambda shapes: [(S(p, k, dx, dy + oy), ch) for p, ch in shapes]
+    st = step if pose == 'walk' else 1
+    return quad(W, H, st, tr(back), tr(front), legs_k, tr(top), SD(det, k, dx, dy + oy), hoof=hoof, hh=hh)
+
+
+# canine (designed in a 54x40 frame): wargs, the frost warg, the fire hound
+def canine(W, H, k, step, pose, extra=None, jaw_open=False):
+    legs = [(14, 26, 12, 4, 2, -2), (36, 26, 37, 3.5, 2, 1), (12, 25, 11, 5, 2, -2), (34, 26, 34, 4, 2, 1)]
+    tail = [([(10, 18), (4, 14), (1, 18), (3, 26), (9, 24)], 'm')]
+    body = [([(9, 18), (16, 15), (30, 16), (40, 14), (44, 20), (41, 28), (33, 30), (20, 26), (12, 27)], 'b'),
+            ([(26, 15), (30, 9), (34, 13), (37, 7), (40, 12), (44, 15), (43, 27), (36, 26)], 'm'),
+            ([(38, 12), (44, 9), (48, 13), (53, 17), (52, 20), (46, 21), (40, 19)], 'b')]
+    ears = [([(40, 11), (41, 3), (44, 10)], 'b'), ([(43, 10), (45, 3), (46, 10)], 'b')]
+    det = [(13, 44, 'WE'), (17, 53, 'N'), (20, 47, '1111'), (21, 48, 'T'), (21, 50, 'T'), (16, 34, '44'), (17, 35, '4'), (19, 20, '2'), (20, 21, '2'), (19, 28, '2'), (20, 29, '2')]
+    if jaw_open:
+        det += [(20, 46, '1NNNNN1'), (21, 46, 'TbTbTb'), (22, 47, 'bbbb')]
+    if extra:
+        b2, d2 = extra
+        body += b2; det += d2
+    return beast(W, H, k, step, pose, legs, tail, body, ears, det, oy=H - 40 * k)
+
+
+def warg_f(step, pose='walk', ice=False):
+    ex = None
+    if ice:
+        ex = ([([(x, 17), (x + 3, 7 - (x // 6) % 2 * 3), (x + 6, 17)], 'T') for x in range(12, 38, 6)], [])
+    return canine(66, 48, 1.2, step, pose, ex, pose == 'strike')
+
+
+def hound_f(step, pose='walk'):
+    fl = step % 2
+    ex = ([([(x, 17), (x + 3, 17 - (8 + (i * 7 + fl * 3 * (i % 2)) % 7)), (x + 6, 17)], 'b') for i, x in enumerate(range(14, 42, 5))],
+          [(17 - (8 + (i * 7 + fl * 3 * (i % 2)) % 7) + 2, x + 3, 'Y') for i, x in enumerate(range(14, 42, 5))] + [(15, x, 'O') for x in range(16, 42, 5)] + [(13, 44, 'YY')])
+    return canine(64, 46, 1.15, step, pose, ex, pose == 'strike')
+
+
+def bear_f(step, pose='walk'):
+    legs = [(24, 34, 23, 9, 7, -1), (50, 34, 51, 8, 7, 1), (19, 34, 19, 10, 8, 0), (46, 34, 46, 10, 8, 0)]
+    body = [([(10, 30), (16, 20), (30, 17), (42, 10), (54, 14), (58, 26), (54, 40), (40, 44), (16, 42)], 'b'), ([(30, 14), (40, 10), (52, 14), (52, 24), (34, 22)], 'm')]
+    head = [([(52, 20), (58, 16), (64, 19), (69, 26), (66, 31), (57, 31), (52, 28)], 'b'), ([(53, 16), (55, 13), (58, 16)], 'b'), ([(59, 16), (61, 13), (63, 17)], 'b')]
+    det = [(21, 60, 'WE'), (26, 67, 'NN'), (30, 60, 'TTTTT'), (20, 22, '44'), (19, 28, '444'), (24, 16, '2'), (25, 17, '2'), (30, 26, '2'), (31, 27, '2'), (34, 36, '2'), (35, 37, '2')]
+    if pose == 'strike':
+        det += [(29, 58, '1NNNNNN'), (30, 59, 'TbTbT')]
+    return beast(70, 52, 1, step, pose, legs, [], body + head, [], det, hoof='T', hh=1)
+
+
+def mammoth_f(step, pose='walk'):
+    legs = [(24, 44, 24, 10, 9, 0), (58, 44, 58, 10, 9, 0), (18, 44, 18, 11, 10, 0), (52, 44, 52, 11, 10, 0)]
+    body = [([(8, 40), (14, 22), (34, 12), (54, 10), (70, 16), (76, 34), (72, 50), (16, 52)], 'b'),
+            ([(12, 22), (30, 12), (48, 10), (40, 18), (20, 24)], 'T')]   # snow on its back
+    trunk_up = pose == 'wind'
+    head = [([(62, 14), (72, 8), (80, 14), (82, 30), (76, 40), (66, 36)], 'b'), ([(60, 18), (66, 16), (68, 32), (62, 34)], 'm')]
+    trunk = ([(76, 34), (84, 28), (88, 16), (86, 12), (82, 22), (74, 28)], 'b') if trunk_up else ([(76, 34), (84, 44), (82, 58), (78, 64), (75, 62), (77, 54), (76, 44), (70, 38)], 'b')
+    tusk = ([(70, 36), (74, 46), (82, 52), (88, 44), (86, 54), (76, 56), (68, 44)], 'T')
+    det = [(22, 72, 'WE'), (41, 12, 'mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm'), (42, 13, 'm.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m.m'),
+           (43, 14, 'm..m..m..m..m..m..m..m..m..m..m..m..m..m..m..m..m..m..m'), (24, 30, '44'), (22, 40, '444'), (30, 50, '2'), (31, 51, '2')]
+    return beast(88, 68, 1, step, pose, legs, [], body + head + [trunk], [tusk], det, hoof='T', hh=1)
+
+
+def griffin_f(step, pose='walk'):
+    legs = [(16, 36, 15, 6, 3, -2), (44, 36, 45, 3, 2, 1), (20, 36, 20, 7, 4, -2), (46, 36, 46, 3.5, 2, 1)]
+    wing_up = step % 2 == 0 or pose == 'wind'
+    wing = ([(22, 28), (6, 2), (16, 6), (24, 3), (32, 8), (42, 26)], 'm') if wing_up else ([(22, 28), (2, 22), (12, 18), (14, 30), (26, 24), (42, 28)], 'm')
+    body = [([(10, 30), (16, 24), (30, 23), (40, 24), (52, 26), (52, 38), (38, 42), (18, 41), (10, 36)], 'b'), ([(38, 22), (48, 20), (54, 28), (50, 40), (40, 38)], 'T')]
+    head = [([(44, 22), (46, 12), (52, 8), (58, 10), (60, 18), (54, 24)], 'T'), ([(58, 12), (66, 14), (69, 19), (67, 23), (64, 19), (58, 19)], 'Y'), ([(46, 12), (40, 4), (48, 10), (47, 2), (51, 9)], 'T')]
+    tail = [([(12, 28), (4, 20), (2, 16), (6, 16), (8, 22), (13, 26)], 'b')]
+    det = [(13, 54, 'WE'), (21, 66, 'N'), (14, 51, '111111'), (26, 20, '44'), (25, 26, '444'), (32, 30, '2'), (33, 31, '2')]
+    if pose == 'strike':
+        det += [(20, 59, '1NNNN'), (21, 59, 'NNN')]
+    return beast(70, 56, 1, step, pose, legs, tail, body + head, [wing], det, hoof='N', hh=1)
+
+
+def lizard(W, H, k, step, pose, crown=False):
+    """Salamanders and the Ash Mother (designed 70x40, scaled by k): sprawled legs, a ridge of flame."""
+    dx, dy = [(0, 0), (-2, 1), (3, 0)][['walk', 'wind', 'strike'].index(pose)]
+    st = [3, -3, 3, -3][step] if pose == 'walk' else 0
+    shp = []
+    for x, d in ((22, 1), (44, -1)):
+        shp.append(([(x, 26), (x + 4, 26), (x + 2 + st * d, 33), (x - 4 + st * d, 38), (x - 6 + st * d, 36), (x - 2, 30)], 'd'))
+    shp.append(([(22, 22), (10, 22), (2, 28 + st // 2), (0, 32 + st // 2), (8, 30), (22, 30)], 'b'))
+    shp.append(([(18 + dx, 20 + dy), (30 + dx, 16 + dy), (44 + dx, 17 + dy), (50 + dx, 22 + dy), (46 + dx, 30 + dy), (24 + dx, 31 + dy), (16, 27)], 'b'))
+    shp.append(([(22 + dx, 28 + dy), (44 + dx, 27 + dy), (42 + dx, 31 + dy), (26 + dx, 32 + dy)], 'm'))
+    for x, d in ((26, -1), (42, 1)):
+        shp.append(([(x - 2, 26), (x + 3, 26), (x + 5 + st * d, 32), (x + 1 + st * d, 38), (x - 2 + st * d, 38), (x, 31)], 'b'))
+    open_ = pose == 'strike'
+    shp.append(([(46 + dx, 18 + dy), (54 + dx, 15 + dy), (62 + dx, 17 + dy), (68 + dx, 21 + dy), (67 + dx, 25 + dy), (58 + dx, 27 + dy), (48 + dx, 26 + dy)], 'b'))
+    shp.append(([(56 + dx, 25 + dy), (68 + dx, 24 + dy + (4 if open_ else 0)), (64 + dx, 29 + dy + (4 if open_ else 0)), (55 + dx, 28 + dy)], 'b'))
+    g = polygrid(W, H, [(S(p, k), ch) for p, ch in shp])
+    det = [(19 + dy, 57 + dx, 'EE')]
+    for i, x in enumerate(range(20, 48, 5)):
+        h = 6 + (i + step) % 3 * 2
+        for r in range(h):
+            det.append((17 + dy - r, x + dx + (1 if r > h // 2 else 0), 'O' if r < h - 2 else 'Y'))
+    det += [(23 + dy, x + dx, 'Y') for x in range(22, 46, 7)]
+    if crown:
+        det += [(16 + dy - r, x + dx, 'T') for x in (50, 54, 58) for r in range(7)]
+    det = SD(det, k)
+    return grid_sprite(with_detail(g, det, W), W, H)
+
+
+def lobster_f(step, pose='walk'):
+    o = 2 if pose == 'strike' else -2 if pose == 'wind' else 0
+    g = polygrid(66, 40, [([(4, 18), (12, 14), (12, 30), (4, 28)], 'm'), ([(10, 16), (30, 14), (46, 16), (48, 26), (30, 30), (10, 28)], 'b'),
+                          ([(44, 18), (54, 10 - o), (62, 8 - o), (64, 12 - o), (56, 16 - o), (48, 22)], 'b'), ([(44, 24), (54, 32 + o), (62, 34 + o), (64, 30 + o), (56, 28 + o), (48, 26)], 'b'),
+                          ([(60, 6 - o), (66, 4 - o), (64, 10 - o)], 'm'), ([(60, 36 + o), (66, 38 + o), (64, 32 + o)], 'm')])
+    det = [(18, 46, 'WE')] + [(r, c, '1') for c in (16, 22, 28, 34) for r in range(15, 29)] + [(15, 20, '444'), (16, 30, '44')]
+    for i in range(4):
+        x = 20 + i * 6; s = (2 if (i + step) % 2 else -2) if pose == 'walk' else 0
+        det += [(29 + r, x + s * r // 8, 'm') for r in range(9)]
+    det += [(17 - r, 47 + r * 2, 'm') for r in range(8)]
+    return grid_sprite(with_detail(g, det, 66), 66, 40)
+
+
+def jelly_f(step, pose='walk'):
+    pulse = [0, 1, 2, 1][step] if pose == 'walk' else 3 if pose == 'wind' else -1
+    bell = {(x, y) for x in range(2, 42) for y in range(2 + pulse, 26) if ((x + .5 - 22) / (20 - pulse)) ** 2 + ((y - 24) / (21 - pulse)) ** 2 <= 1}
+    rows = [['.'] * 44 for _ in range(58)]
+    for x, y in bell:
+        rows[y][x] = 'b'
+    for i, x in enumerate(range(8, 38, 5)):
+        for y in range(25, 54 - (i % 3) * 4 - (6 if pose == 'wind' else 0)):
+            xx = x + round(__import__('math').sin(y * .3 + i + step * 1.5) * 2) + (2 if pose == 'strike' else 0)
+            if 0 <= xx < 44:
+                rows[y][xx] = 'm' if y % 4 else '6'
+    g = [''.join(r) for r in rows]
+    det = [(10 + pulse, 13, '44'), (9 + pulse, 15, '44'), (12 + pulse, 12, '4'), (17, 17, 'E'), (17, 26, 'E'), (18, 17, 'E'), (18, 26, 'E'), (20, 20, '2222')]
+    return grid_sprite(with_detail(g, det, 44), 44, 58)
+
+
+def wisp_f(step, pose='walk'):
+    import math
+    sway = [2, 0, -2, 0][step]
+    rows = [['.'] * 48 for _ in range(60)]
+    for y in range(4, 58):
+        for x in range(4, 44):
+            head = y < 24 and ((x + .5 - 24) / 13) ** 2 + ((y - 22) / 17) ** 2 <= 1
+            tail = 24 <= y < 56 and abs(x + .5 - 24 - sway * (y - 24) / 30) < 13 - (y - 24) * .4 and ((x // 4 + y // 6 + step) % 5 or y < 44)
+            if head or tail:
+                rows[y][x] = 'b'
+    g = [''.join(r) for r in rows]
+    det = [(y, x, 'N') for y in range(14, 28) for x in range(17, 31) if ((x - 24) / 7) ** 2 + ((y - 21) / 7) ** 2 <= 1]
+    det += [(20, 20, 'EE'), (20, 26, 'EE'), (21, 20, 'E'), (21, 27, 'E'), (33, 22, 'WWW'), (34, 21, 'WWWWW'), (35, 22, 'WWW')]
+    for i, (x, y) in enumerate(((6, 14), (42, 22), (8, 42), (40, 48))):
+        y += (2 if (i + step) % 2 else -2) - (6 if pose == 'wind' else 0)
+        det += [(y - 1, x, 'W'), (y, x - 1, 'WWW'), (y + 1, x, 'W')]
+    if pose == 'strike':
+        det += [(28, 34, 'WWWWWWWWWWWWW'), (29, 36, 'WWWWWWWWWWW')]
+    return grid_sprite(with_detail(g, det, 48), 48, 60)
+
+
+def upright(W, H, k, step, pose, P):
+    """Something that stands upright (designed in a 56x60 frame, scaled by k): stone, crystal, troll, giants.
+    P: dict of shapes for 'legs', 'torso', 'arm' (left, mirrored), 'head', plus 'det' and optional 'weapon'."""
+    sw = [0, 2, 0, -2][step] if pose == 'walk' else 0
+    lift = [0, 2, 0, 2][step] if pose == 'walk' else 0
+    ay = {'walk': 0, 'wind': -16, 'strike': 10}[pose]; by = {'walk': 0, 'wind': 0, 'strike': 3}[pose]
+    shapes = []
+    for i, x in enumerate((17, 31)):
+        up = lift if (i == 0) == (step == 1) and step in (1, 3) else 0
+        shapes.append((S(P['leg'], k, x * k, (44 - up) * k), 'b' if i else 'd'))
+    shapes += [(S(p, k, 8 * k, (16 + by) * k), ch) for p, ch in P['torso']]
+    for side, x in ((-1, 3), (1, 45)):
+        pts = P['arm'] if side < 0 else [(8 - px, py) for px, py in P['arm']]
+        shapes.append((S(pts, k, x * k + (6 if pose == 'strike' else 0) * k * -side, (14 + ay + sw * side) * k), 'b'))
+    shapes += [(S(p, k, 20 * k, (3 + by) * k), ch) for p, ch in P['head']]
+    if P.get('weapon'):
+        shapes += [(S(p, k, 0, (ay if pose != 'walk' else sw) * k), ch) for p, ch in P['weapon']]
+    g = polygrid(W, H, shapes)
+    return grid_sprite(with_detail(g, SD(P['det'], k, 0, by * k), W), W, H)
+
+
+BASALT = {'leg': [(0, 0), (10, 0), (11, 15), (-1, 15)], 'arm': [(1, 0), (9, 0), (10, 30), (0, 30)],
+          'torso': [([(4, 0), (8, -6), (12, 0), (16, -4), (20, 0), (24, -6), (28, 0), (32, -4), (36, 0), (40, 2), (38, 28), (2, 28), (0, 2)], 'b'),
+                    ([(-2, 2), (-6, -12), (6, 0)], 'm'), ([(42, 2), (46, -12), (34, 0)], 'm')],
+          'head': [([(0, 2), (8, -2), (16, 2), (16, 14), (0, 14)], 'b')],
+          'det': [(24, 30, 'EEEE'), (25, 27, 'E'), (26, 32, 'EE'), (28, 23, 'O'), (29, 22, 'O'), (30, 21, 'OO'), (31, 34, 'O'), (32, 35, 'O'), (33, 36, 'OO'), (36, 26, 'OOOO'),
+                  (19, 16, '1'), (19, 24, '1'), (19, 32, '1'), (19, 40, '1'), (11, 25, 'YY'), (11, 30, 'YY'), (16, 26, 'OOOOO')]}
+SHARD = {'leg': [(1, 0), (9, 0), (8, 15), (2, 15)], 'arm': [(2, 0), (8, 0), (6, 30), (0, 22)],
+         'torso': [([(4, 4), (12, -2), (28, -4), (36, 4), (38, 26), (2, 26)], 'b'), ([(6, 4), (-2, -14), (6, -12), (12, 2)], 'I'), ([(34, 4), (44, -16), (46, -10), (30, 2)], 'I'),
+                   ([(16, 0), (18, -18), (24, -18), (24, 0)], 'I'), ([(14, 10), (6, -4), (12, -6), (20, 8)], 'I')],
+         'head': [([(2, 2), (8, -4), (14, 2), (12, 12), (4, 12)], 'b')],
+         'det': [(24, 25, 'W'), (25, 24, 'WWW'), (26, 23, 'WWWWW'), (27, 24, 'WWW'), (28, 25, 'W'), (10, 25, 'E'), (10, 30, 'E'), (6, 22, 'W'), (2, 30, 'W'), (12, 14, 'W')]}
+TROLL = {'leg': [(0, 0), (10, 0), (12, 12), (12, 16), (-2, 16), (0, 10)], 'arm': [(2, 0), (8, 0), (10, 30), (12, 34), (2, 36), (0, 30)],
+         'torso': [([(6, 2), (18, -4), (34, 0), (40, 12), (40, 26), (30, 30), (8, 30), (0, 20)], 'b'), ([(10, 14), (30, 14), (32, 28), (8, 28)], 'm'), ([(6, 26), (36, 26), (34, 32), (8, 32)], 'd')],
+         'head': [([(0, 6), (6, 0), (14, 2), (17, 8), (14, 16), (4, 16)], 'b'), ([(12, 7), (18, 10), (16, 14), (12, 12)], 'b')],
+         'weapon': [([(48, 58), (51, 16), (56, 10), (58, 18), (53, 58)], 'm')],
+         'det': [(8, 23, 'E'), (8, 30, 'E'), (6, 22, '11111111111'), (17, 23, 'T'), (17, 31, 'T'), (16, 23, 'T'), (16, 31, 'T'), (22, 14, 'mm'), (21, 16, 'mm'), (20, 40, 'mm'),
+                 (24, 52, 'T'), (30, 53, 'T'), (18, 54, 'T')]}
+GIANT_ROCK = {'leg': [(0, 2), (6, 0), (12, 2), (13, 10), (12, 16), (0, 16), (-1, 9)],
+              'arm': [(0, 2), (5, -2), (10, 1), (11, 12), (8, 15), (11, 20), (12, 28), (9, 33), (1, 33), (-2, 28), (-1, 18), (1, 14), (-1, 8)],
+              'torso': [([(2, 6), (8, 0), (18, -2), (24, 2), (30, -2), (38, 4), (40, 14), (36, 18), (4, 18), (0, 14)], 'b'),
+                        ([(4, 17), (20, 16), (36, 17), (38, 26), (30, 31), (10, 31), (2, 25)], 'b'),
+                        ([(-8, 4), (-2, -2), (6, 2), (4, 10), (-6, 10)], 'm'), ([(48, 4), (42, -2), (34, 2), (36, 10), (46, 10)], 'm'),
+                        ([(-6, 2), (-3, -10), (0, 2)], 'G'), ([(-1, 1), (2, -14), (5, 1)], 'G'), ([(36, 1), (39, -14), (42, 1)], 'G'), ([(41, 2), (44, -9), (47, 2)], 'G'),
+                        ([(15, 8), (20, 3), (25, 8), (20, 14)], 'C')],
+              'head': [([(1, 4), (5, -1), (11, -1), (15, 4), (14, 13), (8, 15), (2, 13)], 'b'),
+                       ([(1, 1), (-2, -8), (4, 0)], 'C'), ([(6, -1), (8, -10), (10, -1)], 'C'), ([(12, 0), (18, -8), (15, 1)], 'C')],
+              'det': [(8, 24, 'EE'), (8, 31, 'EE'), (12, 25, '111111'), (19, 26, 'II'), (20, 27, 'I'), (33, 8, '1111111111111111111111111111111111'),
+                      (17, 4, 'g'), (14, 6, 'g'), (11, 7, 'g'), (17, 49, 'g'), (14, 50, 'g'), (11, 51, 'g'), (24, 14, '2'), (25, 15, '2'), (26, 16, '2'), (40, 36, '2'), (41, 37, '2'),
+                      (22, 20, '44'), (21, 22, '444'), (36, 40, '44')]}
+FORGE = {'leg': [(0, 0), (11, 0), (12, 13), (14, 16), (-2, 16), (-1, 13)], 'arm': [(1, 0), (9, 0), (10, 28), (0, 28)],
+         'torso': [([(0, 2), (40, 2), (38, 22), (34, 30), (6, 30), (2, 22)], 'b'), ([(-6, 0), (8, -4), (10, 8), (-4, 8)], 'm'), ([(46, 0), (32, -4), (30, 8), (44, 8)], 'm'),
+                   ([(13, 8), (27, 8), (27, 20), (13, 20)], 'N')],
+         'head': [([(0, 4), (8, -2), (16, 4), (16, 16), (0, 16)], 'm'), ([(0, 6), (-6, -2), (-7, -6), (-2, -1), (2, 4)], 'T'), ([(16, 6), (22, -2), (23, -6), (18, -1), (14, 4)], 'T')],
+         'weapon': [([(50, 50), (51, 4), (53, 4), (52, 50)], 'm'), ([(44, -6), (60, -6), (60, 4), (44, 4)], 'b')],
+         'det': [(10, 21, 'NNNNNNNNNNNNNN'), (10, 23, 'OO'), (10, 30, 'OO'), (30, 22, 'OOOOOOOOOOOOO'), (31, 22, 'YYYYYYYYYYYY'), (32, 24, 'OOOOOOOOO'),
+                 (27, 22, '1.1.1.1.1.1.1'), (28, 22, '1.1.1.1.1.1.1'), (29, 22, '1.1.1.1.1.1.1'), (-4, 50, 'OO')]}
+
+
+def queen_f(step, pose='walk'):
+    sway = [2, 0, -2, 0][step] if pose == 'walk' else 0
+    up = {'walk': 0, 'wind': -8, 'strike': 4}[pose]
+    g = polygrid(84, 116, [([(22, 30), (58, 30), (74 + sway, 112), (6 + sway, 112)], 'm'), ([(28, 44), (52, 44), (66, 112), (14, 112)], 'b'),
+                           ([(30, 28), (50, 28), (50, 46), (30, 46)], 'b'), ([(30, 30), (24, 52), (28, 54), (34, 34)], 'T'),
+                           ([(50, 30), (64, 40 + up), (62, 44 + up), (48, 36)], 'T'),
+                           ([(65, 112 + up), (65, 18 + up), (68, 18 + up), (68, 112 + up)], 'T'),
+                           ([(66, 4 + up), (72, 14 + up), (66, 24 + up), (60, 14 + up)], 'W'),
+                           ([(30, 14), (50, 14), (54, 46), (26, 46)], 'W'), ([(33, 10), (47, 10), (48, 24), (40, 28), (32, 24)], 'T'),
+                           ([(32, 10), (33, 0), (36, 9)], 'W'), ([(38, 9), (40, -2), (42, 9)], 'W'), ([(44, 9), (47, 0), (48, 10)], 'W')])
+    det = [(17, 36, 'EE'), (17, 42, 'EE'), (23, 38, 'RRRR')] + [(112 - r, x + r, 'W') for x in range(16, 66, 6) for r in range(3)]
+    if pose == 'strike':
+        det += [(14 + up, 72 + i * 2, 'WW') for i in range(5)]
+    return grid_sprite(with_detail(g, det, 84), 84, 116)
+
+
+def captain_f(step, pose='walk'):
+    sway = [3, 0, -3, 0][step] if pose == 'walk' else 0
+    up = {'walk': 0, 'wind': -10, 'strike': 6}[pose]
+    rows = [['.'] * 88 for _ in range(112)]
+    for y in range(40, 110):
+        for x in range(8, 80):
+            if abs(x + .5 - 44 - sway * (y - 40) / 70) < 24 - max(0, y - 80) * .5 and (y < 96 or (x // 6 + step) % 2 == 0 or y < 100):
+                rows[y][x] = 'b'
+    g = polygrid(88, 112, [([(22, 42), (14, 70), (20, 72), (28, 46)], 'b'), ([(64, 42), (76, 56 + up), (72, 60 + up), (60, 48)], 'b'),
+                           ([(74, 58 + up), (86, 20 + up * 2), (88, 22 + up * 2), (76, 60 + up)], 'W'),
+                           ([(34, 22), (54, 22), (56, 34), (50, 42), (38, 42), (32, 34)], 'T'), ([(34, 34), (54, 34), (50, 52), (44, 56), (38, 52)], 'm'),
+                           ([(22, 22), (66, 22), (60, 12), (44, 4), (28, 12)], 'N')])
+    g = overlay([''.join(r) for r in rows], g)
+    det = [(27, 38, 'EEE'), (27, 48, 'EEE'), (22, 24, 'YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY'), (60, 24, '1111111111111111111111111111111111111111')] + [(y, 42, 'YY') for y in range(46, 90, 8)]
+    return grid_sprite(with_detail(g, det, 88), 88, 112)
+
+
+def kraken_f(step, pose='walk'):
+    import math
+    rows = [['.'] * 140 for _ in range(112)]
+    for i in range(8):
+        x0 = 30 + i * 11
+        lift = 20 if pose == 'wind' and i % 2 else 0
+        for kk in range(14):
+            t = kk / 13
+            x = x0 + math.sin(t * 4 + i + step * 1.2) * 10 * t + (i - 3.5) * 6 * t + (14 * t if pose == 'strike' else 0)
+            y = 60 + t * (50 - lift)
+            w = 4 - round(3 * t)
+            for d in range(-w, w + 1):
+                for yy in range(int(y), int(y) + 4):
+                    if 0 <= int(x + d) < 140 and yy < 112:
+                        rows[yy][int(x + d)] = 'm'
+    g = [''.join(r) for r in rows]
+    g = overlay(g, polygrid(140, 112, [([(40, 50), (44, 24), (56, 8), (70, 4), (84, 8), (96, 24), (100, 50), (92, 64), (48, 64)], 'b')]))
+    det = [(46, 54, 'WWWW'), (47, 53, 'WEEW'), (48, 53, 'WEEW'), (49, 54, 'WWWW'), (46, 84, 'WWWW'), (47, 83, 'WEEW'), (48, 83, 'WEEW'), (49, 84, 'WWWW'),
+           (20, 52, '44'), (14, 62, '444'), (12, 70, '44'), (30, 60, '2'), (31, 61, '2'), (28, 84, '2'), (29, 85, '2')]
+    return grid_sprite(with_detail(g, det, 140), 140, 112)
+
+
+def harpy_f(step, pose='walk'):
+    up = step % 2 == 0 if pose == 'walk' else pose == 'wind'
+    lw = [(24, 24), (2, 2), (8, 12), (0, 20), (8, 26), (2, 34), (26, 34)] if up else [(24, 24), (0, 28), (8, 34), (2, 42), (12, 42), (8, 50), (26, 36)]
+    rw = [(36, 24), (58, 4), (52, 14), (60, 20), (52, 26), (58, 32), (36, 34)] if up else [(36, 24), (60, 28), (52, 34), (58, 42), (48, 42), (52, 50), (34, 36)]
+    dy = 2 if pose == 'strike' else 0
+    g = polygrid(60, 60, [(lw, 'm'), ([(24, 36 + dy), (36, 36 + dy), (38, 44 + dy), (22, 44 + dy)], 'm'), ([(25, 24 + dy), (35, 24 + dy), (36, 36 + dy), (24, 36 + dy)], 'T'),
+                          ([(24, 6), (36, 4), (44, 12), (42, 30), (36, 22), (26, 24), (22, 16)], 'b'), ([(30, 10), (37, 10), (39, 16), (36, 21), (31, 20)], 'T'), (rw, 'm')])
+    det = [(13, 35, 'EE'), (18, 36, 'RR')] + [(44 + dy + r, x, 'Y') for x in (26, 34) for r in range(8)] + [(52 + dy, 24, 'NNN'), (52 + dy, 32, 'NNN')]
+    if pose == 'strike':
+        det += [(52 + dy, 22, 'NNNNN'), (53 + dy, 22, 'N...N')]
+    return grid_sprite(with_detail(g, det, 60), 60, 60)
+
+
+def drake_f(step, pose='walk'):
+    """The Cinder Drake: the dragon's design at 1.44x, with fire in its throat."""
+    import math
+    wing = 'up' if step % 2 == 0 else 'down'
+    base = dragon_frame(step, wing, {'walk': 'walk', 'wind': 'rear', 'strike': 'lunge'}[pose])
+    c = Canvas(156, 116)
+    big = base.img.resize((round(108 * 1.44), round(84 * 1.38)), 0)
+    c.paste(big, 0, 0)
+    return c
+
+
+def _reg(name, fn, poses=True):
+    register(name, [(lambda k=k: fn(k, 'walk')) for k in range(4)], [lambda: fn(0, 'wind'), lambda: fn(0, 'strike')] if poses else None)
+
+
+_reg('warg', warg_f); _reg('icewarg', lambda s, p: warg_f(s, p, True)); _reg('hound', hound_f); _reg('bear', bear_f)
+_reg('mammoth', mammoth_f); _reg('griffin', griffin_f)
+_reg('salamander', lambda s, p: lizard(70, 40, 1, s, p)); _reg('ashmother', lambda s, p: lizard(154, 88, 2.2, s, p, True))
+_reg('lobster', lobster_f); _reg('jelly', jelly_f); _reg('wisp', wisp_f); _reg('harpy', harpy_f)
+_reg('basalt', lambda s, p: upright(72, 76, 1.25, s, p, BASALT)); _reg('elemental', lambda s, p: flame_f(s, p))
+_reg('shardling', lambda s, p: upright(58, 68, 1.05, s, p, SHARD)); _reg('glacierheart', lambda s, p: upright(116, 136, 2.05, s, p, SHARD))
+_reg('troll', lambda s, p: upright(64, 76, 1.2, s, p, TROLL)); _reg('tyrant', lambda s, p: upright(132, 124, 2.1, s, p, GIANT_ROCK))
+_reg('forgeking', lambda s, p: upright(100, 104, 1.6, s, p, FORGE))
+_reg('queen', queen_f); _reg('captain', captain_f); _reg('kraken', kraken_f); _reg('drake', drake_f)
+
+
+def flame_f(step, pose='walk'):
+    """The fire elemental (48x62): a body of flame with a hot core; it flares up, then lashes forward."""
+    import math
+    rows = [['.'] * 48 for _ in range(62)]
+    grow = {'walk': 0, 'wind': -5, 'strike': 2}[pose]; lean = 3 if pose == 'strike' else 0
+    for y in range(4 + grow, 60):
+        t = (y - 4 - grow) / (56 - grow)
+        hw = 3 + 15 * math.sin(min(1, t * 1.15) * math.pi * .6) + (2 if y > 50 else 0)
+        for x in range(48):
+            cx = 24 + lean * (1 - t) + math.sin(y * .35 + step * 1.7) * 2 * (1 - t)
+            tongue = y < 26 and abs(x - 24) > 4 and (x + y // 3 + step) % 7 < 3
+            if abs(x + .5 - cx) < hw and not tongue:
+                rows[y][x] = 'O' if abs(x + .5 - cx) > hw - 3 else 'b'
+    g = [''.join(r) for r in rows]
+    det = [(y, x, 'Y') for y in range(36, 54) for x in range(18, 31) if ((x - 24) / 6) ** 2 + ((y - 46) / 8) ** 2 <= 1]
+    det += [(34 + (grow // 2), 19 + lean, 'NNN'), (34 + (grow // 2), 27 + lean, 'NNN'), (35 + (grow // 2), 20 + lean, 'N'), (35 + (grow // 2), 28 + lean, 'N')]
+    for i in range(5):
+        det.append(((2 + i * 5 + step * 3) % 20 + grow + 2, 10 + i * 7, 'Y'))
+    return grid_sprite(with_detail(g, det, 48), 48, 62)
