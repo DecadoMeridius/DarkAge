@@ -298,6 +298,9 @@ Combat is **action combat**: you aim with the mouse and every click swings. If y
 **Combat skills (V)**
 - **Three trees:** **Blade** (Melee), **Marksman** (Ranged) and **Arcane** (Magic), five skills each, for example Whirlwind, Leaping Strike, Rain of Arrows, Fireball, Chain Lightning and Meteor.
 - **Points:** you earn one per 5 levels of that style. Learn a skill, raise it to rank 3, and put it in a slot.
+- **Unlocking:** each skill card lists what it needs, ticked off as you have it: the style level, the skill before it in the tree, a free point, and the weapon to hold.
+- **Loadouts:** each weapon type keeps its own Z / X / C slots, and you can only slot skills for the weapon you're holding.
+- **Fighting fair:** an enemy that has started winding up always finishes its attack, so dodge, parry (Q) or step out of the red wedge instead of trying to interrupt it.
 - **Weapon type:** each tree needs its weapon type: a melee weapon, a bow or a staff.
 
 **Magic**
