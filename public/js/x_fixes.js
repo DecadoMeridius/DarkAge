@@ -209,3 +209,42 @@ killEnemy = function (m, e) {
 };
 const _updateEnemiesK = updateEnemies;
 updateEnemies = function (m, dt) { for (const e of m.ents) if (e.type === 'enemy' && !e.dead && e.hp <= 0) killEnemy(m, e); return _updateEnemiesK(m, dt); };
+
+/* A13 small fixes */
+// the flame glow is drawn over everything after the colour grade: skip it while you stand in front of that fire
+const _flameAtF = flameAt;
+flameAt = function (o, x, y) {
+  const p = _flameAtF(o, x, y); if (!p || !S || !S.p) return p;
+  return S.p.y > (y + 1) * 16 - 2 && Math.abs(S.p.x - p[0]) < 12 && p[1] > S.p.y - 36 ? null : p;
+};
+// the same toast twice within 1.5 s is shown once
+let _lastToast = ['', 0];
+const _toastF = toast;
+toast = function (msg, kind) { const t = performance.now(); if (msg === _lastToast[0] && t - _lastToast[1] < 1500) return; _lastToast = [msg, t]; return _toastF(msg, kind); };
+// tooltips never stick after a drag
+addEventListener('dragend', () => typeof hideTip === 'function' && hideTip(), true);
+addEventListener('drop', () => typeof hideTip === 'function' && hideTip(), true);
+// villages: no trees growing out of roofs
+const _genVillageT = genVillage;
+genVillage = function () { const m = _genVillageT(); for (const b of m.bld) clearNatural(m, b.x - 1, b.y - 3, b.x + b.w, b.y - 1); return m; };
+// one toast per finished craft, "1 item", plural requests, desktop wording
+const _toastW = toast;
+toast = function (msg, kind) {
+  if (typeof msg === 'string') {
+    if (/^Crafted .*\.$/.test(msg) && typeof JOB !== 'undefined' && JOB_RUN) return; // the batch's "done" toast says it
+    msg = msg.replace(/\b1 items\b/g, '1 item').replace(/\.\.(\s|$)/g, '.$1').replace(/tapping/g, 'clicking');
+  }
+  return _toastW(msg, kind);
+};
+// the new-game slot is saved once the arrival letter is closed, not before the character exists
+const _openModalN = openModal;
+openModal = function (title, tabs, start, opts) { const r = _openModalN(title, tabs, start, opts); if ((title === 'Hollowmere Farm' || title === 'Who are you?') && MODAL && !(typeof SANDBOX !== 'undefined' && SANDBOX)) { const cb = MODAL.opts.onClose; MODAL.opts.onClose = () => { if (cb) cb(); saveGame(); }; } return r; };
+// the character creator has no gold counter or close button
+const _openModalC = openModal;
+openModal = function (title, tabs, start, opts) { const r = _openModalC(title, tabs, start, opts); const creator = title === 'Who are you?'; for (const id of ['mgold', 'mclose']) { const e = document.getElementById(id); if (e) e.style.visibility = creator ? 'hidden' : ''; } return r; };
+// a new game isn't saved until the character exists and the letter is read (no empty slots from backing out)
+const _startGameNS = startGame;
+startGame = function (isNew) { if (!isNew) return _startGameNS(isNew); const sg = saveGame; saveGame = () => true; try { return _startGameNS(isNew); } finally { saveGame = sg; } };
+// the sandbox starts with full health and energy
+const _setupSandboxF = setupSandbox;
+setupSandbox = function () { _setupSandboxF(); recalc(); S.p.hp = maxHP(); S.p.st = maxST(); hudKey = ''; };

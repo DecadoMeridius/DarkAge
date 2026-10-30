@@ -188,3 +188,5 @@ body:has(#modal:not([hidden])) #pausebtn, body:has(#pauseov) #pausebtn { display
 .hotrow .cell.on { outline: 2px solid #e0a040; }
 @media (max-width: 760px) { .hotrow { grid-template-columns: repeat(5, 60px); } }
 .wmap.localmap { width: auto !important; height: auto !important; max-width: 100%; }
+.encycell.dim img { opacity: .4; filter: grayscale(.7); }
+h1, h2, h3, .ph h2, #mtitle, .cinzel { font-variant-ligatures: none; font-feature-settings: "liga" 0, "dlig" 0, "clig" 0; }

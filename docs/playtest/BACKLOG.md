@@ -3,19 +3,19 @@
 Work order: A (bugs and controls) → B (inventory and UI) → C (world content) → D (combat overhaul). Each item gets ticked off here when it's done.
 
 ## A. Bugs and controls
-- [ ] A1 The farm → village exit is invisible. Make a clear gap in the trees, a signpost, a wider trigger and an entry banner.
-- [ ] A2 The map (M) is empty on the farm and in the village. Add a real layout, a you-are-here marker and shop labels.
-- [ ] A3 Clicks act on the faced tile, never diagonals. Act on the hovered tile when it's within reach (including diagonals), and fix the fishing reach mismatch.
-- [ ] A4 The intro letter promises a cottage. Match it to the tent start.
-- [ ] A5 The HUD recipe button says "C". It should say B.
-- [ ] A6 Getting stuck on trunks, map edges and the starter workbench. Slide along obstacles and give the workbench a free spot.
-- [ ] A7 Placing a chest or building on or next to you locks you in. Refuse placements that overlap or wall in the player.
-- [ ] A8 Options has no Load game and no "back to the title screen".
-- [ ] A9 There's no way to remove placed buildings. Add demolish (refund part of the materials).
-- [ ] A10 Boss skills keep firing however far away you are. Bosses should only act when you're near or in their arena.
-- [ ] A11 Enemies never lose interest. Make them de-aggro and go home when you're far away.
-- [ ] A12 Bow kills drop no loot.
-- [ ] A13 Small bugs:
+- [x] A1 The farm → village exit is invisible. Make a clear gap in the trees, a signpost, a wider trigger and an entry banner.
+- [x] A2 The map (M) is empty on the farm and in the village. Add a real layout, a you-are-here marker and shop labels.
+- [x] A3 Clicks act on the faced tile, never diagonals. Act on the hovered tile when it's within reach (including diagonals), and fix the fishing reach mismatch.
+- [x] A4 The intro letter promises a cottage. Match it to the tent start.
+- [x] A5 The HUD recipe button says "C". It should say B.
+- [x] A6 Getting stuck on trunks, map edges and the starter workbench. Slide along obstacles and give the workbench a free spot.
+- [x] A7 Placing a chest or building on or next to you locks you in. Refuse placements that overlap or wall in the player.
+- [x] A8 Options has no Load game and no "back to the title screen".
+- [x] A9 There's no way to remove placed buildings. Add demolish (refund part of the materials).
+- [x] A10 Boss skills keep firing however far away you are. Bosses should only act when you're near or in their arena.
+- [x] A11 Enemies never lose interest. Make them de-aggro and go home when you're far away.
+- [x] A12 Bow kills drop no loot.
+- [x] A13 Small bugs (done except Track across maps, the duplicate "Haft" name, the stables door path and "Cast / Cast"; the pause "vanishing" was the camera stopping, the player is drawn):
   - the campfire is drawn over your head;
   - the player vanishes on pause;
   - a silent knockout (show the hit and the fall);

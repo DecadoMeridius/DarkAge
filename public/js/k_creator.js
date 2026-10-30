@@ -3,7 +3,7 @@
    The chosen look is saved as S.look; playerPal() reads it, and worn armour still
    recolours the shirt, boots and helm on top. Older saves without S.look use DEFAULT_LOOK. */
 
-const DEFAULT_LOOK = { name: 'Wren', skin: '#e8b48a', hair: '#6a3a22', hs: 'short', eye: '#2b1d18', shirt: '#4a7cc0', pants: '#4a4258', shoe: '#5a3a22', acc: '#c8642a' };
+const DEFAULT_LOOK = { name: 'Farmer', skin: '#e8b48a', hair: '#6a3a22', hs: 'short', eye: '#2b1d18', shirt: '#4a7cc0', pants: '#4a4258', shoe: '#5a3a22', acc: '#c8642a' };
 const LOOK_OPTS = {
   skin: ['#f6d6b8', '#e8b48a', '#d09a6a', '#b07850', '#8a5a3a', '#5e3a26'],
   hs: ['short', 'long', 'pony', 'bun', 'spiky', 'bald'],
@@ -38,7 +38,7 @@ function openCreator(onDone) {
       el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => { dir = [2, 3, 1, 0][[0, 2, 3, 1].indexOf(dir)]; draw(cvs); } }, '⟲ Turn'),
         el('button', { class: 'btn ghost', on: () => { for (const k in LOOK_OPTS) S.look[k] = pickR(LOOK_OPTS[k]); refresh(); } }, '🎲 Random')));
     const right = el('div', { class: 'ccright' });
-    const name = el('input', { class: 'ccname', value: S.look.name, maxlength: 16 }); name.addEventListener('input', () => S.look.name = name.value.trim() || 'Wren');
+    const name = el('input', { class: 'ccname', value: S.look.name === 'Farmer' || S.look.name === 'Wren' ? '' : S.look.name, placeholder: 'Your name', maxlength: 16 }); name.addEventListener('focus', () => name.select()); name.addEventListener('input', () => S.look.name = name.value.trim() || 'Farmer');
     right.append(el('div', { class: 'ccrow' }, el('span', null, 'Name'), name));
     for (const k in LOOK_OPTS) {
       const row = el('div', { class: 'ccopts' });
