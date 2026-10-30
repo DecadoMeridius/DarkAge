@@ -18,6 +18,8 @@ This guide explains every part of the game. Read the first sections to get going
 - There are up to **8 save slots**. **Continue** loads the newest one, and **Load game** lists them all with name, date and gold.
 - **New game** always starts a new slot; it never overwrites an existing one.
 
+**Combat test** (title screen): a throwaway game with high combat levels, every weapon type, a staff and robes, and a panel to spawn enemy packs or any boss. Nothing is saved.
+
 **Test sandbox** (title screen): a throwaway world with every crafting station, every ingredient, lots of gold and high skills, for trying recipes freely. Nothing you do there is saved.
 
 ## 2. Controls

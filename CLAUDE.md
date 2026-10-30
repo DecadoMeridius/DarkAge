@@ -275,6 +275,9 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - **Staffs:** one per metal tier, wt `staff`, Magic style. Their basic attack is a bolt, and a fireball on the combo finisher.
   - **Robes and hats:** Apprentice to Starweave give `magic` (damage) and `fregen` (Focus regen), need Magic to wear, and are gated by the metal patterns.
 
+## Combat test (`public/js/x_combattest.js`)
+- Title screen → Combat test: SANDBOX game, combat skills at 60, every weapon type, staff, robes, arrows and meals, in the Wilds meadow, with a panel (`#ctpanel`) to spawn packs or any boss, heal and clear.
+
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
 
