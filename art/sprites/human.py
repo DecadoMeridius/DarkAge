@@ -345,34 +345,88 @@ def arm(s, pts, hand, d):
     cel(s, rect(*hand), 'skin')
 
 
+def seg(x0, y0, x1, y1, w):
+    """A limb segment (a capsule) from (x0, y0) to (x1, y1), w px thick."""
+    L = math.hypot(x1 - x0, y1 - y0) or 1
+    nx, ny = -(y1 - y0) / L * w / 2, (x1 - x0) / L * w / 2
+    m = poly([(x0 + nx, y0 + ny), (x1 + nx, y1 + ny), (x1 - nx, y1 - ny), (x0 - nx, y0 - ny)])
+    return m | ellipse(x1, y1, w / 2, w / 2) | ellipse(x0, y0, w / 2, w / 2)
+
+
+def limb(hx, hy, a1, a2, l1, l2):
+    """Joint positions for a two-segment limb hanging from (hx, hy): angles from straight down, + = forward (right)."""
+    kx, ky = hx + math.sin(a1) * l1, hy + math.cos(a1) * l1
+    return (kx, ky), (kx + math.sin(a2) * l2, ky + math.cos(a2) * l2)
+
+
 def walk(d, f):
-    """8-frame walk: legs and arms follow a sine, so every frame is a real in-between."""
+    """8-frame walk with jointed limbs: thighs swing on the gait sine, knees bend during the swing, the far
+    leg and arm are a shade darker, arms swing against the legs with a bent elbow, and the body bobs."""
     s = Canvas(32, 64)
-    st = math.sin(f / 8 * math.tau)
-    if d in (0, 3):
-        for x0, side in ((10, 1), (17, -1)):
-            lift = round(max(0, st * side) * 3)
-            cel(s, rect(x0, 39, 5, 18 - lift), 'pants')
-            cel(s, rect(x0 - 1, 56 - lift, 7, 6) - {(x0 - 1, 56 - lift)}, 'shoe')
-            hline(s, x0 - 1, x0 + 5, 61 - lift, 'shoe', 0)
-        cel(s, poly([(8, 22), (24, 22), (23, 40), (9, 40)]), 'shirt')
-        for x0, side in ((5, 1), (24, -1)):
-            sw = -round(st * side * 2)
-            cel(s, rect(x0, 23 + sw, 3, 14), 'shirt'); cel(s, rect(x0, 37 + sw, 3, 4), 'skin')
-        if d == 0:
-            flat(s, {(14, 22), (15, 23), (16, 23), (17, 22)}, 'skin', 2)
-            hline(s, 12, 19, 22, 'acc', 2); hline(s, 13, 18, 23, 'acc', 1); hline(s, 9, 22, 32, 'shirt', 1)
-        head(s, d)
-    else:
-        for side, x0 in ((-1, 13), (1, 15)):
-            off = round(st * side * 3)
-            lift = 1 if st * side > .6 else 0
-            cel(s, rect(x0 + off, 39, 5, 17 - lift), 'pants')
-            cel(s, rect(x0 + off, 55 - lift, 7, 7), 'shoe'); hline(s, x0 + off, x0 + off + 6, 61 - lift, 'shoe', 0)
-        cel(s, poly([(11, 22), (21, 22), (21, 40), (11, 40)]), 'shirt'); hline(s, 11, 21, 32, 'shirt', 1)
-        sw = round(st * 3)
-        cel(s, poly([(14 + sw // 2, 23), (17 + sw // 2, 23), (17 + sw, 37), (14 + sw, 37)]), 'shirt'); cel(s, rect(14 + sw, 37, 3, 4), 'skin')
-        head(s, d)
+    ph = f / 8 * math.tau
+    bob = -1 if abs(math.sin(ph)) < .5 else 0  # the body rises as the legs pass under it
+    if d == 2:  # side view, facing right (the game mirrors it for left)
+        hip = (16, 39 + bob)
+        legs = []
+        for k in (0, 1):  # 0 = far leg, 1 = near leg
+            p = ph + k * math.pi
+            a1 = .42 * math.sin(p)
+            bend = .85 * max(0, math.cos(p))  # knee bends while the leg swings forward
+            a2 = a1 - bend
+            (kx, ky), (ax, ay) = limb(hip[0], hip[1], a1, a2, 9, 9)
+            ay = min(ay, 57); legs.append((k, kx, ky, ax, ay, bend))
+        arms = []
+        for k in (0, 1):
+            p = ph + k * math.pi + math.pi  # arms swing against the legs on the same side
+            u = .55 * math.sin(p); fa = u + .35 + .35 * max(0, math.sin(p))
+            (ex, ey), (wx, wy) = limb(15, 24 + bob, u, fa, 7, 7)
+            arms.append((k, ex, ey, wx, wy))
+        def draw_leg(k, kx, ky, ax, ay, bend):
+            lvl = None if k else 1
+            th, sh = seg(hip[0], hip[1], kx, ky, 5), seg(kx, ky, ax, ay, 4)
+            if lvl is None: cel(s, th | sh, 'pants')
+            else: flat(s, th | sh, 'pants', 1)
+            foot = rect(round(ax) - 2, round(ay) + 1, 7, 4) if bend < .3 else poly([(ax - 2, ay), (ax + 4, ay + 1), (ax + 4, ay + 4), (ax - 2, ay + 4)])
+            if lvl is None: cel(s, foot, 'shoe')
+            else: flat(s, foot, 'shoe', 1)
+            hline(s, round(ax) - 2, round(ax) + 4, round(ay) + 4, 'shoe', 0)
+        def draw_arm(k, ex, ey, wx, wy):
+            up, fo = seg(15, 24 + bob, ex, ey, 4), seg(ex, ey, wx, wy, 3)
+            if k: cel(s, up | fo, 'shirt')
+            else: flat(s, up | fo, 'shirt', 1)
+            cel(s, ellipse(wx, wy + 1, 1.6, 1.6), 'skin')
+        for L in legs:
+            if L[0] == 0: draw_leg(*L)
+        for A in arms:
+            if A[0] == 0: draw_arm(*A)
+        cel(s, poly([(11, 22 + bob), (21, 22 + bob), (21, 40 + bob), (11, 40 + bob)]), 'shirt'); hline(s, 11, 21, 32 + bob, 'shirt', 1)
+        for L in legs:
+            if L[0] == 1: draw_leg(*L)
+        head(s, d, 0, bob)
+        for A in arms:
+            if A[0] == 1: draw_arm(*A)
+        return s
+    # front (0) and back (3): the knee lifts and the shin folds back (foreshortened), arms swing with the elbow
+    for x0, side in ((12, 1), (19, -1)):
+        p = ph if side > 0 else ph + math.pi
+        lift = max(0, math.cos(p))  # the swinging leg lifts
+        knee_y = 48 - round(lift * 2) + bob
+        foot_y = 57 - round(lift * 4)
+        cel(s, seg(x0, 39 + bob, x0, knee_y, 5) | seg(x0, knee_y, x0 + (side if lift > .4 else 0), foot_y, 4), 'pants')
+        hline(s, x0 - 2, x0 + 2, knee_y, 'pants', 1)  # the knee crease
+        cel(s, rect(x0 - 3, foot_y, 7, 5) - {(x0 - 3, foot_y)}, 'shoe'); hline(s, x0 - 3, x0 + 3, foot_y + 4, 'shoe', 0)
+    cel(s, poly([(8, 22 + bob), (24, 22 + bob), (23, 40 + bob), (9, 40 + bob)]), 'shirt')
+    for x0, side in ((6, 1), (25, -1)):
+        p = ph + (0 if side > 0 else math.pi) + math.pi
+        fwd = math.sin(p)  # + forward (toward the viewer when facing down)
+        ey = 30 + bob - round(abs(fwd) * 1)
+        hx_ = x0 + round(side * max(0, fwd) * 2)  # a forward swing brings the hand in toward the body
+        cel(s, seg(x0, 24 + bob, x0, ey, 3) | seg(x0, ey, hx_, 37 + bob - round(max(0, fwd) * 3), 3), 'shirt')
+        cel(s, rect(hx_ - 1, 37 + bob - round(max(0, fwd) * 3), 3, 3), 'skin')
+    if d == 0:
+        flat(s, {(14, 22 + bob), (15, 23 + bob), (16, 23 + bob), (17, 22 + bob)}, 'skin', 2)
+        hline(s, 12, 19, 22 + bob, 'acc', 2); hline(s, 13, 18, 23 + bob, 'acc', 1); hline(s, 9, 22, 32 + bob, 'shirt', 1)
+    head(s, d, 0, bob)
     return s
 
 

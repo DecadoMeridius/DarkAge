@@ -28,13 +28,14 @@ This guide explains every part of the game. Read the first sections to get going
 | **Left click** | Use the selected tool, weapon or item (hold to repeat). Clicking something far away walks you there and uses it. Clicking a tree, rock, grass or ripe vegetable picks the right tool from your hotbar. |
 | **Right click** or **E** | Interact: talk, open, pick, pick up, enter doors |
 | **Mouse wheel** / **1–0** | Pick a hotbar slot |
-| **Shift** | Dodge roll |
+| **Shift** | Dash (you can't be hit while dashing) |
 | **R** | Ride your horse |
 | **Z / X / C** | Combat abilities |
 | **I** | Backpack, equipment and hotbar |
 | **B** | Recipe book |
 | **K** | Skills |
 | **T** or **Tab** | Passive tree |
+| **V** | Combat skills (Blade, Marksman, Arcane) |
 | **N / P / F / O** | Animals / Friends / Family / Collections |
 | **M** | Map |
 | **J** | Quests and storylines |
@@ -250,35 +251,48 @@ Your machines keep running while you're away and through the night.
 
 ## 13. Fighting
 
+Combat is **action combat**: you aim with the mouse and every click swings. If you prefer the old style (click a target and auto-attack), switch to **Classic** in Options → Combat.
+
 **Attacking**
-- **Click an enemy** to target it. You walk into range and attack on a steady rhythm: daggers are fastest, warhammers slowest.
-- **Shift** dodges.
-- **Bosses** show their big attacks as red marks on the ground: get out of them.
+- **Left click** (hold to keep going) attacks toward the mouse. Each weapon feels different:
 
-**Abilities.** Hitting builds **Focus**, which you spend on abilities with **Z / X / C**:
-- **Cleave:** hits all around you.
-- **Lunge:** dash and strike.
-- **Guard:** block, then counter.
-- More abilities unlock in the passive tree.
+  | Weapon | Style |
+  |---|---|
+  | Dagger | Fast, short |
+  | Sword | All-round |
+  | Spear | Long and narrow |
+  | Warhammer | Slow, wide and heavy |
+  | Bow | Arrows, needs ammo |
+  | Staff | Magic bolts |
 
-**Combat skills**
-- **Melee, Ranged and Magic:** trained by fighting with that style.
-- **Defence:** trained by taking hits.
-- **Constitution:** your health.
-- **Combat level:** your combat skills combined.
+- **Combos:** three hits in a row make a combo, and the third hit is stronger and staggers the enemy.
+- **Shift** dashes. You can't be hit while dashing.
 
-**Gear**
-- Weapons need Melee (bows need Ranged), and armour needs Defence.
-- Every metal tier needs a higher level: wood and copper, then iron, steel, silver, gold, mythril, frostsilver, obsidian, adamant, dragonscale, starforged, plus the four regional metals.
-- Wearing a full set of one metal gives a **set bonus**.
-- Rings add extra bonuses.
+**Reading enemies**
+- **Wind-ups:** an enemy about to attack shows a **red marker on the ground**. Step out of it or dash through it.
+- **Bosses** have their own attacks: shockwave rings, falling rocks, fire pools, ice lanes, tidal waves, charges. The danger zone is always shown first. At half health they get angry and add a new attack.
 
-**Passive tree (T)**
-- **Combat points.** Each combat level above 3 gives a **combat point** for the Might, Precision and Arcana branches: damage, health, accuracy, critical hits, speed, Focus, keystones and new abilities.
-- **Ability slots.** You pick your three ability slots at the bottom of the tree.
-- **Respec.** Respeccing costs gold and is only possible at the village altar.
+**Abilities and Focus**
+- Hitting builds **Focus**, which you spend on abilities with **Z / X / C**.
+- **Guard** (in a slot) opens a short parry: an attack that lands in it does nothing and stuns the attacker.
 
-**Food heals.** Bring food and eat it from the hotbar.
+**Combat skills (V)**
+- **Three trees:** **Blade** (Melee), **Marksman** (Ranged) and **Arcane** (Magic), five skills each, for example Whirlwind, Leaping Strike, Rain of Arrows, Fireball, Chain Lightning and Meteor.
+- **Points:** you earn one per 5 levels of that style. Learn a skill, raise it to rank 3, and put it in a slot.
+- **Weapon type:** each tree needs its weapon type: a melee weapon, a bow or a staff.
+
+**Magic**
+- **Staffs** (one per metal) fire magic bolts and train Magic.
+- **Robes and hats** (Apprentice, Adept, Mystic, Arcanist, Starweave) add magic damage and slowly refill Focus. They need Magic to wear.
+
+**Combat skills, gear and the passive tree**
+- **Skills:** Melee, Ranged, Magic, Defence and Constitution set your damage, defence and health.
+- **Gear:** metal tiers need the matching level, and a full set of one metal gives a bonus.
+- **Passive tree (T):** combat levels give points for Might, Precision and Arcana, and life-skill levels for the Life branch. Respeccing costs gold at the village altar.
+
+**Staying alive**
+- Health slowly comes back when you're out of combat, and you get a warning when it's low.
+- Bring food and eat it from the hotbar.
 
 ## 14. Exploring
 
