@@ -90,3 +90,27 @@ def cart(load):
 
 SPRITES = {'impl_plough': lambda: [plough(0), plough(1)], 'impl_seeddrill': lambda: [seeddrill(0), seeddrill(1)],
            'impl_harrow': lambda: [harrow(0), harrow(1)], 'impl_cart': lambda: [cart(0), cart(1)]}
+
+
+LEATHER = ['#2a160c', '#4e2c16', '#7a4a26', '#a06838']
+BLANKET = ['#4a1414', '#7a2222', '#a83a32', '#c85a48']
+
+
+def tack():
+    """Saddle, blanket, girth, stirrup, bridle and reins, laid over the horse template (70x60, facing right)."""
+    s = Canvas(70, 60)
+    s.shade(poly([(27, 21), (45, 21), (46, 30), (26, 30)]), None, 'form', colors=BLANKET)  # saddle blanket
+    s.fill(line(26, 30, 46, 30), '#e8c860'); s.fill(line(27, 21, 27, 29), BLANKET[3])  # its trim
+    s.fill(rect(36, 29, 2, 12), LEATHER[1]); s.fill(rect(35, 40, 4, 1), IRON[2])  # girth and buckle
+    s.shade(poly([(29, 22), (31, 16), (34, 19), (40, 20), (42, 16), (44, 17), (44, 24), (30, 25)]), None, 'form', colors=LEATHER)  # seat, cantle and pommel
+    s.fill(line(32, 19, 40, 20), LEATHER[3])
+    s.fill(line(34, 25, 33, 35), LEATHER[0]); s.fill(rect(31, 35, 5, 2), IRON[2]); s.set(32, 36, IRON[0])  # stirrup leather and iron
+    s.fill(line(56, 5, 59, 18) | line(57, 5, 60, 18), LEATHER[1])  # headstall
+    s.fill(line(59, 9, 64, 11), LEATHER[1])  # browband
+    s.fill(line(61, 15, 67, 17), LEATHER[1])  # noseband
+    s.set(64, 19, IRON[3]); s.set(65, 19, IRON[2])  # bit
+    s.fill(line(64, 19, 52, 21) | line(52, 21, 44, 19), LEATHER[2])  # reins to the pommel
+    return s
+
+
+SPRITES['horse_tack'] = tack

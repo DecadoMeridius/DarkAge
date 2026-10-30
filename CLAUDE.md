@@ -319,6 +319,10 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **Exploration:** the Wilds and region maps zoom (buttons, mouse wheel) and show waystones; chests list what they held; picked flowers and mushrooms are named; mine ladders have a bobbing arrow; early request-board items are first-week items; gem veins need floor 5+; small windows (`#modal.small`) for the elevator and lost pages; opened chests have a raised lid (`props.py`).
 - **Cliffs:** `r` faces are natural rock (cracks, a broken ledge, darker toward the foot) instead of stone courses; cliff tops get a rocky tint and flat stones (`h_pixel.js`).
 
+## Interaction prompt and tack
+- `x_prompt.js`: a panel under the top-right menu lists what you can do with what's in front of you, each with its (rebound) key: the interact label, G lower/raise and E unhitch while an implement is hitched, R get off while riding.
+- The ridden horse wears a saddle, blanket, girth, stirrup, bridle and reins (`horse_tack` in `implements.py`, drawn between horse and rider in `y_anim.js`).
+
 ## Gear and creature art (`public/js/x_gear.js`, `art/sprites/gear.py`, `armor.py`, `farm_animals.py`, `foes.py`, `foes2.py`)
 - Every tier has its own weapon, shield and tool icons (`gi_<item>`, `gi_tool_<kind>_<level>`), used in the hotbar, bag and hand. Helmets (`hb_helm_<tier>_<d>`, full head, accent in the plume channel) and cuirasses (`hb_arm_<tier>_<d>`, new channels `armor` and `trim`) are drawn on the character; `GEAR_ACC` holds each tier's accent.
 - Farm animals and the horse, the Hollow Vale creatures and the regional ones are redrawn with the same sizes and channels; `art/preview_creatures.py` and `art/preview_armor.py` render preview sheets to `art/out/`.
