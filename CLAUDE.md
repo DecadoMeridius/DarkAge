@@ -259,6 +259,17 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - Clay mounds and salt crusts (`spawnNodes` once per wild map).
   - Slaughtering animals (`BUTCHER`), meat items, `$meat`, and meat recipes.
 
+## Action combat (`public/js/x_action.js`, design in `docs/COMBAT_OVERHAUL.md`)
+- `SETTINGS.combat`: `action` (default) or `classic` (the tick auto-attack in `n_combat.js`), switchable in Options.
+- Action mode:
+  - **Attacks:** LMB (hold to repeat) attacks toward the mouse with `WPN[PS.wt]` (cooldown, range, arc, knockback, damage multiplier, 3-hit combo whose finisher staggers). No misses (`actionHit`: 55-100% of `PS.maxHit`, crits, defence).
+  - **Arrows:** real projectiles (`PSHOTS`).
+  - **Feel:** hit-stop (`ACT.hitstop` pauses `update`), knockback, sparks and shake.
+  - **Dash:** Shift is 0.2 s and invulnerable, with a 0.45 s cooldown.
+  - **Enemies:** they wind up (`e.wind`, a red ground marker drawn in the `drawEnt` wrapper), strike if you're still in the arc, then recover (`enemyAttackAI`). The tick melee in `enemyTick` is off (bleed still ticks). Guard opens a 0.5 s parry (`ACT.parry`) that stuns.
+  - **No auto-target:** `TARGET` only feeds the target frame and aims Lunge, Rend and Volley.
+- Still to do (D4-D7): boss patterns, style skill trees with effects and AOE, magic (staffs, spells, robes), joint animation.
+
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
 

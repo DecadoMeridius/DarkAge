@@ -64,14 +64,14 @@ Work order: A (bugs and controls) → B (inventory and UI) → C (world content)
 - [x] C4 Slaughtering animals for meat, hide, bones and so on, used in recipes.
 
 ## D. Combat overhaul (Hades-like feel)
-- [ ] D1 Movement: responsive 8-way movement with acceleration, a dash with invulnerability frames and a cooldown, and sliding collision.
-- [ ] D2 Direct, directional combat:
+- [x] D1 (phase 1, x_action.js) Movement: responsive 8-way movement with acceleration, a dash with invulnerability frames and a cooldown, and sliding collision.
+- [x] D2 (phase 1, x_action.js) Direct, directional combat:
   - attack toward the mouse with weapon arcs and combos;
   - charged attacks;
   - ranged attacks aimed at the cursor;
   - hit-stop, knockback and screen shake;
   - telegraphed enemy attacks you can dodge.
-- [ ] D3 Enemy AI: approach, wind-up, attack and recover. Ranged enemies keep their distance, and packs flank you.
+- [x] D3 (phase 1, x_action.js) Enemy AI: approach, wind-up, attack and recover. Ranged enemies keep their distance, and packs flank you.
 - [ ] D4 Unique boss mechanics per boss: phases, patterns and arena hazards.
 - [ ] D5 Unlockable combat skills in specialisation trees, each with its own visual effects, replacing just Cleave, Lunge and Guard. Add AOE skills.
 - [ ] D6 Magic: staffs, spells, mana or Focus, and magic armour (robes) in tiers.
