@@ -289,6 +289,8 @@ def dragon(f):
 
 
 SPRITES = {}
+from sprites.farm_animals import chicken, duck, rabbit, goat, sheep, cow, pig, horse  # noqa: E402  (redrawn animals)
+from sprites.foes import slime, bat, wolf, crab, bird, ghost, yeti, golem, imp, dragon  # noqa: E402  (redrawn enemies)
 for name, fn in (('chicken', chicken), ('duck', duck), ('rabbit', rabbit), ('goat', goat), ('sheep', sheep), ('cow', cow), ('pig', pig), ('horse', horse)):
     SPRITES['an_' + name] = (lambda fn=fn: [fn(0), fn(1)])
 for name, fn in (('slime', slime), ('bat', bat), ('wolf', wolf), ('boar', lambda f: wolf(f, True)), ('crab', crab), ('bird', bird), ('ghost', ghost),
