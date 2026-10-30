@@ -118,6 +118,7 @@ pcCursorDraw = function (m) {
   _pcCursorDrawSk(m); if (TITLE) return;
   for (const v of VFX) { g.save(); if (v.cols && typeof tintedDraw === 'function') tintedDraw(v.cols, () => v.draw(Math.min(1, v.t / v.T))); else v.draw(Math.min(1, v.t / v.T)); g.restore(); } // a skill's effects take its colours (x_fix5.js)
   for (const p of SKP) {
+    if (typeof drawSkp === 'function') { drawSkp(p); continue; } // pixel arrows, fireballs and bolts (x_fix5.js)
     if (p.kind === 'fireball') { g.fillStyle = 'rgba(255,120,40,.4)'; g.beginPath(); g.arc(p.x, p.y, 6, 0, 6.283); g.fill(); g.fillStyle = '#ffd060'; g.beginPath(); g.arc(p.x, p.y, 3, 0, 6.283); g.fill(); if (Math.random() < .6) PARTS.push({ x: p.x, y: p.y, vx: (Math.random() - .5) * 20, vy: -10, t: .25, c: '#ff8a2a' }); }
     else { g.strokeStyle = p.cols ? p.cols[0] : p.kind === 'pierce' ? '#bfe8ff' : '#e8dcc0'; g.lineWidth = p.kind === 'pierce' ? 2.5 : 1.5; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - p.vx * .03, p.y - p.vy * .03); g.stroke(); }
   }
@@ -133,7 +134,7 @@ actionAttack = function () {
   const big = ACT.combo === 2; SKP.push({ x: S.p.x + Math.cos(a) * 8, y: S.p.y - 12 + Math.sin(a) * 8, vx: Math.cos(a) * 260, vy: Math.sin(a) * 260, t: 0, life: .9, kind: big ? 'fireball' : 'bolt', mult: w.combo[ACT.combo], hit: new Set(), a });
 };
 const _pcCursorDrawBolt = pcCursorDraw;
-pcCursorDraw = function (m) { _pcCursorDrawBolt(m); for (const p of SKP) if (p.kind === 'bolt') { g.fillStyle = 'rgba(160,120,255,.45)'; g.beginPath(); g.arc(p.x, p.y, 5, 0, 6.283); g.fill(); g.fillStyle = '#efe4ff'; g.beginPath(); g.arc(p.x, p.y, 2, 0, 6.283); g.fill(); } };
+pcCursorDraw = function (m) { _pcCursorDrawBolt(m); if (typeof drawSkp === 'function') return; for (const p of SKP) if (p.kind === 'bolt') { g.fillStyle = 'rgba(160,120,255,.45)'; g.beginPath(); g.arc(p.x, p.y, 5, 0, 6.283); g.fill(); g.fillStyle = '#efe4ff'; g.beginPath(); g.arc(p.x, p.y, 2, 0, 6.283); g.fill(); } };
 
 /* ---------- the Combat skills tab ---------- */
 const treePts = t => Math.floor(clv(CTREES[t].style) / 5) - CSKILLS.filter(s => s[1] === t).reduce((a, s) => a + ((S.cskill || {})[s[0]] || 0), 0);
@@ -145,7 +146,8 @@ function renderCSkills(b) {
     const T = CTREES[t], pts = treePts(t), col = el('div', { class: 'cstree f-panel' }, el('h3', null, T.n), el('small', { class: 'note' }, CSKN[T.style] + ' ' + clv(T.style) + ' · ' + pts + ' point' + (pts === 1 ? '' : 's') + ' · needs ' + T.needN));
     CSKILLS.filter(s => s[1] === t).forEach(([id, , lvl, n, cost, cd, desc], i, arr) => {
       const r = S.cskill[id] || 0, prev = i === 0 || (S.cskill[arr[i - 1][0]] || 0) > 0, okLvl = clv(T.style) >= lvl, can = r < 3 && pts > 0 && prev && okLvl;
-      const card = el('div', { class: 'cscard' + (r ? ' on' : '') }, el('b', null, n + ' ' + '●'.repeat(r) + '○'.repeat(3 - r)), el('small', null, desc), el('small', { class: 'note' }, 'Focus ' + cost + ' · cooldown ' + (cd * .6).toFixed(1) + ' s · ' + CSKN[T.style] + ' ' + lvl + (prev ? '' : ' · learn the skill above first')));
+      const card = el('div', { class: 'cscard' + (r ? ' on' : '') }, el('b', null, n + ' ' + '●'.repeat(r) + '○'.repeat(3 - r)), el('small', null, desc), el('small', { class: 'note' }, 'Focus ' + cost + ' · cooldown ' + (cd * .6).toFixed(1) + ' s'),
+        r ? el('small', { class: 'csreq' }, 'Learned' + (r < 3 ? ' · rank up with a ' + T.n + ' point' : '') + ' · used with ' + T.needN) : el('div', { class: 'csreq' }, el('b', null, 'To unlock:'), ...[[okLvl, CSKN[T.style] + ' level ' + lvl + ' (you: ' + clv(T.style) + ')'], [prev, i === 0 ? 'First skill of the ' + T.n + ' tree' : 'Learn ' + arr[i - 1][3] + ' first'], [pts > 0, 'A free ' + T.n + ' point (one per 5 ' + CSKN[T.style] + ' levels; ' + pts + ' left)'], [T.need(PS.wt), 'Hold ' + T.needN + ' to use it']].map(([ok, t]) => el('span', { class: ok ? 'ok' : 'no' }, (ok ? '✓ ' : '✗ ') + t))));
       const acts = el('div', { class: 'acts wrap' });
       if (r >= 3) acts.append(el('button', { class: 'btn off' }, 'Max rank')); // keeps the Z X C buttons in place
       if (r < 3) acts.append(el('button', { class: 'btn' + (can ? '' : ' off'), on: () => { if (!can) { toast(!okLvl ? 'You need ' + CSKN[T.style] + ' ' + lvl + '.' : !prev ? 'Learn the skill above first.' : 'No points left in this tree.', 'bad'); return; } S.cskill[id] = r + 1; SFX.lvl(); refresh(); } }, r ? 'Rank up' : 'Learn'));

@@ -877,3 +877,70 @@ for (const id in MELEE_ANIM) {
     return ok;
   };
 }
+
+/* bow and staff skills: the bow is drawn and loosed, the staff raised with its tip glowing in the skill's colour;
+   skill projectiles are pixel art (arrows with a head and fletching, flickering fireballs, bolts) with trails;
+   Rain of Arrows drops real arrows, Arcane Orbs are pixel stars and Meteor is a burning rock */
+let RCAST = { until: 0 };
+const PXR = v => Math.round(v * 2) / 2;
+playerAction = (f => function () {
+  if (!S || gameT >= RCAST.until || pl.roll > 0) return f();
+  const k = 1 - (RCAST.until - gameT) / RCAST.T, ic = itemIcon(S.eq.weapon);
+  if (RCAST.kind === 'bow') return k < .45 ? { pose: 'draw', bow: ic, pull: Math.min(1, k / .3) } : { pose: 'draw', bow: ic, pull: 0, loose: (k - .45) / .55 };
+  return { pose: 'cast', item: ic, ang: -Math.PI / 2 + (S.p.dir === 1 ? -.35 : .35), size: 18 };
+})(playerAction);
+function pxStar(x, y, c, r) { g.fillStyle = c; g.fillRect(PXR(x - r), PXR(y - .5), r * 2, 1); g.fillRect(PXR(x - .5), PXR(y - r), 1, r * 2); g.fillRect(PXR(x - 1), PXR(y - 1), 2, 2); }
+function pxArrow(x, y, a, cols, glow) {
+  g.save(); g.translate(PXR(x), PXR(y)); g.rotate(Math.round(a / (Math.PI / 8)) * (Math.PI / 8)); // eight-way steps keep the pixels crisp
+  if (glow) { g.fillStyle = cols[0]; g.globalAlpha = .35; g.fillRect(-9, -2, 16, 4); g.globalAlpha = 1; }
+  g.fillStyle = '#2a1c18'; g.fillRect(-8, -1, 12, 2);
+  g.fillStyle = '#a8743f'; g.fillRect(-7, -.5, 10, 1);
+  g.fillStyle = '#d8dee4'; g.fillRect(3, -1.5, 1.5, 3); g.fillRect(4.5, -1, 1, 2); g.fillRect(5.5, -.5, 1, 1);
+  g.fillStyle = cols[0]; g.fillRect(-9, -2, 3, 1); g.fillRect(-9, 1, 3, 1);
+  g.restore();
+}
+function pxOrb(x, y, halo, body, core, n) { const X = PXR(x), Y = PXR(y); g.fillStyle = halo; g.fillRect(X - n, Y - n + 1, n * 2, n * 2 - 2); g.fillRect(X - n + 1, Y - n, n * 2 - 2, n * 2); g.fillStyle = body; g.fillRect(X - 2.5, Y - 2, 5, 4); g.fillRect(X - 2, Y - 2.5, 4, 5); g.fillStyle = core; g.fillRect(X - 1, Y - 1.5, 2, 2); }
+function drawSkp(p) {
+  const a = Math.atan2(p.vy, p.vx), cols = p.cols || (p.kind === 'fireball' ? SKILL_FX.fireball : p.kind === 'bolt' ? SKILL_FX.orbs : p.kind === 'pierce' ? SKILL_FX.piercing : SKILL_FX.multishot);
+  if (p.kind === 'fireball') {
+    for (let j = 1; j <= 5; j++) { g.globalAlpha = .7 - j * .12; g.fillStyle = j % 2 ? cols[0] : cols[2]; const s = 3 - j * .4; g.fillRect(PXR(p.x - Math.cos(a) * j * 3 - s / 2), PXR(p.y - Math.sin(a) * j * 3 - s / 2), s, s); }
+    g.globalAlpha = 1; const f = Math.floor(gameT * 12) % 2; pxOrb(p.x, p.y, 'rgba(255,90,20,.45)', cols[0], cols[2], 4 + f);
+    if (Math.random() < .5) PARTS.push({ x: p.x, y: p.y, vx: (Math.random() - .5) * 20, vy: -14, t: .3, c: Math.random() < .5 ? cols[0] : cols[2] });
+    return;
+  }
+  if (p.kind === 'bolt') {
+    for (let j = 1; j <= 4; j++) { g.globalAlpha = .55 - j * .12; g.fillStyle = cols[0]; g.fillRect(PXR(p.x - Math.cos(a) * j * 3) - 1, PXR(p.y - Math.sin(a) * j * 3) - 1, 2, 2); }
+    g.globalAlpha = 1; pxOrb(p.x, p.y, 'rgba(160,110,255,.4)', cols[0], cols[1] || '#ffffff', 4); return;
+  }
+  for (let j = 1; j <= 5; j++) { g.globalAlpha = .5 - j * .09; g.fillStyle = cols[0]; g.fillRect(PXR(p.x - Math.cos(a) * (6 + j * 3)) - .5, PXR(p.y - Math.sin(a) * (6 + j * 3)) - .5, 1.5, 1.5); }
+  g.globalAlpha = 1; pxArrow(p.x, p.y, a, cols, p.kind === 'pierce');
+}
+const RANGED_ANIM = {
+  bow: ['piercing', 'multishot', 'rain', 'trap', 'mark', 'volley'],
+  staff: ['fireball', 'frostnova', 'chain', 'orbs', 'meteor', 'secondwind'],
+};
+const STAFF_TIP = () => [S.p.x + (S.p.dir === 1 ? -5 : 5), S.p.y - 40];
+for (const kind in RANGED_ANIM) for (const id of RANGED_ANIM[kind]) {
+  const A = ABIL[id]; if (!A || A._rng) continue; const fn = A.fn, cols = SKILL_FX[id] || ['#fff0c0', '#c8a060', '#ffffff']; A._rng = 1;
+  A.fn = function () {
+    const w = PS && PS.wt, args = arguments, [mx, my] = mouseWorld();
+    const ok = fn.apply(this, args);
+    if (ok === false || !S) return ok;
+    if (kind === 'bow' && w === 'bow') RCAST = { until: gameT + .4, T: .4, kind: 'bow' };
+    if (kind === 'staff' && w === 'staff') {
+      RCAST = { until: gameT + .5, T: .5, kind: 'staff' };
+      vfx(k => { const [tx, ty] = STAFF_TIP(); g.globalAlpha = 1 - k * .6; pxStar(tx, ty, cols[0], 3 + Math.round((1 - k) * 3)); pxStar(tx, ty, cols[2] || '#ffffff', 1.5); g.globalAlpha = 1; if (Math.random() < .5) PARTS.push({ x: tx + (Math.random() - .5) * 6, y: ty + (Math.random() - .5) * 6, vx: 0, vy: -18, t: .3, c: cols[Math.floor(Math.random() * 2)] }); }, .5);
+    }
+    if (id === 'rain') { const seeds = [...Array(9)].map((_, i) => [Math.sin(i * 7.3) * 30, Math.cos(i * 4.1) * 20, i * .23]);
+      vfx(k => { const t = k * 2; for (const [dx, dy, o] of seeds) { const f = ((t + o) % .5) / .5, y0 = my + dy - 70 * (1 - f); pxArrow(mx + dx, y0, Math.PI / 2, cols, false); if (f > .9) { g.fillStyle = cols[2]; g.fillRect(PXR(mx + dx) - 1.5, PXR(my + dy) + 2, 3, 1); } } }, 2); }
+    if (id === 'orbs') vfx(() => { for (let i = 0; i < 3; i++) { const a = gameT * 3 + i * 2.09, x = S.p.x + Math.cos(a) * 34, y = S.p.y - 8 + Math.sin(a) * 24; pxStar(x, y, cols[0], 5); pxStar(x, y, cols[1], 2.5); for (let j = 1; j < 4; j++) { const b = a - j * .18; g.globalAlpha = .5 - j * .14; g.fillStyle = cols[0]; g.fillRect(PXR(S.p.x + Math.cos(b) * 34) - 1, PXR(S.p.y - 8 + Math.sin(b) * 24) - 1, 2, 2); } g.globalAlpha = 1; } }, 6);
+    if (id === 'meteor') vfx(k => { // a burning rock, its tail streaming back up the way it came
+      const ry = my - 160 * (1 - k), rx = mx + 60 * (1 - k);
+      for (let j = 1; j <= 8; j++) { g.globalAlpha = Math.max(0, .8 - j * .09); g.fillStyle = j < 3 ? '#fff0a0' : j < 6 ? cols[0] : cols[2]; const s = 5 - j * .45; g.fillRect(PXR(rx + j * 3.2 - s / 2), PXR(ry - j * 8.5 - s / 2), s, s); }
+      g.globalAlpha = 1; g.fillStyle = '#2a1c18'; g.fillRect(PXR(rx) - 5, PXR(ry) - 4, 10, 8); g.fillRect(PXR(rx) - 4, PXR(ry) - 5, 8, 10);
+      g.fillStyle = '#6a4a3a'; g.fillRect(PXR(rx) - 4, PXR(ry) - 3, 8, 6); g.fillStyle = '#8a6a52'; g.fillRect(PXR(rx) - 3, PXR(ry) - 4, 5, 3);
+      g.fillStyle = cols[0]; g.fillRect(PXR(rx) - 1, PXR(ry) - 1, 3, 1); g.fillRect(PXR(rx) + 1, PXR(ry), 1, 3); g.fillStyle = '#ffe08a'; g.fillRect(PXR(rx) - 2, PXR(ry) + 2, 2, 1);
+    }, 1);
+    return ok;
+  };
+}

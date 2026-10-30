@@ -254,3 +254,5 @@ body:has(#modal:not([hidden])) #ctpanel { display: none; }
 #mbody > .list > .srow { background: rgba(255, 248, 230, .55); border: 2px solid #c8a878; padding: 4px 8px; }
 #modal select { background: #f4e6c4; border: 2px solid #6a4a2a; border-radius: 0; font: 600 13px Fredoka, sans-serif; color: #3a2618; padding: 2px 4px; }
 .need { white-space: nowrap; }
+.csreq { display: flex; flex-direction: column; gap: 1px; margin: 3px 0; font-size: 12px; }
+.csreq .ok { color: #2e6a26; } .csreq .no { color: #a8301a; }

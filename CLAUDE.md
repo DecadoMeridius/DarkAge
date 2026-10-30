@@ -371,6 +371,9 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - Leaping Strike: spins overhead.
   - Blade Storm: ghost copies of your own weapon.
 
+- **Bow and staff skills (`RANGED_ANIM`, `RCAST`, `drawSkp`):** bow skills draw and loose the bow; staff skills raise the staff with a glowing tip in the skill's colour. Skill projectiles are pixel art with trails: arrows with a head and fletching (a glow for Piercing Shot), flickering fireballs and bolts. Rain of Arrows drops real arrows, Arcane Orbs are pixel stars and Meteor is a burning rock with a tail. The old projectile drawing in `x_skills.js` and `x_combatfix.js` steps aside when `drawSkp` exists.
+- **Combat skills page (V):** every unlearned skill lists what it needs with ✓ and ✗: the style level (and yours), the skill before it, a free tree point (one per 5 levels) and the weapon to hold.
+
 ## Canoe (`public/js/x_canoe.js`)
 - Made at a workbench (40 wood, 4 hardwood, 12 fiber), worn in the Boat slot (`S.eq.boat`, between the rings). While worn, deep water (`w`) is open to the player's `moveEnt` and `walkTo` (`withWater` lifts `TER.w.solid` for that call); `S.p.boat` follows the tile under you, so you climb in and out at the shore. Drawn seated in the hull with the near gunwale over the legs, a paddle stroking side to side and a wake (`canoe.0/.1` in `implements.py`).
 
