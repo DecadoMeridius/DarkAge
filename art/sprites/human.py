@@ -45,10 +45,32 @@ def hline(s, x0, x1, y, ch, lvl):
 
 
 # ---- body ------------------------------------------------------------------
-HEAD_F = {(x, y) for x in range(10, 22) for y in range(7, 21)
-          if not ((y < 9 and (x < 11 or x > 20)) or (y > 17 and (x < 11 or x > 20)) or (y > 19 and (x < 12 or x > 19)))}
-HEAD_S = {(x, y) for x in range(11, 22) for y in range(7, 21)
-          if not ((y < 9 and (x < 12 or x > 20)) or (y > 18 and x < 13) or (y > 19 and x > 19))} | {(22, 14), (22, 15)}
+HEAD_ROWS_F = {7: (12, 19), 8: (11, 20), 9: (10, 21), 10: (10, 21), 11: (10, 21), 12: (10, 21), 13: (10, 21), 14: (10, 21),
+               15: (10, 21), 16: (10, 21), 17: (11, 20), 18: (11, 20), 19: (12, 19), 20: (13, 18)}
+HEAD_F = {(x, y) for y, (a, b) in HEAD_ROWS_F.items() for x in range(a, b + 1)}
+HEAD_ROWS_S = {7: (13, 19), 8: (12, 20), 9: (11, 21), 10: (11, 21), 11: (11, 21), 12: (11, 21), 13: (11, 21), 14: (11, 22),
+               15: (11, 22), 16: (11, 21), 17: (12, 21), 18: (13, 20), 19: (14, 20), 20: (15, 19)}
+HEAD_S = {(x, y) for y, (a, b) in HEAD_ROWS_S.items() for x in range(a, b + 1)}
+
+
+def torso_f(dx=0, dy=0):
+    """Front / back torso: sloped shoulders, a chest, a waist, the hips."""
+    return poly([(9 + dx, 22 + dy), (23 + dx, 22 + dy), (24 + dx, 25 + dy), (23 + dx, 31 + dy), (22 + dx, 34 + dy), (23 + dx, 40 + dy),
+                 (9 + dx, 40 + dy), (10 + dx, 34 + dy), (9 + dx, 31 + dy), (8 + dx, 25 + dy)])
+
+
+def torso_s(dx=0, dy=0):
+    return poly([(12 + dx, 22 + dy), (20 + dx, 22 + dy), (21 + dx, 26 + dy), (21 + dx, 32 + dy), (20 + dx, 35 + dy), (21 + dx, 40 + dy),
+                 (11 + dx, 40 + dy), (12 + dx, 35 + dy), (11 + dx, 30 + dy), (11 + dx, 25 + dy)])
+
+
+def belt_line(s, d, dy=0):
+    if d == 2:
+        hline(s, 12, 20, 35 + dy, 'belt', 1); hline(s, 12, 20, 36 + dy, 'belt', 0)
+    else:
+        hline(s, 10, 22, 35 + dy, 'belt', 1); hline(s, 10, 22, 36 + dy, 'belt', 0)
+        if d == 0:
+            s.fill({(16, 35 + dy), (16, 36 + dy)}, '#c8a040')
 
 
 def legs_front(s, f):
@@ -65,7 +87,7 @@ def body(d, f):
     step = {1: 1, 3: -1}.get(f, 0)
     if d in (0, 3):
         legs_front(s, f)
-        cel(s, poly([(8, 22), (24, 22), (23, 40), (9, 40)]), 'shirt')  # torso, shoulders 16 wide
+        cel(s, torso_f(), 'shirt'); belt_line(s, d)  # torso, sloped shoulders
         for x0, side in ((5, 1), (24, -1)):
             sw = -step * side
             cel(s, rect(x0, 23 + sw, 3, 14), 'shirt')
@@ -73,7 +95,7 @@ def body(d, f):
         if d == 0:
             flat(s, {(14, 22), (15, 23), (16, 23), (17, 22)}, 'skin', 2)  # open collar
             hline(s, 12, 19, 22, 'acc', 2); hline(s, 13, 18, 23, 'acc', 1)
-            hline(s, 9, 22, 32, 'shirt', 1)  # shirt hem fold
+            hline(s, 10, 22, 30, 'shirt', 1)  # a fold across the chest
         cel(s, rect(14, 19, 4, 4), 'skin')  # neck
         cel(s, HEAD_F, 'skin')
         if d == 0:
@@ -81,7 +103,7 @@ def body(d, f):
                 s.set(ex, 13, WHITE); s.set(ex + 1, 13, EYE); s.set(ex + 1, 14, EYE); s.set(ex, 14, WHITE)
                 hline(s, ex, ex + 1, 11, 'hair', 1)  # brows
             flat(s, {(15, 15), (15, 16), (16, 16)}, 'skin', 1)  # nose
-            s.fill({(14, 18), (15, 18), (16, 18), (17, 18)}, MOUTH)
+            s.fill({(15, 18), (16, 18)}, MOUTH); flat(s, {(12, 16), (19, 16)}, 'skin', 1)
             flat(s, {(10, 13), (21, 13)}, 'skin', 1)  # ears
     else:  # side, facing right
         for side, x0 in ((-1, 13), (1, 15)):
@@ -89,8 +111,8 @@ def body(d, f):
             cel(s, rect(x0 + off, 39, 5, 17), 'pants')
             cel(s, rect(x0 + off, 55, 7, 7), 'shoe')
             hline(s, x0 + off, x0 + off + 6, 61, 'shoe', 0)
-        cel(s, poly([(11, 22), (21, 22), (21, 40), (11, 40)]), 'shirt')
-        hline(s, 11, 21, 32, 'shirt', 1)
+        cel(s, torso_s(), 'shirt'); belt_line(s, 2)
+        hline(s, 12, 20, 30, 'shirt', 1)
         sw = step * 2
         cel(s, poly([(14 + sw // 2, 23), (17 + sw // 2, 23), (17 + sw, 37), (14 + sw, 37)]), 'shirt')
         cel(s, rect(14 + sw, 37, 3, 4), 'skin')
@@ -117,15 +139,17 @@ def hair(style, d, layer):
         if style == 'pony' and d in (2, 3):
             cel(s, rect(10, 14, 4, 14) if side else rect(14, 18, 4, 14), 'hair')
         return s
-    if d == 3:
-        cap = {(x, y) for x in range(9, 23) for y in range(5, 20) if not (y < 7 and (x < 11 or x > 20))}
+    if d == 3:  # the back of the head: rounded crown, tapering to the nape
+        cap = {(x, y) for x in range(9, 23) for y in range(5, 19) if not (y < 7 and (x < 11 or x > 20)) and not (y > 16 and (x < 11 or x > 20))}
+        cap |= {(x, 19) for x in range(12, 20)} | {(13, 20), (15, 20), (17, 20), (19, 20)}
     elif side:
-        cap = {(x, y) for x in range(10, 22) for y in range(5, 13) if not (y < 7 and (x < 12 or x > 20))} | rect(10, 12, 5, 6)
-        cap -= {(x, 12) for x in range(16, 22)}
+        cap = {(x, y) for x in range(10, 22) for y in range(4, 11) if not (y < 6 and (x < 12 or x > 19))}
+        cap |= rect(10, 11, 5, 7) | {(15, 11), (16, 11), (19, 11), (20, 11), (21, 10), (14, 18)}   # fringe over the brow, hair over the ear
+        cap -= {(x, 10) for x in range(17, 20)}
     else:
-        cap = {(x, y) for x in range(9, 23) for y in range(5, 11) if not (y < 7 and (x < 11 or x > 20))}
-        cap |= rect(9, 10, 2, 7) | rect(21, 10, 2, 7)  # sideburns
-        cap |= {(x, 11) for x in range(11, 17)} | {(11, 12), (12, 12)}  # side-swept fringe
+        cap = {(x, y) for x in range(9, 23) for y in range(4, 10) if not (y < 6 and (x < 11 or x > 20)) and not (y < 5 and (x < 13 or x > 18))}
+        cap |= rect(9, 10, 2, 6) | rect(21, 10, 2, 6)  # sideburns over the ears
+        cap |= {(x, 10) for x in range(11, 21) if x % 3 != 2} | {(11, 11), (12, 11), (14, 11), (17, 11), (19, 11), (20, 11), (12, 12)}  # a ragged fringe
     if style == 'spiky':
         for k in range(5):
             x0 = 9 + k * 3
@@ -133,9 +157,9 @@ def hair(style, d, layer):
     if style == 'long' and d == 0:
         cap |= rect(8, 10, 3, 20) | rect(21, 10, 3, 20)
     cel(s, cap, 'hair')
-    for x in range(10, 22, 3):  # strand lines
-        if (x, 7) in cap:
-            s.px[x, 7] = code('hair', 3)
+    for x, y in ((11, 6), (14, 5), (17, 6), (20, 7), (12, 8), (16, 8), (19, 9)):  # strand highlights and partings
+        if (x, y) in cap:
+            s.px[x, y] = code('hair', 3 if (x + y) % 2 else 1)
     if style == 'bun':
         cel(s, rect(13, 1, 6, 5) if not side else rect(9, 3, 5, 5), 'hair')
     return s
@@ -194,7 +218,7 @@ def beard(d):
     m = (rect(10, 15, 2, 4) | rect(20, 15, 2, 4) | rect(11, 18, 10, 4) | rect(13, 22, 6, 2)) if d == 0 else (rect(16, 15, 6, 6) | rect(17, 21, 4, 2))
     cel(s, m, 'beard')
     if d == 0:
-        s.fill({(14, 18), (15, 18), (16, 18), (17, 18)}, MOUTH)
+        s.fill({(15, 18), (16, 18)}, MOUTH); flat(s, {(12, 16), (19, 16)}, 'skin', 1)
         hline(s, 13, 18, 17, 'beard', 1)
     return s
 
@@ -373,7 +397,7 @@ def head(s, d, dx=0, dy=0):
                 s.set(ex + dx, 13 + dy, WHITE); s.set(ex + 1 + dx, 13 + dy, EYE); s.set(ex + 1 + dx, 14 + dy, EYE); s.set(ex + dx, 14 + dy, WHITE)
                 hline(s, ex + dx, ex + 1 + dx, 11 + dy, 'hair', 1)
             flat(s, sh({(15, 15), (15, 16), (16, 16)}), 'skin', 1)
-            s.fill(sh({(14, 18), (15, 18), (16, 18), (17, 18)}), MOUTH)
+            s.fill(sh({(15, 18), (16, 18)}), MOUTH); flat(s, sh({(12, 16), (19, 16)}), 'skin', 1)
             flat(s, sh({(10, 13), (21, 13)}), 'skin', 1)
     else:
         hline(s, 15 + dx, 19 + dx, 22 + dy, 'acc', 2)
@@ -444,7 +468,7 @@ def walk(d, f):
             if L[0] == 0: draw_leg(*L)
         for A in arms:
             if A[0] == 0: draw_arm(*A)
-        cel(s, poly([(11, 22 + bob), (21, 22 + bob), (21, 40 + bob), (11, 40 + bob)]), 'shirt'); hline(s, 11, 21, 32 + bob, 'shirt', 1)
+        cel(s, torso_s(0, bob), 'shirt'); belt_line(s, 2, bob); hline(s, 12, 20, 30 + bob, 'shirt', 1)
         for L in legs:
             if L[0] == 1: draw_leg(*L)
         head(s, d, 0, bob)
@@ -460,7 +484,7 @@ def walk(d, f):
         cel(s, seg(x0, 39 + bob, x0, knee_y, 5) | seg(x0, knee_y, x0 + (side if lift > .4 else 0), foot_y, 4), 'pants')
         hline(s, x0 - 2, x0 + 2, knee_y, 'pants', 1)  # the knee crease
         cel(s, rect(x0 - 3, foot_y, 7, 5) - {(x0 - 3, foot_y)}, 'shoe'); hline(s, x0 - 3, x0 + 3, foot_y + 4, 'shoe', 0)
-    cel(s, poly([(8, 22 + bob), (24, 22 + bob), (23, 40 + bob), (9, 40 + bob)]), 'shirt')
+    cel(s, torso_f(0, bob), 'shirt'); belt_line(s, d, bob)
     for x0, side in ((6, 1), (25, -1)):
         p = ph + (0 if side > 0 else math.pi) + math.pi
         fwd = math.sin(p)  # + forward (toward the viewer when facing down)
@@ -470,7 +494,7 @@ def walk(d, f):
         cel(s, rect(hx_ - 1, 37 + bob - round(max(0, fwd) * 3), 3, 3), 'skin')
     if d == 0:
         flat(s, {(14, 22 + bob), (15, 23 + bob), (16, 23 + bob), (17, 22 + bob)}, 'skin', 2)
-        hline(s, 12, 19, 22 + bob, 'acc', 2); hline(s, 13, 18, 23 + bob, 'acc', 1); hline(s, 9, 22, 32 + bob, 'shirt', 1)
+        hline(s, 12, 19, 22 + bob, 'acc', 2); hline(s, 13, 18, 23 + bob, 'acc', 1); hline(s, 10, 22, 30 + bob, 'shirt', 1)
     head(s, d, 0, bob)
     return s
 
@@ -487,11 +511,11 @@ def stance(s, d, wide=1):
 
 def torso(s, d, dx=0, dy=0):
     if d in (0, 3):
-        cel(s, poly([(8 + dx, 22 + dy), (24 + dx, 22 + dy), (23 + dx, 40), (9 + dx, 40)]), 'shirt')
+        cel(s, torso_f(dx, dy), 'shirt'); belt_line(s, d)
         if d == 0:
-            hline(s, 12 + dx, 19 + dx, 22 + dy, 'acc', 2); hline(s, 9 + dx, 22 + dx, 32, 'shirt', 1)
+            hline(s, 12 + dx, 19 + dx, 22 + dy, 'acc', 2); hline(s, 10 + dx, 22 + dx, 30, 'shirt', 1)
     else:
-        cel(s, poly([(11 + dx, 22 + dy), (21 + dx, 22 + dy), (21, 40), (11, 40)]), 'shirt'); hline(s, 11, 21, 32, 'shirt', 1)
+        cel(s, torso_s(dx, dy), 'shirt'); belt_line(s, 2)
 
 
 def pose(d, p):
