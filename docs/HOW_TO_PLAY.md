@@ -377,6 +377,42 @@ Each region has:
 
 **The request board** in the village posts requests for items, with a gold reward.
 
+## 15b. The realm: towns, knights and Briarholt
+
+**The Wilds are much bigger now.** Four towns lie in them, joined by roads. Signposts at every town gate and at the crossroads point the way, and each town has a waystone and is marked on the map (M).
+- **Kingsbridge** is a walled city with an inn, a market, a smithy, a bank, a temple, the town hall and the barracks.
+- **Greyhelm** is a walled mining town with an inn, a forge and the miners' supply.
+- **Ashford** is a woodcutters' village with a tavern, a trading post and a sawmill.
+- **Saltmere** is a fishing village with a tavern, a fishmonger and a chandlery.
+
+**In the towns:**
+- **Shops:** walk into any shop. The keepers have opening hours, friendship and gifts like the villagers at home, and they walk the streets when they're closed.
+- **Town jobs:** the town halls and the Kingsbridge barracks have a board of jobs. Clear monsters around the town, bring goods, or ride with a patrol.
+- **Standing:** jobs raise your standing with that town. At 50 standing its shops sell to you at a friend's price.
+- **Safety:** no monsters spawn in or next to a town.
+
+**Guards and knights** are on your side. Town guards hold the gates. Knight patrols of two to four walk the roads between the towns. Both fight any monster that comes near them, and if you're in the fight, the kill counts as yours.
+
+**Briarholt Castle** stands beyond the trees at the south-east corner of your farm.
+- **Getting in:** it opens during **The Empty Throne**, which begins once The Hollow Crown is complete.
+- **The keep** has three floors:
+  - the throne room, great hall, library, chapel, kitchen and armoury;
+  - upstairs, your bedchamber, the bath, a portrait gallery and the map room;
+  - the cellars: the wine cellar, the treasury, the dungeon and the crypt.
+- **Once it's yours:** its courtyard is farmland, its two glasshouses grow any crop in any season, and you can sleep in the royal bed.
+
+**The story** brings:
+- a royal herald with knights and wagons;
+- a princess in hiding;
+- trouble in all four towns;
+- the siege of Briarholt;
+- the knight's oath;
+- a drake's egg.
+
+**The siege:** Morcant's hunters come through the gate in four waves, and Captain Vey's knights hold the courtyard with you. Before you go out, build **ballistae**, which shoot monsters in range, and **barricades** at a workbench and place them on your land.
+
+**Flying:** when your drake is grown, blow the **dragon whistle** outdoors to fly. You fly fast over everything and nothing can hurt you. Press R or blow the whistle again to land on open ground.
+
 ## 16. Village life
 
 **Villagers**

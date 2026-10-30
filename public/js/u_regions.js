@@ -217,11 +217,11 @@ function genDungeon(id, n) {
 }
 
 /* ---- the Wilds side: gates on the north edge, Corwin's ferry, waystones ---- */
-function regionGateX(id) { return REGIONS[id].gx; }
+function regionGateX(id) { return Math.round(REGIONS[id].gx * WK); } // gx is on the old 200-wide Wilds
 function hookWilds() {
   const m = MAPS.wilds; if (!m) return; const W = m.w;
   R = rng(S.seed * 13 + 5);
-  const from = m.mineDoor ? [m.mineDoor.x, m.mineDoor.y + 1] : [100, 80];
+  const from = m.mineDoor ? [m.mineDoor.x, m.mineDoor.y + 1] : [Math.round(100 * WK), Math.round(80 * WK)];
   for (const id of ['highmarch', 'frostmere', 'emberwaste']) {
     const gx = regionGateX(id);
     for (let y = 0; y < 4; y++) for (let x = gx - 2; x <= gx + 2; x++) { if (getO(m, x, y)) delObj(m, x, y); if (!m.solidB[y * W + x]) setT(m, x, y, 'd'); }

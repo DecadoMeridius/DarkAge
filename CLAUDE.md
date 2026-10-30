@@ -422,3 +422,72 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - `S.bank` is unlimited storage, opened from the storage chest in the farmhouse and the bank chest in Mara's store. `S.presets` holds three equipment loadouts (save / load in the bank window).
 - Saves from before the backpack are migrated on load (`ensurePack`): stacks go into slots, anything that doesn't fit goes to the bank.
 - Never an infinite bag: bulk storage belongs in the bank or storage chests.
+
+## Briarholt Castle and The Empty Throne (`x_kingdom.js`, `x_story2.js`; art `castle.py`, `castle2.py`, `procession.py`; plan `docs/IDEAS_KINGDOMS.md`)
+- **The castle plot:** map `castle` (68x52, in `PERSIST`), through the farm's south-east tree line (x 44-46). A sign stands there from the start; the way opens with `S.story.flags.briarOpen`.
+  - **Walls:** `cwall` objects with a join mask (1 N, 2 E, 4 S, 8 W). Each is 32x96: a wall-walk band at y 8-40, and a face only where the run ends to the south.
+  - **Gate and towers:** 2x2 `ctower` objects, and a `cgate` arch whose right half is a non-solid `gpart`, so both gate tiles are open. All have `_w` winter versions.
+  - **Buildings:** the keep `bld_castle_18x10` (door act `castle`) and the glasshouses `cgh_W`/`cgh_E` (any season).
+  - **Ownership:** `flags.castleOwned`; `castleLand()` adds the grounds and glasshouses to `ownedPlots`.
+- **The keep has three floors (`KEEP_PLANS`, `genKeepFloor`, rebuilt every load):**
+  - **`castle_in`:** throne room with pillars, great hall, library, chapel, kitchen with the great hearth, pantry, armoury, guard room, and an entrance hall with the grand stair up and the stair down.
+  - **`castle_up`:** your bedchamber, the solar, Isolde's chamber, the bath, the portrait gallery and the map room.
+  - **`castle_down`:** wine cellar, treasury vault (a hoard to search once: 5000g), dungeon cells, and the crypt of the kings (Margit's empty tomb).
+  - **How a floor is described:** walls `['v', x, y0, y1]` and `['h', x0, x1, y]` (3 thick), `doors` rectangles, `rooms` with names and floor tiles (shown as you enter), `links` for the stairs (`k_up` / `k_down`).
+  - **Wall painting:** `pixRoomWalls` draws a face wherever a wall has floor below it.
+  - **Furniture:** the hand-pixelled pieces are letter grids in `castle2.py` (`grid`, mirrored where symmetrical): pillar, throne, wardrobe, war table, bath, hearth, wine rack, cell bars, tomb, hoard, stairs, portraits.
+- **The Empty Throne** (`STORIES.throne`, 13 chapters) starts when The Hollow Crown is done; Elias, Marta, Sigrun and Aldren hint at it.
+  - **Chapters 1-3:**
+    1. The herald's procession (`procStart`/`procFrame`: knights, the herald and two wagons come in by the village road and park; the story herald shows only once he's arrived).
+    2. Elias, Margit's seal and Ashcombe's key.
+    3. The warm kitchen; Isolde in the throne room; buying the deed (`st.pay`).
+  - **Chapters 4-13 (`x_story2.js`):**
+    4. Captain Vey and riding with patrols (`kill` `*assist`).
+    5. The hunters' camp near Ashford: bandits gather round it, then Rudd.
+    6. Finn, Mags and Captain Harrow at Saltmere.
+    7. Proof for Mayor Osric; Halvard's highland raiders (`kill` `*bio:highlands`); Vey sends knights.
+    8. **The siege of Briarholt.**
+    9. The council at Kingsbridge (the bloodline choice, `flags.bloodline`).
+    10. The oath of the Ember Stag (the Warlord, a night vigil in the chapel, the Ring of the Ember Stag).
+    11. The Cinder Drake and its egg.
+    12. The egg hatches (`S.dragon`: hatch in 5 days, grown in 14) and you get the dragon whistle.
+    13. A "to be continued" step for the capital.
+  - **Story places:** `town:<id>:<spot>` and `castle:gate|hearth|throne|chapel|maproom|crypt|hall`; town keepers are found through `npcWhere`.
+- **Siege (`SIEGE`):**
+  - It starts when the siege step waits, `flags.knightsAtBriar` is set and you enter the grounds.
+  - Four waves (`SIEGE_WAVES`, the Warlord last) come through the gate; six of Vey's knights hold the courtyard and come to your side.
+  - Leaving or being knocked out calls it off until you return. Winning sets `flags.siegeWon`.
+- **Ballista and barricade:**
+  - Both are placeable items on any owned land (workbench recipes). They are hand-pixelled.
+  - A ballista shoots a bolt at the nearest monster within 150 px every 1.6 s (`ballistaFrame`, `BOLTS`).
+- **Dragon flight (`S.flying`):** the dragon whistle (or R to land) lets you fly.
+  - In the air `moveEnt` ignores obstacles at 2.6× speed, you can't be hurt and tools are off, and you land only on open ground.
+  - It's drawn in the overlay pass with `drake_mount.0-2` (hand grid, doubled with Scale2x in `castle2.py`) and the rider in the `ride` pose.
+  - The drakeling naps by the kitchen hearth until it's grown.
+- **Tested on `[::1]`:**
+  - the whole story by an automated driver;
+  - the siege won (with 2 ballistae);
+  - flight;
+  - an old save moving onto the new Wilds.
+
+## The realm: a bigger Wilds, towns, guards and patrols (`public/js/x_realm.js`, art `art/sprites/towns.py`)
+- **The Wilds are 440x330** (`WK` 2.2 in `d_world.js`; `WW`, `WH`, `WIN_F`/`WIN_V` for the farm and village roads, `EW`/`EH` for the explored fog). Region gates scale with `regionGateX`. Old saves get a new Wilds once (`S.wildsVer` 2).
+- **Saves of big generated maps store only their changes** (`DELTA_MAP`, `baseSnap`, `diffO`, `applyDelta`; `ms.d`, with `ms.w`/`ms.h` so a map of another size is regenerated): the Wilds, the regions and Briarholt. A save went from ~470 KB to ~80 KB.
+- **Towns (`TOWNS`, hand-laid plans placed per world by `townSpot` in a fitting biome, then `stampTown`):**
+  - **Kingsbridge:** a walled city: towers and four gates, a plaza with a fountain and market stalls, temple, town hall, inn, emporium, bank, smithy, barracks and 14 houses.
+  - **Greyhelm:** a walled mining town: longhouse, inn, forge and miners' supply.
+  - **Ashford:** a fenced woodcutters' village: tavern, trading post and sawmill.
+  - **Saltmere:** a fishing village with a pier: tavern, fishmonger and chandlery.
+  - **Connections:** roads join them (`m.roads`, carved before the towns are stamped), with signposts at every exit and at the crossroads (arrows to the other towns), and a waystone in each (`wilds_<id>`). Towns are on the world map.
+  - **No spawns:** no monsters spawn within 10 tiles of a town (the `spawnEnemy` wrapper). Town trees can't be cut.
+- **Shops:**
+  - Every shop has a room (`roomFor` → `ROOMS`), a keeper (`TOWN_NPCS`: 18 new villagers in `NPCS` with friendship, gifts and lines), opening hours (`HOURS`, `SCHED`) and a menu (`townMenu`). Story steps waiting on a keeper speak first.
+  - The menus are: inn meals and rest (free at 6 hearts), shop buy/sell with a trade bonus, forge, bank, a temple blessing, and town jobs.
+  - **Town jobs (`TOWN_JOBS`, `S.realm.q`):** kill jobs by biome, bring jobs, and the barracks' patrol job.
+  - **Standing:** `S.realm.rep` per town; 50+ gives friend prices.
+  - **Off duty:** keepers walk to a town spot outside their hours (`townLife`, `townWalk`).
+- **Allies (`ALLIES`):**
+  - Town guards (`guard_kb`, `guard_gh`, `guard_v`) hold posts, and knight patrols of 2-4 (`knight_a/b/c`) walk the roads between towns (`PATROLS`, a path between road ends).
+  - They're NPCS entries hidden from the Friends tab, drawn as villagers with a sword and a health bar.
+  - **Fighting:** they target the nearest monster in reach (`allyFoes`), move by point collision with a path fallback (`allyMove`), and strike (`allyStrike`). A kill counts as yours if you're within 140 px.
+  - **Getting hurt:** monsters next to them hurt them; when beaten they fall back and return later.

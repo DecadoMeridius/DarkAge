@@ -216,13 +216,13 @@ function worldMapCanvas() {
   if (!MAPBASE) MAPBASE = mk(m.w, m.h, x => { const d = x.createImageData(m.w, m.h); for (let i = 0; i < m.w * m.h; i++) { const t = m.t[i], b = BIOMES[m.bio[i]]; let c = BIOCOL[b]; if (t === 'w') c = b === 'coast' ? '#2f74b8' : '#3d8fd0'; else if (t === 'l') c = '#e0561c'; else if (t === 'r') c = '#6e6252'; else if (t === 'd' || t === 'b') c = '#c49a64'; else if (t === 's') c = '#ecd59a'; else if (t === 'i') c = '#bfe3f2'; else if (t === 'st') c = '#a39b8c'; const o = m.o[i]; if (o && (o.k === 'tree' || o.k === 'ancient')) c = sh(c, -1.2); const [r, g2, bb] = h2r(c); d.data.set([r, g2, bb, 255], i * 4); } for (const b of m.bld) for (let j = 0; j < b.h; j++) for (let k = 0; k < b.w; k++) d.data.set([90, 60, 40, 255], ((b.y + j) * m.w + b.x + k) * 4); x.putImageData(d, 0, 0); });
   return mk(m.w * 3, m.h * 3, x => {
     x.imageSmoothingEnabled = false; x.drawImage(MAPBASE, 0, 0, m.w * 3, m.h * 3);
-    for (let j = 0; j < 38; j++) for (let i = 0; i < 50; i++) if (!EXPL[j * 50 + i]) { x.fillStyle = '#d8c090'; x.fillRect(i * 12, j * 12, 12, 12); x.fillStyle = '#ccb27e'; x.fillRect(i * 12 + ((i + j) % 3) * 3, j * 12 + 4, 2, 2); }
+    for (let j = 0; j < EH; j++) for (let i = 0; i < EW; i++) if (!EXPL[j * EW + i]) { x.fillStyle = '#d8c090'; x.fillRect(i * 12, j * 12, 12, 12); x.fillStyle = '#ccb27e'; x.fillRect(i * 12 + ((i + j) % 3) * 3, j * 12 + 4, 2, 2); }
     const S2 = S.poiSeen || {}, ic = { mine: '⛏', arena: '☠', shrine: '✦', cave: '◘', grove: '♣', ruins: '♜', hut: '⌂', wreck: '⚓', cabin: '⌂', fairy: '✿', merchant: '$', cross: '✚' };
     x.font = '14px Fredoka, sans-serif'; x.textAlign = 'center';
     m.poi.forEach((p, i) => { if (!S2[i]) return; const done = p.type === 'arena' ? S.bosses[p.boss] : p.type === 'shrine' ? S.shrines[p.bio] : 0; x.fillStyle = OUT; x.fillText(ic[p.type] || '•', p.x * 3 + 1, p.y * 3 + 6); x.fillStyle = done ? '#7ac04a' : p.type === 'arena' ? '#ff5a3a' : '#fff6d0'; x.fillText(ic[p.type] || '•', p.x * 3, p.y * 3 + 5); });
     if (S.tmap) { x.strokeStyle = '#d8342a'; x.lineWidth = 3; const X = S.tmap.x * 3, Y = S.tmap.y * 3; x.beginPath(); x.moveTo(X - 6, Y - 6); x.lineTo(X + 6, Y + 6); x.moveTo(X + 6, Y - 6); x.lineTo(X - 6, Y + 6); x.stroke(); }
     if (S.meteor) { x.fillStyle = '#fff6a8'; x.fillText('★', S.meteor.x * 3, S.meteor.y * 3 + 5); }
-    if (hasPerk('tracker')) for (const [sx, sy] of m.secrets || []) if (EXPL[Math.floor(sy / 4) * 50 + Math.floor(sx / 4)]) { x.fillStyle = '#ffd040'; x.fillRect(sx * 3 - 1, sy * 3 - 1, 3, 3); }
+    if (hasPerk('tracker')) for (const [sx, sy] of m.secrets || []) if (EXPL[Math.floor(sy / 4) * EW + Math.floor(sx / 4)]) { x.fillStyle = '#ffd040'; x.fillRect(sx * 3 - 1, sy * 3 - 1, 3, 3); }
     if (cur.id === 'wilds') { x.fillStyle = '#ffffff'; x.beginPath(); x.arc(S.p.x / 16 * 3, S.p.y / 16 * 3, 5, 0, 6.283); x.fill(); x.fillStyle = '#e8342a'; x.beginPath(); x.arc(S.p.x / 16 * 3, S.p.y / 16 * 3, 3, 0, 6.283); x.fill(); }
     x.fillStyle = OUT; x.font = '18px Fredoka, sans-serif'; x.fillText('Farm', 60 * 3, (m.h - 2) * 3); x.fillText('Village', 100 * 3, (m.h - 2) * 3);
   });

@@ -20,6 +20,8 @@ function newState(seed) {
     bonus: { maxhp: 0, maxst: 0, fishzone: 0, fireres: 0, atk: 0, eatHp: 0 }, mapsave: {}, music: true, sound: true, mineFloor: 1, cupWins: {},
   };
 }
+/* the Wilds are WK times the old 200x150 in each direction; the farm and village roads come in at WIN_F / WIN_V on the south edge */
+const WK = 2.2, WW = Math.round(200 * WK), WH = Math.round(150 * WK), WIN_F = Math.round(60 * WK), WIN_V = Math.round(100 * WK), EW = Math.ceil(WW / 4), EH = Math.ceil(WH / 4);
 function newMap(id, w, h, fill) { return { id, w, h, t: new Array(w * h).fill(fill), o: new Array(w * h).fill(null), soil: {}, warps: [], bld: [], ents: [], solidB: new Uint8Array(w * h), outdoor: true, dark: false, npcs: [], poi: [], arenas: [] }; }
 const inb = (m, x, y) => x >= 0 && y >= 0 && x < m.w && y < m.h;
 function setT(m, x, y, t) { if (inb(m, x, y)) { m.t[y * m.w + x] = t; m.cv = (m.cv || 0) + 1; } }
@@ -72,7 +74,7 @@ function genFarm() {
   for (let i = 0; i < 2; i++) { const x = ri(4, 30), y = ri(24, 38); if (areaFree(m, x, y, 2, 2)) putObj(m, x, y, { k: 'boulder' }); }
   for (let y = 22; y < 41; y++) for (let x = 37; x < 53; x++) if (getT(m, x, y) === 'g' && !getO(m, x, y) && R() < .1) setO(m, x, y, R() < .5 ? { k: 'tgrass' } : { k: 'tree', kind: R() < .5 ? 'oak' : 'birch' });
   m.warps.push({ x: W - 1, y: 18, w: 1, h: 2, to: 'village', tx: 1.8 * 16, ty: 19 * 16, dir: 2 });
-  m.warps.push({ x: 26, y: 0, w: 3, h: 1, to: 'wilds', tx: 60.5 * 16, ty: 146 * 16, dir: 3 });
+  m.warps.push({ x: 26, y: 0, w: 3, h: 1, to: 'wilds', tx: (WIN_F + .5) * 16, ty: (WH - 4) * 16, dir: 3 });
   return m;
 }
 /* ---------------- Village ---------------- */
@@ -93,19 +95,19 @@ function genVillage() {
   m.npcs = [['mara', 7], ['brann', 14], ['pip', 31.5], ['odile', 39]].map(([id, x]) => ({ id, x: (x + .5) * 16, y: 13 * 16, hx: (x + .5) * 16, hy: 13 * 16 }))
     .concat([{ id: 'hale', x: 7.5 * 16, y: 34.5 * 16, hx: 7.5 * 16, hy: 34.5 * 16 }, { id: 'elias', x: 40.5 * 16, y: 35.5 * 16, hx: 40.5 * 16, hy: 35.5 * 16 }]);
   m.warps.push({ x: 0, y: 18, w: 1, h: 2, to: 'farm', tx: 54 * 16, ty: 19 * 16, dir: 1 });
-  m.warps.push({ x: 24, y: 0, w: 3, h: 1, to: 'wilds', tx: 100.5 * 16, ty: 146 * 16, dir: 3 });
+  m.warps.push({ x: 24, y: 0, w: 3, h: 1, to: 'wilds', tx: (WIN_V + .5) * 16, ty: (WH - 4) * 16, dir: 3 });
   return m;
 }
 /* ---------------- The Wilds (procedural) ---------------- */
 function genWilds() {
-  const W = 200, H = 150, m = newMap('wilds', W, H, 'g'), sd = S.seed % 100000; R = rng(S.seed * 7 + 1);
+  const W = WW, H = WH, K = WK, m = newMap('wilds', W, H, 'g'), sd = S.seed % 100000; R = rng(S.seed * 7 + 1);
   m.name = 'The Wilds'; m.wild = true; m.bio = new Uint8Array(W * H); m.secrets = [];
-  const J = (x, y) => [x + (R() - .5) * 24, y + (R() - .5) * 18];
+  const J = (x, y) => [x * K + (R() - .5) * 24 * K, y * K + (R() - .5) * 18 * K];
   const C = [[0, 95, 128], [0, 62, 134], [1, 28, 108], [1, 34, 70], [1, 58, 98], [2, 100, 82], [2, 128, 60], [2, 80, 55], [3, 178, 100], [3, 172, 132], [3, 182, 66], [4, 60, 20], [4, 100, 16], [4, 26, 28], [5, 166, 26], [5, 146, 40]].map(([b, x, y]) => { const [a, c] = J(x, y); return [b, a, c]; });
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const wx = x + (fbm(x * .025, y * .025, sd + 11) - .5) * 46, wy = y + (fbm(x * .025, y * .025, sd + 23) - .5) * 46;
+    const wx = x + (fbm(x * .025 / K, y * .025 / K, sd + 11) - .5) * 46 * K, wy = y + (fbm(x * .025 / K, y * .025 / K, sd + 23) - .5) * 46 * K;
     let best = 0, bd = 1e9; for (const [b, cx, cy] of C) { const d = (wx - cx) ** 2 + (wy - cy) ** 2; if (d < bd) { bd = d; best = b; } }
-    if (y > H - 16 && ((x > 44 && x < 76) || (x > 84 && x < 116))) best = 0;
+    if (y > H - 16 && ((x > WIN_F - 16 && x < WIN_F + 16) || (x > WIN_V - 16 && x < WIN_V + 16))) best = 0;
     m.bio[y * W + x] = best; m.t[y * W + x] = best === 4 ? 'sn' : best === 5 ? 'a' : 'g';
     if (best === 2 && fbm(x * .07, y * .07, sd + 31) > .6) m.t[y * W + x] = 'st';
   }
@@ -119,10 +121,10 @@ function genWilds() {
   for (let y = 4; y < H - 4; y++) for (let x = 4; x < W - 4; x++) { const b = B(x, y), n = fbm(x * .07, y * .07, sd + 70); if (n < .7) continue; if (b === 'meadow' || b === 'forest') setT(m, x, y, 'w'); else if (b === 'frost') setT(m, x, y, n > .78 && hsh(x, y, sd) < .25 ? 'w' : 'i'); else if (b === 'ash' && n > .72) setT(m, x, y, 'l'); }
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (getT(m, x, y) === 'w' && B(x, y) !== 'coast') for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const t = getT(m, x + dx, y + dy); if (t === 'g' && R() < .5) setT(m, x + dx, y + dy, 's'); }
   // river
-  let rx = 30 + R() * 30, phase = R() * 6; for (let y = 0; y < H; y++) { rx += Math.sin(y / 9 + phase) * .9 + (R() - .5) * .8; rx = clamp(rx + (y > 90 ? -.18 : 0), 8, 90); const w = 2 + (y % 17 < 9 ? 1 : 0); for (let k = 0; k < w; k++) { const x = Math.round(rx) + k; if (!inb(m, x, y)) continue; setT(m, x, y, B(x, y) === 'frost' ? 'i' : 'w'); } }
+  let rx = (30 + R() * 30) * K, phase = R() * 6; for (let y = 0; y < H; y++) { rx += Math.sin(y / 9 + phase) * .9 + (R() - .5) * .8; rx = clamp(rx + (y > 90 * K ? -.18 : 0), 8, 90 * K); const w = 2 + (y % 17 < 9 ? 1 : 0); for (let k = 0; k < w; k++) { const x = Math.round(rx) + k; if (!inb(m, x, y)) continue; setT(m, x, y, B(x, y) === 'frost' ? 'i' : 'w'); } }
   m.river = true;
   // borders
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (x < 2 || y < 2 || x > W - 3 || y > H - 3) { if (getT(m, x, y) === 'w') continue; if (y > H - 3 && ((x >= 58 && x <= 62) || (x >= 98 && x <= 102))) { setT(m, x, y, 'd'); continue; } const b = B(x, y); if (b === 'meadow' || b === 'forest' || b === 'coast') setO(m, x, y, { k: 'tree', kind: b === 'coast' ? 'palm' : R() < .5 ? 'pine' : 'oak' }); else setT(m, x, y, 'r'); }
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (x < 2 || y < 2 || x > W - 3 || y > H - 3) { if (getT(m, x, y) === 'w') continue; if (y > H - 3 && ((x >= WIN_F - 2 && x <= WIN_F + 2) || (x >= WIN_V - 2 && x <= WIN_V + 2))) { setT(m, x, y, 'd'); continue; } const b = B(x, y); if (b === 'meadow' || b === 'forest' || b === 'coast') setO(m, x, y, { k: 'tree', kind: b === 'coast' ? 'palm' : R() < .5 ? 'pine' : 'oak' }); else setT(m, x, y, 'r'); }
   // scatter
   for (let y = 2; y < H - 2; y++) for (let x = 2; x < W - 2; x++) {
     const t = getT(m, x, y); if (TER[t].solid || t === 'i' || getO(m, x, y)) continue; const b = B(x, y), r = R(), i = y * W + x;
@@ -136,15 +138,15 @@ function genWilds() {
     else if (b === 'ash') o = r < .03 ? { k: 'tree', kind: 'dead' } : r < .042 ? { k: 'ore_obsidian' } : r < .045 ? { k: 'ore_adamant' } : r < .05 ? { k: 'ore_gold' } : r < .06 ? { k: 'rock', v: 'A' } : null;
     if (o) m.o[i] = o;
   }
-  for (let n = 0; n < 60; n++) { const x = ri(4, W - 6), y = ri(4, H - 6), b = B(x, y); if ((b === 'forest' || b === 'meadow') && areaFree(m, x, y, 2, 1)) putObj(m, x, y, { k: 'log' }); else if ((b === 'highlands' || b === 'meadow') && areaFree(m, x, y, 2, 2)) putObj(m, x, y, { k: 'boulder' }); }
+  for (let n = 0; n < Math.round(60 * K * K); n++) { const x = ri(4, W - 6), y = ri(4, H - 6), b = B(x, y); if ((b === 'forest' || b === 'meadow') && areaFree(m, x, y, 2, 1)) putObj(m, x, y, { k: 'log' }); else if ((b === 'highlands' || b === 'meadow') && areaFree(m, x, y, 2, 2)) putObj(m, x, y, { k: 'boulder' }); }
   // ---- POIs ----
   const spot = (bio, r, tries = 600, near) => { for (let k = 0; k < tries; k++) { let x, y; if (near) { x = near[0] + ri(-near[2], near[2]); y = near[1] + ri(-near[2], near[2]); } else { x = ri(r + 4, W - r - 5); y = ri(r + 4, H - r - 18); } if (!inb(m, x, y) || B(x, y) !== bio) continue; if (m.poi.some(p => Math.abs(p.x - x) < r + 7 && Math.abs(p.y - y) < r + 7)) continue; let ok = true; for (let j = -r; j <= r && ok; j++) for (let i = -r; i <= r && ok; i++) { const t = getT(m, x + i, y + j); if (TER[t].water || TER[t].lava || B(x + i, y + j) !== bio) ok = false; } if (ok) return [x, y]; } return null; };
   const poi = (type, x, y, extra) => { const p = Object.assign({ type, x, y }, extra || {}); m.poi.push(p); return p; };
-  const entF = [60, H - 3], entV = [100, H - 3];
-  const cross = spot('meadow', 3, 800, [82, 128, 10]) || [82, 128]; clearR(m, cross[0], cross[1], 3); setO(m, cross[0] + 1, cross[1] - 1, { k: 'sign', text: 'North: Greystone Highlands and the Old Mine. West: Whisperwood. East: Saltmarsh Coast.' }); poi('cross', cross[0], cross[1]);
+  const entF = [WIN_F, H - 3], entV = [WIN_V, H - 3];
+  const cross = spot('meadow', 3, 800, [Math.round((WIN_F + WIN_V) / 2), H - 22, 10]) || [Math.round((WIN_F + WIN_V) / 2), H - 22]; clearR(m, cross[0], cross[1], 3); setO(m, cross[0] + 1, cross[1] - 1, { k: 'sign', text: 'North: Greystone Highlands and the Old Mine. West: Whisperwood. East: Saltmarsh Coast.' }); poi('cross', cross[0], cross[1]);
   const merch = spot('meadow', 3, 800) || [cross[0] - 12, cross[1] - 4]; clearR(m, merch[0], merch[1], 3); poi('merchant', merch[0], merch[1]); m.merchant = merch;
   // mine entrance
-  const mineS = spot('highlands', 4) || [100, 80]; clearR(m, mineS[0], mineS[1], 4); const mb = addB(m, mineS[0] - 2, mineS[1] - 4, 5, 4, 'mine', 'mine'); m.mineDoor = mb.door; poi('mine', mb.door.x, mb.door.y);
+  const mineS = spot('highlands', 4) || [Math.round(100 * K), Math.round(80 * K)]; clearR(m, mineS[0], mineS[1], 4); const mb = addB(m, mineS[0] - 2, mineS[1] - 4, 5, 4, 'mine', 'mine'); m.mineDoor = mb.door; poi('mine', mb.door.x, mb.door.y);
   for (let x = mineS[0] - 4; x <= mineS[0] + 4; x++) for (let y = mineS[1] - 7; y <= mineS[1] - 5; y++) if (!m.solidB[y * W + x]) setT(m, x, y, 'r');
   // arenas
   const arenas = {};
@@ -201,8 +203,8 @@ function genWilds() {
   [[mb.door.x, mb.door.y + 1], P('cabin') ? [P('cabin').x, P('cabin').y + 3] : arenas.frost], [P('cabin') ? [P('cabin').x, P('cabin').y + 3] : arenas.frost, arenas.frost], [[mb.door.x, mb.door.y + 1], arenas.ash]];
   m.poi.filter(p => p.type === 'shrine').forEach(p => links.push([p.bio === 'forest' || p.bio === 'coast' ? cross : [mb.door.x, mb.door.y + 1], [p.x, p.y + 2]]));
   links.forEach(([a, b]) => a && b && carvePath(m, a, b));
-  m.warps.push({ x: 58, y: H - 1, w: 5, h: 1, to: 'farm', tx: 27 * 16, ty: 2.2 * 16, dir: 0 });
-  m.warps.push({ x: 98, y: H - 1, w: 5, h: 1, to: 'village', tx: 25.5 * 16, ty: 2.2 * 16, dir: 0 });
+  m.warps.push({ x: WIN_F - 2, y: H - 1, w: 5, h: 1, to: 'farm', tx: 27 * 16, ty: 2.2 * 16, dir: 0 });
+  m.warps.push({ x: WIN_V - 2, y: H - 1, w: 5, h: 1, to: 'village', tx: 25.5 * 16, ty: 2.2 * 16, dir: 0 });
   return m;
 }
 function carvePath(m, a, b) {
@@ -278,12 +280,18 @@ function spawnEnemy(m, k, x, y, lvl) {
 }
 /* ---------------- persistence ---------------- */
 const PERSIST = ['farm', 'village', 'wilds', 'greenhouse'];
+/* big generated maps (the Wilds, the regions, Briarholt) are saved as the changes from a freshly generated map */
+const DELTA_MAP = id => id === 'wilds' || id === 'castle' || (typeof REGIONS !== 'undefined' && !!REGIONS[id]);
+const objJ = o => JSON.stringify(o, (k, v) => k[0] === '_' || k === 'shake' ? undefined : v);
+function baseSnap(o) { const b = new Map(); for (let i = 0; i < o.length; i++) if (o[i]) b.set(i, objJ(o[i])); return b; }
+function diffO(m) { const out = [], b = m.baseJ; for (let i = 0; i < m.o.length; i++) { const o = m.o[i], bj = b.get(i); if (!o) { if (bj) out.push(i, null); continue; } if (objJ(o) !== bj) out.push(i, o); } return out; }
+function applyDelta(m, d) { for (let i = 0; i < d.length; i += 2) m.o[d[i]] = d[i + 1]; }
 function packO(o) { const out = []; for (let i = 0; i < o.length; i++) if (o[i]) out.push(i, o[i]); return out; }
 function unpackO(m, arr) { m.o = new Array(m.w * m.h).fill(null); for (let i = 0; i < arr.length; i += 2) m.o[arr[i]] = arr[i + 1]; }
 function initMaps() {
   MAPS.farm = genFarm(); MAPS.village = genVillage(); MAPS.wilds = genWilds(); MAPS.greenhouse = genGreenhouse();
-  for (const id of PERSIST) { const ms = S.mapsave[id]; if (ms) { unpackO(MAPS[id], ms.o); if (ms.soil) MAPS[id].soil = ms.soil; } }
-  if (!S.explored || S.explored.length !== 50 * 38) S.explored = '0'.repeat(50 * 38);
+  for (const id of PERSIST) { const m = MAPS[id], ms = S.mapsave[id]; if (!m) continue; if (DELTA_MAP(id)) m.baseJ = baseSnap(m.o); if (!ms || (ms.w && (ms.w !== m.w || ms.h !== m.h))) continue; if (ms.d) applyDelta(m, ms.d); else unpackO(m, ms.o); if (ms.soil) m.soil = ms.soil; }
+  if (!S.explored || S.explored.length !== EW * EH) S.explored = '0'.repeat(EW * EH);
   EXPL = S.explored.split('').map(Number);
 }
 let EXPL = [];

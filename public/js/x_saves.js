@@ -24,7 +24,7 @@ saveGame = function () {
   if (!S) return false;
   ensurePack();
   if (!S.slot) { const L = slotIndex(); S.slot = (L.reduce((a, s) => Math.max(a, s.id), 0) || 0) + 1; }
-  for (const id of PERSIST) if (MAPS[id]) S.mapsave[id] = { o: packO(MAPS[id].o), soil: MAPS[id].soil };
+  for (const id of PERSIST) { const m = MAPS[id]; if (m) S.mapsave[id] = m.baseJ ? { d: diffO(m), soil: m.soil, w: m.w, h: m.h } : { o: packO(m.o), soil: m.soil, w: m.w, h: m.h }; }
   S.explored = EXPL.join('');
   try {
     const key = slotKey(S.slot), prev = localStorage.getItem(key);

@@ -655,7 +655,7 @@ EVT.on('map', id => {
     const m = MAPS.wilds; if (!m || m._guideSigns || !m.bio) return; m._guideSigns = 1;
     let cx = 0, cy = 0, n = 0; for (let y = 0; y < m.h; y += 3) for (let x = 0; x < m.w; x += 3) if (BIOMES[m.bio[y * m.w + x]] === 'coast') { cx += x; cy += y; n++; }
     const coast = n ? [cx / n, cy / n] : null, mine = m.mineDoor ? [m.mineDoor.x, m.mineDoor.y] : null;
-    for (const [ex, ey] of [[60, 146], [100, 146]]) {
+    for (const [ex, ey] of [[WIN_F, WH - 4], [WIN_V, WH - 4]]) {
       let spot = null; for (let r = 2; r < 7 && !spot; r++) for (const [dx, dy] of [[r, -2], [-r, -2], [r, -3], [-r, -3]]) { const x = ex + dx, y = ey + dy; if (inb(m, x, y) && passable(m, x, y) && !getO(m, x, y) && !m.solidB[y * m.w + x]) { spot = [x, y]; break; } }
       if (!spot) continue;
       const parts = []; if (mine) parts.push('Old Mine: ' + dirWord(mine[0] - spot[0], mine[1] - spot[1])); if (coast) parts.push('the coast: ' + dirWord(coast[0] - spot[0], coast[1] - spot[1]));

@@ -20,7 +20,7 @@ function startCombatTest() {
     if (cnt('mythril_sword')) equip('mythril_sword');
     S.known = S.known || {}; for (const t of TIERS) S.known['tier:' + t[0]] = 1;
     recalc(); S.p.hp = maxHP(); S.p.st = maxST(); S.focus = 50;
-    goMap('wilds', 60 * 16, 128 * 16, 3); S.time = 600;
+    { const c = MAPS.wilds.poi.find(p => p.type === 'cross'); goMap('wilds', (c.x - 4) * 16, (c.y + 4) * 16, 3); } S.time = 600;
     combatPanel(); toast('Combat test: nothing here is saved. Spend skill points in Combat skills (V), then spawn enemies from the panel.', 'lvl');
   }, 300);
 }

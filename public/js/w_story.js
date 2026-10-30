@@ -46,7 +46,7 @@ const STORIES = {
       { n: 'Grandmother\'s Pages', steps: [
         { t: 'talk', who: 'elias', hint: 'Talk to Elias at the museum.', lines: L('elias', 'Ah, the new farmer. Your grandmother and I argued for forty years about a knight called Aldren.', 'She kept a journal, then tore it to pieces before she died. The pages blew all over the Wilds.', 'Find three of them? I\'d like to know what she was hiding.') },
         { t: 'cond', test: () => Object.keys(S.pages).length >= 3, hint: () => 'Find 3 of your grandmother’s lost journal pages in the Wilds (' + Math.min(3, Object.keys(S.pages).length) + ' of 3 found).', at: 'wilds:ruins' },
-        { t: 'talk', who: 'elias', hint: 'Bring what you\'ve read back to Elias.', lines: L('elias', 'Sir Aldren went down the old mine and never came back. So that part was true.', 'And his squire buried something by the ruins in the Wilds. Your grandmother watched from a hedge, the little spy.', 'Go and look. Gently. It\'s a grave, after all.') },
+        { t: 'talk', who: 'elias', hint: 'Bring what you\'ve read back to Elias.', lines: L('elias', 'Sir Aldren went down the old mine and never came back. So that part was true.', 'And his squire buried something by the ruins in the Wilds. Your grandmother watched from a hedge, the little spy.', 'Go and look. Gently. It\'s a grave, after all.', 'Oh, and one page has a seal pressed into the margin: a stag under a crown. An odd thing for a farmer to own. I\'ll puzzle over it.') },
       ], reward: { gold: 800 } },
       { n: 'The Squire\'s Grave', steps: [
         { t: 'use', at: 'wilds:ruins', obj: 'cairn', hint: 'Search for the squire\'s grave near the ruins in the Wilds.', give: { squire_locket: 1 },
@@ -56,7 +56,7 @@ const STORIES = {
           lines: L('brann', 'This heart still hums. Feel that? Aldren\'s key was forged to answer it.', 'My grandfather kept the key in a box under the anvil, waiting for whoever came back with this.', 'It opens the old pass north of the mine. The Highmarch. Nobody\'s been up there in fifty years. Mind the raiders.') },
       ], reward: { gold: 1500, region: 'highmarch' } },
       { n: 'The Sunken Forge', steps: [
-        { t: 'meet', who: 'marta', at: 'highmarch:town', hint: 'Find someone in Highmarch Hold who remembers Aldren.', lines: L('marta', 'A lowlander carrying Aldren\'s key. Well, well.', 'He came through here on his way to the Sunken Forge. Said the crown he hunted was made down there.', 'Something still tends those fires. Go down and put them out for good.') },
+        { t: 'meet', who: 'marta', at: 'highmarch:town', hint: 'Find someone in Highmarch Hold who remembers Aldren.', lines: L('marta', 'A lowlander carrying Aldren\'s key. Well, well.', 'He was King Oswin\'s own knight, you know, before the king went hollow. He came through here on his way to the Sunken Forge. Said the crown he hunted was made down there.', 'Something still tends those fires. Go down and put them out for good.') },
         { t: 'boss', boss: 'forgeking', hint: 'Defeat the Forge King at the bottom of the Sunken Forge.', at: 'highmarch:dungeon' },
         { t: 'meet', who: 'marta', at: 'highmarch:town', hint: 'Tell Old Marta the forge is cold.', lines: L('marta', 'Cold at last. I felt the mountain sigh.', 'Aldren believed the crown\'s wearer sleeps beneath your mine, and that the wyrm guards the way.', 'Silence the wyrm, then ask your curator about the seal. He reads old script better than I do.') },
       ], reward: { gold: 3000, items: { cobalt_bar: 5 } } },
@@ -65,7 +65,7 @@ const STORIES = {
         { t: 'talk', who: 'elias', hint: 'Tell Elias about the wyrm.', lines: L('elias', 'You faced the wyrm and lived? Then the words on the seal make sense now.', '"The crown\'s cold half sleeps with the Queen of Rime." The Frostmere, past Frostpeak.', 'There\'s a village up there, Rimehold. Ask for the elder. And wear something warm.') },
       ], reward: { gold: 5000, region: 'frostmere' } },
       { n: 'Rime and Ruin', steps: [
-        { t: 'meet', who: 'sigrun', at: 'frostmere:town', hint: 'Find the elder of Rimehold.', lines: L('sigrun', 'Aldren\'s kin? You have his stubborn jaw.', 'The Rime Queen took the crown\'s cold half when he fell, and she has worn it ever since.', 'While she wears it, winter never leaves us. End her reign.') },
+        { t: 'meet', who: 'sigrun', at: 'frostmere:town', hint: 'Find the elder of Rimehold.', lines: L('sigrun', 'Aldren\'s kin? You have his stubborn jaw.', 'The Rime Queen took the crown\'s cold half when he fell, and she has worn it ever since.', 'While she wears it, winter never leaves us. End her reign.', 'And mind yourself afterwards. When a crown falls, there is always someone waiting to pick up the throne.') },
         { t: 'boss', boss: 'rimequeen', hint: 'Defeat the Rime Queen in the Frostmere.', at: 'frostmere:arena' },
         { t: 'meet', who: 'sigrun', at: 'frostmere:town', hint: 'Return to Elder Sigrun.', lines: L('sigrun', 'The ice cracked last night. Children ran out to hear it.', 'Aldren\'s trail ends in the Emberwaste. But the Pale Lich guards the way down your mine. Beat it first, or the crown\'s last bearer will wake knowing you\'re coming.') },
         { t: 'boss', boss: 'lich', hint: 'Defeat the Pale Lich on mine floor 30.' },
@@ -74,7 +74,7 @@ const STORIES = {
         { t: 'meet', who: 'aldren', at: 'site:emberwaste:cinder', hint: 'Search the Cinder Fields of the Emberwaste for Aldren\'s last camp.', lines: L('aldren', '...You carry my key. And my sister\'s eyes. Her grandchild, then.', 'I came here to burn the crown\'s last piece and failed. The Drake took it to its lair.', 'Kill the Drake. Then go down your mine, to the very bottom, and end the one who wears the hollow crown.') },
         { t: 'boss', boss: 'cinderdrake', hint: 'Defeat the Cinder Drake in the Emberwaste.', at: 'emberwaste:arena' },
         { t: 'boss', boss: 'hollowking', hint: 'Defeat the Hollow King on mine floor 40.' },
-        { t: 'meet', who: 'aldren', at: 'farm:home', hint: 'Someone is waiting at your farm.', lines: L('aldren', 'It is done. The hill is quiet. I can hear the bees again.', 'Take my blade. I have no more use for it.', 'Tend your farm. And tell them in the village that Aldren came home.') },
+        { t: 'meet', who: 'aldren', at: 'farm:home', hint: 'Someone is waiting at your farm.', lines: L('aldren', 'It is done. The hill is quiet. I can hear the bees again.', 'Take my blade. I have no more use for it.', 'Tend your farm. And tell them in the village that Aldren came home.', 'One more thing. My sister Margit was born at Briarholt, the old castle beyond your south-east trees. She never went back. Perhaps you will.') },
       ], reward: { gold: 25000, items: { aldren_blade: 1 } } },
     ] },
   ashcombe: { n: 'The Ashcombe Signet', blurb: 'The landowner\'s lost ring, and the son who left.', start: () => S.day >= 5 || S.season > 0 || S.year > 1, how: 'Lord Ashcombe has asked to see you at the manor.',

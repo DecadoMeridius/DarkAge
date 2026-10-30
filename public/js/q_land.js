@@ -31,7 +31,7 @@ function plotInfo(k) {
   const price = Math.round((6000 + soil * 4000 + feats.length * 1500 + (type === 'lakeside' ? 1500 : 0)) / 100) * 100;
   return { type, soil, res, feats, price };
 }
-const ownedPlots = () => Object.keys(PLOTS).filter(k => S.land && S.land[k]).map(k => 'plot_' + k);
+const ownedPlots = () => Object.keys(PLOTS).filter(k => S.land && S.land[k]).map(k => 'plot_' + k).concat(typeof castleLand === 'function' ? castleLand() : []); // + Briarholt once owned (x_kingdom.js)
 const ownsPlot = k => !!(S.land && S.land[k]);
 
 /* ---- plot maps ---- */
