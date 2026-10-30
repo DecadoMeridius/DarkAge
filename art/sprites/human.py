@@ -73,6 +73,22 @@ def belt_line(s, d, dy=0):
             s.fill({(16, 35 + dy), (16, 36 + dy)}, '#c8a040')
 
 
+def hand(s, x, y, thumb=1):
+    """A 3x3 hand: lit top-left, shaded bottom, a thumb on the inner side, knuckles."""
+    cel(s, rect(x, y, 3, 3), 'skin')
+    flat(s, {(x, y + 2), (x + 1, y + 2), (x + 2, y + 2)}, 'skin', 1)
+    flat(s, {(x + (2 if thumb > 0 else 0), y)}, 'skin', 3)
+
+
+def arm_front(s, x0, y0, side, length=14):
+    """A hanging arm seen from the front or back: shoulder cap, a sleeve that narrows to a cuff, an elbow crease, a hand."""
+    sleeve = poly([(x0 - (1 if side > 0 else 0), y0), (x0 + 3 + (1 if side < 0 else 0), y0), (x0 + 3, y0 + length - 1), (x0, y0 + length - 1)])
+    cel(s, sleeve | ellipse(x0 + 1.5, y0 + 1, 1.6, 1.3), 'shirt')
+    flat(s, {(x0 + (2 if side > 0 else 0), y0 + 6), (x0 + 1, y0 + 6)}, 'shirt', 1)   # elbow crease
+    hline(s, x0, x0 + 2, y0 + length - 1, 'shirt', 0)                                  # cuff
+    hand(s, x0, y0 + length, side)
+
+
 def legs_front(s, f):
     step = {1: 1, 3: -1}.get(f, 0)
     for x0, side in ((10, 1), (17, -1)):
@@ -90,8 +106,7 @@ def body(d, f):
         cel(s, torso_f(), 'shirt'); belt_line(s, d)  # torso, sloped shoulders
         for x0, side in ((5, 1), (24, -1)):
             sw = -step * side
-            cel(s, rect(x0, 23 + sw, 3, 14), 'shirt')
-            cel(s, rect(x0, 37 + sw, 3, 4), 'skin')  # hands
+            arm_front(s, x0, 23 + sw, side)
         if d == 0:
             flat(s, {(14, 22), (15, 23), (16, 23), (17, 22)}, 'skin', 2)  # open collar
             hline(s, 12, 19, 22, 'acc', 2); hline(s, 13, 18, 23, 'acc', 1)
@@ -463,7 +478,8 @@ def walk(d, f):
             up, fo = seg(15, 24 + bob, ex, ey, 4), seg(ex, ey, wx, wy, 3)
             if k: cel(s, up | fo, 'shirt')
             else: flat(s, up | fo, 'shirt', 1)
-            cel(s, ellipse(wx, wy + 1, 1.6, 1.6), 'skin')
+            s.px[round(ex), round(ey)] = code('shirt', 0 if k else 0)        # the elbow
+            cel(s, ellipse(wx, wy + 1, 1.7, 1.7), 'skin'); flat(s, {(round(wx), round(wy) + 2)}, 'skin', 1)
         for L in legs:
             if L[0] == 0: draw_leg(*L)
         for A in arms:
@@ -490,8 +506,11 @@ def walk(d, f):
         fwd = math.sin(p)  # + forward (toward the viewer when facing down)
         ey = 30 + bob - round(abs(fwd) * 1)
         hx_ = x0 + round(side * max(0, fwd) * 2)  # a forward swing brings the hand in toward the body
-        cel(s, seg(x0, 24 + bob, x0, ey, 3) | seg(x0, ey, hx_, 37 + bob - round(max(0, fwd) * 3), 3), 'shirt')
-        cel(s, rect(hx_ - 1, 37 + bob - round(max(0, fwd) * 3), 3, 3), 'skin')
+        wy = 37 + bob - round(max(0, fwd) * 3)
+        cel(s, seg(x0, 24 + bob, x0, ey, 3) | seg(x0, ey, hx_, wy, 3) | ellipse(x0, 24 + bob, 1.6, 1.3), 'shirt')
+        flat(s, {(x0, ey), (x0 + side, ey)}, 'shirt', 1)                     # elbow crease
+        hline(s, hx_ - 1, hx_ + 1, wy - 1, 'shirt', 0)                     # cuff
+        hand(s, hx_ - 1, wy, side)
     if d == 0:
         flat(s, {(14, 22 + bob), (15, 23 + bob), (16, 23 + bob), (17, 22 + bob)}, 'skin', 2)
         hline(s, 12, 19, 22 + bob, 'acc', 2); hline(s, 13, 18, 23 + bob, 'acc', 1); hline(s, 10, 22, 30 + bob, 'shirt', 1)

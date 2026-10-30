@@ -333,6 +333,13 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 ## Menu dock (`public/js/x_dock.js`, icons in `art/sprites/ui_icons.py`)
 - The top-right `#topr` is a 4-column dock with a labelled tile per tab (Bag, Recipes, Skills, Tree, Combat, Animals, Friends, Family, Collect, Lore, Map, Quests, Options), each with a hand-pixelled 16x16 `ui_<tab>` icon; the open tab's tile is lit and a click on it closes the window. The Satchel's tab row shows the same icons (`drawModal` wrapper).
 
+## Stations, trees, arms and townsfolk
+- `art/sprites/stations_hand.py` redraws the keg, preserves jar, cheese press, loom, oil press, smoker, campfire (3 flame frames), kiln, bread oven, smelter and stone furnace by hand at the old sizes (lit frames carry `meta.light`).
+- `upright()` in handdrawn.py narrows torsos (`P.tw`) so arms hang clear; the troll, basalt golem and crystal creatures have organic part outlines.
+- Bare trees (`bare_branches` in nature.py): limbs taper from 4px to twigs with a lit and a shaded side, knots and snow along the upper side.
+- Arms (`arm_front`, `hand` in human.py): shoulder cap, a sleeve narrowing to a cuff, elbow crease, shaded hands with a thumb.
+- `public/js/x_townsfolk.js` dresses the villagers and the story cast (aprons, vests, robes, hats, hoods, capes; Sir Aldren in silver armour).
+
 ## Enemy outfits (`public/js/x_outfits.js`)
 - New character layers in `human.py`: `hb_mask_<d>` (bandana, hood channel), `hb_vest_<d>` (leather vest, belt channel), `hb_quiver_<d>`; `humanSpr` adds them for `P.mask`, `P.vest`, `P.quiver`. Bandits and archers are masked and in vests (archers with quivers), goblins wear vests, and the Highmarch Raider, Bandit Warlord, Void Knight and Hollow King wear tier helmets and cuirasses (`P.helmS`, `P.armS`).
 

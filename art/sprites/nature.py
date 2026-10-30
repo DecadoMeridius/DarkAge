@@ -90,26 +90,44 @@ def clusters_round(cx, top, w, h, r, n=8):
 
 
 def bare_branches(s, kind, cx, top, r, snow):
+    """A full bare crown: limbs taper from 4px to 1px twigs, lit on the left, shaded on the right, knots at the forks,
+    and in winter a line of snow along the upper side of the thicker limbs."""
     bark = BARK.get(kind, BARK['oak'])
-    tips = []
+    snowline = []
+
+    def limb(x, y, x2, y2, w):
+        n = max(1, int(math.hypot(x2 - x, y2 - y)))
+        for i in range(n + 1):
+            t = i / n; px_, py_ = x + (x2 - x) * t, y + (y2 - y) * t
+            ww = max(1, round(w * (1 - t * .35)))
+            for k in range(ww):
+                c = bark[2] if k == 0 and ww > 1 else bark[0] if k == ww - 1 and ww > 2 else bark[1]
+                s.set(round(px_ - ww / 2 + k), round(py_), c)
+            if w >= 2 and i % 2 == 0:
+                snowline.append((round(px_ - ww / 2), round(py_) - 1, ww))
 
     def branch(x, y, ang, ln, depth):
         x2, y2 = x + math.cos(ang) * ln, y + math.sin(ang) * ln
-        s.fill(line(round(x), round(y), round(x2), round(y2)), bark[1 if depth < 2 else 0])
-        if depth < 3:
-            s.fill(line(round(x) - 1, round(y), round(x2) - 1, round(y2)), bark[2])
-        if depth >= 4:
-            tips.append((round(x2), round(y2)))
+        limb(x, y, x2, y2, max(1, 5 - depth))
+        if depth >= 5:
+            for d in (-.4, .4):  # a pair of twigs at each tip
+                s.set(round(x2 + math.cos(ang + d) * 2), round(y2 + math.sin(ang + d) * 2), bark[1])
             return
-        for d in (-.5, .45):
-            branch(x2, y2, ang + d + r.uniform(-.15, .15), ln * .72, depth + 1)
+        if depth == 2:
+            s.set(round(x2), round(y2), bark[0])  # a knot at the fork
+        spread = .62 - depth * .05
+        for d in (-spread, spread * .9):
+            branch(x2, y2, ang + d + r.uniform(-.18, .18), ln * (.74 + r.uniform(-.05, .05)), depth + 1)
 
-    branch(cx, top + 34, -math.pi / 2, 14, 1)
-    branch(cx - 1, top + 40, -math.pi / 2 - .9, 12, 2)
-    branch(cx + 1, top + 42, -math.pi / 2 + .9, 12, 2)
+    branch(cx, top + 36, -math.pi / 2, 15, 1)
+    branch(cx - 1, top + 42, -math.pi / 2 - 1.0, 13, 2)
+    branch(cx + 1, top + 44, -math.pi / 2 + 1.0, 13, 2)
+    branch(cx, top + 48, -math.pi / 2 - .45, 10, 3)
     if snow:
-        for x, y in tips:
-            s.set(x, y - 1, SNOW[3]); s.set(x + 1, y - 1, SNOW[4])
+        for x, y, w in snowline:
+            for k in range(w):
+                if not s.get(x + k, y)[3]:
+                    s.set(x + k, y, SNOW[4] if k < w - 1 else SNOW[3])
 
 
 def tree(kind, season, v, fruit=False):
@@ -136,7 +154,7 @@ def tree(kind, season, v, fruit=False):
                 for k in range(-hw + 3, hw - 2, 6):
                     s.fill({(cx + k, y0 + 25 + j) for j in range(3)}, '#ffffff')
     elif kind in ('dead', 'charwood') or winter_bare:
-        trunk(s, kind, cx, base, base - 52, 4, r)
+        trunk(s, kind, cx, base, base - 52, 5, r)
         bare_branches(s, kind, cx, base - 88, r, season == 3 and kind != 'charwood')
         if kind == 'charwood':  # embers still glowing in the cracks
             for _ in range(14):
