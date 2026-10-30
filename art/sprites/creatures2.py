@@ -434,6 +434,8 @@ def kraken(f):
     return fin(s)
 
 
+from sprites.foes2 import warg, hound, bear, troll, griffin, tyrant, forgeking, mammoth, shardling, basalt, drake, harpy, salamander  # noqa: E402  (redrawn)
+
 SPRITES = {}
 for name, fn in (('warg', warg), ('icewarg', lambda f: warg(f, True)), ('bear', bear), ('troll', troll), ('griffin', griffin), ('tyrant', tyrant),
                  ('forgeking', forgeking), ('mammoth', mammoth), ('wisp', wisp), ('shardling', shardling), ('glacierheart', lambda f: shardling(f, 2.0)),
