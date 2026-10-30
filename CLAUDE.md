@@ -330,6 +330,9 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - Harpoon (anvil: 3 iron bars, 5 wood, 6 fiber): facing deep water, picks a `BIGFISH` for the water and season (shark, swordfish, tuna, manta at sea; sturgeon in rivers and lakes). Minigame in `#fishgame` (pauses the game, own rAF loop): aim (a sweeping mark over the fish's shadow, 3 throws), then fight (hold to reel, release while it runs, keep tension 0.3-0.78; snaps at 1, shakes loose after 2.4 s slack).
 - Crab trap (workbench: 8 wood, 10 fiber): set in water as a `crabtrap` object; from the next day `trapReady` rolls 1-3 `SHELLFISH` for its water (mud crab, prawn, crayfish, rock lobster, river snail). Hauling: 3-4 timed pulls on a sliding marker; a miss loses one catch. The trap stays set; on an empty one, interacting lifts it back into the bag.
 
+## Hand-drawn item icons (`art/sprites/icons_hand.py`)
+- Overrides icons.py's material and food templates (`ic_bar`, `ic_ore`, `ic_gem`, `ic_log`, `ic_fish`, `ic_round`, `ic_bread`, ...) with pixel grids in the same channels (ch 0 item colour, ch 1 second colour). `icon()` grows small designs (nearest on the letter grid) before shading, so outlines stay 1px. `art/preview_module.py <module>` makes a contact sheet of a whole module.
+
 ## Hand-drawn props (`art/sprites/props_hand.py`, `public/js/x_props.js`)
 - Fences join: `fence_<mask>` (1 N, 2 E, 4 S, 8 W) chosen from `o.fm`, refreshed by `fenceMasks` on map change and every 2 ticks; vertical runs show their rail tops beside the posts. Also redrawn by hand: the knight statue, ivy-covered ruin walls, the iron lamp post, the stone forge and the ember shrine.
 
