@@ -214,3 +214,7 @@ body:has(#modal:not([hidden])) #ctpanel { display: none; }
 #lives span.on { color: #e8344a; text-shadow: 0 0 3px rgba(255,90,90,.6), 0 1px 0 #5a1010; }
 #lives span.fill { color: #8a5a50; }
 #tframe { top: 104px !important; }
+.grid .cell.dim img { opacity: .3; }
+#ctpanel { top: 150px !important; }
+#abil { right: auto !important; left: 14px !important; bottom: 150px !important; }
+#craftprog { position: sticky; top: 0; z-index: 2; }

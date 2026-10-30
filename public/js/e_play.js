@@ -170,7 +170,7 @@ function useTool() {
 }
 const TIER_TOOL = ['', 'Basic', 'Copper', 'Iron', 'Gold', 'Mythril'];
 const power = l => 1 + (l - 1) * .9;
-const canCap = () => 20 + (S.tools.can - 1) * 15;
+const canCap = () => 40 + (S.tools.can - 1) * 20;
 function forageQ() { if (hasPerk('botanist')) return Math.random() < .2 ? 3 : 2; const r = Math.random(), f = S.sk.foraging.l; return r < f * .015 ? 2 : r < .1 + f * .04 ? 1 : 0; }
 function animalQ(qlt, aff) { const sc = qlt * .5 + aff * .3 + S.sk.husbandry.l * 3 + Math.random() * 30; return sc > 88 ? 3 : sc > 68 ? 2 : sc > 48 ? 1 : 0; }
 function cutGrass(m, x, y, o) {

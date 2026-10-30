@@ -195,7 +195,7 @@ function storyDialog(lines, opts = {}) {
   document.body.append(box); PAUSED = true; INPUT.x = INPUT.y = 0;
   const close = quiet => { box.remove(); removeEventListener('keydown', key, true); DIALOG = null; PAUSED = wasPaused && !!MODAL; if (!quiet && opts.done) opts.done(); };
   const next = () => { if (i < lines.length - 1) { i++; draw(); } else if (!opts.choices) close(); };
-  const key = e => { if (['Space', 'Enter', 'KeyE', 'NumpadEnter'].includes(e.code)) { e.preventDefault(); e.stopPropagation(); next(); } else if (e.code === 'Escape' && !opts.choices) { e.preventDefault(); e.stopPropagation(); i = lines.length - 1; close(); } };
+  const key = e => { if (['Space', 'Enter', 'KeyE', 'NumpadEnter'].includes(e.code) || [' ', 'Enter', 'e', 'E'].includes(e.key)) { e.preventDefault(); e.stopPropagation(); next(); } else if (e.code === 'Escape' && !opts.choices) { e.preventDefault(); e.stopPropagation(); i = lines.length - 1; close(); } };
   addEventListener('keydown', key, true);
   const draw = () => {
     box.innerHTML = '';

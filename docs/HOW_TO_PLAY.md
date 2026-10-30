@@ -66,7 +66,7 @@ This guide explains every part of the game. Read the first sections to get going
 1. Buy seeds at **Mara's General Store** in the village (east of the farm, at the end of the dirt road).
 2. Use the **hoe** to till grass or dirt.
 3. **Plant** seeds on the tilled soil.
-4. **Water** each crop every day with the watering can. Refill it at any water, or at a well you build.
+4. **Water** each crop every day with the watering can (it holds 40). Refill it at any water, or at a well you build. Point at a crop to see its day, whether it's watered, and when it's ready. Seed rows in the shop show grow days, seasons and the sell price.
 
 **Growing and harvesting**
 - **Growth.** A watered crop grows one day each morning. Crops that are out of season die when the season changes.
@@ -162,7 +162,7 @@ Everything is made at a **station**:
 **What each building is for**
 - **Cottage:** your real house, built wherever you like. When it's finished the tent is packed away. You wake beside your bed, and it has a kitchen and a storage chest (your bank).
 - **Coop, Barn and Stable:** house your animals. Hale can upgrade each one for more room and a nicer look.
-- **Well:** refills the watering can.
+- **Well:** refills the watering can. Its plans are cheap (250g from Hale), so it makes a good first building near your field.
 - **Storage Shed:** a bank chest on the farm.
 - **Silo:** stores 240 hay. Put hay in from your bag; animals eat from it in winter.
 - **Market Stall:** sells your goods while you're away (section 12).
@@ -216,7 +216,8 @@ You can make the farm run itself: machines on belts, powered by wind and water, 
 - A **Splitter** alternates straight and right.
 
 **Moving items around**
-- **Storage crates:** belts fill them, and they push items out onto belts leading away.
+- **Storage crates:** belts fill them, and they push items out onto belts leading away. In the crate window, click takes 10, right click takes 1 and Shift-click takes the whole stack; the search box filters it.
+- **Build sites** take missing materials from your storage (the bank) as well as from your backpack.
 - **Cranes:** move items from the tile behind them to the tile in front.
 
 **Machines**

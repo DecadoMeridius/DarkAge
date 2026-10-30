@@ -74,7 +74,7 @@ function drawFishing(p) { // a rod held out over the water, one sagging line, on
 }
 drawPlayer = function () {
   const p = S.p, P = playerPal(); if (!HC_P) HC_P = 'pl' + Math.random().toString(36).slice(2, 7);
-  if (pl.inv > 0 && pl.inv < .72 && Math.floor(gameT * 20) % 2) return; // invulnerability blink
+  // (no blink while invulnerable: it made the player vanish; x_fix3.js draws a shield instead)
   if (S.mounted) {
     const h = rideHorse(); if (!h) { S.mounted = false; return; }
     const spr = animalSpr('horse', h.coat, pl.moving ? Math.floor(gameT * 10) % 2 : 0), right = p.dir === 2 || (p.dir !== 1 && p.lastH !== 1), bob = pl.moving && Math.floor(gameT * 10) % 2 ? .5 : 0;

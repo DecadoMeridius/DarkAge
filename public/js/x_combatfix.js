@@ -24,7 +24,7 @@
       buttons don't jump. */
 
 /* ---------- 1 the player stays visible ---------- */
-const playerCovered = () => {
+let playerCovered = () => {
   if (!cur) return false;
   for (const e of cur.ents) { if (e.type !== 'enemy' || e.dead) continue; const E = EN[e.k]; if (Math.abs(e.x - S.p.x) < E.r + 8 && e.y > S.p.y - 2 && e.y - S.p.y < E.r * 2 + 30) return true; }
   if (typeof HAZ !== 'undefined' && HAZ.some(h => Math.hypot(h.x - S.p.x, h.y - S.p.y) < (h.r || 40) + 10)) return true;

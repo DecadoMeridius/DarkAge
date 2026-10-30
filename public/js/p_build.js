@@ -95,7 +95,7 @@ renderBuild = function (b) {
     const built = S.structures.filter(s => s.k === k && s.stage >= 4).length, single = k === 'cottage' || B.build;
     const row = el('div', { class: 'rrow' }, el('div', { class: 'qck' }, built || '–'), el('div', { class: 'rtxt' }, el('b', null, B.n + (built ? (single ? ' (built)' : ' ×' + built) : '')), el('small', null, B.desc + ' Materials: ' + Object.entries(B.cost).map(([i, n]) => n + ' ' + IT[i].n.toLowerCase()).join(', ') + '.')));
     if (single && (built || building)) row.append(el('small', { class: 'note' }, building ? 'Under construction' : ''));
-    else if (!owned) row.append(el('button', { class: 'btn' + (S.gold >= B.gold ? '' : ' off'), on: () => { if (S.gold < B.gold) { toast('Not enough gold.', 'bad'); return; } S.gold -= B.gold; S.blue[k] = 1; SFX.coin(); toast(B.n + ' blueprint bought.', 'lvl'); refresh(); } }, 'Buy ' + B.gold + 'g'));
+    else if (!owned) row.append(el('button', { class: 'btn' + (S.gold >= B.gold ? '' : ' off'), on: () => { if (S.gold < B.gold) { toast('Not enough gold.', 'bad'); return; } S.gold -= B.gold; S.blue[k] = 1; SFX.coin(); toast(B.n + ' plans bought. Make the blueprint at a workbench.', 'lvl'); refresh(); } }, 'Buy ' + B.gold + 'g'));
     else row.append(el('button', { class: 'btn', on: () => startPlacing(k) }, 'Place'));
     L.append(row);
   }

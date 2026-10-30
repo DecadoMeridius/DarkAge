@@ -139,3 +139,24 @@ None of them saw a JavaScript error. Each harness command takes about 1 second, 
 7. Building and animals: the plan gate on blueprints, the hotbar ghost, delivering from the bank, a Place button, reasons on disabled buttons, a cheap starter plan, resources near the tent.
 8. Combat tuning: early slimes, the Mixed pack, filled telegraphs, the loadout per weapon shown in V with sensible defaults, the panel and toasts off the HUD.
 9. Text and consistency cleanup; layout jumps.
+
+## Status after the first fix pass (`x_fix3.js`, 2026-10-30)
+**Done:**
+- Separation ring for enemies and NPCs, outline behind buildings and NPCs, no hit blink, a shield after losing a life.
+- Click rules: ground walks with a weapon, an empty slot never opens the Satchel, building clicks go to the door, a red cross for unreachable spots, safer unstick.
+- Cliff pockets and gaps plugged by trees or rocks are opened in the Wilds and regions.
+- Crate window: search, stable grid, hover names, take 1 / 10 / all.
+- Track: journal pages, villagers where they stand, a bigger arrow, the exit toward another map; "Begins on day N" in the journal; new stories in the morning report; Space in dialogue; Enter on the main button.
+- Farming: checklist stays ticked, crop info in the shop and on hover, can holds 40, Trail Bread, 250g Well, haft 8g, goat 1200g, signpost, debris around the tent.
+- Building: site delivery from the bank, no hotbar ghost, Place button, plan hints in shops, "plans" wording.
+- Combat: softer early enemies, loadout named in V, test panel and ability bar moved, sticky craft bar.
+- Text: tent text, "Give a gift", no trailing full stops in descriptions.
+
+**Still open:**
+- Cliffs and brick faces in the wild still need art (rock faces, darker tops).
+- Placement on the cursor tile; doors and counters acting on arrival; E on counters.
+- Filled telegraphs with a fill-up timer, the Mixed pack, bow in hand and brighter projectiles, a boss pushing you off the map, the boss dropdown with the mouse.
+- Workbench blueprint recipes for plans you don't own, reasons on disabled buttons, animal names that match villagers, sandbox wishes.
+- Chat / Shop / Gift choice, gift heart progress, longer dialogue.
+- Wilds map (zoom, roads, POI icons), pickup messages for flowers and chests, opened chests looking open, mine floor-1 issues.
+- Stale hints, "ore_gem" label, Fiber/fibre, title and dialog button jumps.

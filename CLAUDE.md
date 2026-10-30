@@ -299,6 +299,17 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
 
+## Playtest 3 fixes (`public/js/x_fix3.js`)
+- **Visibility:** enemies keep a ring of their radius + 11 px around you (bosses + 14), villagers step out of your way, you're outlined behind buildings and NPCs, there is no hit blink, and losing a life gives 2 s of shield (`S.p.shieldT`, drawn as a ring).
+- **Clicks:** with a weapon and no enemy on the cursor or within 200 px, clicking ground out of reach walks there; an empty slot only walks (never opens the Satchel); clicking a building goes to its door; an unreachable click shows a red cross (`NOPATH`). Unstick moves never push you into more blocked corners.
+- **Terrain:** `openPockets` (Wilds and regions) opens walkable tiles with 3+ cliff neighbours and removes trees, bushes and rocks plugging 1-wide cliff gaps.
+- **Crates:** `openCrate` has search, a stable order (empty stacks dimmed), hover names; click takes 10, right click 1, Shift-click all.
+- **Quests:** Track points at the nearest uncollected journal page and at villagers where they stand; off-map targets get an arrow to the right exit labelled "to <place>" (`exitToward`). The journal says when each story begins (`STORY_WHEN`), the morning report announces new stories, Space advances dialogue and Enter presses a window's main button.
+- **Farming:** the Getting started steps stay ticked (`S.flags.gs<i>`), seed rows show grow days, seasons and sell price, pointing at a crop shows its day and water, the watering can holds 40, the starting food is Trail Bread (8g), Well plans 250g (30 stone, 10 wood), haft and grip sell for 8g, goats 1200g, a signpost where the paddock road ends, and weeds, stones and twigs around the tent on a new farm.
+- **Building:** build sites pull missing materials from the bank, used-up blueprints leave the hotbar, blueprints have a Place button in the bag, and shops say which plans you need from Hale.
+- **Combat:** meadow and forest enemies hit 40% softer; the V screen names the loadout you're editing; the combat test panel and the ability bar moved off the hearts and toasts; the craft progress bar is sticky.
+- Item descriptions lose trailing full stops (the UI adds its own).
+
 ## Inventory (implemented in `public/js/l_pack.js`)
 - `S.pack` is the backpack: 28 slots of `{ k, n }` (k = item key, `id` or `id#quality`). Weapons, armour and rings take one slot each; everything else stacks in one slot (`SINGLE` set). `S.inv` is a read-only view (key -> total) so older code keeps reading it; all writes go through `give` / `take` / `takeK`.
 - A full backpack never deletes items: `give` drops the rest on the ground, and ground pickups stay put until there's room.
