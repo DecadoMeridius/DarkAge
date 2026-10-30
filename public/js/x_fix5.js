@@ -702,3 +702,93 @@ endDay = (f => function (fainted) {
 // early money: cheap crops sell a quarter higher, and a new farm starts with some fibre for the first workbench recipes
 sellPrice = (f => function (id) { const p = f(id), it = IT[id]; return p && it && it.t === 'crop' && it.p < 60 ? Math.round(p * 1.25) : p; })(sellPrice);
 startGame = (f => function (isNew) { const r = f(isNew); if (isNew && !(typeof SANDBOX !== 'undefined' && SANDBOX) && S) give('fiber', 20, 0, true); return r; })(startGame);
+
+/* ---------- cliffs, spawns, damage and skill colours (after 0.5.3) ---------- */
+// cliff blocks can be broken with the pickaxe: it takes a good number of swings, gives stone,
+// and leaves the ground of the biome (never the outer edge of a map, rooms, mines or towns)
+const CLIFF_T = new Set(['r', 'x', 'mo']), CLIFF_HITS = 14;
+const cliffAt = (m, x, y) => m && m.outdoor && !m.mine && m.id !== 'village' && !(m.id || '').startsWith('in_') && inb(m, x, y) && x > 1 && y > 1 && x < m.w - 2 && y < m.h - 2
+  && CLIFF_T.has(getT(m, x, y)) && !m.solidB[y * m.w + x] && !getO(m, x, y) && !(m.safe && Math.hypot(x - m.safe[0], y - m.safe[1]) < 18); // towns keep their walls
+useTool = (f => function () {
+  const k = selKind();
+  if ((k === 'pick' || k === 'multi') && pl.cd <= 0 && cur && !fishing) {
+    const [tx, ty] = faceTile(), m = cur;
+    if (cliffAt(m, tx, ty)) {
+      if (S.p.st <= 0) { toast('Too tired to work. Eat or sleep.', 'bad'); SFX.bad(); return; }
+      pl.cd = .28; pl.anim = .25; pl.tool = k; useStamina(2);
+      const lvl = k === 'multi' ? 6 : (S.tools.pick || 1), i = ty * m.w + tx; m.cliffHits = m.cliffHits || {};
+      m.cliffHits[i] = (m.cliffHits[i] || 0) + 1 + (lvl - 1) * .35;
+      SHAKE = .06; snd(160 + Math.random() * 40, .06, 'square', .05);
+      for (let n = 0; n < 4; n++) PARTS.push({ x: (tx + .5) * 16 + (Math.random() - .5) * 10, y: (ty + .6) * 16, vx: (Math.random() - .5) * 60, vy: -40 - Math.random() * 40, t: .5, c: Math.random() < .5 ? '#8a8070' : '#5a5246' });
+      const left = Math.max(0, Math.ceil(CLIFF_HITS - m.cliffHits[i]));
+      if (left > 0) { floatText((tx + .5) * 16, ty * 16, left + '', '#e8dcc0'); return; }
+      delete m.cliffHits[i]; setT(m, tx, ty, typeof baseFor === 'function' ? baseFor(m, tx, ty) : 'g'); m.cv = (m.cv || 0) + 1;
+      give('stone', ri(3, 6)); addXP('mining', 12); SFX.boom && SFX.boom(); toast('The rock gives way.');
+      return;
+    }
+  }
+  return f();
+})(useTool);
+hasTarget = (f => function (tx, ty) { const k = selKind(); return f(tx, ty) || ((k === 'pick' || k === 'multi') && cliffAt(cur, tx, ty)); })(hasTarget);
+// nothing spawns on top of the cliff blocks: objects there are cleared, enemies and dropped items are moved down to open ground
+function openTileNear(m, x, y) {
+  for (let r = 0; r < 8; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+    if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; const X = x + dx, Y = y + dy;
+    if (inb(m, X, Y) && passable(m, X, Y) && !TER[getT(m, X, Y)].water) return [X, Y];
+  }
+  return null;
+}
+EVT.on('map', id => {
+  const m = cur; if (!m || !m.outdoor || m._cliffClean) return; m._cliffClean = 1;
+  for (let i = 0; i < m.o.length; i++) { const o = m.o[i]; if (o && !o.fixed && !o.id && o.k !== 'part' && o.k !== 'chest' && CLIFF_T.has(m.t[i]) && !m.solidB[i]) m.o[i] = null; }
+});
+spawnEnemy = (f => function (m, k, x, y, lvl) {
+  const e = f(m, k, x, y, lvl);
+  if (e && m && !(EN[k] && (EN[k].ai === 'fly' || EN[k].ai === 'swoop')) && solidAt(m, e.x, e.y - 2)) { const t = openTileNear(m, Math.floor(e.x / 16), Math.floor((e.y - 2) / 16)); if (t) { e.x = (t[0] + .5) * 16; e.y = (t[1] + .8) * 16; e.hx = e.x; e.hy = e.y; if (e.home) e.home = [e.x, e.y]; } }
+  return e;
+})(spawnEnemy);
+EVT.on('tick', () => {
+  const m = cur; if (!m || TITLE) return;
+  for (const e of m.ents) if (e.type === 'drop' && !e.z && solidAt(m, e.x, e.y)) { const t = openTileNear(m, Math.floor(e.x / 16), Math.floor(e.y / 16)); if (t) { e.x = (t[0] + .5) * 16; e.y = (t[1] + .5) * 16; } }
+});
+// your hits are softer (action combat dealt up to 18 with a wooden sword: slimes and crows fell in one swing)
+actionHit = (f => function (e, mult, a, kb, opts) { return f(e, mult * .6, a, kb, opts); })(actionHit);
+// skills have their own colours: a burst of motes and a coloured ring when you use one, and coloured sparks on what it hits
+const SKILL_FX = {
+  cleave: ['#ffd890', '#ff9a3a', '#fff4d0'], lunge: ['#ffe8a0', '#e8c060', '#ffffff'], rend: ['#ff5a4a', '#a8201a', '#ffb0a0'], volley: ['#c8ff8a', '#7ad84a', '#f0ffe0'], secondwind: ['#7affb0', '#2ad870', '#e0fff0'], guard: ['#9ad8ff', '#4a8aff', '#ffffff'],
+  whirlwind: ['#ffe8a0', '#ff9a3a', '#ffffff'], groundslam: ['#c8a070', '#8a6040', '#ffd890'], bladedash: ['#9ad8ff', '#4a8aff', '#ffffff'], leap: ['#ffb040', '#ff6a2a', '#fff0b0'], bladestorm: ['#8ae8ff', '#4ab0ff', '#e0f8ff'],
+  piercing: ['#7affb0', '#2ad870', '#e0fff0'], multishot: ['#c8ff8a', '#7ad84a', '#f0ffe0'], rain: ['#ffe08a', '#e8a040', '#fff4c8'], trap: ['#ffd040', '#8a6a3a', '#fff0a0'], mark: ['#ff5a3a', '#ffb08a', '#ffe0d0'],
+  fireball: ['#ff8a2a', '#ff3a1a', '#ffe08a'], frostnova: ['#bfe8ff', '#6ab8ff', '#ffffff'], chain: ['#c8a0ff', '#8ad8ff', '#ffffff'], orbs: ['#b07aff', '#e0c8ff', '#7a3ad8'], meteor: ['#ff6a1a', '#ffd040', '#8a2a10'],
+};
+let SKILL_COL = null, SKILL_COL_T = 0;
+const motes = (x, y, cols, n, sp) => { for (let i = 0; i < n * (typeof PARTICLE_K !== 'undefined' ? Math.max(.3, PARTICLE_K) : 1); i++) { const a = Math.random() * 6.283, v = sp * (.4 + Math.random() * .6); PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v * .7 - 30, t: .35 + Math.random() * .35, c: cols[i % cols.length] }); } };
+for (const id in SKILL_FX) {
+  const A = ABIL[id]; if (!A || A._fx) continue; const fn = A.fn, cols = SKILL_FX[id]; A._fx = 1;
+  A.fn = function () {
+    const ok = fn.apply(this, arguments);
+    if (ok !== false && S && S.p) {
+      SKILL_COL = cols; SKILL_COL_T = gameT + 1.2;
+      motes(S.p.x, S.p.y - 14, cols, 18, 90);
+      vfx(k => { g.save(); g.globalAlpha = (1 - k) * .8; g.fillStyle = cols[0]; pxBand(S.p.x, S.p.y - 2, 10 + k * 26, (10 + k * 26) * .55, 8 + k * 26, (8 + k * 26) * .55); g.restore(); }, .35);
+    }
+    return ok;
+  };
+}
+actionHit = (f => function (e, mult, a, kb, opts) {
+  const r = f(e, mult, a, kb, opts);
+  if (SKILL_COL && gameT < SKILL_COL_T && e && (opts && (opts.skill || opts.ability) || typeof SKILL_HIT !== 'undefined' && SKILL_HIT)) motes(e.x, e.y - EN[e.k].r * 1.4, SKILL_COL, 7, 70);
+  return r;
+})(actionHit);
+// no stun-locking: an enemy that has started winding up finishes its attack (hits don't knock it back or
+// cancel it; only a parry does), and a combo finisher staggers the same enemy at most once every 2.5 s
+actionHit = (f => function (e, mult, a, kb, opts) {
+  if (!e || e.type !== 'enemy' || e.dead) return f(e, mult, a, kb, opts);
+  const parry = (e.stun || 0) >= 1.1; let o = opts;
+  if (o && o.stagger && !parry) { if (gameT < (e.poiseT || 0) || e.wind > 0) { o = Object.assign({}, o); delete o.stagger; } else e.poiseT = gameT + 2.5; }
+  if (e.wind > 0 && !parry) {
+    const w = [e.wind, e.windT, e.windA], r = f(e, mult, a, 0, o);
+    if (!e.dead) { e.wind = w[0]; e.windT = w[1]; e.windA = w[2]; e.kb = 0; e.vx = e.vy = 0; }
+    return r;
+  }
+  return f(e, mult, a, kb, o);
+})(actionHit);

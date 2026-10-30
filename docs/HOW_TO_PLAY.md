@@ -110,6 +110,8 @@ This guide explains every part of the game. Read the first sections to get going
 | Hoe and watering can | Cover more tiles at once |
 | Fishing rod | Bigger catch zone; iron and better can fish in lava |
 
+**Breaking rock ledges.** The raised rocky blocks in the Wilds and the regions can be broken with the pickaxe. It takes many swings (14 with a basic pick, fewer with better ones) and gives stone, so you can open a shortcut or free something stuck between them.
+
 **The Ember Multitool** is the last tool. It's an axe, a pickaxe and a scythe in one, and it picks the right action for whatever you hit (its scythe sweep cuts a 7×3 area). Brann forges it once your axe, pickaxe and scythe are all mythril.
 
 ## 6. Fishing
