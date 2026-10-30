@@ -72,7 +72,7 @@ recalc = function () {
   PS.maxhp += clv('constitution') * 10 - 100 + (T.maxhp || 0); if (T.maxhpPct) PS.maxhp = Math.round(PS.maxhp * (1 + T.maxhpPct));
   PS.acc = T.acc || 0; PS.fgain = 8 + (T.fgain || 0); PS.focusMax = 100 + (T.focusMax || 0);
   PS.ticks = Math.max(2, (WSPEED[PS.wt] || 4) - (T.haste ? 1 : 0));
-  const style = PS.wt === 'bow' ? 'ranged' : 'melee';
+  const style = PS.wt === 'bow' ? 'ranged' : PS.wt === 'staff' ? 'magic' : 'melee';
   PS.style = style; PS.maxHit = Math.max(2, Math.round((PS.atk + 4) * (1 + (clv(style) - 1) * .03) * (1 + PS.dmg) * 2.2));
   S.sk.combat.l = combatLevel();
 };
@@ -83,7 +83,7 @@ const _equipC = equip;
 equip = function (id) {
   const it = IT[id]; ensureCombat();
   if (it && it.ti !== undefined && (it.t === 'weapon' || it.t === 'armor')) {
-    const sk = it.t === 'armor' ? 'defence' : it.wt === 'bow' ? 'ranged' : 'melee', need = TIER_REQ_RS[it.ti] || 1;
+    const sk = it.magic ? 'magic' : it.t === 'armor' ? 'defence' : it.wt === 'bow' ? 'ranged' : it.wt === 'staff' ? 'magic' : 'melee', need = TIER_REQ_RS[it.ti] || 1;
     if (clv(sk) < need) { toast('You need ' + CSKN[sk] + ' level ' + need + ' to use ' + it.n + '.', 'bad'); SFX.bad(); return; }
     const L = S.sk.combat.l; S.sk.combat.l = 99; _equipC(id); S.sk.combat.l = L; return; // skip the old combat-level check
   }
@@ -92,7 +92,7 @@ equip = function (id) {
 const _itemDescC = itemDesc;
 itemDesc = function (id) {
   const it = IT[id]; let d = _itemDescC(id).replace(/ Requires Combat \d+\./, '');
-  if (it && it.ti !== undefined && (it.t === 'weapon' || it.t === 'armor')) d += ' Requires ' + CSKN[it.t === 'armor' ? 'defence' : it.wt === 'bow' ? 'ranged' : 'melee'] + ' ' + (TIER_REQ_RS[it.ti] || 1) + '.' + (it.t === 'weapon' ? ' Attacks every ' + (WSPEED[it.wt] || 4) + ' ticks.' : '');
+  if (it && it.ti !== undefined && (it.t === 'weapon' || it.t === 'armor')) d += ' Requires ' + CSKN[it.magic ? 'magic' : it.t === 'armor' ? 'defence' : it.wt === 'bow' ? 'ranged' : it.wt === 'staff' ? 'magic' : 'melee'] + ' ' + (TIER_REQ_RS[it.ti] || 1) + '.' + (it.t === 'weapon' ? ' Attacks every ' + (WSPEED[it.wt] || 4) + ' ticks.' : '');
   return d;
 };
 

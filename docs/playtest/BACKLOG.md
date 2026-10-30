@@ -73,6 +73,6 @@ Work order: A (bugs and controls) → B (inventory and UI) → C (world content)
   - telegraphed enemy attacks you can dodge.
 - [x] D3 (phase 1, x_action.js) Enemy AI: approach, wind-up, attack and recover. Ranged enemies keep their distance, and packs flank you.
 - [x] D4 (x_bosses.js) Unique boss mechanics per boss: phases, patterns and arena hazards.
-- [ ] D5 Unlockable combat skills in specialisation trees, each with its own visual effects, replacing just Cleave, Lunge and Guard. Add AOE skills.
-- [ ] D6 Magic: staffs, spells, mana or Focus, and magic armour (robes) in tiers.
+- [x] D5 (x_skills.js) Unlockable combat skills in specialisation trees, each with its own visual effects, replacing just Cleave, Lunge and Guard. Add AOE skills.
+- [x] D6 (x_skills.js) Magic: staffs, spells, mana or Focus, and magic armour (robes) in tiers.
 - [ ] D7 Character animation: proper limbs and joints for walking, attacking and dashing, so it doesn't look goofy.

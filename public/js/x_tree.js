@@ -72,7 +72,7 @@ renderTree = function (b) {
     SFX.ok(); recalc(); refresh();
   };
   b.append(c);
-  const pool = abilPool(), row = el('div', { class: 'acts wrap' }, el('b', null, 'Ability slots: '));
+  const pool = typeof abilPoolX === 'function' ? abilPoolX() : abilPool(), row = el('div', { class: 'acts wrap' }, el('b', null, 'Ability slots: '));
   ['Z', 'X', 'C'].forEach((key, i) => { const s = el('select'); for (const id of pool) { const o = el('option', { value: id }, ABIL[id].n); if (S.abil[i] === id) o.selected = true; s.append(o); } s.onchange = () => { S.abil[i] = s.value; hudKey = ''; }; row.append(el('span', null, key + ' '), s); });
   b.append(row);
 };

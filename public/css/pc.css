@@ -195,3 +195,10 @@ h1, h2, h3, .ph h2, #mtitle, .cinzel { font-variant-ligatures: none; font-featur
 .bagtools { margin-bottom: 6px; }
 .slot .water { position: absolute; left: 3px; bottom: 1px; font: 600 10px Fredoka, sans-serif; color: #bfe6ff; text-shadow: 0 0 3px #1a2a3a; }
 #modal .rrow .acts .btn.big ~ * { }
+.cstrees { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 10px; }
+.cstree { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.cstree h3 { margin: 0; }
+.cscard { padding: 6px 8px; border: 1px solid #c8a878; border-radius: 4px; background: rgba(255,250,235,.5); display: flex; flex-direction: column; gap: 2px; }
+.cscard.on { background: rgba(255,232,170,.55); border-color: #b08040; }
+.cscard .btn.on { outline: 2px solid #e0a040; }
+@media (max-width: 900px) { .cstrees { grid-template-columns: 1fr; } }

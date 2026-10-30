@@ -100,6 +100,26 @@ def shapes():
         s.fill(rect(16, 15, 3, 3), '#ff8a2a'); s.set(17, 16, '#ffe08a')             # ember rune on the haft
         return fin(s)
 
+    @reg('staff')
+    def _():  # a long haft with a gem held in a claw head (the gem takes the item colour)
+        s = I(); handle(s, 6, 30, 22, 8)
+        s.fill(line(20, 9, 19, 4) | line(24, 9, 26, 4) | line(22, 10, 22, 3), WOOD[1])
+        blob(s, ellipse(22, 6, 4, 4), 0, 'sphere'); s.set(21, 4, C(0)[3]); s.set(20, 5, '#ffffff')
+        return fin(s)
+
+    @reg('robe')
+    def _():  # a hooded robe with a sash
+        s = I(); blob(s, poly([(11, 6), (21, 6), (25, 29), (7, 29)]), 0)
+        blob(s, poly([(5, 10), (11, 7), (10, 20), (5, 22)]), 0); blob(s, poly([(27, 10), (21, 7), (22, 20), (27, 22)]), 0)
+        s.fill(rect(9, 16, 14, 2), C(1)[2]); s.fill(line(16, 7, 16, 28), C(0)[0]); s.fill(poly([(12, 5), (16, 9), (20, 5), (16, 3)]), C(0)[1])
+        return fin(s)
+
+    @reg('hat')
+    def _():  # a wide-brimmed pointed wizard hat
+        s = I(); blob(s, poly([(16, 3), (22, 20), (10, 20)]), 0); s.fill(line(16, 3, 19, 6), C(0)[3])
+        blob(s, ellipse(16, 22, 13, 4), 0); s.fill(rect(10, 18, 12, 2), C(1)[2]); s.set(19, 12, '#fff6a8')
+        return fin(s)
+
     @reg('can')
     def _():
         s = I(); blob(s, rect(6, 12, 16, 15), 0); s.fill(line(22, 16, 29, 10) | line(22, 17, 29, 11), C(0)[1])

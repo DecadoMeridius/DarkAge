@@ -268,7 +268,12 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - **Dash:** Shift is 0.2 s and invulnerable, with a 0.45 s cooldown.
   - **Enemies:** they wind up (`e.wind`, a red ground marker drawn in the `drawEnt` wrapper), strike if you're still in the arc, then recover (`enemyAttackAI`). The tick melee in `enemyTick` is off (bleed still ticks). Guard opens a 0.5 s parry (`ACT.parry`) that stuns.
   - **No auto-target:** `TARGET` only feeds the target frame and aims Lunge, Rend and Volley.
-- Still to do (D4-D7): boss patterns, style skill trees with effects and AOE, magic (staffs, spells, robes), joint animation.
+- **Bosses (`x_bosses.js`):** each boss has a kit (`BOSS_KIT`) of old moves plus signature hazards: quake rings, rockfall, fire pools, ice lanes, spirals, triple charges, tide waves and anvil slams. Hazards live in `HAZ`, telegraphed then live, and hit through `hurtPlayer`. Phase 2 starts at 50% health (roar, a 1.2 s shield, plus a phase move).
+- **Skill trees and magic (`x_skills.js`):**
+  - **Trees:** Combat skills tab (V) with Blade, Marksman and Arcane, 5 skills each (`CSKILLS`), ranks 1-3. Points = style level / 5 per tree. Each skill needs its weapon type.
+  - **Abilities:** skills are `ABIL` entries usable in the Z/X/C slots (`abilPoolX`). Effects live in `VFX` (draw functions plus a `tick` for damage); skill projectiles in `SKP`.
+  - **Staffs:** one per metal tier, wt `staff`, Magic style. Their basic attack is a bolt, and a fireball on the combo finisher.
+  - **Robes and hats:** Apprentice to Starweave give `magic` (damage) and `fregen` (Focus regen), need Magic to wear, and are gated by the metal patterns.
 
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
