@@ -235,6 +235,30 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - Biome treasure chests (`w0`-`w5` in the Wilds, `<region>_c<n>` caches) restock a week after opening in a new random spot in their biome (`S.restock`); story and landmark chests stay put. The farm and the village regrow in place as before.
 - **Auto tool:** left-clicking a tree, rock, ore, grass, weed or ripe vegetable first selects the matching hotbar tool (the multitool if it's there); a seed or item in hand on soil is kept (`toolFor` in `x_multitool.js`).
 
+## Playtest fixes (`x_fixes.js`, `x_ui.js`, `x_world.js`; list in `docs/playtest/BACKLOG.md`)
+- **x_fixes.js:**
+  - Wide signposted farm↔village exits (`clearNatural`, `widenExit`).
+  - A local map for small places (`localMapCanvas`).
+  - `faceTile` returns the hovered tile when it's next to you (`AIM` holds the clicked target on arrival); the rod casts at water up to 3 tiles ahead.
+  - Corner sliding and unsticking in `moveEnt`; refusing placements that would trap the player.
+  - Options → Load another save / Save and quit to title.
+  - `demolish` at Hale's.
+  - Enemy leash (home, heal, bosses wake within 190 px and stop beyond 280); kill loot homes to the player.
+  - Small fixes: flame overlay, toasts, creator, saving only after the creator closes.
+- **x_ui.js:**
+  - Recipe search and category chips (RC swapped during `renderCraft`).
+  - Backpack search, Sort and "Recipes & uses"; bank search.
+  - Getting-started checklist; a shorter milestone list.
+  - Door name plates; closed-shop notice; buy confirmation.
+  - Combat bar only when fighting; watering-can level.
+  - Out-of-combat regen and a low-HP warning.
+  - The clock runs at 0.7×; starting bread; lower request rewards.
+- **x_world.js:**
+  - The pet (`S.pet`, Odile's stray quest, a `pet` entity on the farm, morning digs in `showDayReport`).
+  - Picking wild flowers and mushrooms.
+  - Clay mounds and salt crusts (`spawnNodes` once per wild map).
+  - Slaughtering animals (`BUTCHER`), meat items, `$meat`, and meat recipes.
+
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
 

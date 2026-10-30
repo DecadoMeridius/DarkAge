@@ -58,10 +58,10 @@ Work order: A (bugs and controls) → B (inventory and UI) → C (world content)
   - common Woodcutting-10 maples at the start.
 
 ## C. World content
-- [ ] C1 A pet dog or cat from a quest. It sometimes digs something up overnight and says so in the morning report.
-- [ ] C2 Harvestable wild flowers and mushrooms.
-- [ ] C3 Nodes for basic resources: clay mounds on beaches, and the same for other basics that have no node yet (sand, flint, salt...).
-- [ ] C4 Slaughtering animals for meat, hide, bones and so on, used in recipes.
+- [x] C1 A pet dog or cat from a quest. It sometimes digs something up overnight and says so in the morning report.
+- [x] C2 Harvestable wild flowers and mushrooms.
+- [x] C3 Nodes for basic resources: clay mounds on beaches, and the same for other basics that have no node yet (sand, flint, salt...).
+- [x] C4 Slaughtering animals for meat, hide, bones and so on, used in recipes.
 
 ## D. Combat overhaul (Hades-like feel)
 - [ ] D1 Movement: responsive 8-way movement with acceleration, a dash with invulnerability frames and a cooldown, and sliding collision.
