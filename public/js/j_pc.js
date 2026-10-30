@@ -83,7 +83,7 @@ buildHUD = function () {
   _buildHUD();
   for (const id of ['#hpb', '#stb']) if (!$(id + ' s')) $(id).append(el('s'));
   const tr = $('#topr'); tr.innerHTML = '';
-  [['🎒', 'bag', 'I'], ['⚒', 'craft', 'C'], ['★', 'skills', 'K'], ['🗺', 'map', 'M'], ['📜', 'quests', 'J'], ['⚙', 'opts', 'Esc']].forEach(([ic, tab, key]) =>
+  [['🎒', 'bag', 'I'], ['⚒', 'craft', 'B'], ['★', 'skills', 'K'], ['🗺', 'map', 'M'], ['📜', 'quests', 'J'], ['⚙', 'opts', 'Esc']].forEach(([ic, tab, key]) =>
     tr.append(el('button', { class: 'sq f-dark', title: tab, on: () => { if (!PAUSED) openMenu(tab); } }, ic, el('kbd', null, key))));
   if (!$('#prompt')) document.body.append(el('div', { id: 'prompt' }, el('span', { id: 'pL' }), el('span', { id: 'pR' })));
   if (!$('#keyhelp')) document.body.append(el('div', { id: 'keyhelp', html: '<kbd>WASD</kbd>move &nbsp; <kbd>LMB</kbd>use / attack &nbsp; <kbd>RMB</kbd> or <kbd>E</kbd>interact<br><kbd>Shift</kbd>dodge &nbsp; <kbd>R</kbd>ride &nbsp; <kbd>1-0</kbd> / wheel hotbar &nbsp; <kbd>H</kbd>hide' }));

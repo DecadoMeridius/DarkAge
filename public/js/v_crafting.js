@@ -70,7 +70,7 @@ function placeStarterBench() {
   const m = MAPS.farm, h = m && m.bHouse; if (!m || !h) return;
   const bx = h.x + h.w + 1, by = h.y + h.h;
   for (let r = 0; r < 8 && !S.flags.wb; r++) for (let j = -r; j <= r && !S.flags.wb; j++) for (let i = -r; i <= r && !S.flags.wb; i++) {
-    const x = bx + i, y = by + j; if (!areaFree(m, x, y, 2, 1) || m.soil[y * m.w + x] || m.soil[y * m.w + x + 1] || TER[getT(m, x, y)].water || TER[getT(m, x + 1, y)].water) continue;
+    const x = bx + i, y = by + j, [px, py] = cur === m ? playerTile() : [-9, -9]; if (Math.abs(x - px) <= 2 && Math.abs(y - py) <= 2 || !areaFree(m, x, y - 1, 2, 3) || m.soil[y * m.w + x] || m.soil[y * m.w + x + 1] || TER[getT(m, x, y)].water || TER[getT(m, x + 1, y)].water) continue;
     putObj(m, x, y, { k: 'workbench' }); S.flags.wb = 1;
   }
 }
