@@ -120,6 +120,12 @@ def shapes():
         blob(s, ellipse(16, 22, 13, 4), 0); s.fill(rect(10, 18, 12, 2), C(1)[2]); s.set(19, 12, '#fff6a8')
         return fin(s)
 
+    @reg('plate')
+    def _():  # a breastplate: shoulders, a raised chest ridge and a belt line
+        s = I(); blob(s, poly([(6, 7), (12, 5), (16, 8), (20, 5), (26, 7), (25, 16), (23, 28), (9, 28), (7, 16)]), 0)
+        s.fill(line(16, 9, 16, 26), C(0)[3]); s.fill(rect(9, 22, 14, 2), C(1)[1]); s.fill(rect(15, 22, 2, 2), '#e8c060')
+        s.fill(line(8, 9, 12, 12) | line(24, 9, 20, 12), C(0)[1]); return fin(s)
+
     @reg('can')
     def _():
         s = I(); blob(s, rect(6, 12, 16, 15), 0); s.fill(line(22, 16, 29, 10) | line(22, 17, 29, 11), C(0)[1])

@@ -40,7 +40,7 @@ const VFX = [];
 const vfx = (draw, T, extra) => VFX.push(Object.assign({ t: 0, T, draw }, extra || {}));
 const enemiesNear = (x, y, r) => cur.ents.filter(e => e.type === 'enemy' && !e.dead && Math.hypot(e.x - x, e.y - EN[e.k].r - y) < r + EN[e.k].r);
 function hitArea(x, y, r, mult, kb, opts = {}) { let n = 0; for (const e of enemiesNear(x, y, r)) { actionHit(e, mult, Math.atan2(e.y - y, e.x - x), kb, opts); if (opts.slow) e.st.slow = opts.slow; if (opts.burn) e.st.burn = opts.burn; if (opts.freeze) e.stun = Math.max(e.stun || 0, opts.freeze); n++; } return n; }
-const rankK = id => 1 + .3 * (((S.cskill || {})[id] || 1) - 1);
+let rankK = id => 1 + .3 * (((S.cskill || {})[id] || 1) - 1);
 const burst = (x, y, n, c, sp = 90) => { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = sp * (.4 + Math.random() * .6); PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: .35 + Math.random() * .25, c }); } };
 const ring = (x, y, r, col, T = .35, w = 2) => vfx(k => { g.globalAlpha = 1 - k; g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.ellipse(x, y, r * (.3 + .7 * k), r * .7 * (.3 + .7 * k), 0, 0, 6.283); g.stroke(); g.globalAlpha = 1; }, T);
 const SKP = []; // skill projectiles: { x, y, vx, vy, t, life, kind, pierce, hit:Set }
@@ -96,7 +96,7 @@ function updateSkills(dt) {
     p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt;
     if (p.t > p.life || solidAt(cur, p.x, p.y + 6)) { if (p.kind === 'fireball') blowFire(p); p.dead = 1; continue; }
     for (const e of cur.ents) { if (e.type !== 'enemy' || e.dead || p.hit.has(e)) continue; if (Math.hypot(e.x - p.x, e.y - EN[e.k].r - p.y) < EN[e.k].r + 5) {
-      p.hit.add(e); if (p.kind === 'fireball') { blowFire(p); p.dead = 1; break; } actionHit(e, p.mult, p.a, p.kind === 'pierce' ? 90 : 50); if (p.kind !== 'pierce') { p.dead = 1; break; } } }
+      p.hit.add(e); if (p.kind === 'fireball') { blowFire(p); p.dead = 1; break; } actionHit(e, p.mult, p.a, p.kind === 'pierce' ? 90 : 50, { skill: p.kind !== 'bolt' }); if (p.kind !== 'pierce') { p.dead = 1; break; } } }
   }
   for (let i = SKP.length - 1; i >= 0; i--) if (SKP[i].dead) SKP.splice(i, 1);
   for (const v of VFX) { v.t += dt; if (v.tick && !v.ended) v.tick(dt); if (v.t >= v.T && !v.ended) { v.ended = 1; if (v.done) v.done(); } }
@@ -139,7 +139,7 @@ pcCursorDraw = function (m) { _pcCursorDrawBolt(m); for (const p of SKP) if (p.k
 const treePts = t => Math.floor(clv(CTREES[t].style) / 5) - CSKILLS.filter(s => s[1] === t).reduce((a, s) => a + ((S.cskill || {})[s[0]] || 0), 0);
 function renderCSkills(b) {
   S.cskill = S.cskill || {};
-  b.append(el('p', { class: 'note' }, 'Each tree earns a point every 5 levels of its combat style. Learn a skill, raise it to rank 3, then put it in a slot (Z, X or C). Skills cost Focus, which you build by hitting enemies.'));
+  b.append(el('p', { class: 'note' }, 'Each tree earns a point every 5 levels of its combat style. Learn a skill, then put it in a slot (Z, X or C); each extra rank (up to 3) makes it 30% stronger. Skills cost Focus, which you build by hitting enemies.'));
   const cols = el('div', { class: 'cstrees' });
   for (const t in CTREES) {
     const T = CTREES[t], pts = treePts(t), col = el('div', { class: 'cstree f-panel' }, el('h3', null, T.n), el('small', { class: 'note' }, CSKN[T.style] + ' ' + clv(T.style) + ' · ' + pts + ' point' + (pts === 1 ? '' : 's') + ' · needs ' + T.needN));
@@ -147,6 +147,7 @@ function renderCSkills(b) {
       const r = S.cskill[id] || 0, prev = i === 0 || (S.cskill[arr[i - 1][0]] || 0) > 0, okLvl = clv(T.style) >= lvl, can = r < 3 && pts > 0 && prev && okLvl;
       const card = el('div', { class: 'cscard' + (r ? ' on' : '') }, el('b', null, n + ' ' + '●'.repeat(r) + '○'.repeat(3 - r)), el('small', null, desc), el('small', { class: 'note' }, 'Focus ' + cost + ' · cooldown ' + (cd * .6).toFixed(1) + ' s · ' + CSKN[T.style] + ' ' + lvl + (prev ? '' : ' · learn the skill above first')));
       const acts = el('div', { class: 'acts wrap' });
+      if (r >= 3) acts.append(el('button', { class: 'btn off' }, 'Max rank')); // keeps the Z X C buttons in place
       if (r < 3) acts.append(el('button', { class: 'btn' + (can ? '' : ' off'), on: () => { if (!can) { toast(!okLvl ? 'You need ' + CSKN[T.style] + ' ' + lvl + '.' : !prev ? 'Learn the skill above first.' : 'No points left in this tree.', 'bad'); return; } S.cskill[id] = r + 1; SFX.lvl(); refresh(); } }, r ? 'Rank up' : 'Learn'));
       if (r) ['Z', 'X', 'C'].forEach((key, k) => acts.append(el('button', { class: 'btn ghost' + (S.abil[k] === id ? ' on' : ''), on: () => { S.abil[k] = id; hudKey = ''; refresh(); } }, key)));
       card.append(acts); col.append(card);

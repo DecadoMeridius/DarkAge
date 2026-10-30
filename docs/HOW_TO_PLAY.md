@@ -33,6 +33,7 @@ This guide explains every part of the game. Read the first sections to get going
 | **Shift** | Dash (you can't be hit while dashing) |
 | **R** | Ride your horse |
 | **Z / X / C** | Combat abilities |
+| **Q** | Guard / parry |
 | **I** | Backpack, equipment and hotbar |
 | **B** | Recipe book |
 | **K** | Skills |
@@ -57,7 +58,7 @@ This guide explains every part of the game. Read the first sections to get going
 - **Weather.** Rain waters your crops for you. Winter brings snow, frozen ponds and hungry animals.
 - **Energy** (the E bar) is used by tools. Eating and sleeping restore it.
 - **Health** (the ♥ bar) drops in fights. Eat food to heal.
-- **Knockouts.** If you're knocked out you wake up at home with half health and energy, and you lose some gold.
+- **Lives and knockouts.** You have 3 lives (hearts). Losing all your health costs a life and you get straight back up. With no lives left you're knocked out: you wake up at home with half health and energy, and you lose some gold.
 
 ## 4. The farm and farming
 
@@ -293,7 +294,10 @@ Combat is **action combat**: you aim with the mouse and every click swings. If y
 - **Passive tree (T):** combat levels give points for Might, Precision and Arcana, and life-skill levels for the Life branch. Respeccing costs gold at the village altar.
 
 **Staying alive**
+- You have **3 lives** (the hearts under your health bar). If your health runs out you lose a life and get straight back up, and nearby enemies are knocked back. With no lives left you're knocked out: you wake at home the next morning and lose some gold.
+- Lives come back one at a time while you're out of combat, and all of them every morning.
 - Health slowly comes back when you're out of combat, and you get a warning when it's low.
+- **Q** guards and parries any time.
 - Bring food and eat it from the hotbar.
 
 ## 14. Exploring

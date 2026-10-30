@@ -85,7 +85,7 @@ function render(dt) {
       if (isTree || o.k === 'tgrass' || o.k === 'bush') {
         const amp = o.k === 'tgrass' ? .14 : isTree ? .03 : .04, sw = Math.sin(gameT * (o.k === 'tgrass' ? 2.2 : 1.1) + x * .7 + y * .3) * amp;
         const behind = isTree && S.p.x > dx + 4 && S.p.x < dx + spr.ww - 4 && S.p.y < (y + 1) * 16 - 3 && S.p.y > dy + 8;
-        if (behind) g.globalAlpha = .5;
+        if (behind) g.globalAlpha = .25;
         g.save(); g.translate(x * 16 + w / 2, (y + 1) * 16); g.transform(1, 0, sw, 1, 0, 0); D(spr, dx - x * 16 - w / 2, dy - (y + 1) * 16); g.restore(); g.globalAlpha = 1;
       } else D(spr, dx, dy);
       if (DD.mach && o.out && o.left <= 0) { const b = Math.sin(gameT * 4) * 1.5; g.fillStyle = 'rgba(255,250,235,.92)'; g.beginPath(); g.arc(x * 16 + 8, dy - 6 + b, 7, 0, 6.283); g.fill(); g.strokeStyle = INK; g.lineWidth = .5; g.stroke(); D(itemIcon(o.out), x * 16 + 2.5, dy - 11.5 + b, 11, 11); }

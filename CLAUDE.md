@@ -278,6 +278,24 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 ## Combat test (`public/js/x_combattest.js`)
 - Title screen → Combat test: SANDBOX game, combat skills at 60, every weapon type, staff, robes, arrows and meals, in the Wilds meadow, with a panel (`#ctpanel`) to spawn packs or any boss, heal and clear.
 
+## Combat fixes from playtest 2 and lives (`public/js/x_combatfix.js`)
+- **Seeing yourself:** a see-through player is drawn on top when enemies, hazards or canopies cover you (canopy fade is 0.25 in `f_render`).
+- **Spacing:** `separate` (with `nudge` for stuck enemies) spaces enemies and keeps a ring around you; bosses are solid. At most two ordinary wind-ups happen at once. Swings always hit an overlapping enemy (`x_action`).
+- **Controls:** weapon clicks never walk you. You face the mouse for 0.45 s after an attack. The dash follows the movement keys, or the mouse when none are held (with a trail).
+- **HUD:** `#abil` sits at the bottom right and `#tframe` at the top left. The boss bar tracks the boss you hit, else the nearest one.
+- **Bosses:** 1.8 s of grace on waking (shielded, no melee, nearby hazards cleared). Every hit is capped at 20% of max health plus defence. Regional bosses' `atk` is ×0.55.
+- **Lich and Hollow King:** the Lich uses `blink2` (fade, a destination marker, then a punish window); the Hollow King walks and quakes.
+- **Projectiles:** glowing arrows and bolts; staff bolts live 1.4 s and puff out; plain arrows are used before fire arrows.
+- **Focus:** skill hits (`hitArea`, `{skill:1}` projectiles) give no Focus.
+- **Skill tuning:** `SKILL_MULT` (Whirlwind, Chain, Meteor down; Ground Slam, Piercing up). Blade Dash stops at the mouse; Chain Lightning starts on a boss in range.
+- **Loadouts and keys:** a Z/X/C loadout per weapon group (`S.abilSets`). **Q parries** (Guard). Equipping a weapon selects it.
+- **Quieter toasts:** repeated "backpack full" and "recharging" toasts are suppressed.
+- **Lives (`S.lives`, max 3):**
+  - A knockout with a life left gets you up on the spot (full health, 2 s invulnerable, a shockwave).
+  - With none left it's the old knockout (home, a new day).
+  - One life returns per 60 s out of combat, and all refill each morning. The hearts show under the bars (`#lives`).
+  - Combat test respawns without using lives.
+
 ## Building the desktop app
 - `npm run build` then `npx electron-builder --win` (or `npm run dist`) writes `release/Emberhollow-setup-<version>.exe` (installer) and `release/Emberhollow-portable-<version>.exe` (runs without installing). `release/` and `dist/` are not committed.
 

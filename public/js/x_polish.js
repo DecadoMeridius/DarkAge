@@ -118,7 +118,7 @@ const TREE_N = { oak: 'Oak', maple: 'Maple', birch: 'Birch', pine: 'Pine', dead:
 const _pcCursorDrawX = pcCursorDraw;
 pcCursorDraw = function (m) {
   _pcCursorDrawX(m);
-  if (TITLE || PAUSED || !MOUSE.in || !S || !S.p || fishing || (typeof PLACING !== 'undefined' && PLACING)) return;
+  if (TITLE || PAUSED || !MOUSE.in || !S || !S.p || fishing || (typeof PLACING !== 'undefined' && PLACING) || selKind() === 'weapon') return;
   const [tx, ty] = faceTile(); if (!inb(m, tx, ty)) return;
   const [ax, ay, o] = mainOf(m, tx, ty), D = o && OBJ[o.k]; if (!D || !D.drop || !D.xp || D.place) return;
   const skill = D.xp[0], need = nodeReq(o); if (lifeL(skill) >= need) return;

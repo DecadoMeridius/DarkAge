@@ -67,7 +67,7 @@ function actionAttack() {
   for (const e of cur.ents) {
     if (e.type !== 'enemy' || e.dead) continue; const E = EN[e.k]; if (E.ai === 'ambush' && !e.awake) continue;
     const ex = e.x, ey = e.y - E.r, d = Math.hypot(ex - cx, ey - cy);
-    if (d > w.range + E.r + 2 || (d > 8 && angDiff(Math.atan2(ey - cy, ex - cx), a) > w.arc / 2)) continue;
+    if (d > w.range + E.r + 2 || (d > E.r + 8 && angDiff(Math.atan2(ey - cy, ex - cx), a) > w.arc / 2)) continue; // an enemy overlapping you is always in the swing
     actionHit(e, m, Math.atan2(ey - cy, ex - cx), w.kb * (fin ? 1.6 : 1), { stagger: fin });
   }
   // swings still cut grass and weeds in front of you
