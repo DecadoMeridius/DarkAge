@@ -128,7 +128,7 @@ function render(dt) {
   const bb = $('#bossbar'); if (bb) { if (boss) { bb.hidden = false; $('#bossname').textContent = EN[boss.k].n; $('#bosshp').style.width = Math.max(0, boss.hp / boss.mhp * 100) + '%'; } else bb.hidden = true; }
 }
 function drawAnimal(a) {
-  const A = ANIMAL[a.sp], baby = a.age < A.adult, spr = animalSpr(a.sp, a.coat, Math.floor((a.walk || 0) * 6) % 2), sc = (baby ? .62 : 1) * (a.traits.includes('giant') ? 1.15 : 1), w = spr.ww * sc, h = spr.wh * sc;
+  const A = ANIMAL[a.sp], baby = a.age < A.adult, spr = animalSpr(a.sp, a.coat, a.vx || a.vy ? Math.floor((a.walk || 0) * 9) : 0), sc = (baby ? .62 : 1) * (a.traits.includes('giant') ? 1.15 : 1), w = spr.ww * sc, h = spr.wh * sc;
   shadow(a.x, a.y, w * .4);
   g.save(); g.translate(a.x, a.y); if (a.dir < 0) g.scale(-1, 1); const bob = a.vx || a.vy ? Math.abs(Math.sin((a.walk || 0) * 12)) * .5 : 0; D(spr, -w / 2, -h - bob, w, h); g.restore();
   if (a.traits.includes('radiant') && Math.floor(gameT * 3 + a.id) % 4 === 0) { g.fillStyle = '#fff6a8'; g.beginPath(); g.arc(a.x + (Math.random() - .5) * w, a.y - Math.random() * h, .8, 0, 6.283); g.fill(); }
@@ -146,7 +146,7 @@ function drawEnt(e) {
     else { g.fillStyle = '#9a948a'; g.strokeStyle = INK; g.lineWidth = .5; g.beginPath(); g.arc(e.x, e.y, 2.2, 0, 6.283); g.fill(); g.stroke(); }
     return;
   }
-  const E2 = EN[e.k], spr = enemySpr(e.k, Math.floor(e.t * (E2.ai === 'fly' || E2.ai === 'swoop' ? 8 : 4)) % 2);
+  const E2 = EN[e.k], spr = enemySpr(e.k, typeof enemyFrame === 'function' ? enemyFrame(e) : Math.floor(e.t * 4) % 2);
   if (E2.ai === 'ambush' && !e.awake) { D(SPR.rock, e.x - 8, e.y - 14); return; }
   const air = E2.ai === 'fly' || E2.ai === 'swoop' ? 10 + Math.sin(e.t * 5) * 2 : E2.ai === 'ghost' ? 4 + Math.sin(e.t * 2) * 2 : (e.hopT > 0 ? Math.sin(e.hopT / .35 * Math.PI) * 6 : 0);
   shadow(e.x, e.y, Math.max(5, spr.ww * .32));
