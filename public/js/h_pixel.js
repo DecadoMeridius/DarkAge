@@ -180,11 +180,11 @@ function pixCliffsAndBridges(x, m, cx, cy, M, s) {
 
 /* ---- humans: layered template sprites, palette-swapped from the character's palette ----
    Template pixels are channel codes RGB(255, channel, level). See art/sprites/human.py. */
-const HCH = ['skin', 'hair', 'shirt', 'pants', 'shoe', 'acc', 'helm', 'plume', 'cape', 'hood', 'apron', 'beard', 'robe', 'hat', 'crown', 'belt'];
+const HCH = ['skin', 'hair', 'shirt', 'pants', 'shoe', 'acc', 'helm', 'plume', 'cape', 'hood', 'apron', 'beard', 'robe', 'hat', 'crown', 'belt', 'armor', 'trim'];
 const pixRamp = col => [sh(col, -1.7), sh(col, -.7), col, sh(col, 1)].map(h2r);
 function humanRamps(P) {
-  const col = { skin: P.skin, hair: P.hair, shirt: P.shirt, pants: P.pants, shoe: P.shoe || '#5a3a20', acc: P.acc || P.shirt, helm: P.helm, plume: P.plume, cape: P.cape, hood: P.hood, apron: P.apron, beard: typeof P.beard === 'string' ? P.beard : P.hair, robe: P.robe, hat: P.hat, crown: '#f2c040', belt: P.belt || '#6a4428' };
-  const fallback = { robe: P.shirt, hood: P.shirt, cape: '#9a2a2a', apron: '#e8dcc0', hat: '#5a4a3a', helm: '#8a8a92', plume: '#d8342a' };
+  const col = { skin: P.skin, hair: P.hair, shirt: P.shirt, pants: P.pants, shoe: P.shoe || '#5a3a20', acc: P.acc || P.shirt, helm: P.helm, plume: P.plume, cape: P.cape, hood: P.hood, apron: P.apron, beard: typeof P.beard === 'string' ? P.beard : P.hair, robe: P.robe, hat: P.hat, crown: '#f2c040', belt: P.belt || '#6a4428', armor: P.armor, trim: P.trim };
+  const fallback = { armor: P.shirt, trim: '#c8a040', robe: P.shirt, hood: P.shirt, cape: '#9a2a2a', apron: '#e8dcc0', hat: '#5a4a3a', helm: '#8a8a92', plume: '#d8342a' };
   return HCH.map(n => pixRamp(typeof col[n] === 'string' ? col[n] : fallback[n] || '#888888')); // flag values (robe: 1) mean "wear the default"
 }
 const _humanSpr = humanSpr;
@@ -200,12 +200,12 @@ humanSpr = function (key, P, dir, f) {
   if (P.cape && d !== 3) add('hb_cape_' + d);
   if (P.hood) add(`hb_hood_${d}_back`); else if (!P.helm) add(`hb_hair_${hs}_${d}_back`);
   add(ride ? 'hb_ride_2' : `hb_body_${d}_${f}`, wf >= 0 ? bob : 0, 0); // 'ride' = seated pose, facing right if (P.ribs) add('hb_ribs_' + d);
-  if (P.robe) add('hb_robe_' + d); if (P.apron) add('hb_apron_' + d); if (P.belt) add('hb_belt_' + d);
+  if (P.robe) add('hb_robe_' + d); if (P.apron) add('hb_apron_' + d); if (P.belt) add('hb_belt_' + d); if (P.armS && !P.robe) add('hb_arm_' + P.armS + '_' + d);
   if (P.cape && d === 3) add('hb_cape_3');
   if (P.beard) add('hb_beard_' + d); if (P.ears) add('hb_ears_' + d);
   if (!P.helm && !P.hood && hs !== 'bald') add(`hb_hair_${hs}_${d}_front`);
   if (P.hood) add(`hb_hood_${d}_front`);
-  if (P.helm) add('hb_helm_' + d); if (P.plume) add('hb_plume_' + d);
+  if (P.helm) add(P.helmS && PIX.has('hb_helm_' + P.helmS + '_' + d) ? 'hb_helm_' + P.helmS + '_' + d : 'hb_helm_' + d); if (P.plume && !P.helmS) add('hb_plume_' + d);
   if (P.hat) add('hb_hat_' + d); if (P.crown) add('hb_crown_' + d);
   if (tuck) { L.length = 0; add('hb_body_0_tuck', 0, 0); } // the roll is the curled body alone
   const c = mk(32, 64, x => { for (const [img, dy, dx] of L) x.drawImage(img, dx || 0, dy); });

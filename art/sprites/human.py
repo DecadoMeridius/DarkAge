@@ -12,7 +12,7 @@ drawn per dir and bobbed 1px on the step frames.
 """
 from px import Canvas, rect, ellipse, poly, line
 
-CH = {n: i for i, n in enumerate(['skin', 'hair', 'shirt', 'pants', 'shoe', 'acc', 'helm', 'plume', 'cape', 'hood', 'apron', 'beard', 'robe', 'hat', 'crown', 'belt'])}
+CH = {n: i for i, n in enumerate(['skin', 'hair', 'shirt', 'pants', 'shoe', 'acc', 'helm', 'plume', 'cape', 'hood', 'apron', 'beard', 'robe', 'hat', 'crown', 'belt', 'armor', 'trim'])}
 EYE, WHITE, MOUTH = '#2b1d18', '#f4ece0', '#9a5048'
 
 
