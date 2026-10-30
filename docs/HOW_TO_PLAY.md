@@ -115,6 +115,10 @@ This guide explains every part of the game. Read the first sections to get going
 
 Every lake, river, coast and region has its own fish, and some only bite in certain seasons or at certain times. Better rods and a higher Fishing level make it easier. Lava fishing needs an iron rod.
 
+- **Harpoon.** Made at an anvil. Face deep water and use it: throw when your mark is over the big fish's shadow, then reel while it rests and let the line go when it runs, keeping the tension in the green band. Sharks, swordfish, tuna and manta rays live at sea; sturgeon in rivers and lakes.
+- **Crab traps.** Made at a workbench. Set one in water and come back the next day: haul it up by pulling when the marker crosses the green band. A missed pull lets one catch escape. Crabs, prawns, crayfish, lobsters and snails, depending on the water.
+- **From the canoe** you can fish with the rod, the harpoon and traps, but not use other tools or weapons.
+
 ## 7. Skills and levelling
 
 - **Skills.** Every action trains a **life skill**: Farming, Husbandry, Foraging, Woodcutting, Mining, Fishing, Cooking, Smithing, Crafting and Construction. Combat has its own skills (section 13). Skills go from **level 1 to 99**, and press **K** to see them.

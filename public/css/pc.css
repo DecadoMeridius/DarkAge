@@ -229,3 +229,5 @@ body:has(#modal:not([hidden])) #ctpanel { display: none; }
 #iprompt { position: fixed; right: 14px; top: 205px; padding: 6px 10px; z-index: 30; display: flex; flex-direction: column; gap: 4px; min-width: 150px; pointer-events: none; }
 #iprompt .iprow { display: flex; gap: 8px; align-items: center; font-weight: 600; }
 #iprompt kbd { min-width: 22px; text-align: center; }
+#fishgame { position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%); padding: 8px 10px; z-index: 55; display: flex; flex-direction: column; gap: 4px; align-items: center; }
+#fishgame canvas { width: 640px; height: 300px; image-rendering: pixelated; border: 2px solid #2a1c18; }

@@ -322,6 +322,11 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 ## Canoe (`public/js/x_canoe.js`)
 - Made at a workbench (40 wood, 4 hardwood, 12 fiber), worn in the Boat slot (`S.eq.boat`, between the rings). While worn, deep water (`w`) is open to the player's `moveEnt` and `walkTo` (`withWater` lifts `TER.w.solid` for that call); `S.p.boat` follows the tile under you, so you climb in and out at the shore. Drawn seated in the hull with the near gunwale over the legs, a paddle stroking side to side and a wake (`canoe.0/.1` in `implements.py`).
 
+## Harpoon, crab traps and the canoe rule (`public/js/x_fishing2.js`, art in `fishing_art.py`)
+- In the canoe only fishing works (`canoeAllows`: rod, `fishtool` items, food); other clicks say so, and action attacks are off.
+- Harpoon (anvil: 3 iron bars, 5 wood, 6 fiber): facing deep water, picks a `BIGFISH` for the water and season (shark, swordfish, tuna, manta at sea; sturgeon in rivers and lakes). Minigame in `#fishgame` (pauses the game, own rAF loop): aim (a sweeping mark over the fish's shadow, 3 throws), then fight (hold to reel, release while it runs, keep tension 0.3-0.78; snaps at 1, shakes loose after 2.4 s slack).
+- Crab trap (workbench: 8 wood, 10 fiber): set in water as a `crabtrap` object; from the next day `trapReady` rolls 1-3 `SHELLFISH` for its water (mud crab, prawn, crayfish, rock lobster, river snail). Hauling: 3-4 timed pulls on a sliding marker; a miss loses one catch. The trap stays set; on an empty one, interacting lifts it back into the bag.
+
 ## Hand-drawn props (`art/sprites/props_hand.py`, `public/js/x_props.js`)
 - Fences join: `fence_<mask>` (1 N, 2 E, 4 S, 8 W) chosen from `o.fm`, refreshed by `fenceMasks` on map change and every 2 ticks; vertical runs show their rail tops beside the posts. Also redrawn by hand: the knight statue, ivy-covered ruin walls, the iron lamp post, the stone forge and the ember shrine.
 
