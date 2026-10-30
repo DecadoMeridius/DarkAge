@@ -306,6 +306,7 @@ Combat is **action combat**: you aim with the mouse and every click swings. If y
 **The Wilds** (north of the farm) is a big valley:
 - **Biomes:** meadows, forest, highlands, coast, frost and ash, each with its own enemies, plants and ores.
 - **Places to find:** caves, shrines, ruins, a shipwreck, a travelling merchant, and the **mine**.
+- **Canoe:** make one at a workbench (40 wood, 4 hardwood, 12 fiber) and wear it in the Boat slot. Walk into a river or lake and you paddle across; step onto land and you climb out.
 - **Chests:** hidden chests restock a week after you open them, in a new spot. Opening one lists what it held.
 - **The map (M):** zoom with the buttons or the mouse wheel; blue diamonds are waystones you have touched.
 - **Ember shards:** 30 are scattered around the Wilds and regions; collecting them earns rewards.

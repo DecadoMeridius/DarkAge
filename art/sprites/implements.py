@@ -114,3 +114,31 @@ def tack():
 
 
 SPRITES['horse_tack'] = tack
+
+
+def canoe(side):
+    """A birch-bark canoe, side view facing right (40x16): side 0 the hull, 1 its near gunwale drawn over the paddler."""
+    s = Canvas(40, 16)
+    hull = poly([(1, 5), (6, 8), (34, 8), (39, 4), (37, 10), (31, 14), (9, 14), (3, 10)])
+    if side == 0:
+        s.shade(hull, None, 'form', colors=['#5a3a22', '#8a5a32', '#c08a52', '#e0b07a'])
+        for x in range(7, 33, 5):
+            s.fill(line(x, 9, x, 13), '#6a4426')  # ribs showing through the bark
+        s.fill(line(4, 9, 36, 9), '#e8d0a0')      # pale birch band
+        return fin(s)
+    s.fill(line(2, 6, 38, 5) | line(3, 7, 37, 6), '#4a2e1a')  # the near gunwale, over the paddler's legs
+    s.fill(line(5, 7, 35, 6), '#a0703c')
+    return s
+
+
+def canoe_icon():
+    s = Canvas(32, 32)
+    hull = poly([(2, 22), (6, 20), (26, 10), (31, 6), (29, 12), (24, 18), (8, 26), (3, 25)])
+    s.shade(hull, None, 'form', colors=['#5a3a22', '#8a5a32', '#c08a52', '#e0b07a'])
+    s.fill(line(5, 22, 28, 9), '#e8d0a0')
+    s.fill(line(10, 28, 22, 4) | line(11, 28, 23, 4), '#a0703c'); s.fill(poly([(20, 4), (24, 2), (25, 7), (22, 8)]), '#c08a52')  # the paddle
+    return fin(s)
+
+
+SPRITES['canoe'] = lambda: [canoe(0), canoe(1)]
+SPRITES['gi_canoe'] = canoe_icon

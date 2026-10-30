@@ -319,6 +319,9 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **Exploration:** the Wilds and region maps zoom (buttons, mouse wheel) and show waystones; chests list what they held; picked flowers and mushrooms are named; mine ladders have a bobbing arrow; early request-board items are first-week items; gem veins need floor 5+; small windows (`#modal.small`) for the elevator and lost pages; opened chests have a raised lid (`props.py`).
 - **Cliffs:** `r` faces are natural rock (cracks, a broken ledge, darker toward the foot) instead of stone courses; cliff tops get a rocky tint and flat stones (`h_pixel.js`).
 
+## Canoe (`public/js/x_canoe.js`)
+- Made at a workbench (40 wood, 4 hardwood, 12 fiber), worn in the Boat slot (`S.eq.boat`, between the rings). While worn, deep water (`w`) is open to the player's `moveEnt` and `walkTo` (`withWater` lifts `TER.w.solid` for that call); `S.p.boat` follows the tile under you, so you climb in and out at the shore. Drawn seated in the hull with the near gunwale over the legs, a paddle stroking side to side and a wake (`canoe.0/.1` in `implements.py`).
+
 ## Interaction prompt and tack
 - `x_prompt.js`: a panel under the top-right menu lists what you can do with what's in front of you, each with its (rebound) key: the interact label, G lower/raise and E unhitch while an implement is hitched, R get off while riding.
 - The ridden horse wears a saddle, blanket, girth, stirrup, bridle and reins (`horse_tack` in `implements.py`, drawn between horse and rider in `y_anim.js`).
