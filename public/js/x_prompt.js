@@ -12,7 +12,9 @@ hudTick = function (dt) {
   const rows = [];
   if (S && !TITLE && !PAUSED && !MODAL && !fishing && cur && !(typeof DIALOG !== 'undefined' && DIALOG) && !(typeof PLACING !== 'undefined' && PLACING)) {
     const it = findInteract();
-    if (it && it.label) rows.push([bindKey('interact', 'e'), it.label]);
+    let place = '';
+    if (it && it.label && typeof BLD_N === 'object') { const [tx, ty] = faceTile(); const b = (cur.bld || []).find(b => b.door && b.door.x === tx && b.door.y === ty && b.act); if (b && BLD_N[b.act]) place = BLD_N[b.act]; }
+    if (it && it.label) rows.push([bindKey('interact', 'e'), place && !place.includes(it.label) ? it.label + ' · ' + place : place || it.label]);
     if (typeof hitchK === 'function' && hitchK()) {
       if (S.hitch.k !== 'cart') rows.push(['G', S.hitch.on ? 'Raise the ' + IT[S.hitch.k].n.toLowerCase() : 'Lower the ' + IT[S.hitch.k].n.toLowerCase()]);
       if (!it) rows.push([bindKey('interact', 'e'), 'Unhitch here']);

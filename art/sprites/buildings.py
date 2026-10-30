@@ -52,7 +52,7 @@ STY = {
     'museum': dict(roof='hip', rmat='slate', rcol='#5e6e8e', wmat='ashlar', wcol='#e2dccc', trim='#8a8478', portico=1, arched=1, icon='urn', rf=.46),
     'hut': dict(roof='side', rmat='thatch', rcol='#a89a5a', wmat='boards', wcol='#9a8466', trim='#4a3020', icon='fish', nets=1, barrels=1, rf=.44),
     'cabin': dict(roof='side', rmat='slate', rcol='#6a6070', wmat='logs', wcol='#8a6a48', trim='#3a2618', chim=('stone', 12), snow=1, wood=1, rf=.46),
-    'manor': dict(roof='hip', rmat='slate', rcol='#3e4a6a', wmat='ashlar', wcol='#d8d0c0', trim='#5a4a3a', cross=1, chim=('stone', 30), chim2=1,
+    'manor': dict(roof='hip', rmat='slate', rcol='#3e4a6a', wmat='ashlar', wcol='#d8d0c0', trim='#5a4a3a', cross=1, icon='crest', chim=('stone', 30), chim2=1,
                   shut='#2e4a3a', boxes=1, tall=1, lantern=1, rf=.48),
 }
 
@@ -566,22 +566,48 @@ def awning(s, col, y, x0, x1):
     eave_shadow(s, x0, x1, y + 9, 3)
 
 
+SIGN_PAL = {'k': '#241812', 'g': '#3a3a42', 'G': '#6a6a78', 's': '#9a9aa8', 'S': '#d0d4dc', 'b': '#6a4426', 'B': '#3a2416', 'c': '#a8743f', 'y': '#e8b830',
+            'Y': '#a87a18', 'r': '#c8342a', 'w': '#f6f0e0', 'f': '#f0e2c0', 'a': '#d07a3a', 'A': '#8a4418', 'o': '#4a7ab0', 'O': '#2a4a7a', 'e': '#4a9a3a', 'E': '#2a6a26'}
+SIGN_ICONS = {  # 12x9 hand-pixelled trade symbols painted on the board
+    'seed': ["....kk......", "...kbck.....", "..kbccck..k.", ".kbcccbck.kyk", ".kbccccbkkyYk", ".kbcccccb.kk.", ".kbbcccbb....", "..kbbbbb.....", "...kkkkk....."],
+    'anvil': ["............", "kkkkkkkkkk..", "kSssssssGGk.", ".kkkGGGGkk..", "....kGGk....", "....kGGk....", "...kGGGGk...", "..kkkkkkkk..", "............"],
+    'mug': ["..wwwwww....", ".wwwwwwww...", ".kyyyyyyk...", ".kyYyyyykkk.", ".kyYyyyyk.k.", ".kyYyyyyk.k.", ".kyYyyyykkk.", ".kyyyyyyk...", ".kkkkkkkk..."],
+    'horse': ["..kkkkkkk...", ".kGsssssGk..", "kGsk...ksGk.", "kSk.....kSk.", "kSk.....kSk.", "kSk.....kSk.", "kGk.....kGk.", "kkk.....kkk.", "............"],
+    'saw': ["...........k", "kkkkkkkkkkbk", "kSSSSSSSSkbk", "ksksksksskck", ".k.k.k.k.kbk", "..........kk", "............", "............", "............"],
+    'urn': ["....kkkk....", "...kaaaak...", "....kAAk....", "..kaaaaaak..", ".kaawwwaaak.", ".kaAAAAAaak.", "..kaaaaaak..", "...kaaaak...", "...kkkkkk..."],
+    'fish': ["............", "..kkkkk..k..", ".kooooook.kk", "koOwkoooookOk", "kooooooooOk.", ".kOOOOOOk.kk", "..kkkkk..k..", "............", "............"],
+    'crest': [".kkkkkkkkk..", ".kOOyOOOOk..", ".kOyyyOOOk..", ".kOOyOOOOk..", ".kOOOOrrOk..", "..kOOrrOk...", "...kOOOk....", "....kOk.....", ".....k......"],
+}
+
+
 def sign(s, x, y, icon):
-    """A board hanging from an iron bracket fixed to the wall at (x, y)."""
-    s.fill(rect(x, y, 16, 2), '#2a2a30'); s.fill(rect(x + 13, y + 2, 1, 2) | rect(x + 2, y + 2, 1, 2), '#2a2a30')
-    bx, by = x, y + 4
-    s.fill(rect(bx, by, 16, 12), '#5a3a22'); s.fill(rect(bx + 1, by + 1, 14, 10), '#e8d0a0'); s.fill(rect(bx + 1, by + 1, 14, 1), '#f8ead0')
-    s.fill(rect(bx + 1, by + 10, 14, 1), '#b0906a')
-    cx, cy = bx + 8, by + 6
-    g = {'seed': ({(cx - 2, cy), (cx - 1, cy - 1), (cx, cy - 2), (cx + 1, cy - 1), (cx + 2, cy), (cx, cy - 1), (cx, cy), (cx, cy + 1), (cx, cy + 2)}, '#4a9a3a'),
-         'anvil': (rect(cx - 4, cy - 2, 8, 2) | rect(cx - 1, cy, 3, 2) | rect(cx - 3, cy + 2, 6, 1), '#4a4a58'),
-         'mug': (rect(cx - 3, cy - 2, 5, 5) | {(cx + 2, cy - 1), (cx + 3, cy), (cx + 2, cy + 1)}, '#c8901a'),
-         'horse': ({(cx - 3 + k, cy - 2 + abs(k - 3) // 2) for k in range(7)} | {(cx - 3, cy + 1), (cx + 3, cy + 1)}, '#6a6a6a'),
-         'saw': (rect(cx - 4, cy - 1, 7, 2) | rect(cx + 3, cy - 2, 2, 4), '#8a8a94'),
-         'urn': (ellipse(cx, cy + .5, 2.5, 3), '#c8703a'),
-         'fish': (ellipse(cx - 1, cy, 3, 1.6) | {(cx + 2, cy - 1), (cx + 3, cy - 2), (cx + 2, cy + 1), (cx + 3, cy + 2)}, '#4a7ab0')}.get(icon)
+    """A painted trade sign hanging on two chains from a curled iron bracket fixed to the wall at (x, y)."""
+    P = SIGN_PAL
+    for k in range(20):                                          # the bracket arm with a curl at the wall end
+        s.set(x + k, y, P['g']); s.set(x + k, y + 1, P['k'] if k % 5 else P['G'])
+    for (dx, dy) in ((0, -1), (-1, -1), (-1, 0), (-1, 1), (0, 2)):
+        s.set(x + dx, y + dy, P['g'])
+    s.set(x + 1, y + 2, P['g']); s.set(x + 2, y + 3, P['k'])     # brace
+    for cx_ in (x + 4, x + 16):                                  # chains
+        for k in range(3):
+            s.set(cx_, y + 2 + k, P['G'] if k % 2 else P['s'])
+    bx, by, W, H = x + 1, y + 5, 20, 15
+    for yy in range(by, by + H):                                 # the board: dark frame, painted panel, wood grain
+        for xx in range(bx, bx + W):
+            edge = yy in (by, by + H - 1) or xx in (bx, bx + W - 1)
+            inner = yy in (by + 1, by + H - 2) or xx in (bx + 1, bx + W - 2)
+            s.set(xx, yy, P['B'] if edge else P['b'] if inner else P['f'])
+    for xx in range(bx + 2, bx + W - 2):
+        s.set(xx, by + 2, '#fff8ea')                             # lit top of the panel
+        s.set(xx, by + H - 3, '#d8c8a0')
+    s.set(bx + 1, by + 1, P['c']); s.set(bx + W - 2, by + H - 2, P['B'])
+    g = SIGN_ICONS.get(icon)
     if g:
-        s.fill(g[0], g[1])
+        ox, oy = bx + 4, by + 3
+        for r_, row in enumerate(g):
+            for c_, ch in enumerate(row[:13]):
+                if ch in P:
+                    s.set(ox + c_, oy + r_, P[ch])
 
 
 # ---- small props by the walls -------------------------------------------------
@@ -819,7 +845,7 @@ def _building(kind, w, h, lvl=1):
     if st.get('lantern'):
         lantern(s, dcx + 16, dtop + 6)
     if st.get('icon'):
-        sign(s, dcx - 34 if kind != 'tavern' else dcx + 18, max(body_top + 4, dtop + 2), st['icon'])
+        sign(s, dcx - 36 if kind != 'tavern' else dcx + 16, max(body_top + 2, dtop - 2), st['icon'])
     if st.get('barrels'):
         barrel(s, W - ov - 13, H - 1); barrel(s, W - ov - 23, H - 1)
     if st.get('crates'):

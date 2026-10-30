@@ -35,7 +35,7 @@ genVillage = function () {
 /* A2 The map (M) on the farm, the village and other small places drew the Wilds chart, which is blank
       until explored. Small maps now get their own map: ground, trees and rocks, buildings with their
       names, exits with where they lead, signposts, and a "You" marker. The Wilds chart is a button away. */
-const BLD_N = { store: 'Mara\'s Store', smith: 'Brann\'s Smithy', carpenter: 'Hale\'s Carpentry', tavern: 'Tavern', stablemaster: 'Odile\'s Stables', museum: 'Museum',
+const BLD_N = { store: 'Mara\'s Store', smith: 'Brann\'s Smithy', carpenter: 'Hale\'s Carpentry', tavern: 'The Drowsy Drake', stablemaster: 'Odile\'s Stables', museum: 'Museum',
   landowner: 'Manor (land)', house: 'Your house', tent: 'Your tent', coop: 'Coop', barn: 'Barn', stable: 'Stable', greenhouse: 'Greenhouse', bank: 'Storage shed', silo: 'Silo', stall: 'Market stall', site: 'Build site', fisher: 'Fisher\'s hut', cottage: 'Cottage', mine: 'Mine' };
 const MAP_N = { farm: 'Hollowmere Farm', village: 'Emberhollow Village', wilds: 'The Wilds', greenhouse: 'Greenhouse' };
 const placeName = id => MAP_N[id] || (typeof REGIONS !== 'undefined' && REGIONS[id] ? REGIONS[id].n : (MAPS[id] && MAPS[id].name) || id);

@@ -333,6 +333,9 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 ## Menu dock (`public/js/x_dock.js`, icons in `art/sprites/ui_icons.py`)
 - The top-right `#topr` is a 4-column dock with a labelled tile per tab (Bag, Recipes, Skills, Tree, Combat, Animals, Friends, Family, Collect, Lore, Map, Quests, Options), each with a hand-pixelled 16x16 `ui_<tab>` icon; the open tab's tile is lit and a click on it closes the window. The Satchel's tab row shows the same icons (`drawModal` wrapper).
 
+## Trade signs
+- `sign()` in buildings.py: a 20x15 board on two chains from a curled iron bracket, with a hand-pixelled 12x9 trade symbol (`SIGN_ICONS`: grain sack, anvil, mug, horseshoe, saw, urn, fish, crest for the manor). The floating name plates are off; `x_prompt.js` adds the building's name (`BLD_N`) to the door prompt.
+
 ## Stations, trees, arms and townsfolk
 - `art/sprites/stations_hand.py` redraws the keg, preserves jar, cheese press, loom, oil press, smoker, campfire (3 flame frames), kiln, bread oven, smelter and stone furnace by hand at the old sizes (lit frames carry `meta.light`).
 - `upright()` in handdrawn.py narrows torsos (`P.tw`) so arms hang clear; the troll, basalt golem and crystal creatures have organic part outlines.

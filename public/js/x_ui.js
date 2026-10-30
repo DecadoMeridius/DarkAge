@@ -130,9 +130,9 @@ doorAction = function (act, who) {
   return _doorActionU(act, who);
 };
 const _pcCursorDrawU = pcCursorDraw;
-pcCursorDraw = function (m) { // name plates over the village doors
+pcCursorDraw = function (m) { // (the floating name plates are gone: the buildings carry painted trade signs, and the door prompt says the name)
   _pcCursorDrawU(m);
-  if (TITLE || !m || m.id !== 'village') return;
+  return;
   g.save(); g.font = '600 7px Fredoka, sans-serif'; g.textAlign = 'center';
   for (const b of m.bld) { const n = BLD_N[b.act]; if (!n || b.act === 'house') continue; const x = (b.door.x + .5) * 16, y = b.door.y * 16 - 3, w = g.measureText(n).width + 8;
     g.fillStyle = 'rgba(58,36,20,.92)'; g.fillRect(Math.round(x - w / 2), y - 8, Math.round(w), 10); g.fillStyle = '#ffe8b8'; g.fillText(n, x, y); }
