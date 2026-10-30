@@ -36,19 +36,19 @@ Work order: A (bugs and controls) → B (inventory and UI) → C (world content)
   - "New game" saves before the creator is finished.
 
 ## B. Inventory, recipes and UI
-- [ ] B1 A search box in the recipe book, station windows, backpack, bank and encyclopedia.
-- [ ] B2 A Sort button in the backpack, bank and chests.
-- [ ] B3 Clicking an item in the bag shows what it's used for (like the encyclopedia), with a "Recipes" option on right click.
-- [ ] B4 Category tabs at the workbench and in the recipe book (Blueprints, Machines, Parts, Tools, Farming...).
-- [ ] B5 Onboarding: a short first-day guide, hide late milestones at the start, and stories say how they begin.
-- [ ] B6 Shop name signs, a closed notice at the door, a quantity picker and confirmation for purchases, and don't offer to sell seeds.
-- [ ] B7 HUD:
+- [x] B1 A search box in the recipe book, station windows, backpack, bank and encyclopedia.
+- [x] B2 A Sort button in the backpack, bank and chests.
+- [x] B3 Clicking an item in the bag shows what it's used for (like the encyclopedia), with a "Recipes" option on right click.
+- [x] B4 Category tabs at the workbench and in the recipe book (Blueprints, Machines, Parts, Tools, Farming...).
+- [x] B5 Onboarding: a short first-day guide, hide late milestones at the start, and stories say how they begin.
+- [x] B6 Shop name signs, a closed notice at the door, a quantity picker and confirmation for purchases, and don't offer to sell seeds.
+- [x] B7 HUD:
   - hide the combat bar when you're not fighting;
   - show the watering-can level;
   - one name for the bag;
   - a wider backpack grid;
   - compact key-binding rows.
-- [ ] B8 Balance:
+- [x] B8 Balance:
   - the clock runs too fast early;
   - wolves near the farm are level 9;
   - you start with no food;

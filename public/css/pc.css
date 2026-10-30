@@ -190,3 +190,8 @@ body:has(#modal:not([hidden])) #pausebtn, body:has(#pauseov) #pausebtn { display
 .wmap.localmap { width: auto !important; height: auto !important; max-width: 100%; }
 .encycell.dim img { opacity: .4; filter: grayscale(.7); }
 h1, h2, h3, .ph h2, #mtitle, .cinzel { font-variant-ligatures: none; font-feature-settings: "liga" 0, "dlig" 0, "clig" 0; }
+.pack { grid-template-columns: repeat(7, 60px) !important; }
+.pack .cell.dim img { opacity: .25; }
+.bagtools { margin-bottom: 6px; }
+.slot .water { position: absolute; left: 3px; bottom: 1px; font: 600 10px Fredoka, sans-serif; color: #bfe6ff; text-shadow: 0 0 3px #1a2a3a; }
+#modal .rrow .acts .btn.big ~ * { }
