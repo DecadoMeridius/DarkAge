@@ -172,6 +172,8 @@ Everything is made at a **station**:
 - **Market Stall:** sells your goods while you're away (section 12).
 - **Build again:** wells, sheds and silos can be built as many times as you like. The others are one each.
 
+- **Moving or removing buildings.** Make a Building Hammer at a workbench (6 wood, 4 stone). Hold it and interact with a building: **Move** lets you set it down somewhere else on the farm (right click puts it back), **Remove** takes it down and returns half its materials (a build site returns everything delivered).
+
 ## 10. Animals and breeding
 
 - **Buying.** Buy animals at **Odile's Stables** in the village. Each needs its building:

@@ -142,3 +142,17 @@ def canoe_icon():
 
 SPRITES['canoe'] = lambda: [canoe(0), canoe(1)]
 SPRITES['gi_canoe'] = canoe_icon
+
+
+def build_hammer_icon():
+    """The building hammer: a claw hammer over a rolled plan."""
+    s = Canvas(32, 32)
+    s.fill(poly([(3, 24), (14, 18), (17, 22), (6, 28)]), '#e8dcc0'); s.fill(line(4, 25, 15, 19), '#f6eedc'); s.fill(line(6, 27, 16, 21), '#c8b898')  # the plan
+    s.fill(line(8, 23, 12, 21), '#5a7ad0'); s.fill(line(9, 25, 13, 23), '#5a7ad0')
+    s.fill(line(9, 30, 22, 9) | line(10, 30, 23, 9), '#a0703c'); s.fill(line(11, 30, 24, 9), '#6e4426')                  # handle
+    s.fill(poly([(18, 6), (26, 2), (30, 6), (27, 9), (21, 11)]), '#7e8492'); s.fill(line(19, 6, 26, 3), '#b8bec8')       # head
+    s.fill(poly([(18, 6), (14, 3), (16, 2), (20, 5)]), '#5a5e6a')                                                       # claw
+    return fin(s)
+
+
+SPRITES['gi_build_hammer'] = build_hammer_icon
