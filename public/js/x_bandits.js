@@ -14,11 +14,12 @@ const isBandit = e => e && e.bandit;
 function spawnBandits(m) {
   if (!m.roads || !m.roads.length) return;
   const px = S.p.x / 16, py = S.p.y / 16, homeEnd = y => y > m.h - 45;   // not on the roads that come up from the farm and village
-  const cand = [];
-  for (const r of m.roads) for (const k of [0, 1]) { const a = r[k], b = r[1 - k], d = dist(px, py, a[0], a[1]); if (d > 26 && d < 60 && !homeEnd(a[1]) && !homeEnd(b[1])) cand.push([a, b]); }
-  if (!cand.length) return;
-  const [a, b] = cand[Math.floor(Math.random() * cand.length)];
-  const path = findPath(m, Math.round(a[0]), Math.round(a[1]), Math.round(b[0]), Math.round(b[1]), 60000); if (!path || path.length < 25) return;
+  // start on any road tile 26-70 tiles from you (not the farm-end roads), and head for a road point 40-120 tiles further on
+  const tiles = [...(m.roadT || [])], pick = test => { for (let k = 0; k < 60; k++) { const i = tiles[Math.floor(Math.random() * tiles.length)], x = i % m.w, y = (i / m.w) | 0; if (test(x, y)) return [x, y]; } return null; };
+  if (!tiles.length) return;
+  const a = pick((x, y) => { const d = dist(px, py, x, y); return d > 26 && d < 70 && !homeEnd(y); }); if (!a) return;
+  const b = pick((x, y) => { const d = dist(a[0], a[1], x, y); return d > 40 && d < 120 && !homeEnd(y); }); if (!b) return;
+  const path = findPath(m, a[0], a[1], b[0], b[1], 60000); if (!path || path.length < 25) return;
   const n = 3 + Math.floor(Math.random() * 3), P = { path, pi: 1, members: [], age: 0 };
   for (let i = 0; i < n; i++) {
     const k = i === 0 && n >= 4 ? 'banditchief' : i % 3 === 2 ? 'archer' : 'bandit';
@@ -45,7 +46,7 @@ function banditsFrame(dt) {
   const day = (S.year - 1) * 112 + S.season * 28 + S.day;
   BANDIT_T -= dt;
   BANDIT_PATROLS = BANDIT_PATROLS.filter(P => P.members.some(e => !e.dead && m.ents.includes(e)));
-  if (BANDIT_T <= 0) { BANDIT_T = 40; if (day >= 3 && BANDIT_PATROLS.length < 2) spawnBandits(m); }
+  if (BANDIT_T <= 0) { BANDIT_T = 40; if (day >= 2 && BANDIT_PATROLS.length < 2) spawnBandits(m); }
   const monsters = m.ents.filter(e => e.type === 'enemy' && !e.dead && !e.bandit && !(EN[e.k] && EN[e.k].boss));
   for (const P of BANDIT_PATROLS) {
     P.age += dt; const live = P.members.filter(e => !e.dead && m.ents.includes(e));
@@ -55,8 +56,8 @@ function banditsFrame(dt) {
       e.hx = e.x; e.hy = e.y; e.home = [e.x, e.y]; e.leash = 0; e.cdB = (e.cdB || 0) - dt;   // their home walks with them, so the leash never drags them back
       if (dist(e.x, e.y, S.p.x, S.p.y) < 130) continue;            // you're close: the normal enemy AI fights you
       // a target: a knight or guard, else a monster
-      const al = ALLIES.filter(a => !a.down && !a.gone && dist(a.x, a.y, e.x, e.y) < 160).sort((p, q) => dist(p.x, p.y, e.x, e.y) - dist(q.x, q.y, e.x, e.y))[0];
-      const mo = !al && monsters.filter(t => dist(t.x, t.y, e.x, e.y) < 140).sort((p, q) => dist(p.x, p.y, e.x, e.y) - dist(q.x, q.y, e.x, e.y))[0];
+      const al = ALLIES.filter(a => !a.down && !a.gone && dist(a.x, a.y, e.x, e.y) < 220).sort((p, q) => dist(p.x, p.y, e.x, e.y) - dist(q.x, q.y, e.x, e.y))[0];
+      const mo = !al && monsters.filter(t => dist(t.x, t.y, e.x, e.y) < 220).sort((p, q) => dist(p.x, p.y, e.x, e.y) - dist(q.x, q.y, e.x, e.y))[0];
       const T = al || mo;
       if (T) {
         if (dist(T.x, T.y, e.x, e.y) > 16) { bMove(m, e, T.x, T.y, 44, dt); e.stun = Math.max(e.stun || 0, dt * 1.01); }   // the normal AI sits this frame out
@@ -90,7 +91,7 @@ spawnEnemy = (f => function (m, k, x, y, lvl) {
   if (WILD_SPAWN && e && !e.dead && PACKS.has(e.k) && !e.pack) {
     WILD_SPAWN = false; const n = 1 + Math.floor(Math.random() * 4);
     for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, r = 14 + Math.random() * 26; const t = typeof openTileNear === 'function' ? openTileNear(m, Math.floor((e.x + Math.cos(a) * r) / 16), Math.floor((e.y + Math.sin(a) * r) / 16)) : null;
-      const q = t ? f(m, e.k, (t[0] + .5) * 16, (t[1] + .8) * 16, lvl) : null; if (q) q.pack = e; }
+      const q = t ? f(m, e.k, (t[0] + .5) * 16 + (Math.random() - .5) * 10, (t[1] + .8) * 16 + (Math.random() - .5) * 6, lvl) : null; if (q) { q.pack = e; q.ai.t = Math.random() * 3; } }
     e.pack = e; WILD_SPAWN = true;
   }
   return e;

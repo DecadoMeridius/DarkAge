@@ -15,7 +15,7 @@ EN.goblin = { n: 'Goblin', art: 'goblin', col: '#6a9a3a', eye: '#ffd040', hp: 48
   drops: [['copper_ore', .3, 1, 2], ['$', .7, 4, 16], ['bone', .2, 1, 1], ['leather', .15, 1, 1]] };
 EN.goblin_slinger = { n: 'Goblin Slinger', art: 'goblin', col: '#7a8a3a', eye: '#ffd040', hp: 38, atk: 8, def: 1, spd: 46, xp: 14, ai: 'ranged', shot: 'rock', r: 6,
   drops: [['stone', .5, 1, 3], ['$', .7, 4, 16]] };
-EN.ogre = { n: 'Ogre', art: 'ogre', col: '#8a9a6a', eye: '#ff8a2a', hp: 320, atk: 24, def: 6, spd: 30, xp: 80, ai: 'charge', r: 14,
+EN.ogre = { n: 'Ogre', art: 'ogre', col: '#8a9a6a', eye: '#ff8a2a', hp: 300, atk: 14, def: 6, spd: 26, /* it took 240 HP in 5 s (round 3) */ xp: 80, ai: 'charge', r: 14,
   drops: [['hide', .8, 1, 3], ['fang', .5, 1, 2], ['gold_ore', .4, 1, 3], ['$', 1, 30, 80]] };
 // the forest's day goblins move into the camps; zombies walk the forest at night
 if (BIOME_EN.forest) { BIOME_EN.forest.day = BIOME_EN.forest.day.filter(([k]) => k !== 'goblin'); BIOME_EN.forest.night = BIOME_EN.forest.night.map(([k, w]) => [k === 'goblin' ? 'zombie' : k, w]); }
