@@ -501,6 +501,14 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **The keep's wall tops** are dark stone coping in 16 px blocks (`pixRoomWalls` in `x_kingdom.js`).
 - **The see-through player** only shows when a tree, a tall object directly in front, a building or a villager really overlaps you.
 
+## Guilds (`public/js/x_guilds.js`)
+- **The guilds:** `GUILDS` keyed by act: `gh_guild` (Miners', Greyhelm), `af_guild` (Hunters' Lodge, Ashford), `sm_guild` (Anglers', Saltmere), `kb_guild` (Growers', Kingsbridge).
+- **Halls:** each converts a townhouse in the town plan (`house`), registers its guildmaster in `TOWN_NPCS`/`NPCS` (Dorrik, Brakka, Nessa, Florian), a room (`ROOMS[act]`, counter plus themed props), hours 8:00-20:00, and `townMenu` → `openGuild` (tabs Guild, Ranks, Guild store, Titles).
+- **Ranks:** five per guild, each with `tasks`: `bring` (taken on promotion), `skill` (life skill L), `cskill` (combat style), `stat` (a function and a target), `boss` (`S.bosses`), `kills` (counted since joining in `S.guilds[act].kills`). Rewards: gold, items, `tool` (+1 level, max 5), `unlock` text. The store is gated by rank.
+- **Guild-only items:** `hunt_bow`, `ashford_greatbow`, and the rings `ring_delver`, `ring_greyhelm`, `ring_tracker`, `ring_antler`, `ring_angler`, `ring_pearlhook`, `ring_grower`.
+- **The Guild Seam:** the mine mouth in Greyhelm (act `gh_seam`) opens at Hewer rank. `genSeam` makes a dense ore cave (`gseam`), rebuilt every visit, full only on the first visit of the day.
+- **Titles:** `S.titles` and `S.title`; guildmasters greet you by your title. State: `S.guilds[act] = { r, kills }`.
+
 ## The welcome tutorial (`public/js/x_tutorial.js`)
 - **The opening:** on a new game, after the character creator, Lord Ashcombe walks up the farm road to you instead of the arrival letter appearing. The `openModal` wrapper swallows the 'Hollowmere Farm' letter while `S.flags.tutIntro` is set.
 - **The choice:** he welcomes you, then offers "Show me around" (starts `STORIES.welcome`, "A New Start") or "I know my way around a farm" (one line of tips, then he leaves).

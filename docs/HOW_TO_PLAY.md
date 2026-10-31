@@ -22,6 +22,16 @@ This guide explains every part of the game. Read the first sections to get going
 
 **Test sandbox** (title screen): a throwaway world with every crafting station, every ingredient, lots of gold and high skills, for trying recipes freely. Nothing you do there is saved.
 
+## 1b. Your first day
+
+On a new game, Lord Ashcombe, who sold your grandmother this meadow, walks up the road to welcome you. Say "Show me around" and he spends the morning with you:
+1. Clearing weeds, tilling, planting and watering.
+2. Chopping and mining.
+3. Making something at the workbench.
+4. Walking you to the village to meet Mara.
+
+Each step shows in your journal with an arrow. If you'd rather find your own way, tell him so and he leaves you to it.
+
 ## 2. Controls
 
 | Key / mouse | What it does |
@@ -436,6 +446,21 @@ Each region has:
 **The siege:** Morcant's hunters come through the gate in four waves, and Captain Vey's knights hold the courtyard with you. Before you go out, build **ballistae**, which shoot monsters in range, and **barricades** at a workbench and place them on your land.
 
 **Flying:** when your drake is grown, blow the **dragon whistle** outdoors to fly. You fly fast over everything and nothing can hurt you. Press R or blow the whistle again to land on open ground.
+
+## 15c. Guilds
+
+Four towns have a guild hall. Join for a small fee, then rise through five ranks. Each rank asks for a few things (goods, a skill level, a count of fish or crops or beasts, sometimes a boss), and the guildmaster promotes you when you report back.
+- **Miners' Guild, Greyhelm** (Dorrik Stonehand):
+  - At Hewer rank, the **Guild Seam** opens: Greyhelm's own mine, thick with ore and new veins every day, richer at higher ranks.
+  - Later ranks bring the Delver's Band, a reforged pickaxe and the Greyhelm Crest.
+- **Hunters' Lodge, Ashford** (Brakka): the **Huntsman's Bow**, the Tracker's Charm, the **Ashford Greatbow** and the Antler Ring. The Lodge's bows are made for its members only.
+- **Anglers' Guild, Saltmere** (Old Nessa): the Angler's Charm, a rebuilt rod, the Pearl Hook.
+- **Growers' Guild, Kingsbridge** (Florian Vale): compost and tonics, a wider watering can, starbloom seeds, the Grower's Ring and a reforged hoe.
+
+**What you get:**
+- **The guild store:** each guild has one, and more opens as you rise.
+- **Titles:** every rank you earn becomes a title. Pick one to wear in the Titles tab, and guild folk greet you by it.
+- **The journal (J)** lists your guilds and what the next rank needs.
 
 ## 16. Village life
 
