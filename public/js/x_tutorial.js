@@ -18,7 +18,7 @@ STORIES.welcome = {
   start: () => !!(S.flags && S.flags.tutorial),
   ch: [
     { n: 'Hollowmere', steps: [
-      { t: 'cond', test: () => cnt('hay') > 0, hint: 'Clear some weeds by the tent with the scythe (6).',
+      { t: 'cond', test: () => cnt('hay') > 0, hint: 'Cut some weeds or long grass with the scythe (6). They grow all over the meadow.',
         lines: AL("That's the way. Weeds give fibre and hay, and you'll want both. Nothing on a farm is wasted.",
           "Now the soil. Take the hoe (1) and break a few tiles of ground. Somewhere flat and sunny, near water if you can.") },
       { t: 'cond', test: () => soilDone(1), hint: 'Till a few tiles of soil with the hoe (1).',
@@ -26,7 +26,7 @@ STORIES.welcome = {
           "You've turnip and potato seeds on your belt (8 and 9). Plant them in the tilled ground.") },
       { t: 'cond', test: () => soilDone(2), hint: 'Plant seeds (8, 9) on the tilled soil.',
         lines: AL("Seeds want water every day, or they sit and sulk. Take the can (2) to them.",
-          "When the can runs dry, fill it at the pond. Walk to the water's edge and use it there.") },
+          "When the can runs dry, fill it at any water. Walk to the edge and use the can on it.") },
       { t: 'cond', test: () => soilDone(3), hint: 'Water your crops with the watering can (2).',
         lines: AL("Watered crops grow a day each morning. Dry ones don't.",
           "You'll need timber before long. Take the axe (3) to a tree, or to the twigs and stumps lying about.") },
@@ -37,16 +37,16 @@ STORIES.welcome = {
           "That old workbench by the tent was your grandmother's. Make yourself something on it. A few fence posts, say. Walk up to it and press E.") },
       { t: 'cond', test: () => (S.stats.crafted || 0) > (S.flags.tutCraft0 || 0), hint: 'Make something at the workbench by your tent (walk up, press E).',
         lines: AL("Ha. She'd be pleased. She built half this valley's fences with her own hands, and quarrelled over the other half.",
-          "That's my morning spent. Walk with me to the village. The road east, past the signpost. Mara keeps the store there; she'll sell you more seeds.",
+          "That's my morning spent. I'll ride on ahead to the village: meet me at the fountain. The road east, past the signpost. Mara keeps the store there; she'll sell you more seeds.",
           "And mind the time. Be in your tent by two in the morning, or you'll wake up somewhere you'd rather not.") },
       { t: 'go', at: 'village:plaza', r: 8, hint: 'Follow the road east to Emberhollow village.',
         lines: [['narr', 'Emberhollow: a fountain, a few shopfronts, smoke from the tavern chimney, and people who all turn to look at the new farmer.'],
           ['ashcombe', "Here we part. The manor's on the hill, if you ever want more land. Good luck, farmer. You'll need less of it than you think."]] },
       { t: 'talk', who: 'mara', hint: 'Say hello to Mara at the general store.',
-        lines: [['mara', "You're the new one at Hollowmere! Lord Ashcombe sent word you'd be by."], ['mara', "Seeds, tools, a bit of everything. I'm open nine till five. Come back when you've coin and I'll find you something that grows."]] },
-      { t: 'cond', test: () => S.day > 1 || S.season > 0 || S.year > 1, hint: 'Sleep in your tent (before 2 am) to start a new day.',
+        lines: [['mara', "You're the new one at Hollowmere! Lord Ashcombe sent word you'd be by."], ['mara', "Seeds, tools, a bit of everything. I'm open nine till five. Come by for seeds whenever you like; I'll always find you something that grows."]] },
+      { t: 'cond', test: () => S.day > 1 || S.season > 0 || S.year > 1, at: 'farm:home', hint: 'Go home and sleep in your tent (before 2 am) to start a new day.',
         lines: [['narr', 'A note is pinned to the tent flap, in a neat old hand:'],
-          ['narr', '"Your crops will want water every day, and your purse wants a shipping bin: put what you grow in the bin by the tent and it sells overnight. The Wilds lie north; don\'t go far without bread. Come to the manor when you\'re ready for more land. A."']] },
+          ['narr', '"Your crops will want water every day, and your purse wants a shipping bin: put what you grow in the bin by the tent and it sells overnight. The Wilds lie north; don\'t go far without bread. Come to the manor when you\'re ready for more land. A. Tucked inside: a purse of 250 gold and three loaves of trail bread."']] },
     ], reward: { gold: 250, items: { trail_bread: 3 } } },
   ],
 };
@@ -71,7 +71,7 @@ function tutWelcome() {
       "I can spare you a morning. Shall I show you the lie of the land?"),
     { title: 'Hollowmere Farm', choices: [
       ['Show me around', () => { S.flags.tutorial = 1; S.flags.tutCraft0 = S.stats.crafted || 0; storyState(); S.story.track = 'welcome';
-        storyDialog(AL("Splendid. First, these weeds. There's a scythe on your belt (6). Give them a swing, close to the tent."), { title: 'Hollowmere Farm' }); }],
+        storyDialog(AL("Splendid. First, these weeds. There's a scythe on your belt (6). Find a clump of weeds or long grass and give it a swing."), { title: 'Hollowmere Farm' }); }],
       ['I know my way around a farm', () => { S.flags.tutSkip = 1;
         storyDialog(AL("Ha! Her blood after all. Seeds at Mara's in the village, east along the road. Sleep in your tent before two. The manor's on the hill when you want more land."), { title: 'Hollowmere Farm', done: () => { S.flags.tutWalk = 3; } }); }],
     ] });
@@ -82,7 +82,7 @@ function tutFrame(dt) {
   const W = S.flags.tutWalk;
   if (W === 1) { // walking up to you
     const d = dist(n.x, n.y, S.p.x, S.p.y);
-    if (d < 30) { n.walk = false; const dx = S.p.x - n.x; n.dir = dx < 0 ? 1 : 2; if (!DIALOG && !MODAL) tutWelcome(); return; }
+    if (d < 30 && !getO(m, Math.floor(n.x / 16), Math.floor((n.y - 2) / 16))) { n.walk = false; const dx = S.p.x - n.x; n.dir = dx < 0 ? 1 : 2; if (!DIALOG && !MODAL) tutWelcome(); return; }
     TUT.re -= dt;
     if (!TUT.path || TUT.re <= 0) { TUT.re = 1; TUT.path = findPath(m, Math.floor(n.x / 16), Math.floor((n.y - 2) / 16), Math.floor(S.p.x / 16), Math.floor((S.p.y - 2) / 16), 4000); TUT.pi = 1; }
   } else if (W === 3) { // going home along the road
@@ -118,3 +118,14 @@ openModal = (f => function (title) {
   if (title === 'Hollowmere Farm' && S && S.flags && S.flags.tutIntro && !TITLE && typeof SANDBOX !== 'undefined' && !SANDBOX) { S.flags.tutIntro = 0; setTimeout(tutIntro, 400); return; }
   return f.apply(this, arguments);
 })(openModal);
+
+// at the village step he's waiting by the fountain (he rides ahead), and he leaves once he's said goodbye
+EVT.on('tick', () => {
+  const v = MAPS.village; if (!S || TITLE || !v || !S.story || !S.story.q) return; const q = S.story.q.welcome;
+  const want = q && !q.done && q.i === 7;
+  v.npcs = v.npcs || []; const here = v.npcs.find(n => n.id === 'tut_ashcombe');
+  if (want && !here) { const t = openTileNear(v, 27, 21) || [27, 21]; v.npcs.push({ id: 'tut_ashcombe', tut: 1, x: (t[0] + .5) * 16, y: (t[1] + .8) * 16, hx: (t[0] + .5) * 16, hy: (t[1] + .8) * 16, dir: 0, walk: false, t: 1e9, vx: 0 }); }
+  if (!want && here) v.npcs = v.npcs.filter(n => n !== here);
+});
+// the auto tool stays out of the way while Ashcombe is teaching you a tool (it switched the hoe to the pickaxe on a pebble)
+toolFor = (f => function () { const q = S && S.story && S.story.q && S.story.q.welcome; if (q && !q.done && q.i < 7) return null; return f.apply(this, arguments); })(toolFor);

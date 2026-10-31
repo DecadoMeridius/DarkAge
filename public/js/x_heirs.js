@@ -27,6 +27,11 @@ const SUITOR_KIND = {
     dates: ['You throw pots together. Yours collapses. You keep it anyway.', 'You fire a kiln through the night and watch the sparks until dawn.'] },
 };
 const SUITOR_N = { f: ['Elin', 'Rosa', 'Maren', 'Ivy', 'Talia', 'Wren', 'Clara', 'Nell', 'Sabine', 'Lotte', 'Freya', 'Isla', 'Mira', 'Juno'], m: ['Aric', 'Tobias', 'Jory', 'Bram', 'Felix', 'Corin', 'Leif', 'Owen', 'Silas', 'Rowan', 'Edric', 'Milo', 'Teo', 'Hugo'] };
+// gender: chosen in the creator (S.look.sex); older looks are read from the hairstyle. Suitors and romance
+// candidates are of the other gender (asked 2026-10-31: "if we choose a woman we need male suitors")
+const ROMANCE_SEX = { pip: 'f', odile: 'f', mara: 'f', hale: 'm', brann: 'm' };
+const candSex = id => { const s = (S.fam && S.fam.suitors || []).find(s => s.id === id); return s ? s.sex : ROMANCE_SEX[id]; };
+const wantsSex = () => sexOf(S.look) === 'f' ? 'm' : 'f';
 const candAge = id => { const s = (S.fam && S.fam.suitors || []).find(s => s.id === id); return s ? ageOf(s) : ROMANCE[id] ? ROMANCE[id].age + Math.max(0, dayIndex()) * AGE_RATE : 99; };
 
 function regSuitor(s) {
@@ -44,13 +49,14 @@ function ensureSuitors(announce) {
   if (!S || !S.fam) return; const F = fam(), me = myAge(); F.suitors = F.suitors || []; if (me < 18) return;
   const taken = id => F.spouse === id || F.rel[id] === 'family' || F.elder === id;
   // those who no longer fit move away (unless you're courting them or married to them)
-  const gone = F.suitors.filter(s => !taken(s.id) && F.rel[s.id] !== 'dating' && F.rel[s.id] !== 'engaged' && Math.abs(ageOf(s) - me) > 8);
+  const gone = F.suitors.filter(s => !taken(s.id) && F.rel[s.id] !== 'dating' && F.rel[s.id] !== 'engaged' && (Math.abs(ageOf(s) - me) > 8 || (s.sex && s.sex !== wantsSex())));
   for (const s of gone) { unregSuitor(s); F.suitors.splice(F.suitors.indexOf(s), 1); }
-  const fits = F.suitors.filter(s => !taken(s.id) && Math.abs(ageOf(s) - me) <= 8).length;
+  const fits = F.suitors.filter(s => !taken(s.id) && Math.abs(ageOf(s) - me) <= 8 && (!s.sex || s.sex === wantsSex())).length;
   const kinds = Object.keys(SUITOR_KIND); let made = 0;
   for (let i = fits; i < 4; i++) {
-    const n = (F.suitorN = (F.suitorN || 0) + 1), id = 'su_' + n, L = CROWD_LOOK(id), name = pickR(L.fem ? SUITOR_N.f : SUITOR_N.m);
-    const s = { id, name, kind: kinds[(n * 3 + F.me.gen) % kinds.length], age0: Math.max(18, Math.round(me + (Math.random() * 12 - 6))), d0: dayIndex(), gen: F.me.gen };
+    let n, id, L; const want = wantsSex(); do { n = (F.suitorN = (F.suitorN || 0) + 1); id = 'su_' + n; L = CROWD_LOOK(id); } while ((L.fem ? 'f' : 'm') !== want);
+    const used = new Set(F.suitors.map(x => x.name).concat(Object.values(NPCS).map(x => x.n))), pool = (L.fem ? SUITOR_N.f : SUITOR_N.m).filter(x => !used.has(x)), name = pickR(pool.length ? pool : (L.fem ? SUITOR_N.f : SUITOR_N.m));
+    const s = { id, name, sex: L.fem ? 'f' : 'm', kind: kinds[(n * 3 + F.me.gen) % kinds.length], age0: Math.max(18, Math.round(me + (Math.random() * 12 - 6))), d0: dayIndex(), gen: F.me.gen };
     F.suitors.push(s); regSuitor(s); made++;
   }
   if (made && announce) toast(made === 1 ? 'Someone new has settled in the village.' : made + ' new faces have settled in the village: young folk your age.', 'lvl');
@@ -58,7 +64,7 @@ function ensureSuitors(announce) {
 // the original candidates only while they're within 15 years of you; suitors within 8
 greet = (f => function (b, id) {
   const R = ROMANCE[id];
-  if (R && S.fam && !S.fam.rel[id] && S.fam.spouse !== id && Math.abs(candAge(id) - myAge()) > (R.suitor ? 8 : 15)) { const keep = ROMANCE[id]; delete ROMANCE[id]; try { return f.apply(this, arguments); } finally { ROMANCE[id] = keep; } }
+  if (R && S.fam && !S.fam.rel[id] && S.fam.spouse !== id && (Math.abs(candAge(id) - myAge()) > (R.suitor ? 8 : 15) || (candSex(id) && candSex(id) !== wantsSex()))) { const keep = ROMANCE[id]; delete ROMANCE[id]; try { return f.apply(this, arguments); } finally { ROMANCE[id] = keep; } }
   return f.apply(this, arguments);
 })(greet);
 // a wedding records the spouse's real age; then the next morning's chores
@@ -133,6 +139,6 @@ function investiture() {
   S.fam.parted = null;
   if (castle) storyDialog(lines.concat([[royal ? 'isolde' : 'bh_steward', royal ? 'The crown passes with the castle. How shall the heralds proclaim you?' : 'Briarholt passes to you. How shall the household style you?']]),
     { title: 'The Will', choices: royal ? [['King', () => crown('King')], ['Queen', () => crown('Queen')]] : [['Lord', () => crown('Lord')], ['Lady', () => crown('Lady')]] });
-  else storyDialog(lines.concat([['narr', 'Every title the family has earned is yours to wear now.']]), { title: 'The Will' });
+  else storyDialog(lines.concat([['narr', (S.titles || []).length ? 'Every title the family has earned is yours to wear now.' : 'The farm is yours now. Make your own mark on it.']]), { title: 'The Will' });
 }
 EVT.on('tick', () => { if (S && S.fam && S.fam.invest && !MODAL && !DIALOG && !TITLE) investiture(); });

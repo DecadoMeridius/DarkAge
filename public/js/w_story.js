@@ -193,9 +193,10 @@ function storyDialog(lines, opts = {}) {
   const box = el('div', { class: 'f-panel storybox' }), wasPaused = PAUSED;
   Object.assign(box.style, { position: 'fixed', left: '50%', bottom: '86px', transform: 'translateX(-50%)', width: 'min(760px, 92vw)', display: 'flex', gap: '16px', alignItems: 'center', padding: '14px 18px', zIndex: 40 });
   document.body.append(box); PAUSED = true; INPUT.x = INPUT.y = 0;
-  const close = quiet => { box.remove(); removeEventListener('keydown', key, true); DIALOG = null; PAUSED = wasPaused && !!MODAL; if (typeof INPUT_GAP !== 'undefined') INPUT_GAP = Math.max(INPUT_GAP, performance.now() + 900); if (!quiet && opts.done) opts.done(); }; // the key that closed it doesn't reach the world
-  const next = () => { if (i < lines.length - 1) { i++; draw(); } else if (!opts.choices) close(); };
-  const key = e => { if (e.repeat) { e.preventDefault(); e.stopImmediatePropagation(); return; } if (['Space', 'Enter', 'KeyE', 'NumpadEnter'].includes(e.code) || [' ', 'Enter', 'e', 'E'].includes(e.key)) { e.preventDefault(); e.stopImmediatePropagation(); next(); } else if (e.code === 'Escape' && !opts.choices) { e.preventDefault(); e.stopImmediatePropagation(); i = lines.length - 1; close(); } else if (!/^(Digit[1-4]|Numpad[1-4])$/.test(e.code)) { e.preventDefault(); e.stopImmediatePropagation(); } }; // no other key reaches the game during a dialogue; a held key never skips lines
+  const close = quiet => { box.remove(); removeEventListener('keydown', key, true); DIALOG = null; PAUSED = wasPaused && !!MODAL; if (typeof INPUT_GAP !== 'undefined') INPUT_GAP = Math.max(INPUT_GAP, performance.now() + 400); if (!quiet && opts.done) opts.done(); }; // the key that closed it doesn't reach the world
+  let shownAt = performance.now();
+  const next = (byKey) => { if (byKey === true && performance.now() - shownAt < 280) return; if (i < lines.length - 1) { i++; shownAt = performance.now(); draw(); } else if (!opts.choices) close(); };
+  const key = e => { if (e.repeat) { e.preventDefault(); e.stopImmediatePropagation(); return; } if (['Space', 'Enter', 'KeyE', 'NumpadEnter'].includes(e.code) || [' ', 'Enter', 'e', 'E'].includes(e.key)) { e.preventDefault(); e.stopImmediatePropagation(); next(true); } else if (e.code === 'Escape' && !opts.choices) { e.preventDefault(); e.stopImmediatePropagation(); i = lines.length - 1; close(); } else if (!/^(Digit[1-4]|Numpad[1-4])$/.test(e.code)) { e.preventDefault(); e.stopImmediatePropagation(); } }; // no other key reaches the game during a dialogue; a held key never skips lines
   addEventListener('keydown', key, true);
   const draw = () => {
     box.innerHTML = '';

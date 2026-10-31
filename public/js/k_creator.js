@@ -42,6 +42,7 @@ function openCreator(onDone) {
     const right = el('div', { class: 'ccright' });
     const name = el('input', { class: 'ccname', value: CC_NAME !== null ? CC_NAME : S.look.name === 'Farmer' || S.look.name === 'Wren' ? '' : S.look.name, placeholder: 'Your name', maxlength: 16 }); name.addEventListener('focus', () => name.select()); name.addEventListener('input', () => { CC_NAME = name.value; S.look.name = name.value.trim() || 'Farmer'; });
     right.append(el('div', { class: 'ccrow' }, el('span', null, 'Name'), name));
+    { const sx = sexOf(S.look), row = el('div', { class: 'ccopts' }); [['f', 'A woman'], ['m', 'A man']].forEach(([v, t]) => row.append(el('button', { class: 'chip' + (sx === v ? ' on' : ''), on: () => { S.look.sex = v; refresh(); } }, t))); right.append(el('div', { class: 'ccrow' }, el('span', null, 'You are'), row)); } // suitors are drawn from the other one (x_heirs.js)
     for (const k in LOOK_OPTS) {
       const row = el('div', { class: 'ccopts' });
       LOOK_OPTS[k].forEach(v => {

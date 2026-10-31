@@ -73,7 +73,7 @@ addEventListener('mousedown', e => {
 // a key held over from a minigame (Space, E) doesn't reach the world as it closes
 fgClose = (f => function () { f(); INPUT_GAP = performance.now() + 350; })(fgClose);
 addEventListener('keydown', e => {
-  if (performance.now() < INPUT_GAP && !MODAL && !/^(Key[WASD]|Arrow\w+|Shift\w*)$/.test(e.code)) { e.stopImmediatePropagation(); e.preventDefault(); return; } // movement always gets through (playtest: a held key was lost when a window closed)
+  if (performance.now() < INPUT_GAP && !MODAL && !/^(Key[WASD]|Arrow\w+|Shift\w*|Digit\d|Numpad\d)$/.test(e.code)) { e.stopImmediatePropagation(); e.preventDefault(); return; } // movement always gets through (playtest: a held key was lost when a window closed)
   // Esc in a search box closes the window like anywhere else
   if (e.key === 'Escape' && e.target && /input|textarea/i.test(e.target.tagName) && MODAL) { e.target.blur(); closeModal(); e.preventDefault(); }
 }, true);

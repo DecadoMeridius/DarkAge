@@ -40,6 +40,7 @@ function fam() {
   const F = S.fam; if (!F.crest) { const r = rng(S.seed * 7 + 3); F.crest = { c1: pickR(['#7a1a2a', '#1a3a6a', '#1a5a3a', '#5a3a1a', '#3a2a5a']), c2: pickR(['#e8c050', '#e8e0d0', '#c8c8d0']), sym: ['stag', 'oak', 'flame', 'wheat', 'anvil'][Math.floor(r() * 5)] }; }
   return F;
 }
+const sexOf = L => (L && L.sex) || (L && ['long', 'bun', 'pony'].includes(L.hs) ? 'f' : 'm'); // chosen in the creator; older looks read the hairstyle
 const ageOf = p => p.age0 + (dayIndex() - p.d0) * AGE_RATE;
 const meName = () => (S.look && S.look.name) || fam().me.name; // the creator may name you after the family record exists
 const myAge = () => ageOf(fam().me);
@@ -115,9 +116,10 @@ function nameBaby() {
   const F = fam(), sp = F.spouse ? npcLook(F.spouse) : null, me = Object.assign({}, DEFAULT_LOOK, S.look);
   const pick = (a, b) => (b && Math.random() < .5 ? b : a);
   const look = { skin: pick(me.skin, sp && sp.skin), hair: pick(me.hair, sp && sp.hair), hs: pickR(LOOK_OPTS.hs.filter(h => h !== 'bald')), eye: pick(me.eye, sp && sp.eye), shirt: pickR(LOOK_OPTS.shirt), pants: pickR(LOOK_OPTS.pants), shoe: pickR(LOOK_OPTS.shoe), acc: pickR(LOOK_OPTS.acc) };
+  look.sex = Math.random() < .5 ? 'f' : 'm'; look.hs = pickR(look.sex === 'f' ? ['long', 'bun', 'pony'] : ['short', 'spiky']); // a girl or a boy, chosen at birth
   const suggestions = ['Alder', 'Briar', 'Linden', 'Sorrel', 'Rowan', 'Ember', 'Wren', 'Hazel', 'Tamsin', 'Corin', 'Juniper', 'Marlow'];
   openModal('A new arrival', [{ id: 'n', label: 'Name', render: b => {
-    b.append(el('p', { class: 'note' }, 'Your baby has arrived, healthy and loud. What will you call them?'));
+    b.append(el('p', { class: 'note' }, 'Your baby ' + (look.sex === 'f' ? 'girl' : 'boy') + ' has arrived, healthy and loud. What will you call her?'.replace('her?', look.sex === 'f' ? 'her?' : 'him?')));
     const inp = el('input', { type: 'text', value: pickR(suggestions), maxlength: 16 }); inp.style.cssText = 'font:inherit;padding:6px 10px;width:220px';
     b.append(el('div', { class: 'acts' }, inp, el('button', { class: 'btn', on: () => { const name = (inp.value || '').trim().slice(0, 16) || pickR(suggestions); look.name = name; F.kids.push({ name, age0: 0, d0: dayIndex(), look, skill: null, xp: {} }); closeModal(); toast('Welcome to the family, ' + name + '.', 'lvl'); SFX.lvl(); placeFamily(); } }, 'Name them')));
   } }]);
