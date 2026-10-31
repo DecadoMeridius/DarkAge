@@ -29,7 +29,8 @@ let playerCovered = () => {
   for (const e of cur.ents) { if (e.type !== 'enemy' || e.dead) continue; const E = EN[e.k]; if (Math.abs(e.x - S.p.x) < E.r + 8 && e.y > S.p.y - 2 && e.y - S.p.y < E.r * 2 + 30) return true; }
   if (typeof HAZ !== 'undefined' && HAZ.some(h => Math.hypot(h.x - S.p.x, h.y - S.p.y) < (h.r || 40) + 10)) return true;
   const tx = Math.floor(S.p.x / 16), ty = Math.floor(S.p.y / 16);
-  for (let j = 1; j <= 3; j++) for (let i = -2; i <= 2; i++) { const o = getO(cur, tx + i, ty + j); if (o && OBJ[o.k] && (OBJ[o.k].tree || OBJ[o.k].tall)) return true; }
+  for (let j = 1; j <= 3; j++) for (let i = -1; i <= 1; i++) { const o = getO(cur, tx + i, ty + j); if (!o || !OBJ[o.k]) continue; // only what really overlaps you (art round: a pale ghost with nothing in front)
+    if (OBJ[o.k].tree ? j <= 2 && Math.abs((tx + i + .5) * 16 - S.p.x) < 20 : OBJ[o.k].tall && i === 0 && j === 1) return true; }
   return false;
 };
 const _pcCursorDrawCF = pcCursorDraw;

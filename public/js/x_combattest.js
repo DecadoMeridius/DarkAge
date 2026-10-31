@@ -58,7 +58,7 @@ function startKingdomTest() {
   setTimeout(() => {
     while (MODAL) { MODAL.lock = false; closeModal(); } while (typeof DIALOG !== 'undefined' && DIALOG) DIALOG.close(true);
     ensureCombat(); for (const k of ['melee', 'ranged', 'magic', 'defence', 'constitution']) S.csk[k].xp = Math.max(S.csk[k].xp || 0, XPT[30] + 10);
-    S.look = Object.assign({}, DEFAULT_LOOK, S.look || {}, { name: 'Tester' }); S.gold = 22000; // with the herald's 3,000 and the keep's hoard, enough for the deed
+    S.look = Object.assign({}, DEFAULT_LOOK, S.look || {}, { name: 'Tester' }); S.gold = 30000; // with the herald's 3,000 and the keep's hoard, enough for the deed
     for (const id of ['iron_sword', 'iron_bow', 'iron_body', 'iron_helm', 'iron_boots', 'iron_shield']) if (IT[id]) give(id, 1, 0, true);
     give('arrow', 300, 0, true); give('steak', 15, 0, true); give('bread', 20, 0, true);
     for (const s of ['body', 'helm', 'boots', 'shield']) { const id = 'iron_' + s; if (IT[id] && cnt(id)) equip(id); }

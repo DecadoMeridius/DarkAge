@@ -68,19 +68,19 @@ gradeColor = function (t) {
 const darkness = () => { const c = gradeColor(((S.time % 1440) + 1440) % 1440), L = (c[0] + c[1] + c[2]) / 765; return clamp((.9 - L) / .42, 0, 1); };
 
 /* ---- after the grade: lit windows, lanterns and fires (crisp, flat colours, no gradients) ---- */
-const FLAMES = { lantern: 'lantern', campfire: 'campfire.0', forge: 'forge', shrine: 'shrine' }; // sprites whose atlas meta marks where the flame is
+const FLAMES = { lantern: 'lantern', campfire: 'campfire.0', forge: 'forge', shrine: 'shrine', furn_candles: 'furn_candles', furn_fireplace: 'furn_fireplace', furn_lamp: 'furn_lamp' }; // sprites whose atlas meta marks where the flame is
 function flameAt(o, x, y) { // world position of an object's flame, from its sprite's meta.light (objects stand bottom-centred on their tile)
   const n = FLAMES[o.k] || (o.on && /^(smelter|stonefurnace|blastfurnace|emberforge)$/.test(o.k) ? o.k + '.1' : null); if (!n) return null;
   const c = PIX.get(n), f = PIX.map[n], L = f && f.meta && f.meta.light; if (!c || !L) return o.on ? [x * 16 + 8, (y + 1) * 16 - 8] : null;
   return [x * 16 + 8 - c.ww / 2 + L[0] / 2, (y + 1) * 16 - c.wh + L[1] / 2];
 }
 function nightLights(m, Z, cxp, cyp, W, H) {
-  if (m.dark || m.indoor) return; const nf = darkness(); if (nf <= .05) return;
+  if (m.dark) return; const nf = m.indoor ? .6 : darkness(); if (nf <= .05) return; // indoors the candles, lamps and fires always glow (art round: "no warmth")
   const R = (x, y, w, h, col, a) => { const X = Math.round((x - cxp) * Z), Y = Math.round((y - cyp) * Z), X2 = Math.round((x + w - cxp) * Z), Y2 = Math.round((y + h - cyp) * Z); if (X2 < 0 || Y2 < 0 || X > W || Y > H) return; g.globalAlpha = a; g.fillStyle = col; g.fillRect(X, Y, X2 - X, Y2 - Y); };
-  for (const b of m.bld || []) {
+  for (const b of m.indoor ? [] : m.bld || []) {
     const f = b.winName && PIX.map[b.winName], win = f && f.meta && f.meta.win; if (!win) continue;
     if ((b.x + b.w) * 16 < cxp || b.x * 16 > cxp + W / Z || (b.y + b.h) * 16 < cyp || b.y * 16 > cyp + H / Z) continue;
-    const lit = hsh(b.x, b.y, dayIndex()) < .85 || b.act === 'tavern' || b.act === 'r_inn'; if (!lit) continue; // a few households are already asleep
+    const lit = hsh(b.x, b.y, dayIndex()) < .85 || b.act === 'tavern' || b.act === 'r_inn' || b.kind === 'castle' || /inn|tavern/.test(b.act || ''); if (!lit) continue; // a few households are already asleep
     for (const [wx, wy, ww, wh] of win) { const x = b.x * 16 + wx / 2, y = b.y * 16 + wy / 2; R(x, y, ww / 2, wh / 2, '#ffc864', .8 * nf); R(x, y, ww / 4, wh / 4, '#fff0b8', .7 * nf); }
   }
   const x0 = Math.floor(cxp / 16) - 1, y0 = Math.floor(cyp / 16) - 1, x1 = x0 + Math.ceil(W / Z / 16) + 3, y1 = y0 + Math.ceil(H / Z / 16) + 4;

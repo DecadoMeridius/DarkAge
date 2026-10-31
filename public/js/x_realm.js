@@ -766,7 +766,7 @@ function citSync() {
     const T = m.towns.find(t => t.id === C.town); if (!T || m.npcs.some(n => n.id === C.id)) continue;
     if (dist((T.x + T.w / 2) * 16, (T.y + T.h / 2) * 16, S.p.x, S.p.y) > 1200) continue;
     let at;
-    if (C.vendor) { const b = stalls[C.si]; if (!b) continue; at = [b.x + 1, b.y - 1]; }
+    if (C.vendor) { const b = stalls[C.si]; if (!b) continue; at = [b.x + b.w, b.y + b.h - 1]; } // beside the counter, not behind the awning (art round)
     else at = citSpot(m, T);
     if (!at) continue;
     const x = (at[0] + .5) * 16, y = (at[1] + .8) * 16;

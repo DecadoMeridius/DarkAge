@@ -651,7 +651,8 @@ def candelabra():
     s.fill(rect(5, 16, 23, 2), GOLD[2])
     for x in (5, 15, 25):
         s.fill(rect(x, 6, 3, 10), CLOTH['cream'][3]); s.fill(rect(x + 1, 2, 1, 4), '#ffd25a'); s.set(x + 1, 1, '#fff4c0')
-    return finish(s)
+    c = finish(s); c.meta = {'light': [16, 3]}   # the middle flame, for night glow
+    return c
 
 
 def royal_chest():

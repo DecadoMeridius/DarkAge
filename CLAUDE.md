@@ -488,6 +488,19 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - During a siege they stay indoors.
 - **Kingdom test** (title screen, `startKingdomTest` in `x_combattest.js`): a throwaway game with The Hollow Crown finished (the herald rides in on the first morning), combat 30, iron gear and 20,000 gold.
 
+## Crowds (`public/js/x_crowds.js`, art playtest in `docs/playtest/art/`)
+- **Village folk** (`VILLAGE_FOLK`): eight walkers on the village's streets and plaza by day (`villageSpot`); they're kept in `v.npcs` across `lifeTick`'s rebuild.
+- **Patrons** (`SEATS`): sit and stand at the same seats in the Drowsy Drake (`in_tavern`) and every town inn (`in_<inn act>`), two at lunch, up to seven in the evening.
+- **Evenings:** Brann's and Hale's evening `SCHED` place is `'tavern'`; they appear inside as `REGULARS`.
+- **How they work:** runtime only (`crowd: 1` in `m.npcs`), hidden from Friends, and they talk through `k_crowd`.
+- **Briarholt:** gains an old household before you own it (`bh_porter`, `bh_laund`, `bh_groom`, `bh_scull` in `COURT`). Everyone but posts and diners leaves the grounds at night (`courtOn`).
+- **Night lights:**
+  - Indoors, candelabras (`meta.light` in `castle.py`), fireplaces and lamps glow (`FLAMES`, `nightLights` at a fixed 0.6 indoors).
+  - The keep and every inn always have lit windows.
+  - Torches stand by the keep door and gate (a `genCastle` wrapper).
+- **The keep's wall tops** are dark stone coping in 16 px blocks (`pixRoomWalls` in `x_kingdom.js`).
+- **The see-through player** only shows when a tree, a tall object directly in front, a building or a villager really overlaps you.
+
 ## The realm: a bigger Wilds, towns, guards and patrols (`public/js/x_realm.js`, art `art/sprites/towns.py`)
 - **The Wilds are 440x330** (`WK` 2.2 in `d_world.js`; `WW`, `WH`, `WIN_F`/`WIN_V` for the farm and village roads, `EW`/`EH` for the explored fog). Region gates scale with `regionGateX`. Old saves get a new Wilds once (`S.wildsVer` 2).
 - **Saves of big generated maps store only their changes** (`DELTA_MAP`, `baseSnap`, `diffO`, `applyDelta`; `ms.d`, with `ms.w`/`ms.h` so a map of another size is regenerated): the Wilds, the regions and Briarholt. A save went from ~470 KB to ~80 KB.

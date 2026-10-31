@@ -239,8 +239,11 @@ pixRoomWalls = (f => function (x, m, cx, cy, M) {
       if (open(X + 1, Y) || (low ? false : open(X + 1, Y + 1))) { P(bx + 30, by, 2, 32, pal.face[0]); }
       continue;
     }
-    P(bx, by, 32, 32, '#221a20');
-    for (let k = 0; k < 6; k++) P(bx + ((hsh(X, Y, k) * 30) | 0), by + ((hsh(Y, X, k) * 30) | 0), 2, 1, '#2c2228');
+    // the wall top: dark stone coping in 16 px blocks, lit on the top-left edges (art round: the walls between rooms read as black voids)
+    for (let yy = 0; yy < 32; yy++) for (let xx = 0; xx < 32; xx++) {
+      const ax = X * 32 + xx, ay = Y * 32 + yy, row = ay >> 4, bxk = (ax + (row & 1) * 8) >> 4, jx = (ax + (row & 1) * 8) & 15, jy = ay & 15;
+      P(bx + xx, by + yy, 1, 1, jx === 15 || jy === 15 ? '#1c1820' : jx === 0 || jy === 0 ? '#4a4450' : hsh(bxk, row, 9) > .7 ? '#3a3440' : '#332e38');
+    }
     if (open(X + 1, Y)) { P(bx + 28, by, 4, 32, pal.trim[1]); P(bx + 28, by, 1, 32, pal.trim[3]); }
     if (open(X - 1, Y)) { P(bx, by, 4, 32, pal.trim[1]); P(bx + 3, by, 1, 32, pal.trim[0]); }
     if (open(X, Y - 1)) P(bx, by, 32, 2, pal.trim[2]);

@@ -18,8 +18,8 @@ update = function (dt) {
 const _playerCoveredF3 = playerCovered;
 playerCovered = function () {
   if (_playerCoveredF3()) return true;
-  for (const b of cur.bld || []) if (S.p.x > b.x * 16 - 4 && S.p.x < (b.x + b.w) * 16 + 4 && S.p.y < (b.y + b.h) * 16 && S.p.y > b.y * 16 - 8) return true;
-  return (cur.npcs || []).some(n => Math.abs(n.x - S.p.x) < 12 && n.y > S.p.y && n.y - S.p.y < 30);
+  for (const b of cur.bld || []) if (S.p.x > b.x * 16 && S.p.x < (b.x + b.w) * 16 && S.p.y < (b.y + b.h) * 16 - 2 && S.p.y > b.y * 16 - 8) return true;
+  return (cur.npcs || []).some(n => Math.abs(n.x - S.p.x) < 10 && n.y > S.p.y + 2 && n.y - S.p.y < 22);
 };
 // after losing a life: a visible shield while you're invulnerable
 const _faintF3 = faint;
@@ -158,7 +158,7 @@ pcCursorDraw = function (m) {
   // the name and distance show for 4 s when the target changes and while you stand still, so they don't sit over signs and titles as you walk (playtest night)
   const now2 = performance.now(), tk = (S.story.track || '') + w.map + w.x + ',' + w.y; if (TRK.tk !== tk) { TRK.tk = tk; TRK.shown = now2; }
   if (TRK.px !== S.p.x || TRK.py !== S.p.y) { TRK.px = S.p.x; TRK.py = S.p.y; TRK.still = now2; }
-  const showLbl = now2 - TRK.shown < 4000 || now2 - TRK.still > 900;
+  const showLbl = now2 - TRK.shown < 4000 || (now2 - TRK.still > 900 && now2 - TRK.still < 4500); // and only for a moment when you stop (art round: it stayed up all day)
   if (showLbl && w.map === m.id) { const sid = S.story.track, st = stepOf(sid), W = st && st.who && (NPCS[st.who] || (typeof SCAST !== 'undefined' && SCAST[st.who])), who = W ? W.n : st && st.t === 'use' ? 'Search here' : st && st.t === 'go' && typeof placeName === 'function' ? placeName(w.map) : STORIES[sid].n;
     g.save(); g.font = '600 6px Fredoka, sans-serif'; g.textAlign = 'center'; g.lineWidth = 2; g.strokeStyle = '#2a1c18'; const t = who + ' · ' + Math.round(dd / 16) + ' m'; g.strokeText(t, cx, cy - 9); g.fillStyle = '#ffe08a'; g.fillText(t, cx, cy - 9); g.restore(); }
   g.save(); g.translate(cx, cy); g.rotate(a); g.fillStyle = '#2a1c18'; g.beginPath(); g.moveTo(8, 0); g.lineTo(-5, -6); g.lineTo(-2, 0); g.lineTo(-5, 6); g.closePath(); g.fill();
@@ -181,7 +181,8 @@ showDayReport = function (lines) {
 // Enter presses the window's main button (the arrival letter, the morning report)
 addEventListener('keydown', e => {
   if (e.key !== 'Enter' || !MODAL || (e.target && /input|textarea|select/i.test(e.target.tagName)) || (typeof DIALOG !== 'undefined' && DIALOG)) return;
-  const btn = document.querySelector('#modal .btn.big'); if (btn) { e.preventDefault(); btn.click(); }
+  const bs = document.querySelectorAll('#modal .btn.big'); // only a window with one main button and no shop or item list (Enter once sold goods in the sandbox, art round)
+  if (bs.length === 1 && !document.querySelector('#modal .list, #modal .grid, #modal .slots')) { e.preventDefault(); bs[0].click(); }
 });
 
 /* ---------- 6 farming ---------- */
