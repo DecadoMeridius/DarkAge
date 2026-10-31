@@ -387,6 +387,13 @@ Each region has:
 
 **The request board** in the village posts requests for items, with a gold reward.
 
+## 14b. Dangers on the road
+
+- **Bandits:** they roam the Wilds roads in groups of three to five, sometimes led by a Bandit Chief. They attack anyone: you, knights, town guards, even monsters. They're marked in red on the map.
+- **Goblin camps:** goblins live in camps of shacks in the forest, meadows and highlands, with spearmen, rock-slingers and sometimes an ogre. Clear a camp for its loot; the tribe is back a couple of days later. Camps are green triangles on the map.
+- **Packs:** wolves, slimes, crows and bats come in packs of two to five.
+- **Zombies:** they shamble through the forest at night.
+
 ## 15b. The realm: towns, knights and Briarholt
 
 **The Wilds are much bigger now.** Four towns lie in them, joined by roads. Signposts at every town gate and at the crossroads point the way, and each town has a waystone and is marked on the map (M).

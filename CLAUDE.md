@@ -509,6 +509,17 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **The Guild Seam:** the mine mouth in Greyhelm (act `gh_seam`) opens at Hewer rank. `genSeam` makes a dense ore cave (`gseam`), rebuilt every visit, full only on the first visit of the day.
 - **Titles:** `S.titles` and `S.title`; guildmasters greet you by your title. State: `S.guilds[act] = { r, kills }`.
 
+## Bandits, packs and goblin tribes (`x_bandits.js`, `x_goblins.js`, art `goblins.py`)
+- **Bandit patrols** (`BANDIT_PATROLS`): 3-5 `bandit`/`archer`/`banditchief` spawn on a Wilds road 26-60 tiles away (not the farm-end roads), from day 3, at most 2 at a time.
+  - Each bandit's `home`/`hx` walks with it, so the leash never pulls it back. A patrol goes on along another road at each end and moves on after 7 minutes.
+  - Near you (130 px) the normal AI fights you. Otherwise they attack knights and guards (`bHitAlly`) or monsters (`bHitMonster`), and monsters strike back.
+  - They're kept out of the 36-tile despawn (110 tiles), spawn past the town slime ring with `window.SPAWN_RAW`, and show as red marks on the Wilds map.
+- **Packs:** a wild spawn of a `PACKS` monster (slimes, wolves, crows, bats, jellies) brings 1-4 more of its kind (`WILD_SPAWN` flag around `wildSpawns`).
+- **Goblins:**
+  - The old green humanoid is now `zombie`, a night shambler in the forest. `goblin` (spear) and `goblin_slinger` use the new `en_goblin` template; `ogre` uses the brute frame with a club.
+  - `placeCamps` puts 6 camps in the Wilds (`m.gcamps`: clearing, 1-3 `furn_gshack`, `furn_gtotem`, `furn_gspit` with a flame, a chest).
+  - A tribe of 3-6 (sometimes an ogre) appears within 34 tiles (`campTick`, `S.gcamp`) and is back 2 days after being wiped out. Camps show as green triangles on the map.
+
 ## The welcome tutorial (`public/js/x_tutorial.js`)
 - **The opening:** on a new game, after the character creator, Lord Ashcombe walks up the farm road to you instead of the arrival letter appearing. The `openModal` wrapper swallows the 'Hollowmere Farm' letter while `S.flags.tutIntro` is set.
 - **The choice:** he welcomes you, then offers "Show me around" (starts `STORIES.welcome`, "A New Start") or "I know my way around a farm" (one line of tips, then he leaves).
