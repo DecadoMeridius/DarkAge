@@ -229,8 +229,8 @@ function townMenu(act, who) {
     // a hot meal at the table: eaten on the spot, health and energy back (playtest: meals only went into the bag, at 1.6x)
     const hot = 40 + 10 * TOWN_ORDER.indexOf(town);
     b.append(el('div', { class: 'acts' }, el('button', { class: 'btn', on: () => { if (S.gold < hot) { toast('A hot meal is ' + hot + 'g.'); return; } S.gold -= hot; S.p.hp = maxHP(); if (typeof maxST === 'function') S.p.st = maxST(); SFX.ok(); toast('A bowl of the house stew and fresh bread. Health and energy restored.'); refresh(); } }, 'Eat a hot meal here (' + hot + 'g)')));
-    b.append(el('h3', null, 'To take away'));
-    const L = el('div', { class: 'list' }); listOf(mealsAt[town]).forEach(id => L.append(buyRow(id, price(id, 1.15)))); b.append(L);
+    b.append(el('h3', null, 'To take away')); b.append(el('p', { class: 'note' }, 'Plain fare for the road. The feasts are only served at the table.'));
+    const L = el('div', { class: 'list' }); listOf(mealsAt[town]).filter(id => IT[id].p <= 400).forEach(id => L.append(buyRow(id, price(id, 1.1)))); /* feasts at 1,000g+ read as a rip-off beside a 40g hot meal (playtest night #143) */ b.append(L);
     const free = k && hearts(k) >= 6, cost = free ? 0 : 120;
     const night = S.time >= 1080 || S.time < 300;
     b.append(el('div', { class: 'acts' }, night

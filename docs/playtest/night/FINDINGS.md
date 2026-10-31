@@ -60,7 +60,16 @@ The new content went from not playable past the first step to playable through c
 - inn take-away prices;
 - whether the sword's left click should walk or attack (testers disagreed).
 
-**Needs your decision:** the Cheese Press placeable and the Cheese food share the item key `cheese` (#164). Fixing it means a save migration.
+**After the night (fixed, not yet re-tested by a round):**
+- **#164 cheese:** the press item is now `cheese_press` (its placed object stays `cheese`), so Cheese is food again. Old saves are migrated once (`migrateCheese` in `x_court.js`): a player who knows the press plan and has none set down gets one press back from their cheese; the rest stays food.
+- **#13, #66, #201, #244 tracker label:** it shows for 4 s when the target changes and while you stand still, so it no longer sits over signs and titles as you walk.
+- **#143, #175, #205 inn take-away:** only plain fare (up to 400g value, at 1.1x); the feasts are served at the table only.
+- **#243, #246, #251 local maps:** castle walls, towers and the gate, waystones and the keep's stairs are drawn and labelled.
+- **#106, #173, #210, #236 snagging:** trees, bushes, posts, signs, benches, dummies and targets are solid only in the middle of their tile, and walking into one slides you round it (up to 14 px).
+
+Still open: standing inside NPCs and the stove, towers at Kingsbridge's gates, map label overlaps.
+
+**Was waiting on your decision (now fixed, above):** the Cheese Press placeable and the Cheese food share the item key `cheese` (#164). Fixing it means a save migration.
 
 ---
 

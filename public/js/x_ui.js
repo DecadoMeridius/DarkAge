@@ -23,7 +23,7 @@ function rcatOf(r) {
   if (r[3] === 'kitchen' || it.t === 'food') return 'food';
   if (it.t === 'weapon' || it.t === 'armor' || it.t === 'ring' || it.t === 'ammo') return 'gear';
   if (it.t === 'fert' || it.t === 'path' || /sprinkler|scarecrow|beehive|compost|channel/.test(r[0])) return 'farm';
-  if ((typeof AUTOTIER !== 'undefined' && AUTOTIER[r[0]]) || (OBJ[r[0]] && (OBJ[r[0]].mach || OBJ[r[0]].place))) return 'mach';
+  if ((typeof AUTOTIER !== 'undefined' && AUTOTIER[r[0]]) || (OBJ[r[0]] && (OBJ[r[0]].mach || OBJ[r[0]].place)) || (it.place && OBJ[it.place] && OBJ[it.place].mach)) return 'mach';
   if (it.t === 'mat' || it.t === 'bar') return 'part';
   return 'all';
 }

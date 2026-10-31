@@ -550,4 +550,5 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - Wall bodies: an east-west wall run also blocks the tile north of it (`wallBodies`); north-south runs don't, so side gates stay 2 tiles wide.
 - **The court** dines in the great hall at noon and in the evening (`meal` entries). Aldous has `met` lines once you know Isolde, and Isolde lives in the keep after chapter 2.
 - **Fonts:** the "Cinzel" face is Cinzel Decorative, so every Cinzel text is set in uppercase (its lowercase letters are ornamental capitals).
-- **Known data bug, not fixed (it needs a save migration):** the Cheese Press placeable and the Cheese food share the item key `cheese`, and the press definition overwrites the food.
+- **Cheese:** the Cheese Press item is `cheese_press` (placed object kind still `cheese`; picking it up gives the item back), so `cheese` is the food. `migrateCheese` runs once per old save (`S.flags.cheeseV`).
+- **After the night:** the tracker's name label shows for 4 s after the target changes and while you stand still; inn take-away is plain fare only; local maps draw castle walls, waystones and stairs; trees, bushes, posts, signs, benches, dummies and targets (`NARROW`) are solid only in x 3-13 of their tile, and the player sidesteps up to 14 px round them.

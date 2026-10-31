@@ -155,11 +155,15 @@ pcCursorDraw = function (m) {
   // above your head, clear of the body: an arrow that turns smoothly, with the distance and the target's name
   const want = Math.atan2(dy, dx); TRK.a = TRK.a === undefined ? want : TRK.a + Math.atan2(Math.sin(want - TRK.a), Math.cos(want - TRK.a)) * .12;
   const a = TRK.a, cx = Math.round(S.p.x), cy = Math.round(S.p.y - 48);
-  if (w.map === m.id) { const sid = S.story.track, st = stepOf(sid), W = st && st.who && (NPCS[st.who] || (typeof SCAST !== 'undefined' && SCAST[st.who])), who = W ? W.n : st && st.t === 'use' ? 'Search here' : st && st.t === 'go' && typeof placeName === 'function' ? placeName(w.map) : STORIES[sid].n;
+  // the name and distance show for 4 s when the target changes and while you stand still, so they don't sit over signs and titles as you walk (playtest night)
+  const now2 = performance.now(), tk = (S.story.track || '') + w.map + w.x + ',' + w.y; if (TRK.tk !== tk) { TRK.tk = tk; TRK.shown = now2; }
+  if (TRK.px !== S.p.x || TRK.py !== S.p.y) { TRK.px = S.p.x; TRK.py = S.p.y; TRK.still = now2; }
+  const showLbl = now2 - TRK.shown < 4000 || now2 - TRK.still > 900;
+  if (showLbl && w.map === m.id) { const sid = S.story.track, st = stepOf(sid), W = st && st.who && (NPCS[st.who] || (typeof SCAST !== 'undefined' && SCAST[st.who])), who = W ? W.n : st && st.t === 'use' ? 'Search here' : st && st.t === 'go' && typeof placeName === 'function' ? placeName(w.map) : STORIES[sid].n;
     g.save(); g.font = '600 6px Fredoka, sans-serif'; g.textAlign = 'center'; g.lineWidth = 2; g.strokeStyle = '#2a1c18'; const t = who + ' · ' + Math.round(dd / 16) + ' m'; g.strokeText(t, cx, cy - 9); g.fillStyle = '#ffe08a'; g.fillText(t, cx, cy - 9); g.restore(); }
   g.save(); g.translate(cx, cy); g.rotate(a); g.fillStyle = '#2a1c18'; g.beginPath(); g.moveTo(8, 0); g.lineTo(-5, -6); g.lineTo(-2, 0); g.lineTo(-5, 6); g.closePath(); g.fill();
   g.fillStyle = '#ffd040'; g.beginPath(); g.moveTo(6, 0); g.lineTo(-4, -4.5); g.lineTo(-1.5, 0); g.lineTo(-4, 4.5); g.closePath(); g.fill(); g.restore();
-  if (w.map !== m.id) { g.save(); g.font = '600 7px Fredoka, sans-serif'; g.textAlign = 'center'; g.lineWidth = 2; g.strokeStyle = '#2a1c18'; const t = (m.indoor || /^in_/.test(m.id)) && (m.warps || []).some(x => x.to === w.map) ? 'Go outside' : 'to ' + (typeof placeName === 'function' ? placeName(w.map) : w.map); g.strokeText(t, cx, cy - 9); g.fillStyle = '#ffe08a'; g.fillText(t, cx, cy - 9); g.restore(); }
+  if (showLbl && w.map !== m.id) { g.save(); g.font = '600 7px Fredoka, sans-serif'; g.textAlign = 'center'; g.lineWidth = 2; g.strokeStyle = '#2a1c18'; const t = (m.indoor || /^in_/.test(m.id)) && (m.warps || []).some(x => x.to === w.map) ? 'Go outside' : 'to ' + (typeof placeName === 'function' ? placeName(w.map) : w.map); g.strokeText(t, cx, cy - 9); g.fillStyle = '#ffe08a'; g.fillText(t, cx, cy - 9); g.restore(); }
 };
 // the journal says when each story begins; new stories are announced in the morning report
 const STORY_WHEN = { hollow: 'on your second morning', lanterns: 'on day 3', smugglers: 'on day 4', ashcombe: 'on day 5', pilgrims: 'on day 6, or as soon as you find an ember shard' };

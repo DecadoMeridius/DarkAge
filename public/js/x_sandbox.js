@@ -26,7 +26,7 @@ function sandboxSupply() {
   for (const k in FUEL) want.add(k);
   ['hay', 'wheat', 'milk', 'egg', 'beet', 'clam', 'grape', 'apple', 'wool', 'goat_milk', 'cheese', 'honey', 'pumpkin', 'potato', 'carrot', 'corn', 'tomato', 'cloth'].forEach(k => want.add(k));
   for (const id of Object.keys(AUTOTIER)) want.add(id);
-  ['workbench', 'forge', 'anvil', 'tanrack', 'campfire', 'keg', 'jar', 'cheese', 'loom', 'oilpress', 'smoker', 'sprinkler', 'qsprinkler', 'isprinkler'].forEach(k => want.add(k));
+  ['workbench', 'forge', 'anvil', 'tanrack', 'campfire', 'keg', 'jar', 'cheese_press', 'loom', 'oilpress', 'smoker', 'sprinkler', 'qsprinkler', 'isprinkler'].forEach(k => want.add(k));
   const inv = {};
   for (const k of want) { const it = IT[k]; if (!it) continue; inv[k] = it.t === 'place' || it.t === 'implement' ? 10 : it.p >= 1500 ? 20 : it.p >= 400 ? 60 : 300; }
   return inv;

@@ -355,3 +355,61 @@ const MOVE_KEYS = ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arr
 const restoreHeld = () => { if (typeof INPUT !== 'undefined' && INPUT.keys) for (const k of MOVE_KEYS) if (HELD.has(k)) INPUT.keys[k] = true; };
 if (typeof setPause === 'function') setPause = (f => function (on) { const r = f(on); if (!on) restoreHeld(); return r; })(setPause);
 closeModal = (f => function () { const r = f.apply(this, arguments); setTimeout(restoreHeld, 0); return r; })(closeModal);
+
+/* ---------- the cheese press and the cheese: one save migration ----------
+   The press item used to share the key 'cheese' with the food, so the food was a press.
+   The item is now 'cheese_press' (its placed object stays 'cheese'). Old 'cheese' items
+   become food, except one press for a player who knows the plan and has none set down. */
+function migrateCheese() {
+  if (!S || !S.flags || S.flags.cheeseV) return; S.flags.cheeseV = 1;
+  if (S.known && S.known.cheese) { S.known.cheese_press = 1; delete S.known.cheese; }
+  if (!(S.known && S.known.cheese_press)) return;
+  const placed = PERSIST.some(id => { const m = MAPS[id]; return m && Array.isArray(m.o) && m.o.some(o => o && o.k === 'cheese'); });
+  if (placed) return;
+  const slot = S.pack.findIndex(s => s && parseK(s.k)[0] === 'cheese');
+  if (slot >= 0) { const s = S.pack[slot]; if (--s.n <= 0) S.pack[slot] = null; give('cheese_press', 1, 0, true); return; }
+  const bk = Object.keys(S.bank || {}).find(k => parseK(k)[0] === 'cheese' && S.bank[k] > 0);
+  if (bk) { if (--S.bank[bk] <= 0) delete S.bank[bk]; S.bank.cheese_press = (S.bank.cheese_press || 0) + 1; }
+}
+startGame = (f => function (isNew) { const r = f.apply(this, arguments); if (isNew) { if (S.flags) S.flags.cheeseV = 1; } else migrateCheese(); return r; })(startGame);
+
+/* local maps show castle walls and towers, waystones and stairs (playtest night #243, #246, #251) */
+localMapCanvas = (f => function (m) {
+  const c = f(m); if (!m || !m.o) return c;
+  const x = c.getContext('2d'), k = Math.max(6, Math.min(14, Math.floor(900 / m.w))), fs = Math.max(10, k + 1);
+  const label = (t, X, Y, col) => { x.font = '600 ' + fs + 'px Fredoka, sans-serif'; x.textAlign = 'center'; x.lineWidth = 3; x.strokeStyle = 'rgba(42,28,24,.9)'; x.strokeText(t, X, Y); x.fillStyle = col; x.fillText(t, X, Y); };
+  const marks = [];
+  for (let i = 0; i < m.o.length; i++) {
+    const o = m.o[i]; if (!o) continue; const X = i % m.w, Y = (i / m.w) | 0;
+    if (o.k === 'cwall' || o.k === 'ctower' || o.k === 'cgate' || o.k === 'gpart') { x.fillStyle = o.k === 'cgate' || o.k === 'gpart' ? '#c8b89a' : '#5e5850'; x.fillRect(X * k, Y * k, k * (o.k === 'ctower' ? 2 : 1), k * (o.k === 'ctower' ? 2 : 1)); }
+    else if (o.k === 'waystone') marks.push(['Waystone', X, Y, '#c8a0ff']);
+    else if (o.act === 'k_up' || o.act === 'k_down') marks.push([o.act === 'k_up' ? 'Stairs up' : 'Stairs down', X, Y, '#ffe08a']);
+  }
+  for (const [t, X, Y, col] of marks) {
+    const cx = (X + .5) * k, cy = (Y + .5) * k; x.fillStyle = col; x.strokeStyle = '#2a1c18'; x.lineWidth = 1.5;
+    x.beginPath(); x.moveTo(cx, cy - k * .7); x.lineTo(cx + k * .5, cy); x.lineTo(cx, cy + k * .7); x.lineTo(cx - k * .5, cy); x.closePath(); x.fill(); x.stroke();
+    label(t, Math.max(30, Math.min(c.width - 30, cx)), cy - k < 14 ? cy + k + fs : cy - k, col);
+  }
+  return c;
+})(localMapCanvas);
+
+/* trunks, posts and signs are solid only in the middle of their tile, and you slide round them:
+   WASD stuck on single trees, bushes, benches and lamp posts (playtest night #106, #173, #210, #236) */
+const NARROW = new Set(['ftree', 'bush', 'twig', 'lantern', 'sign', 'scarecrow', 'furn_sbench', 'furn_bpole', 'furn_target', 'furn_dummy']);
+solidAt = (f => function (m, x, y) {
+  if (!f(m, x, y)) return false;
+  const tx = Math.floor(x / 16), ty = Math.floor(y / 16); if (!inb(m, tx, ty)) return true;
+  const i = ty * m.w + tx, o = m.o[i]; if (!o || TER[m.t[i]].solid || m.solidB[i]) return true;
+  const D = OBJ[o.k]; if (!D || !(D.tree || NARROW.has(o.k))) return true;
+  const lx = x - tx * 16; return lx >= 3 && lx < 13;
+})(solidAt);
+moveEnt = (f => function (m, e, dx, dy, hw) { // a wider sidestep than x_fix5's 9 px, enough to clear a trunk hit dead centre
+  if (e !== S.p || (!dx && !dy)) return f(m, e, dx, dy, hw);
+  const x0 = e.x, y0 = e.y, r = f(m, e, dx, dy, hw); if (e.x !== x0 || e.y !== y0 || !boxFree(m, e.x, e.y, hw)) return r;
+  const d = Math.hypot(dx, dy), ux = dx / d, uy = dy / d;
+  for (let k = 10; k <= 14; k++) for (const s of [-1, 1]) {
+    const px = -uy * s * k, py = ux * s * k;
+    if (boxFree(m, e.x + px, e.y + py, hw) && boxFree(m, e.x + px + ux * 1.5, e.y + py + uy * 1.5, hw)) { const st = Math.min(d, k); f(m, e, -uy * s * st, ux * s * st, hw); return true; }
+  }
+  return r;
+})(moveEnt);

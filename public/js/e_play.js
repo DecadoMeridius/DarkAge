@@ -156,7 +156,7 @@ function useTool() {
   } else if (k === 'axe' || k === 'pick') {
     if (o && OBJ[o.k]) {
       const D = OBJ[o.k];
-      if (D.place && !o.fixed) { if (k === 'pick' || o.k === 'fence') { if (D.mach && o.out) { toast('Collect what\'s inside first.'); return; } delObj(m, ax, ay); give(o.k, 1, 0, true); SFX.pick(); } return; }
+      if (D.place && !o.fixed) { if (k === 'pick' || o.k === 'fence') { if (D.mach && o.out) { toast('Collect what\'s inside first.'); return; } delObj(m, ax, ay); give(o.k === 'cheese' ? 'cheese_press' : o.k, 1, 0, true); SFX.pick(); } return; }
       if (o.k === 'ftree' && k === 'axe') { if (!o.chop) { o.chop = 1; toast('Chop again to cut down this fruit tree.'); return; } delObj(m, ax, ay); give('wood', 8); return; }
       if (D.tool === k) { if (D.tlvl && lvl < D.tlvl) { toast('You need a better ' + (k === 'axe' ? 'axe' : 'pickaxe') + ' (' + TIER_TOOL[D.tlvl] + ').', 'bad'); SFX.bad(); o.shake = .2; return; } hitObj(m, ax, ay, o, power(lvl)); useStamina(cost(3)); return; }
       if (D.tool) { toast('Use the ' + (D.tool === 'axe' ? 'axe' : 'pickaxe') + ' on that.'); return; }

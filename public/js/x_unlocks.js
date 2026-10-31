@@ -15,7 +15,7 @@ const BASIC_TIERS = new Set(['wood', 'leather', 'copper']);
 const REGION_DISH = { highland_stew: 'highmarch', edelweiss_tea: 'highmarch', lotus_broth: 'frostmere', lichen_bread: 'frostmere', dragon_chili: 'emberwaste', melon_sorbet: 'emberwaste', pearl_chowder: 'saltreach', saffron_paella: 'saltreach' };
 const PATTERN_GOLD = { iron: 800, steel: 2000, silver: 3500, gold: 5000, mythril: 9000, frost: 14000, obsidian: 20000, adamant: 28000, dragon: 40000, star: 60000, cobalt: 12000, tide: 18000, rime: 26000, cinder: 45000 };
 const TIER_REGION = { cobalt: 'highmarch', tide: 'saltreach', rime: 'frostmere', cinder: 'emberwaste' };
-const WORKSHOP = { lantern: 300, growth_tonic: 600, rich_compost: 900, fire_arrow: 700, sprinkler: 800, beehive: 1200, jar: 1200, keg: 1500, cheese: 1500, loom: 1500, smoker: 1500, oilpress: 2000, warp_totem: 1500, staircase: 2500, qsprinkler: 3000, isprinkler: 9000 };
+const WORKSHOP = { lantern: 300, growth_tonic: 600, rich_compost: 900, fire_arrow: 700, sprinkler: 800, beehive: 1200, jar: 1200, keg: 1500, cheese_press: 1500, loom: 1500, smoker: 1500, oilpress: 2000, warp_totem: 1500, staircase: 2500, qsprinkler: 3000, isprinkler: 9000 };
 for (const k in WORKSHOP) if (!RC.some(r => r[0] === k)) delete WORKSHOP[k];
 
 const gearTier = r => { const it = IT[r[0]]; return it && (it.t === 'weapon' || it.t === 'armor') && it.tier ? it.tier : null; };

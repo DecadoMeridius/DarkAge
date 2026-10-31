@@ -140,8 +140,8 @@ const RINGS = [['ring_ruby', 'Ruby Ring', 'ruby', { atk: 5 }, '+5 attack'], ['ri
 RINGS.forEach(([id, n, gem, b, d]) => I(id, n, 'ring', 400, 'ring', gem ? IT[gem].c : '#5ad85a', '#ffd040', { slot: 'ring', bonus: b, desc: d }));
 /* placeables & machines */
 [['fence', 'Fence', 4], ['sprinkler', 'Sprinkler', 150], ['qsprinkler', 'Gold Sprinkler', 450], ['isprinkler', 'Mythril Sprinkler', 1200], ['campfire', 'Campfire', 40], ['forge', 'Forge', 200], ['beehive', 'Beehive', 250],
-['scarecrow', 'Scarecrow', 60], ['lantern', 'Lantern', 80], ['keg', 'Keg', 300], ['jar', 'Preserves Jar', 200], ['cheese', 'Cheese Press', 300], ['loom', 'Loom', 400], ['oilpress', 'Oil Press', 400], ['smoker', 'Smoker', 300]]
-  .forEach(([id, n, p]) => I(id, n, 'place', p, 'obj', null, null, { place: id }));
+['scarecrow', 'Scarecrow', 60], ['lantern', 'Lantern', 80], ['keg', 'Keg', 300], ['jar', 'Preserves Jar', 200], ['cheese_press', 'Cheese Press', 300, 'cheese'], ['loom', 'Loom', 400], ['oilpress', 'Oil Press', 400], ['smoker', 'Smoker', 300]]
+  .forEach(([id, n, p, k]) => I(id, n, 'place', p, 'obj', null, null, { place: k || id })); // the press item is cheese_press, its object stays 'cheese'
 /* artifacts */
 const ARTIFACTS = [['ember_idol', 'Ember Idol', '#ff7a2a', 'meadow'], ['rusted_crown', 'Rusted Crown', '#a8742a', 'forest'], ['knights_seal', 'Knight\'s Seal', '#c8a040', 'meadow'], ['dragon_tooth', 'Dragon Tooth', '#f0e6d0', 'ash'],
 ['elven_brooch', 'Elven Brooch', '#4fe0c8', 'forest'], ['bone_flute', 'Bone Flute', '#e8e0c8', 'highlands'], ['ancient_coin', 'Ancient Coin', '#ffd040', 'any'], ['amphora', 'Chipped Amphora', '#c8784a', 'coast'],
@@ -154,7 +154,7 @@ const RC = [
   ['scarecrow', 1, { wood: 15, fiber: 15, coal: 1 }, 'bench', ['farming', 2]], ['compost', 2, { fiber: 10, slime_goo: 2 }, 'bench', ['farming', 2]], ['growth_tonic', 2, { herb: 1, slime_goo: 4, sap: 1 }, 'bench', ['farming', 4]],
   ['rich_compost', 2, { compost: 2, bone: 2, truffle: 1 }, 'bench', ['farming', 7]], ['sprinkler', 1, { copper_bar: 1, iron_bar: 1 }, 'bench', ['farming', 3]], ['qsprinkler', 1, { iron_bar: 1, gold_bar: 1, aquamarine: 1 }, 'bench', ['farming', 6]],
   ['isprinkler', 1, { gold_bar: 1, mythril_bar: 1, diamond: 1 }, 'bench', ['farming', 9]], ['beehive', 1, { wood: 40, coal: 5, iron_bar: 1 }, 'bench', ['husbandry', 3]],
-  ['keg', 1, { wood: 30, copper_bar: 1, iron_bar: 1, sap: 1 }, 'bench', ['farming', 5]], ['jar', 1, { wood: 40, stone: 30, coal: 6 }, 'bench', ['farming', 3]], ['cheese', 1, { wood: 45, stone: 40, hardwood: 6, copper_bar: 1 }, 'bench', ['husbandry', 4]],
+  ['keg', 1, { wood: 30, copper_bar: 1, iron_bar: 1, sap: 1 }, 'bench', ['farming', 5]], ['jar', 1, { wood: 40, stone: 30, coal: 6 }, 'bench', ['farming', 3]], ['cheese_press', 1, { wood: 45, stone: 40, hardwood: 6, copper_bar: 1 }, 'bench', ['husbandry', 4]],
   ['loom', 1, { wood: 60, fiber: 30, sap: 1 }, 'bench', ['husbandry', 5]], ['oilpress', 1, { hardwood: 10, iron_bar: 2, gold_bar: 1 }, 'bench', ['husbandry', 7]], ['smoker', 1, { stone: 50, coal: 10, iron_bar: 1 }, 'bench', ['fishing', 4]],
   ['arrow', 20, { wood: 4, stone: 4 }, 'bench'], ['fire_arrow', 15, { arrow: 15, magma_shard: 1 }, 'bench', ['combat', 6]], ['staircase', 1, { stone: 99 }, 'bench', ['mining', 4]], ['warp_totem', 1, { hardwood: 2, prismatic: 0, sap: 2, fiber: 20 }, 'bench', ['foraging', 6]],
   ['copper_bar', 1, { copper_ore: 5, coal: 1 }, 'forge'], ['iron_bar', 1, { iron_ore: 5, coal: 1 }, 'forge', ['smithing', 2]], ['steel_bar', 1, { iron_bar: 2, coal: 3 }, 'forge', ['smithing', 3]],
