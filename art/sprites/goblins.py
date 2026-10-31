@@ -1,3 +1,4 @@
+import math
 """Goblins and ogres of the Wilds' camps (asked for 2026-10-31: "real goblin/ogre sprites; they live in the wild
 in little shacks with small tribes"). Templates in the creature channels (b body, m clothing), recoloured per
 enemy, plus fixed wood and iron for their spears and clubs. Light from the top-left, facing right.
@@ -53,15 +54,23 @@ OGRE = {
     'head': H.spans(18, 16, {0: [(6, 11, 'b')], 1: [(3, 14, 'b')], 2: [(2, 15, 'b')], 3: [(1, 16, 'b')], 4: [(1, 16, 'b')], 5: [(1, 16, 'b'), (11, 11, 'E'), (14, 14, 'E')],
                              6: [(1, 16, 'b')], 7: [(1, 17, 'b'), (13, 15, 'N')], 8: [(1, 17, 'b')], 9: [(1, 16, 'b'), (8, 15, 'N'), (9, 9, 'T'), (14, 14, 'T')],
                              10: [(2, 16, 'b'), (9, 9, 'T'), (14, 14, 'T')], 11: [(3, 15, 'b')], 12: [(4, 14, 'b')]}),
-    'torso': H.spans(40, 30, {**{y: [(6 - min(6, y), 33 + min(6, y), 'b')] for y in range(0, 8)},
-                              **{y: [(0, 39, 'b')] for y in range(8, 18)},
-                              **{y: [(1, 38, 'b')] for y in range(18, 22)},
-                              **{y: [(3, 36, 'm')] for y in range(22, 30)}}),          # the loincloth
-    'arm': H.spans(10, 30, {**{y: [(1, 8, 'b')] for y in range(0, 24)}, **{y: [(0, 9, 'b')] for y in range(24, 29)}, 29: [(2, 7, 'b')]}),
+    # sloped shoulders, a round pot belly that bulges out and down, narrower hips under the loincloth
+    'torso': H.spans(40, 30, {y: [(round(19.5 - hw), round(19.5 + hw), 'b' if y < 22 else 'm')] for y, hw in
+                              [(y, (10 + y * 1.4) if y < 6 else (17 + 2.5 * math.sin(math.pi * (y - 6) / 16)) if y < 22 else (16 - (y - 22) * .4)) for y in range(30)]}),
+    'arm': H.spans(10, 30, {**{y: [(0, 9, 'b')] for y in range(0, 4)}, **{y: [(1, 8, 'b')] for y in range(4, 12)}, **{y: [(2, 7, 'b')] for y in range(12, 22)}, 22: [(1, 8, 'b')], **{y: [(0, 9, 'b')] for y in range(23, 28)}, 28: [(1, 8, 'b')], 29: [(2, 7, 'b')]}),  # a heavy shoulder, a tapering forearm, a big fist
     'leg': H.spans(10, 16, {**{y: [(1, 8, 'b')] for y in range(0, 13)}, 13: [(0, 9, 'b')], 14: [(0, 9, 'b')], 15: [(0, 3, 'N'), (6, 9, 'N')]}),
 }
-OGRE['torso'] = H.with_detail(OGRE['torso'], [(10, 16, '44444'), (11, 14, '4'), (14, 22, '2'), (15, 23, '2'), (16, 17, '22'), (21, 4, '1' * 32), (22, 8, '7.7.7.7.7.7.7.7.7.7.7.7')], 40)
-OGRE['head'] = H.with_detail(OGRE['head'], [(2, 6, '44'), (1, 8, '444'), (6, 3, '2'), (7, 4, '2')], 18)
+# form shading by hand: a lit left shoulder and chest, pectorals, a belly that curves into shadow underneath,
+# a dark right flank, a navel, and the loincloth's knotted belt (art round 3: "a blocky, under-shaded slab")
+_od = [(2, 4, '4444'), (3, 3, '44'), (4, 2, '4'), (8, 2, '44'), (9, 1, '4')]
+_od += [(9, 9, '444444'), (10, 8, '4'), (12, 10, '2222'), (12, 24, '2222'), (11, 19, '2')]            # pectorals
+_od += [(14, 6, '4'), (15, 5, '4'), (16, 5, '4'), (17, 6, '4')]                                       # lit belly edge
+_od += [(18, 10, '2'), (19, 12, '22'), (20, 15, '22222222222'), (19, 26, '22'), (18, 28, '2')]          # the belly's underside
+_od += [(16, 19, '1')] + [(y, 35, '22') for y in range(8, 20)] + [(y, 37, '1') for y in range(9, 19)]   # navel, the shaded flank
+_od += [(21, 4, '1' * 32), (22, 8, '7.7.7.7.7.7.7.7.7.7.7.7'), (21, 18, 'NN'), (22, 18, 'N'), (23, 19, 'N')]
+OGRE['torso'] = H.with_detail(OGRE['torso'], _od, 40)
+OGRE['arm'] = H.with_detail(OGRE['arm'], [(y, 1, '4') for y in range(1, 11)] + [(y, 2, '4') for y in range(12, 21)] + [(y, 7, '2') for y in range(2, 11)] + [(y, 6, '2') for y in range(12, 21)] + [(11, 2, '2222'), (26, 1, '2.2.2.2'), (24, 1, '44')], 10)
+OGRE['head'] = H.with_detail(OGRE['head'], [(2, 6, '44'), (1, 8, '444'), (3, 4, '4'), (4, 9, '22222222'), (6, 3, '2'), (7, 4, '2'), (8, 2, '2'), (11, 6, '2222'), (12, 6, '222')], 18)  # heavy brow, cheeks, jowls
 
 
 def ogre(step=0, arms='swing'):

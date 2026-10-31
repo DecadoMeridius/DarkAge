@@ -78,7 +78,8 @@ function nightLights(m, Z, cxp, cyp, W, H) {
   if (m.dark) return; const nf = m.indoor ? .6 : darkness(); if (nf <= .05) return; // indoors the candles, lamps and fires always glow (art round: "no warmth")
   const R = (x, y, w, h, col, a) => { const X = Math.round((x - cxp) * Z), Y = Math.round((y - cyp) * Z), X2 = Math.round((x + w - cxp) * Z), Y2 = Math.round((y + h - cyp) * Z); if (X2 < 0 || Y2 < 0 || X > W || Y > H) return; g.globalAlpha = a; g.fillStyle = col; g.fillRect(X, Y, X2 - X, Y2 - Y); };
   // window glow is painted over the finished frame, so it skips windows that someone stands in front of (art round 2: the glow lay over the player)
-  const bodies = [[S.p.x, S.p.y], ...(m.npcs || []).filter(n => !n.home).map(n => [n.x, n.y])], covered = (x, y, w, h) => bodies.some(([bx, by]) => x < bx + 8 && x + w > bx - 8 && y < by + 2 && y + h > by - 34);
+  const bodies = [[S.p.x, S.p.y], ...(m.npcs || []).filter(n => !n.home).map(n => [n.x, n.y])], walled = (x, y) => { const tx = Math.floor(x / 16), ty = Math.floor(y / 16); for (let j = 0; j <= 4; j++) { const o = inb(m, tx, ty + j) && getO(m, tx, ty + j); if (o && /^(cwall|ctower|cgate|gpart)$/.test(o.k)) return true; if (o && o.k === 'part' && typeof mainOf === 'function') { const mo = mainOf(m, tx, ty + j); if (mo && mo[2] && mo[2].k === 'ctower') return true; } } return false; },
+    covered = (x, y, w, h) => walled(x + w / 2, y + h) || bodies.some(([bx, by]) => x < bx + 8 && x + w > bx - 8 && y < by + 2 && y + h > by - 34); // a town wall in front hides the window too (round 3)
   for (const b of m.indoor ? [] : m.bld || []) {
     const f = b.winName && PIX.map[b.winName], win = f && f.meta && f.meta.win; if (!win) continue;
     if ((b.x + b.w) * 16 < cxp || b.x * 16 > cxp + W / Z || (b.y + b.h) * 16 < cyp || b.y * 16 > cyp + H / Z) continue;
