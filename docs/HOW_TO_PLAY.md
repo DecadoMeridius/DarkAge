@@ -391,6 +391,17 @@ Each region has:
 - **Standing:** jobs raise your standing with that town. At 50 standing its shops sell to you at a friend's price.
 - **Safety:** no monsters spawn in or next to a town.
 
+**Life in the towns:**
+- **Townsfolk** walk the streets by day, and Kingsbridge's market stalls have vendors. Talk to anyone.
+- **Inns** are open all night:
+  - Sit down to a **hot meal** (40-70g) that restores your health and energy.
+  - Take plain food away.
+  - Rest for two hours.
+  - After 6 pm, **sleep there until morning**, and wake at the inn.
+- **Inns and the village tavern** fill up with patrons at lunch and in the evening. In the evenings Brann and Hale are at the Drowsy Drake.
+
+**The Patrol job** at the Kingsbridge barracks sends Captain Vey's knights to ride with you, and patrols come more often while it's on.
+
 **Guards and knights** are on your side. Town guards hold the gates. Knight patrols of two to four walk the roads between the towns. Both fight any monster that comes near them, and if you're in the fight, the kill counts as yours.
 
 **Briarholt Castle** stands beyond the trees at the south-east corner of your farm.
@@ -399,6 +410,15 @@ Each region has:
   - the throne room, great hall, library, chapel, kitchen and armoury;
   - upstairs, your bedchamber, the bath, a portrait gallery and the map room;
   - the cellars: the wine cellar, the treasury, the dungeon and the crypt.
+- **Its people:**
+  - **Before it's yours:** an old household keeps it: Aldous the steward, Wenna the gardener, the gate porter, a laundress, a groom and a scullery maid.
+  - **Once it's yours:** guards, servants, a cook, a chaplain and a scribe move in.
+  - **As the story goes on:** knights who drill in the training yard, and finally lords, ladies and a bard.
+  - **Mealtimes:** the court dines in the great hall at noon and in the evening.
+  - **Isolde** lives in the keep once you've met her.
+- **At night** the keep's windows glow, and torches burn at the gate and the keep door.
+- **Furniture:** the wardrobe changes your clothes, the war table shows the realm's map, and the royal chests open your storage.
+- **Briarholt's waystone** is just inside the grounds.
 - **Once it's yours:** its courtyard is farmland, its two glasshouses grow any crop in any season, and you can sleep in the royal bed.
 
 **The story** brings:
