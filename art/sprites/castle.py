@@ -18,7 +18,7 @@ MOSS = ['#2e5a26', '#4a8a3a', '#7ab858']
 ROYAL = ['#2a1440', '#4a2470', '#6a3a9a', '#8e5ac0']             # Briarholt purple
 GOLD = ['#7a5a1a', '#b8862a', '#e8b830', '#ffe080']
 WALL_COL = '#b4ada6'
-TOP_Y, FACE_Y, PH = 8, 40, 96
+TOP_Y, FACE_Y, PH = 8, 40, 128   # walls stand ~4 tiles tall (art round: 'the walls are low, the gate barely taller than you')
 
 
 def top_band(s, x0, x1, y0, y1, seed=3):
@@ -43,11 +43,18 @@ def merlons(s, x0, x1, y, h=8, vertical=False, ox=0):
                     c = STONE[4] if yy == y else STONE[3] if xx == mx else STONE[1] if xx == mx + w - 1 else STONE[2]
                     s.set(xx, yy, c)
             s.fill(rect(mx, y + h, w, 2), STONE[0])
-    else:
-        for my in range(y, h, 10):
-            for yy in range(my, min(h, my + 6)):
+    else:   # a parapet down the side of a north-south run: a raised strip with merlons, each a block with a lit top and a shaded south face
+        for yy in range(y, h):
+            for xx in range(ox, ox + 5):
+                s.set(xx, yy, STONE[3] if xx == ox else STONE[1] if xx == ox + 4 else STONE[2])
+        inner = ox + 5 if ox == 0 else ox - 1                  # the parapet's inner face throws a dark line on the walk
+        for yy in range(y, h):
+            s.set(inner, yy, STONE[0])
+        for my in range(y, h - 4, 10):
+            for yy in range(my, min(h, my + 9)):
                 for xx in range(ox, ox + 5):
-                    s.set(xx, yy, STONE[4] if yy == my else STONE[3] if xx == ox else STONE[1])
+                    top = yy < my + 5
+                    s.set(xx, yy, (STONE[4] if yy == my else STONE[3] if xx == ox else STONE[2]) if top else (STONE[1] if xx < ox + 4 else STONE[0]))
 
 
 def face(s, x0, x1, y0, y1, lit_left, dark_right, seed=5):
@@ -159,13 +166,13 @@ def cwall(mask, winter=False):
         return s
     # a contact shadow on the ground to the east, where nothing joins: light from the top-left, so a run of
     # wall seen from above reads as raised (playtest: north-south walls looked like flat grey strips)
-    c = Canvas(48, PH)                      # 8 px of padding each side keep the wall centred on its tile
-    c.img.alpha_composite(s.img, (8, 0)); c.px = c.img.load()
+    c = Canvas(64, PH)                      # 16 px of padding each side keep the wall centred on its tile
+    c.img.alpha_composite(s.img, (16, 0)); c.px = c.img.load()
     y0, y1 = (FACE_Y + 4, PH - 1) if not so else (TOP_Y + 2, TOP_Y + 34)   # a joined run: just this tile's stretch
-    for y in range(y0, y1):
-        for k in range(6):
-            if (y + k) % 2 == 0 or k < 4:
-                c.set(40 + k, y, (16, 24, 8, 150 - k * 18))
+    for y in range(y0, y1):                 # a wall ~4 tiles tall throws a wide shadow (art round: north-south runs read as paths)
+        for k in range(14):
+            if k < 9 or (y + k) % 2 == 0:
+                c.set(48 + k, y, (16, 24, 8, 140 - k * 7))
     return c
 
 
@@ -238,19 +245,17 @@ def crenel_ring(s, cx, rr, y):
 
 
 def ctower(winter=False):
-    s = Canvas(64, 160)
+    s = Canvas(64, 192)        # a head taller than the 128 px curtain walls
     cx, rr = 32, 26
-    for y in range(150, 158):   # contact shadow
+    for y in range(182, 190):   # contact shadow
         for x in range(4, 60):
-            if ((x - 32) / 28) ** 2 + ((y - 152) / 5) ** 2 <= 1:
+            if ((x - 32) / 28) ** 2 + ((y - 184) / 5) ** 2 <= 1:
                 s.set(x, y, (20, 30, 10, 90))
-    round_body(s, cx, rr, 52, 154, 21)
-    for y in range(52, 154):    # the round base: rounded bottom corners
-        pass
-    string_course(s, cx, rr, 104)
-    for wy in (80, 116):        # arrow slits
+    round_body(s, cx, rr, 52, 186, 21)
+    string_course(s, cx, rr, 100); string_course(s, cx, rr, 146)
+    for wy in (76, 116, 156):   # arrow slits
         s.fill(rect(cx - 9, wy, 2, 12), '#1e1a22'); s.fill(rect(cx + 6, wy + 6, 2, 10), '#141018')
-    weather(s, cx - rr + 2, cx + rr - 2, 66, 150, 77, [(cx - 8, 92), (cx - 8, 128)])
+    weather(s, cx - rr + 2, cx + rr - 2, 66, 182, 77, [(cx - 8, 88), (cx - 8, 128), (cx - 8, 168)])
     corbels(s, cx - rr + 1, cx + rr - 2, 0, 8, lambda x: 52 + int(6 * math.sqrt(max(0, 1 - ((x - cx) / (rr + 2)) ** 2))))
     crenel_ring(s, cx, rr, 52)
     cone_roof(s, cx, 14, 44, rr + 1)

@@ -51,14 +51,15 @@ const TOWNS = {
       ...[5, 9, 13, 31, 37, 43].flatMap(y => [['lantern', 25, y], ['lantern', 30, y]]), ['lantern', 11, 20], ['lantern', 44, 20], ['lantern', 11, 25], ['lantern', 44, 25]],
     guards: [[24, 42], [31, 42], [26, 3], [29, 3], [3, 21], [3, 24], [52, 21], [52, 24], [8, 35]],
     spots: [[24, 19], [31, 27], [20, 13], [17, 22], [35, 13], [47, 23], [8, 23], [38, 23]] },
-  greyhelm: { n: 'Greyhelm', kind: 'Town', bio: 'highlands', w: 40, h: 30, ground: 'g', walls: 'stone',
+  greyhelm: { n: 'Greyhelm', kind: 'Town', bio: 'highlands', w: 40, h: 30, ground: 'st', walls: 'stone', // stony ground, a mine mouth, rails, carts and spoil (art round: 'nothing says mining town')
     gates: { N: [19, 0], S: [19, 29] },
     towers: [[0, 1], [38, 1], [0, 29], [38, 29], [17, 1], [21, 1], [17, 29], [21, 29]],
     st: [[18, 1, 4, 28, 'p'], [1, 13, 38, 3, 'p']],
     b: [['hm_hall', 3, 4, 7, 6, 'gh_hall', 'The Longhouse'], ['gh_inn', 24, 5, 7, 5, 'gh_inn', 'The Iron Kettle'], ['hm_house', 12, 6, 5, 4, 'k_house'], ['hm_house', 32, 5, 5, 4, 'k_house'],
       ['hm_forge', 3, 18, 6, 5, 'gh_forge', 'Borek\'s Forge'], ['gh_supply', 24, 18, 6, 5, 'gh_supply', 'Miners\' Supply'], ['hm_house', 11, 19, 5, 4, 'k_house'], ['hm_house', 31, 19, 5, 4, 'k_house'],
-      ['hm_house', 3, 24, 5, 4, 'k_house'], ['hm_house', 11, 24, 5, 4, 'k_house'], ['hm_house', 24, 24, 5, 4, 'k_house'], ['hm_house', 31, 24, 5, 4, 'k_house']],
-    props: [['furn_crate', 14, 16], ['furn_coal', 10, 22], ['furn_crate', 30, 22], ['furn_barrel', 31, 17], ['well', 22, 11], ...[4, 9, 18, 24].flatMap(y => [['lantern', 17, y], ['lantern', 22, y]]), ['tree', 36, 11], ['tree', 2, 11]],
+      ['hm_house', 3, 24, 5, 4, 'k_house'], ['hm_house', 11, 24, 5, 4, 'k_house'], ['hm_house', 24, 24, 5, 4, 'k_house'], ['hm_house', 31, 24, 5, 4, 'k_house'], ['mine', 31, 9, 5, 4, null]],
+    props: [['furn_crate', 14, 16], ['furn_coal', 10, 22], ['furn_crate', 30, 22], ['furn_barrel', 35, 18], ['well', 22, 11], ...[4, 9, 18, 24].flatMap(y => [['lantern', 17, y], ['lantern', 22, y]]), ['tree', 2, 11],
+      ...[13, 14, 15, 16].map(y => ['furn_rails_v', 33, y]), ...[27, 28, 29, 30, 31, 32, 33].map(x => ['furn_rails', x, 17]), ['furn_minecart', 34, 15], ['furn_minecart', 27, 16], ['furn_slag', 37, 13], ['furn_slag', 36, 16], ['furn_coal', 9, 22], ['furn_anvil', 9, 20], ['furn_coal', 29, 12]],
     guards: [[16, 26], [23, 26], [18, 3], [21, 3]],
     spots: [[20, 12], [8, 16], [28, 12], [23, 26], [14, 14]] },
   ashford: { n: 'Ashford', kind: 'Village', bio: 'forest', w: 34, h: 26, ground: 'g', walls: 'fence',
@@ -67,7 +68,8 @@ const TOWNS = {
     b: [['af_tavern', 3, 6, 7, 5, 'af_tavern', 'The Felled Oak'], ['cottage', 10, 6, 5, 5, 'k_house'], ['af_trader', 20, 6, 6, 5, 'af_trader', 'Ashford Trading Post'], ['af_hut', 27, 7, 4, 4, 'k_house'],
       ['cottage', 3, 15, 5, 5, 'k_house'], ['af_hut', 10, 16, 4, 4, 'k_house'], ['af_saw', 20, 15, 6, 5, 'af_saw', 'Ashford Sawmill'], ['af_hut', 27, 16, 4, 4, 'k_house']],
     props: [['well', 12, 22], ['furn_lumber', 27, 21], ['furn_lumber', 21, 22], ['tree', 2, 2], ['tree', 8, 2], ['tree', 29, 2], ['tree', 2, 22], ['tree', 30, 22], ['tree', 24, 3],
-      ['lantern', 15, 11], ['lantern', 18, 11], ['lantern', 15, 14], ['lantern', 18, 14], ['furn_barrel', 9, 11], ['flower', 6, 11], ['flower', 7, 11], ['flower', 12, 11]],
+      ['lantern', 15, 11], ['lantern', 18, 11], ['lantern', 15, 14], ['lantern', 18, 14], ['furn_barrel', 9, 11], ['flower', 6, 11], ['flower', 7, 11], ['flower', 12, 11],
+      ['furn_logpile', 5, 22], ['furn_logpile', 23, 11], ['furn_logpile', 29, 21], ['stump', 8, 23], ['stump', 25, 23], ['furn_hay', 31, 11]],
     guards: [[1, 11], [32, 14]],
     spots: [[14, 19], [8, 13], [24, 21], [19, 11]] },
   saltmere: { n: 'Saltmere', kind: 'Village', bio: 'coast', w: 32, h: 24, ground: 's', walls: null, sea: 1,
@@ -76,7 +78,7 @@ const TOWNS = {
     water: [[24, 0, 8, 24]], bridge: [[20, 11, 12, 2]],
     b: [['sm_tavern', 2, 4, 6, 5, 'sm_tavern', 'The Salty Gull'], ['sm_fish', 13, 5, 5, 4, 'sm_fish', 'Finn\'s Fish'], ['sr_house', 19, 4, 4, 4, 'k_house'],
       ['sm_chandler', 2, 15, 5, 4, 'sm_chandler', 'Perrin\'s Chandlery'], ['sr_house', 13, 14, 4, 4, 'k_house'], ['sr_house', 19, 15, 4, 4, 'k_house']],
-    props: [['furn_nets', 6, 14], ['furn_barrel', 12, 14], ['furn_crate', 13, 10], ['lantern', 21, 10], ['lantern', 25, 10], ['lantern', 29, 10], ['tree', 1, 1], ['tree', 1, 21], ['tree', 7, 21], ['tree', 22, 21]],
+    props: [['furn_nets', 6, 14], ['furn_barrel', 12, 14], ['furn_crate', 13, 10], ['furn_rowboat', 13, 20], ['furn_rowboat', 3, 21], ['furn_fishrack', 14, 2], ['furn_fishrack', 3, 10], ['furn_nets', 18, 10], ['lantern', 21, 10], ['lantern', 25, 10], ['lantern', 29, 10], ['tree', 1, 1], ['tree', 1, 21], ['tree', 7, 21], ['tree', 22, 21]],
     guards: [[1, 10], [1, 13]],
     spots: [[27, 12], [8, 10], [21, 20], [16, 10]] },
 };
@@ -392,7 +394,16 @@ genWilds = (f => function () {
   if (spots.kingsbridge && cross) road([cross.x, cross.y], near('kingsbridge', [cross.x, cross.y]));
   const mine = m.mineDoor ? [m.mineDoor.x, m.mineDoor.y + 1] : null;
   const pairs = [['kingsbridge', 'greyhelm'], ['kingsbridge', 'ashford'], ['kingsbridge', 'saltmere'], ['ashford', 'greyhelm']];
-  for (const [a, b] of pairs) if (spots[a] && spots[b]) { const pb = [spots[b][0] + TOWNS[b].w / 2, spots[b][1] + TOWNS[b].h / 2], ea = near(a, pb), eb = near(b, ea); road(ea, eb); }
+  // the towns join the network like branches of a tree: each road runs from the town's gate nearest Kingsbridge
+  // to the closest road already laid (art round: parallel roads braided across the map)
+  const kbC = spots.kingsbridge ? [spots.kingsbridge[0] + TOWNS.kingsbridge.w / 2, spots.kingsbridge[1] + TOWNS.kingsbridge.h / 2] : null;
+  const order = ['greyhelm', 'ashford', 'saltmere'].filter(id => spots[id]).sort((p, q) => kbC ? Math.hypot(spots[p][0] - kbC[0], spots[p][1] - kbC[1]) - Math.hypot(spots[q][0] - kbC[0], spots[q][1] - kbC[1]) : 0);
+  for (const id of order) {
+    if (!kbC) { for (const [a, b] of pairs) if (spots[a] && spots[b] && b === id) road(near(a, spots[b]), near(b, spots[a])); continue; }
+    const g = near(id, kbC); let to = near('kingsbridge', g), bd = Math.hypot(to[0] - g[0], to[1] - g[1]);
+    for (const i of m.roadT || []) { const x = i % m.w, y = (i / m.w) | 0; if (x > spots.kingsbridge[0] - 3 && x < spots.kingsbridge[0] + TOWNS.kingsbridge.w + 3 && y > spots.kingsbridge[1] - 3 && y < spots.kingsbridge[1] + TOWNS.kingsbridge.h + 3) continue; const d = Math.hypot(x - g[0], y - g[1]); if (d < bd - 4) { bd = d; to = [x, y]; } }
+    road(g, to);
+  }
   if (spots.greyhelm && mine) road(near('greyhelm', mine), mine);
   const hut = m.poi.find(p => p.type === 'hut'); if (spots.saltmere && hut) road(near('saltmere', [hut.x, hut.y]), [hut.x, hut.y + 2]);
   if (spots.ashford) { const sh = m.poi.find(p => p.type === 'shrine' && p.bio === 'forest'); if (sh) road(near('ashford', [sh.x, sh.y]), [sh.x, sh.y + 2]); }
