@@ -193,9 +193,9 @@ function storyDialog(lines, opts = {}) {
   const box = el('div', { class: 'f-panel storybox' }), wasPaused = PAUSED;
   Object.assign(box.style, { position: 'fixed', left: '50%', bottom: '86px', transform: 'translateX(-50%)', width: 'min(760px, 92vw)', display: 'flex', gap: '16px', alignItems: 'center', padding: '14px 18px', zIndex: 40 });
   document.body.append(box); PAUSED = true; INPUT.x = INPUT.y = 0;
-  const close = quiet => { box.remove(); removeEventListener('keydown', key, true); DIALOG = null; PAUSED = wasPaused && !!MODAL; if (!quiet && opts.done) opts.done(); };
+  const close = quiet => { box.remove(); removeEventListener('keydown', key, true); DIALOG = null; PAUSED = wasPaused && !!MODAL; if (typeof INPUT_GAP !== 'undefined') INPUT_GAP = Math.max(INPUT_GAP, performance.now() + 900); if (!quiet && opts.done) opts.done(); }; // the key that closed it doesn't reach the world
   const next = () => { if (i < lines.length - 1) { i++; draw(); } else if (!opts.choices) close(); };
-  const key = e => { if (['Space', 'Enter', 'KeyE', 'NumpadEnter'].includes(e.code) || [' ', 'Enter', 'e', 'E'].includes(e.key)) { e.preventDefault(); e.stopPropagation(); next(); } else if (e.code === 'Escape' && !opts.choices) { e.preventDefault(); e.stopPropagation(); i = lines.length - 1; close(); } };
+  const key = e => { if (e.repeat) { e.preventDefault(); e.stopImmediatePropagation(); return; } if (['Space', 'Enter', 'KeyE', 'NumpadEnter'].includes(e.code) || [' ', 'Enter', 'e', 'E'].includes(e.key)) { e.preventDefault(); e.stopImmediatePropagation(); next(); } else if (e.code === 'Escape' && !opts.choices) { e.preventDefault(); e.stopImmediatePropagation(); i = lines.length - 1; close(); } else if (!/^(Digit[1-4]|Numpad[1-4])$/.test(e.code)) { e.preventDefault(); e.stopImmediatePropagation(); } }; // no other key reaches the game during a dialogue; a held key never skips lines
   addEventListener('keydown', key, true);
   const draw = () => {
     box.innerHTML = '';
@@ -333,7 +333,8 @@ plotInfo = function (k) { const P = _plotInfoW(k); return S && S.story && S.stor
 const _renderQuestsW = renderQuests;
 renderQuests = function (b) {
   const T = storyState(), list = el('div', { class: 'list' });
-  for (const sid in STORIES) {
+  const rank = sid => { const q = T.q[sid]; return sid === T.track ? 0 : q && !q.done ? 1 : !q ? 2 : 3; }; // tracked, then running, not begun, finished
+  for (const sid of Object.keys(STORIES).sort((a, b) => rank(a) - rank(b))) {
     const Sd = STORIES[sid], q = T.q[sid];
     if (!q) { list.append(el('div', { class: 'rrow done' }, el('div', { class: 'qck' }, '?'), el('div', { class: 'rtxt' }, el('b', null, Sd.n), el('small', null, 'Not begun yet.')))); continue; }
     if (q.done) { list.append(el('div', { class: 'rrow done' }, el('div', { class: 'qck' }, '✓'), el('div', { class: 'rtxt' }, el('b', null, Sd.n), el('small', null, 'Complete. ' + Sd.blurb)))); continue; }
@@ -341,7 +342,7 @@ renderQuests = function (b) {
     const where = w ? (here ? ' (marked on your map)' : ' (in ' + (MAPS[w.map].name || w.map) + ')') : '';
     list.append(el('div', { class: 'rrow' + (T.track === sid ? ' hl' : '') }, el('div', { class: 'qck' }, (q.c + 1) + '/' + Sd.ch.length),
       el('div', { class: 'rtxt' }, el('b', null, Sd.n + ': ' + Sd.ch[q.c].n), el('small', null, hintOf(sid, st) + where)),
-      el('button', { class: 'btn ghost', on: () => { T.track = T.track === sid ? null : sid; refresh(); } }, T.track === sid ? 'Tracking' : 'Track')));
+      el('button', { class: 'btn ghost', on: () => { T.track = T.track === sid ? null : sid; refresh(); } }, T.track === sid ? 'Tracking (click to stop)' : 'Track')));
   }
   b.append(el('h3', null, 'Stories'), list, el('h3', null, 'Milestones'));
   _renderQuestsW(b);

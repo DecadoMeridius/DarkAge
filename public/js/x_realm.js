@@ -38,9 +38,8 @@ initMaps = (f => function () {
 const TOWNS = {
   kingsbridge: { n: 'Kingsbridge', kind: 'City', bio: 'meadow', w: 56, h: 46, ground: 'g', walls: 'stone',
     gates: { N: [27, 0], S: [27, 45], W: [0, 22], E: [55, 22] },
-    towers: [[0, 1], [54, 1], [0, 45], [54, 45], [25, 1], [29, 1], [25, 45], [29, 45], [0, 21], [0, 25], [54, 21], [54, 25]],
+    towers: [[0, 1], [54, 1], [0, 45], [54, 45], [25, 1], [29, 1], [25, 45], [29, 45], [0, 20], [54, 20]], // only above the side gates: a tower below one would hide the gateway
     st: [[26, 1, 4, 44, 'p'], [1, 21, 54, 4, 'p'], [12, 3, 2, 40, 'p'], [42, 3, 2, 40, 'p'], [3, 11, 50, 2, 'p'], [3, 33, 50, 2, 'p'], [3, 41, 50, 2, 'p'], [19, 15, 18, 15, 'st']],
-    water: [[26, 22, 4, 2]],
     b: [['kb_temple', 16, 4, 8, 7, 'kb_temple', 'Temple of the Ember'], ['kb_hall', 31, 4, 9, 7, 'kb_hall', 'Town Hall'], ['kb_house_a', 4, 6, 5, 5, 'k_house'], ['kb_house_c', 45, 6, 5, 5, 'k_house'],
       ['kb_inn', 4, 15, 7, 6, 'kb_inn', 'The Crowned Stag'], ['kb_market', 14, 16, 6, 5, 'kb_market', 'Wynna\'s Emporium'], ['kb_bank', 36, 16, 6, 5, 'kb_bank', 'Kingsbridge Bank'], ['kb_smith', 45, 16, 6, 5, 'kb_smith', 'Garrick\'s Forge'],
       ['kb_barracks', 4, 28, 7, 5, 'kb_barracks', 'The Barracks'], ['kb_house_b', 15, 29, 4, 4, 'k_house'], ['kb_house_a', 20, 28, 5, 5, 'k_house'], ['kb_house_c', 31, 28, 5, 5, 'k_house'],
@@ -50,7 +49,7 @@ const TOWNS = {
     props: [['fountain', 26, 23], ['statue', 14, 9], ['statue', 30, 9], ['statue', 41, 9], ['tree', 2, 4], ['tree', 10, 3], ['tree', 52, 4], ['tree', 2, 14], ['tree', 52, 14], ['tree', 2, 30], ['tree', 52, 30], ['tree', 11, 38], ['tree', 41, 38],
       ['furn_bench', 23, 20], ['furn_bench', 30, 20], ['furn_bench', 23, 25], ['furn_bench', 30, 25],
       ...[5, 9, 13, 31, 37, 43].flatMap(y => [['lantern', 25, y], ['lantern', 30, y]]), ['lantern', 11, 20], ['lantern', 44, 20], ['lantern', 11, 25], ['lantern', 44, 25]],
-    guards: [[26, 42], [29, 42], [26, 3], [29, 3], [3, 21], [3, 24], [52, 21], [52, 24], [8, 35]],
+    guards: [[24, 42], [31, 42], [26, 3], [29, 3], [3, 21], [3, 24], [52, 21], [52, 24], [8, 35]],
     spots: [[24, 19], [31, 27], [20, 13], [17, 22], [35, 13], [47, 23], [8, 23], [38, 23]] },
   greyhelm: { n: 'Greyhelm', kind: 'Town', bio: 'highlands', w: 40, h: 30, ground: 'g', walls: 'stone',
     gates: { N: [19, 0], S: [19, 29] },
@@ -60,7 +59,7 @@ const TOWNS = {
       ['hm_forge', 3, 18, 6, 5, 'gh_forge', 'Borek\'s Forge'], ['gh_supply', 24, 18, 6, 5, 'gh_supply', 'Miners\' Supply'], ['hm_house', 11, 19, 5, 4, 'k_house'], ['hm_house', 31, 19, 5, 4, 'k_house'],
       ['hm_house', 3, 24, 5, 4, 'k_house'], ['hm_house', 11, 24, 5, 4, 'k_house'], ['hm_house', 24, 24, 5, 4, 'k_house'], ['hm_house', 31, 24, 5, 4, 'k_house']],
     props: [['furn_crate', 14, 16], ['furn_coal', 10, 22], ['furn_crate', 30, 22], ['furn_barrel', 31, 17], ['well', 22, 11], ...[4, 9, 18, 24].flatMap(y => [['lantern', 17, y], ['lantern', 22, y]]), ['tree', 36, 11], ['tree', 2, 11]],
-    guards: [[18, 26], [21, 26], [18, 3], [21, 3]],
+    guards: [[16, 26], [23, 26], [18, 3], [21, 3]],
     spots: [[20, 12], [8, 16], [28, 12], [23, 26], [14, 14]] },
   ashford: { n: 'Ashford', kind: 'Village', bio: 'forest', w: 34, h: 26, ground: 'g', walls: 'fence',
     gates: { W: [0, 12], E: [33, 12], N: [16, 0], S: [16, 25] },
@@ -100,7 +99,7 @@ const TOWN_NPCS = {
   osric: { town: 'kingsbridge', n: 'Mayor Osric', role: 'Mayor', shop: 'kb_hall', P: TP({ skin: '#e8c0a0', hair: '#a8a8a8', hs: 'short', shirt: '#4a2470', pants: '#2a2a2a', cape: '#e8b830', beard: '#a8a8a8' }), love: ['wine_grape', 'truffle_risotto', 'knights_seal'], like: ['cheese', 'jam_plum', 'roast_feast'], hate: ['slime_goo', 'hay'],
     lines: [['Kingsbridge stands where the royal road crosses the river. That makes it important. And me, by extension.', 'The board has work for anyone with a strong arm.'], ['The regent\'s men came asking about a missing girl. I said I\'d never heard of her. Which was true, at the time.'], ['Kingsbridge owes you. I\'ll have a statue made. A small one.']], gifts: [[3, 'knights_feast', 2], [6, 'gold_bar', 5], [9, 'ring_topaz', 1]] },
   vey: { town: 'kingsbridge', n: 'Captain Vey', role: 'Captain of the Watch', shop: 'kb_barracks', P: TP({ skin: '#c88a60', hair: '#3a2a1a', hs: 'pony', shirt: '#6a3a9a', pants: '#2a2a32', helm: '#a8b0c0', helmS: 'steel', armS: 'steel', armor: '#8a92a4', trim: '#6a3a9a', cape: '#4a2470' }), love: ['steel_sword', 'knights_feast', 'griffin_feather'], like: ['bread', 'iron_bar', 'leather'], hate: ['wine_strawberry'],
-    lines: [['My knights ride the roads in fours. If you see them, they\'ll have your back.', 'Wolves, bandits, worse. The Wilds grew teeth while the crown was hollow.'], ['More of us are in the saddle than in fifty years. Someone is expecting trouble.'], ['If you ever want to take the oath, I\'ll stand witness.']], gifts: [[3, 'iron_body', 1], [6, 'steel_shield', 1], [9, 'ring_tyrant', 1]] },
+    lines: [['My knights ride the roads in twos, threes and fours. If you see them, they\'ll have your back.', 'Wolves, bandits, worse. The Wilds grew teeth while the crown was hollow.'], ['More of us are in the saddle than in fifty years. Someone is expecting trouble.'], ['If you ever want to take the oath, I\'ll stand witness.']], gifts: [[3, 'iron_body', 1], [6, 'steel_shield', 1], [9, 'ring_tyrant', 1]] },
   nell: { town: 'kingsbridge', n: 'Nell', role: 'Errand girl', shop: 'k_talk', P: TP({ skin: '#f0c8a0', hair: '#c8642a', hs: 'pony', shirt: '#5a7a3a', pants: '#5a4a3a' }), love: ['honey_cake', 'blackberry', 'berry_tart'], like: ['apple', 'strawberry', 'egg'], hate: ['coal', 'stone'],
     lines: [['I know every alley in Kingsbridge. Two coppers and I\'ll show you. One copper and I\'ll show you most of them.', 'The knights let me feed their horses. The grey one bites.'], ['I saw a lady in a purple cloak buy bread at dawn and run off toward the woods. Very suspicious.'], ['When I grow up I\'m going to be a knight. Or a pirate. Whichever pays.']], gifts: [[3, 'blackberry', 6], [6, 'honey_cake', 2], [9, 'rabbit_foot', 1]] },
   dagna: { town: 'greyhelm', n: 'Dagna', role: 'Innkeeper', shop: 'gh_inn', P: TP({ skin: '#d8a070', hair: '#a83a1a', hs: 'bun', shirt: '#5a6a4a', pants: '#3a3a40', apron: '#8a6a4a' }), love: ['miners_pie', 'highland_stew'], like: ['potato', 'red_meat', 'cheese'], hate: ['tulip', 'sea_urchin'],
@@ -148,7 +147,7 @@ const TOWN_ACTS = {};
 for (const id in TOWNS) for (const b of TOWNS[id].b) if (b[5] && b[5] !== 'k_house' && b[5] !== 'kb_stall') TOWN_ACTS[b[5]] = { town: id, kind: b[0], name: b[6] || b[0] };
 const keeperOf = act => Object.keys(TOWN_NPCS).find(k => TOWN_NPCS[k].shop === act);
 const actType = act => /inn|tavern/.test(act) ? 'inn' : /bank/.test(act) ? 'bank' : /temple/.test(act) ? 'temple' : /hall/.test(act) ? 'hall' : /barracks/.test(act) ? 'barracks' : /smith|forge/.test(act) ? 'smith' : act === 'sm_fish' ? 'fish' : 'shop';
-const TOWN_HOURS = { inn: [420, 1440], shop: [540, 1080], smith: [540, 1080], fish: [480, 1080], bank: [540, 1020], temple: [360, 1320], hall: [540, 1080], barracks: [360, 1380] };
+const TOWN_HOURS = { inn: [0, 1440], shop: [540, 1080], smith: [540, 1080], fish: [480, 1080], bank: [540, 1020], temple: [360, 1320], hall: [480, 1260], barracks: [360, 1380] };
 const CITY_WALL = { kingsbridge: 'plaster', greyhelm: 'stone', ashford: 'plank', saltmere: 'plank' };
 function roomFor(act) {
   const T = TOWN_ACTS[act], ty = actType(act), k = keeperOf(act), wall = ty === 'temple' || ty === 'bank' || ty === 'barracks' ? 'stone' : CITY_WALL[T.town];
@@ -158,16 +157,16 @@ function roomFor(act) {
       d: [['dec_rug_red', 9, 6, 0, 8], ['dec_window', 12, 1, 0, 6], ['dec_painting', 9, 1, 16, 10], ['dec_banner_' + (T.town === 'kingsbridge' ? 'royal' : 'red'), 7, 1, 4, 2]] },
     shop: { w: 12, h: 9, floor: 'f', keeper: K(5, 4), f: [['shelf_store', 1, 3], ['plant', 3, 3], ['shelf_store', 7, 3], ['shelf_store', 9, 3], ['counter', 4, 5, act, 'Shop'], ['barrel', 1, 6], ['barrel', 1, 7], ['sack', 10, 6], ['sack', 10, 7], ['crate', 9, 7], ['lamp', 10, 5]],
       d: [['dec_rug_green', 4, 6, 0, 8], ['dec_window', 4, 1, 0, 6], ['dec_shelf', 5, 1, 0, 4]] },
-    smith: { w: 12, h: 9, floor: 'p', keeper: K(7, 5), f: [['coal', 3, 3], ['coal', 4, 3], ['forge', 5, 3, act, 'Forge'], ['weapons', 8, 3], ['lamp', 1, 3], ['anvil', 6, 5, act, 'Forge'], ['tub', 8, 6], ['barrel', 10, 6], ['crate', 10, 7], ['workbench', 1, 6], ['stool', 3, 6]],
+    smith: { w: 12, h: 9, floor: 'fl', keeper: K(7, 5), f: [['coal', 3, 3], ['coal', 4, 3], ['forge', 5, 3, act, 'Forge'], ['weapons', 8, 3], ['lamp', 1, 3], ['anvil', 6, 5, act, 'Forge'], ['tub', 8, 6], ['barrel', 10, 6], ['crate', 10, 7], ['workbench', 1, 6], ['stool', 3, 6]],
       d: [['dec_banner_red', 2, 1, 4, 2], ['dec_banner_red', 10, 1, 4, 2]] },
     fish: { w: 10, h: 8, floor: 'f', keeper: K(5, 4), f: [['nets', 1, 3], ['counter', 4, 5, act, 'Fish'], ['barrel', 8, 3], ['tub', 8, 5], ['crate', 1, 6], ['lamp', 7, 3]], d: [['dec_window', 4, 1, 0, 6], ['dec_rug_small', 4, 6, 0, 8]] },
-    bank: { w: 12, h: 9, floor: 'st', keeper: K(5, 4), f: [['chest', 1, 3], ['chest', 9, 3], ['counter', 4, 5, act, 'Vault'], ['candles', 3, 3], ['candles', 8, 3], ['plant', 1, 7], ['plant', 10, 7], ['armour', 1, 5], ['armour', 10, 5]],
+    bank: { w: 12, h: 9, floor: 'mb', keeper: K(5, 4), f: [['chest', 1, 3], ['chest', 9, 3], ['counter', 4, 5, act, 'Vault'], ['candles', 3, 3], ['candles', 8, 3], ['plant', 1, 7], ['plant', 10, 7], ['armour', 1, 5], ['armour', 10, 5]],
       d: [['dec_rug_blue', 4, 6, 0, 8], ['dec_banner_royal', 5, 1, 4, 4], ['dec_painting', 8, 1, 0, 10]] },
-    temple: { w: 14, h: 11, floor: 'st', keeper: K(7, 5), f: [['altar', 6, 4, act, 'Pray'], ['candles', 4, 3], ['candles', 9, 3], ['candles', 2, 6], ['candles', 11, 6], ['bench', 2, 8], ['bench', 5, 8], ['bench', 7, 8], ['bench', 10, 8], ['plant', 1, 3], ['plant', 12, 3]],
+    temple: { w: 14, h: 11, floor: 'mb', keeper: K(7, 5), f: [['altar', 6, 4, act, 'Pray'], ['candles', 4, 3], ['candles', 9, 3], ['candles', 2, 6], ['candles', 11, 6], ['bench', 2, 8], ['bench', 5, 8], ['bench', 7, 8], ['bench', 10, 8], ['plant', 1, 3], ['plant', 12, 3]],
       d: [['dec_glass', 3, 1, 0, 2], ['dec_glass', 6, 1, 16, 2], ['dec_glass', 10, 1, 0, 2], ['dec_runner_s', 6, 5, 16, 0]] },
-    hall: { w: 14, h: 10, floor: T.town === 'kingsbridge' ? 'st' : 'f', keeper: K(7, 4), f: [['counter', 5, 5, act, 'Town board'], ['bookshelf', 1, 3], ['bookshelf', 11, 3], ['banquet', 4, 7], ['bench', 4, 8], ['bench', 6, 8], ['fireplace', 8, 3], ['candles', 3, 3], ['candles', 11, 6], ['plant', 1, 8], ['plant', 12, 8]],
+    hall: { w: 14, h: 10, floor: T.town === 'kingsbridge' ? 'mb' : 'f', keeper: K(7, 4), f: [['counter', 5, 5, act, 'Town board'], ['bookshelf', 1, 3], ['bookshelf', 11, 3], ['banquet', 4, 7], ['bench', 4, 8], ['bench', 6, 8], ['fireplace', 8, 3], ['candles', 3, 3], ['candles', 11, 6], ['plant', 1, 8], ['plant', 12, 8]],
       d: [['dec_tapestry', 5, 1, 0, 0], ['dec_banner_' + (T.town === 'kingsbridge' ? 'royal' : 'blue'), 3, 1, 4, 4], ['dec_rug_purple', 5, 6, 0, 0]] },
-    barracks: { w: 14, h: 10, floor: 'p', keeper: K(7, 4), f: [['counter', 5, 5, act, 'Captain'], ['weapons', 1, 3], ['weapons', 3, 3], ['armour', 9, 3], ['armour', 10, 3], ['armour', 11, 3], ['bed', 1, 8], ['bed', 11, 8], ['table', 6, 8], ['stool', 5, 8], ['stool', 8, 8], ['lamp', 12, 4]],
+    barracks: { w: 14, h: 10, floor: 'fl', keeper: K(7, 4), f: [['counter', 5, 5, act, 'Captain'], ['weapons', 1, 3], ['weapons', 3, 3], ['armour', 9, 3], ['armour', 10, 3], ['armour', 11, 3], ['bed', 1, 8], ['bed', 11, 8], ['table', 6, 8], ['stool', 5, 8], ['stool', 8, 8], ['lamp', 12, 4]],
       d: [['dec_banner_royal', 6, 1, 4, 4], ['dec_banner_royal', 8, 1, 4, 4], ['dec_painting', 12, 1, 0, 10]] },
   }[ty];
   return Object.assign({ name: T.name, wall, dark: .3 }, L);
@@ -177,7 +176,7 @@ for (const act in TOWN_ACTS) {
   ROOMS[act] = roomFor(act);
   if (H[0] > 0 || H[1] < 1440) HOURS[act] = H;
   if (k) SCHED[k] = [[H[0], 'shop'], [H[1], 'home']];
-  DOORL[act] = { inn: 'Inn', temple: 'Temple', hall: 'Town hall', barracks: 'Barracks', bank: 'Bank' }[ty] || 'Shop';
+  DOORL[act] = { inn: 'Enter', temple: 'Enter', hall: 'Enter', barracks: 'Enter', bank: 'Enter' }[ty] || 'Shop'; // the prompt adds the building's own name
   BLD_N[act] = TOWN_ACTS[act].name;
 }
 DOORL.k_house = 'Knock'; DOORL.kb_stall = 'Browse';
@@ -187,7 +186,7 @@ const price = (id, k) => Math.max(5, Math.round((IT[id].p || 20) * k));
 const listOf = ids => ids.filter(id => IT[id]);
 const SHOP_STOCK = {
   kb_market: () => [...Object.keys(CROPS).filter(k => CROPS[k].s.includes(S.season) && !CROPS[k].secret && IT[k + '_seed']).map(k => k + '_seed'), ...listOf(['apple_sapling', 'cherry_sapling', 'peach_sapling', 'orange_sapling', 'compost', 'growth_tonic', 'rich_compost', 'flour', 'sugar', 'salt', 'butter', 'lantern'])],
-  kb_stall: () => listOf(['apple', 'cherry', 'peach', 'orange', 'plum', 'honey', 'cheese', 'jam_cherry', 'jam_plum', 'wine_grape', 'egg', 'milk']),
+  kb_stall: () => listOf(['apple', 'cherry', 'peach', 'orange', 'plum', 'honey', 'goat_cheese', 'jam_cherry', 'jam_plum', 'wine_grape', 'egg', 'milk']),
   kb_smith: () => listOf(['copper_bar', 'iron_bar', 'steel_bar', 'silver_bar', 'gold_bar', 'iron_sword', 'steel_sword', 'steel_spear', 'steel_bow', 'steel_shield', 'steel_helm', 'arrow']),
   af_trader: () => listOf(['wood', 'hardwood', 'sap', 'apple_sapling', 'cherry_sapling', 'plum_sapling', 'morel', 'chanterelle', 'hazelnut', 'blackberry', 'leather']),
   af_saw: () => listOf(['wood', 'hardwood', 'fence', 'workbench', 'stone_path', 'gravel_path']),
@@ -227,9 +226,17 @@ function townMenu(act, who) {
   const G = b => { if (k && NPCS[k]) greet(b, k); };
   if (ty === 'inn') return openModal(title, [{ id: 'eat', label: 'Meals', render: b => {
     G(b); b.append(el('p', { class: 'note' }, 'Rumour: ' + pickR(RUMORS_T[town])));
-    const L = el('div', { class: 'list' }); listOf(mealsAt[town]).forEach(id => L.append(buyRow(id, price(id, 1.6)))); b.append(L);
-    const free = k && hearts(k) >= 6, cost = free ? 0 : 150;
-    b.append(el('div', { class: 'acts' }, el('button', { class: 'btn', on: () => { if (S.gold < cost) { toast('A room is ' + cost + 'g.'); return; } S.gold -= cost; S.p.hp = maxHP(); if (typeof maxST === 'function') S.p.st = maxST(); if (typeof S.lives === 'number') S.lives = 3; SFX.ok(); toast('You rest by the fire. Health restored.'); refresh(); } }, free ? 'Rest (free for a friend)' : 'Rest (' + cost + 'g)')));
+    // a hot meal at the table: eaten on the spot, health and energy back (playtest: meals only went into the bag, at 1.6x)
+    const hot = 40 + 10 * TOWN_ORDER.indexOf(town);
+    b.append(el('div', { class: 'acts' }, el('button', { class: 'btn', on: () => { if (S.gold < hot) { toast('A hot meal is ' + hot + 'g.'); return; } S.gold -= hot; S.p.hp = maxHP(); if (typeof maxST === 'function') S.p.st = maxST(); SFX.ok(); toast('A bowl of the house stew and fresh bread. Health and energy restored.'); refresh(); } }, 'Eat a hot meal here (' + hot + 'g)')));
+    b.append(el('h3', null, 'To take away'));
+    const L = el('div', { class: 'list' }); listOf(mealsAt[town]).forEach(id => L.append(buyRow(id, price(id, 1.15)))); b.append(L);
+    const free = k && hearts(k) >= 6, cost = free ? 0 : 120;
+    const night = S.time >= 1080 || S.time < 300;
+    b.append(el('div', { class: 'acts' }, night
+      // after six in the evening: a bed for the night, and you wake here (playtest: resting at 1 am still meant collapsing at 2)
+      ? el('button', { class: 'btn', on: () => { if (S.gold < cost) { toast('A room is ' + cost + 'g.'); return; } S.gold -= cost; S.flags = S.flags || {}; S.flags.innWake = act; closeModal(); endDay(false); } }, free ? 'Sleep here until morning (free for a friend)' : 'Sleep here until morning (' + cost + 'g)')
+      : el('button', { class: 'btn', on: () => { if (S.gold < cost) { toast('A room is ' + cost + 'g.'); return; } S.gold -= cost; S.p.hp = maxHP(); if (typeof maxST === 'function') S.p.st = maxST(); if (typeof S.lives === 'number') S.lives = 3; S.time = Math.min(S.time + 120, 1500); closeModal(); SFX.ok(); toast('You sleep a couple of hours in a warm bed upstairs. Health, energy and lives restored.', 'lvl'); } }, free ? 'Rest two hours (free for a friend)' : 'Rest two hours (' + cost + 'g)')));
   } }]);
   if (ty === 'bank') return openBank();
   if (ty === 'smith') return openModal(title, [buyTab(act, 'Bars and arms, forged here.'), sellTab(act), { id: 'forge', label: 'Forge', render: b => { if (!MODAL.opts.st || MODAL.opts.st === 'forge') MODAL.opts.st = 'furnace'; MODAL.opts.station = 'forge'; renderCraft(b); } }]);
@@ -277,13 +284,42 @@ killEnemy = (f => function (m, e) {
   const was = e.dead; f(m, e);
   if (was || !e.dead || !S || !S.realm || !m || m.id !== 'wilds' || !m.bio) return;
   const b = BIOMES[m.bio[Math.floor(e.y / 16) * m.w + Math.floor(e.x / 16)]];
-  for (const j of TOWN_JOBS) { const s = S.realm.q[j.id]; if (!s || !s.on || s.done) continue; if (j.t === 'kill' && j.bio === b) s.n++; if (j.t === 'assist' && e.allyHit && gameT - e.allyHit < 10) s.n++; }
+  for (const j of TOWN_JOBS) {
+    const s = S.realm.q[j.id]; if (!s || !s.on || s.done) continue; const T = (m.towns || []).find(t => t.id === j.town);
+    const near = T && dist(e.x / 16, e.y / 16, T.cx, T.cy) < 60; // the land round a town is mixed: a kill near it counts too (playtest)
+    if ((j.t === 'kill' && (j.bio === b || near)) || (j.t === 'assist' && ((e.allyHit && gameT - e.allyHit < 10) || ALLIES.some(al => !al.down && !al.gone && dist(al.x, al.y, e.x, e.y) < 120)))) {
+      s.n++; const need = j.need; toast(j.n + ': ' + Math.min(s.n, need) + '/' + need + (s.n >= need ? '. Done: hand it in at ' + (TOWNS[j.town] ? TOWNS[j.town].n : 'town') + '.' : ''), s.n >= need ? 'lvl' : undefined);
+    }
+  }
 })(killEnemy);
 
 /* ---- placing the towns, their roads and signposts ---- */
+/* the royal roads: long straight runs that only turn on dry land, so bridges cross water in a straight
+   line (playtest: diagonal roads made staircase-shaped plank bridges), and no tree canopy hangs over them */
+function realmRoad(m, a, b) {
+  let [x, y] = a.map(Math.round); const [tx, ty] = b.map(Math.round); let n = 0, horiz = Math.abs(tx - x) >= Math.abs(ty - y), run = 0;
+  const wet = (X, Y) => inb(m, X, Y) && (TER[getT(m, X, Y)].water || getT(m, X, Y) === 'b');
+  const KEEP = ['shrine', 'cave', 'chest', 'page', 'shard', 'sign', 'tent', 'wreck', 'statue', 'campfire', 'waystone'];
+  const RT = m.roadT || (m.roadT = new Set());
+  const lay = (x, y) => {
+    for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
+      const X = x + i, Y = y + j; if (!inb(m, X, Y) || m.solidB[Y * m.w + X]) continue; const t = getT(m, X, Y); RT.add(Y * m.w + X);
+      if (t === 'w' || t === 'l') setT(m, X, Y, 'b'); else if (t !== 'i' && t !== 'b' && t !== 's' && t !== 'p') setT(m, X, Y, 'd');
+      const o = getO(m, X, Y); if (o && !KEEP.includes(mainOf(m, X, Y)[2].k)) delObj(m, X, Y);
+    }
+    for (let j = 2; j <= 4; j++) for (let i = -1; i <= 2; i++) { const X = x + i, Y = y + j, o = inb(m, X, Y) && getO(m, X, Y); if (o && (o.k === 'tree' || o.k === 'ancient')) delObj(m, X, Y); } // canopies overhanging from the south
+  };
+  lay(x, y);
+  while ((x !== tx || y !== ty) && n++ < 4000) {
+    if (run <= 0 && !wet(x, y) && !wet(x + 1, y + 1)) { horiz = x === tx ? false : y === ty ? true : !horiz; run = 6 + Math.floor(R() * 14); }
+    if (horiz && x !== tx) x += Math.sign(tx - x); else if (!horiz && y !== ty) y += Math.sign(ty - y); else { horiz = !horiz; run = 0; continue; }
+    run--; lay(x, y);
+  }
+}
 function townSpot(m, T, avoid, near) {
-  const W = m.w, want = BIOMES.indexOf(T.bio);
-  for (let k = 0; k < 6000; k++) {
+  const W = m.w, want = BIOMES.indexOf(T.bio); let best = null, bs = -1e9;
+  for (let k = 0; k < 9000; k++) {
+    if (k === 6000 && best) return best; // no ideal spot (some worlds): the best one seen still gets the town
     const x = 8 + Math.floor(R() * (W - T.w - 16)), y = 10 + Math.floor(R() * (m.h - T.h - 40));
     if (near && k < 4000 && (Math.hypot(x + T.w / 2 - near[0], y + T.h / 2 - near[1]) > near[2] || Math.hypot(x + T.w / 2 - near[0], y + T.h / 2 - near[1]) < near[3])) continue;
     if (avoid.some(a => x < a[0] + a[2] + 14 && x + T.w + 14 > a[0] && y < a[1] + a[3] + 14 && y + T.h + 14 > a[1])) continue;
@@ -291,11 +327,13 @@ function townSpot(m, T, avoid, near) {
     if (m.arenas.some(a => a.x > x - 12 && a.x < x + T.w + 12 && a.y > y - 12 && a.y < y + T.h + 12)) continue;
     let ok = 0, bad = 0, n = 0;
     for (let j = 0; j < T.h; j += 2) for (let i = 0; i < (T.sea ? T.w - 8 : T.w); i += 2) { n++; const X = x + i, Y = y + j, t = getT(m, X, Y); if (m.bio[Y * W + X] === want) ok++; if (TER[t].water || TER[t].lava) bad++; }
+    const seaOk = !T.sea || (TER[getT(m, x + T.w + 2, y + (T.h >> 1))].water && TER[getT(m, x + T.w - 4, y + (T.h >> 1))].water);
+    if (seaOk && bad / n <= (T.sea ? .3 : .12)) { const sc = ok / n - bad / n * 3; if (sc > bs) { bs = sc; best = [x, y]; } }
     if (ok / n < .85 || bad / n > (T.sea ? .2 : .06)) continue;
-    if (T.sea && !(TER[getT(m, x + T.w + 2, y + (T.h >> 1))].water && TER[getT(m, x + T.w - 4, y + (T.h >> 1))].water)) continue;
+    if (!seaOk) continue;
     return [x, y];
   }
-  return null;
+  return best;
 }
 function stampTown(m, id, T, ox, oy) {
   const W = m.w, G = (x, y) => [ox + x, oy + y];
@@ -320,16 +358,24 @@ function stampTown(m, id, T, ox, oy) {
     const [X, Y] = G(x, y); if (getO(m, X, Y) || m.solidB[Y * W + X]) continue;
     if (k === 'tree') setO(m, X, Y, { k: 'tree', kind: TREEK[T.bio] || 'oak', fixed: 1, town: 1 });
     else if (k === 'flower') setO(m, X, Y, { k: 'flower', v: (x + y) % 5 });
-    else if (k === 'fountain') { putObj(m, X, Y, { k: 'fountain', fixed: 1 }); }
+    else if (k === 'fountain') { for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) { setT(m, X + i, Y - j, 'p'); m.solidB[(Y - j) * W + X + i] = 1; } setO(m, X, Y, { k: 'fountain', fixed: 1 }); } // like the village's: paved and solid under the basin, no loose water
     else putObj(m, X, Y, { k, fixed: 1 });
+  }
+  // the gateways are paved through to the road outside (the stamp above grassed over the road's last tiles)
+  for (const [s, [x, y]] of Object.entries(T.gates || {})) for (let k = -1; k <= 6; k++) for (let w = 0; w < 2; w++) {
+    const X = s === 'N' || s === 'S' ? ox + x + w : s === 'W' ? ox + x - k : ox + x + k, Y = s === 'N' ? oy + y - k : s === 'S' ? oy + y + k : oy + y + w;
+    if (!inb(m, X, Y) || m.solidB[Y * W + X]) continue; const t = getT(m, X, Y); if (TER[t].water) setT(m, X, Y, 'b'); else setT(m, X, Y, 'p'); // through cliffs too: a gate never opens into rock (round 5)
+    const o = getO(m, X, Y); if (o && !['cgate', 'gpart', 'ctower', 'cwall', 'fence'].includes(o.k)) delObj(m, X, Y);
   }
   const gx = Object.fromEntries(Object.entries(T.gates || {}).map(([s, [x, y]]) => [s, s === 'N' ? [ox + x, oy - 2] : s === 'S' ? [ox + x, oy + T.h + 1] : s === 'W' ? [ox - 2, oy + y] : [ox + T.w + 1, oy + y]]));
   return { id, n: T.n, kind: T.kind, x: ox, y: oy, w: T.w, h: T.h, cx: ox + (T.w >> 1), cy: oy + (T.h >> 1), exits: gx };
 }
 const ARROWS = ['→', '↗', '↑', '↖', '←', '↙', '↓', '↘'];
 const arrowTo = (dx, dy) => ARROWS[Math.round(((Math.atan2(-dy, dx) * 180 / Math.PI + 360) % 360) / 45) % 8];
-function signNear(m, x, y, text) {
-  for (let r = 1; r < 5; r++) for (const [dx, dy] of [[r, 0], [-r, 0], [r, -1], [-r, -1], [r, 1], [-r, 1]]) { const X = x + dx, Y = y + dy; if (inb(m, X, Y) && !getO(m, X, Y) && !m.solidB[Y * m.w + X] && !TER[getT(m, X, Y)].solid && !TER[getT(m, X, Y)].water && getT(m, X, Y) !== 'p' && getT(m, X, Y) !== 'd') { setO(m, X, Y, { k: 'sign', fixed: 1, text, guide: 1 }); return; } }
+function signNear(m, x, y, text, side) {
+  // beside a gate's road, never in the gateway: across the road for N/S gates, above or below it for W/E
+  const offs = side === 'W' || side === 'E' ? r => [[0, -r], [0, r], [-1, -r], [-1, r], [1, -r], [1, r]] : side ? r => [[r, 0], [-r, 0], [r, side === 'N' ? -1 : 1], [-r, side === 'N' ? -1 : 1]] : r => [[r, 0], [-r, 0], [r, -1], [-r, -1], [r, 1], [-r, 1]];
+  for (let r = side ? 2 : 1; r < 6; r++) for (const [dx, dy] of offs(r)) { const X = x + dx, Y = y + dy; if (inb(m, X, Y) && !getO(m, X, Y) && !m.solidB[Y * m.w + X] && !TER[getT(m, X, Y)].solid && !TER[getT(m, X, Y)].water && getT(m, X, Y) !== 'p' && getT(m, X, Y) !== 'd') { setO(m, X, Y, { k: 'sign', fixed: 1, text, guide: 1 }); return; } }
 }
 genWilds = (f => function () {
   const m = f(), R0 = R; R = rng((S.seed || 1) * 91 + 7);
@@ -341,7 +387,7 @@ genWilds = (f => function () {
   }
   m.towns = []; m.roads = [];
   const exitOf = (id, side) => { const T = TOWNS[id], [x, y] = spots[id], g = T.gates[side]; if (!g) return null; return side === 'N' ? [x + g[0], y - 2] : side === 'S' ? [x + g[0], y + T.h + 1] : side === 'W' ? [x - 2, y + g[1]] : [x + T.w + 1, y + g[1]]; };
-  const road = (a, b) => { if (!a || !b) return; carvePath(m, a, b); m.roads.push([a, b]); };
+  const road = (a, b) => { if (!a || !b) return; realmRoad(m, a, b); m.roads.push([a, b]); };
   const near = (id, pt) => { const T = TOWNS[id]; return Object.keys(T.gates).map(s => exitOf(id, s)).sort((p, q) => Math.hypot(p[0] - pt[0], p[1] - pt[1]) - Math.hypot(q[0] - pt[0], q[1] - pt[1]))[0]; };
   if (spots.kingsbridge && cross) road([cross.x, cross.y], near('kingsbridge', [cross.x, cross.y]));
   const mine = m.mineDoor ? [m.mineDoor.x, m.mineDoor.y + 1] : null;
@@ -355,9 +401,9 @@ genWilds = (f => function () {
   const home = [WIN_F, m.h - 4];
   for (const T of m.towns) for (const s in T.exits) {
     const [x, y] = T.exits[s], parts = m.towns.filter(o => o !== T).map(o => o.n + ' ' + arrowTo(o.cx - x, o.cy - y));
-    parts.push('Emberhollow ' + arrowTo(home[0] - x, home[1] - y)); signNear(m, x, y, parts.join(' · '));
+    parts.push('Emberhollow ' + arrowTo(home[0] - x, home[1] - y)); signNear(m, x, y, parts.join(' · '), s);
   }
-  if (cross) signNear(m, cross.x + 2, cross.y + 3, m.towns.map(o => o.n + ' ' + arrowTo(o.cx - cross.x, o.cy - cross.y)).join(' · '));
+  if (cross) signNear(m, cross.x + 2, cross.y + 3, m.towns.map(o => o.n + ' ' + arrowTo(o.cx - cross.x, o.cy - cross.y)).concat(['Emberhollow ' + arrowTo(home[0] - cross.x, home[1] - cross.y)]).join(' · '));
   R = R0;
   return m;
 })(genWilds);
@@ -372,6 +418,7 @@ useTool = (f => function () { const [tx, ty] = typeof faceTile === 'function' ? 
 wayName = (f => function (id) { if (id && id.startsWith('wilds_') && TOWNS[id.slice(6)]) return TOWNS[id.slice(6)].n; return f(id); })(wayName);
 
 /* ---- doors ---- */
+const TOWNS_AT_ME = () => { const T = cur && cur.towns && townAt(cur, S.p.x / 16, S.p.y / 16, 4); return T ? T.n : cur && cur.wild ? 'On the road' : ''; }; // the dialog's title line: where, not the name again
 const KNOCK = {
   kingsbridge: ['A maid opens the door a crack. "The master is out. The master is always out."', 'Laughter and the clink of cups inside. Nobody hears you.', 'A sign on the door: "No hawkers, no knights, no geese."'],
   greyhelm: ['A gruff voice: "If you\'re selling, we\'re not buying. If you\'re buying, we\'re not selling."', 'The smell of stew. Someone calls "Shift\'s not over!" through the door.'],
@@ -381,7 +428,7 @@ const KNOCK = {
 doorAction = (f => function (act, who) {
   if (act === 'k_house') { const T = townAt(cur, S.p.x / 16, S.p.y / 16, 2); toast(pickR(KNOCK[T ? T.id : 'kingsbridge'])); return; }
   if (act === 'kb_stall') return openModal('Market stall', [buyTab('kb_stall', 'Fresh from the farms around Kingsbridge.'), sellTab('kb_stall')]);
-  if (act === 'k_guard') { const kind = (ALLY_KINDS[who] || {}).n || 'Guard'; storyDialog([[who, pickR(/knight/.test(who) ? ALLY_LINES.knight : ALLY_LINES.guard)]], { title: kind }); return; }
+  if (act === 'k_guard') { const kind = (ALLY_KINDS[who] || {}).n || 'Guard'; storyDialog([[who, pickR(/knight/.test(who) ? ALLY_LINES.knight : ALLY_LINES.guard)]], { title: (TOWNS_AT_ME() || kind) }); return; }
   if (act === 'k_talk' && storyTalk(who)) return;
   if (act === 'k_talk') return openModal(NPCS[who] ? NPCS[who].n : 'Talk', [{ id: 't', label: 'Talk', render: b => greet(b, who) }]);
   if (TOWN_ACTS[act] && (who || (cur && cur.id === 'in_' + act))) {
@@ -437,11 +484,26 @@ function spawnGuards(m) {
     for (const [x, y] of TOWNS[T.id].guards) { const A = ALLY_KINDS[kind], px = (T.x + x + .5) * 16, py = (T.y + y + .8) * 16; ALLIES.push({ id: kind, x: px, y: py, hp: A.hp, mhp: A.hp, atk: A.atk, post: [px, py], cd: 0, dir: 0 }); }
   }
 }
+function spawnEscort(m) {
+  const t = typeof openTileNear === 'function' && openTileNear(m, Math.floor(S.p.x / 16) + 6, Math.floor(S.p.y / 16) + 3); if (!t) return;
+  const P = { path: [t], pi: 0, members: [], escort: true };
+  ['knight_c', 'knight_a', 'knight_b'].forEach((kind, i) => { const A = ALLY_KINDS[kind], al = { id: kind, x: (t[0] + .5) * 16 + i * 10, y: (t[1] + .8) * 16, hp: A.hp, mhp: A.hp, atk: A.atk, patrol: P, slot: i, cd: 0, dir: 1 }; P.members.push(al); ALLIES.push(al); });
+  PATROLS.push(P); toast('Three knights ride up: "Captain Vey sent us. Lead on, we will keep at your side."', 'lvl');
+}
 function spawnPatrol(m) {
   if (!m.roads || !m.roads.length) return;
-  const far = m.roads.map(r => [r, Math.min(dist(S.p.x / 16, S.p.y / 16, r[0][0], r[0][1]), dist(S.p.x / 16, S.p.y / 16, r[1][0], r[1][1]))]).filter(([, d]) => d > 30);
-  if (!far.length) return; const [rd] = far[Math.floor(Math.random() * far.length)], rev = Math.random() < .5, a = rev ? rd[1] : rd[0], b = rev ? rd[0] : rd[1];
+  // a road whose one end is out of sight but not too far (25-90 tiles): the patrol rides in from there, past you (playtest: none were ever seen)
+  const px = S.p.x / 16, py = S.p.y / 16, cand = [];
+  for (const r of m.roads) for (const k of [0, 1]) { const d = dist(px, py, r[k][0], r[k][1]), d2 = dist(px, py, r[1 - k][0], r[1 - k][1]); if (d > 25 && d < 90 && d2 < d + 40) cand.push([r[k], r[1 - k], d]); }
+  const far = m.roads.map(r => [r, Math.min(dist(px, py, r[0][0], r[0][1]), dist(px, py, r[1][0], r[1][1]))]).filter(([, d]) => d > 30);
+  let a, b;
+  if (cand.length) [a, b] = cand[Math.floor(Math.random() * cand.length)];
+  else { if (!far.length) return; const [rd] = far[Math.floor(Math.random() * far.length)], rev = Math.random() < .5; a = rev ? rd[1] : rd[0]; b = rev ? rd[0] : rd[1]; }
   const path = findPath(m, Math.round(a[0]), Math.round(a[1]), Math.round(b[0]), Math.round(b[1]), 60000); if (!path) return;
+  { // start about 24 tiles before the point of the road nearest you, so they come by within a minute (off screen)
+    let j = 0, bd = 1e9; path.forEach((p, i) => { const d = dist(px, py, p[0], p[1]); if (d < bd) { bd = d; j = i; } });
+    if (bd < 45) { let i = j; while (i > 0 && dist(px, py, path[i][0], path[i][1]) < 24) i--; if (i > 0) { path.splice(0, i); a = path[0]; } }
+  }
   const P = { path, pi: 1, members: [], wait: 0 }, n = 2 + Math.floor(Math.random() * 3);
   for (let i = 0; i < n; i++) { const kind = i === 0 && n >= 3 ? 'knight_c' : pickR(['knight_a', 'knight_b']), A = ALLY_KINDS[kind];
     const al = { id: kind, x: (a[0] + .5) * 16 + (i % 2) * 14 - 7, y: (a[1] + .8) * 16 + Math.floor(i / 2) * 14, hp: A.hp, mhp: A.hp, atk: A.atk, patrol: P, slot: i, cd: 0, dir: 0 }; P.members.push(al); ALLIES.push(al); }
@@ -474,7 +536,12 @@ function alliesFrame(dt) {
   const m = cur; if (!m || m.id !== 'wilds' || !m.towns) return;
   if (!ALLIES.length && m.towns.length) spawnGuards(m);
   PATROL_T -= dt; PATROLS = PATROLS.filter(P => P.members.some(a => !a.gone));
-  if (PATROL_T <= 0) { PATROL_T = 20; if (PATROLS.length < 3) spawnPatrol(m); }
+  { // the patrol job: a squad of three rides up to you and stays (round 6: map patrols were too far and too fast to join)
+    const j = S.realm && S.realm.q.kb_patrol, on = j && j.on && !j.done, E = PATROLS.find(P => P.escort);
+    if (on && !E && !(m.towns || []).some(T => townAt(m, S.p.x / 16, S.p.y / 16, 2) === T)) spawnEscort(m);
+    if (!on && E) E.members.forEach(a => a.gone = true);
+  }
+  if (PATROL_T <= 0) { const job = S.realm && S.realm.q.kb_patrol && S.realm.q.kb_patrol.on && !S.realm.q.kb_patrol.done; PATROL_T = job ? 10 : 20; if (PATROLS.length < (job ? 4 : 3)) spawnPatrol(m); } // with the patrol job on, they come by far more often (playtest)
   for (const al of ALLIES) {
     if (al.gone) continue;
     if (al.down > 0) { al.down -= dt; if (al.down <= 0) { al.hp = al.mhp; if (al.post) { al.x = al.post[0]; al.y = al.post[1]; } } continue; }
@@ -491,10 +558,20 @@ function alliesFrame(dt) {
     if (al.hp < al.mhp) al.hp = Math.min(al.mhp, al.hp + 6 * dt);
     if (al.post) { if (allyMove(m, al, al.post[0], al.post[1], 40, dt)) al.dir = 0; continue; }
     const P = al.patrol;
+    if (P.escort) { // Vey's squad keeps by you while the patrol job is on
+      const off = [[-18, 12], [18, 12], [0, 24]][al.slot % 3], tx = S.p.x + off[0], ty = S.p.y + off[1];
+      if (dist(al.x, al.y, tx, ty) > 420) { al.x = tx; al.y = ty; } else if (dist(al.x, al.y, tx, ty) > 10) allyMove(m, al, tx, ty, 52, dt); else al.walk = false;
+      continue;
+    }
     if (al.slot === 0) {
-      const node = P.path[P.pi]; if (!node) { al.gone = true; P.members.forEach(a => a.gone = true); continue; }
-      if (P.members.some(a => a !== al && !a.gone && !a.down && dist(a.x, a.y, al.x, al.y) > 60)) { al.walk = false; continue; } // wait for stragglers
-      if (allyMove(m, al, (node[0] + .5) * 16, (node[1] + .8) * 16, 30, dt)) P.pi++;
+      const node = P.path[P.pi]; P.age = (P.age || 0) + dt; if (!node || P.age > 360) { al.gone = true; P.members.forEach(a => a.gone = true); continue; }
+      // a patrol never stalls (round 5: one stood jammed against a forge for hours, and blocked new ones): stragglers
+      // catch up after 3 s, and a leader making no headway for 3 s steps on to the next point of the road
+      const lag = P.members.filter(a => a !== al && !a.gone && !a.down && dist(a.x, a.y, al.x, al.y) > 60);
+      if (lag.length) { al.walk = false; P.wt = (P.wt || 0) + dt; if (P.wt > 3) { P.wt = 0; for (const a of lag) { a.x = al.x + (Math.random() - .5) * 20; a.y = al.y + 8; } } continue; } P.wt = 0;
+      const nd = Math.hypot((node[0] + .5) * 16 - al.x, (node[1] + .8) * 16 - al.y);
+      if (P.bestD === undefined || nd < P.bestD - 3) { P.bestD = nd; P.st = 0; } else if ((P.st = (P.st || 0) + dt) > 3) { P.st = 0; P.bestD = undefined; P.pi = Math.min(P.path.length - 1, P.pi + 2); const n2 = P.path[P.pi]; al.x = (n2[0] + .5) * 16; al.y = (n2[1] + .8) * 16; }
+      if (allyMove(m, al, (node[0] + .5) * 16, (node[1] + .8) * 16, 30, dt)) { P.pi++; P.bestD = undefined; }
     } else {
       const L = P.members[0], off = [[0, 0], [-14, 10], [14, 10], [0, 20]][al.slot];
       if (L.gone || L.down) { const nx = P.members.find(a => !a.gone && !a.down); if (nx && nx !== al) allyMove(m, al, nx.x + off[0], nx.y + off[1], 34, dt); continue; }
@@ -526,6 +603,16 @@ let LAST_TOWN = null;
 /* the map shows the towns */
 worldMapCanvas = (f => function () {
   const c = f(), m = MAPS.wilds; if (!m || !m.towns) return c; const x = c.getContext('2d');
+  if (m.roadT) { x.fillStyle = '#d8b878'; for (const i of m.roadT) x.fillRect((i % m.w) * 3, ((i / m.w) | 0) * 3, 3, 3); } // the roads are known, explored or not
+  for (const P of PATROLS) { const L = P.members.find(a => !a.gone); if (!L) continue; const X = L.x / 16 * 3, Y = L.y / 16 * 3; x.fillStyle = '#2a1c18'; x.fillRect(X - 5, Y - 5, 10, 10); x.fillStyle = '#9a66cc'; x.fillRect(X - 4, Y - 4, 8, 8); x.fillStyle = '#ffe080'; x.fillRect(X - 1, Y - 3, 2, 6); x.fillRect(X - 3, Y - 1, 6, 2); } // knight patrols on the road
+  for (const T of m.towns) { x.strokeStyle = T.kind === 'City' || TOWNS[T.id].walls === 'stone' ? '#8a8478' : '#8a6a3a'; x.lineWidth = 3; x.strokeRect(T.x * 3, T.y * 3, T.w * 3, T.h * 3); x.fillStyle = 'rgba(216,200,168,.35)'; x.fillRect(T.x * 3, T.y * 3, T.w * 3, T.h * 3); } // each town's walls or fence
+  { // each town building by what it is (playtest: nobody could find the barracks)
+    const TAG = { inn: 'Inn', shop: 'Shop', smith: 'Forge', fish: 'Fish', bank: 'Bank', temple: 'Temple', hall: 'Hall', barracks: 'Barracks' };
+    x.font = '700 10px Fredoka, sans-serif'; x.textAlign = 'center'; x.lineWidth = 3; x.strokeStyle = '#2a1c18'; x.fillStyle = '#ffe8a8';
+    for (const b of m.bld) { if (!TOWN_ACTS[b.act]) continue; const t = TAG[actType(b.act)] || 'Shop', X = (b.x + b.w / 2) * 3, Y = (b.y + b.h / 2) * 3 + 4; x.strokeText(t, X, Y); x.fillText(t, X, Y); }
+  }
+  x.font = '700 18px Fredoka, sans-serif'; x.textAlign = 'center'; x.lineWidth = 4; x.strokeStyle = '#2a1c18'; x.fillStyle = '#fff2c8'; // the home labels again, over the roads
+  for (const [t, X] of [['Farm', WIN_F], ['Village', WIN_V]]) { x.strokeText(t, X * 3, (m.h - 3) * 3); x.fillText(t, X * 3, (m.h - 3) * 3); }
   for (const T of m.towns) {
     const X = T.cx * 3, Y = T.cy * 3, big = T.kind === 'City' ? 1 : 0;
     x.fillStyle = '#2a1c18'; x.fillRect(X - 8 - big * 3, Y - 6 - big * 3, 16 + big * 6, 12 + big * 6); x.fillStyle = big ? '#e8b830' : '#d8c8a8'; x.fillRect(X - 7 - big * 3, Y - 5 - big * 3, 14 + big * 6, 10 + big * 6);
@@ -545,7 +632,7 @@ objSprite = (f => function (o, season) {
   return f(o, season);
 })(objSprite);
 objInteract = (f => function (m, x, y, o) {
-  if (o.k === 'storynpc' && o.c === 'herald' && !(S.story && S.story.flags.heraldHere)) return { label: 'Wait', fn: () => toast('Riders are coming up the village road…') };
+  if (o.k === 'storynpc' && o.c === 'herald' && !(S.story && S.story.flags.heraldHere)) return { label: 'Riders are coming…', fn: () => toast('Riders in purple and gold are coming up the village road. Wait for them here.') };
   if (o.k === 'wagon') return { label: 'Look', fn: () => toast(o.v === 'royal' ? 'A royal wagon, purple and gold, with the stag of Valdmark on its cover.' : 'A supply wagon heavy with crates and the knights\' kit.') };
   return f(m, x, y, o);
 })(objInteract);
@@ -557,10 +644,20 @@ function procStart(snap) {
   const ex = m.w + 1, ey = 19, hx = w.x, hy = w.y;
   const slots = [['knight_c', hx - 2, hy + 1], ['knight_a', hx + 2, hy + 1], ['herald_w', hx, hy], ['knight_b', hx - 2, hy + 2], ['knight_a', hx + 2, hy + 2]];
   PROC = { m, walkers: [], wagons: [], leaving: false };
-  slots.forEach(([id, tx, ty], i) => { const d = freeNear(m, tx, ty, 0, 4) || [tx, ty]; const al = { id, x: (m.w - 1.5) * 16, y: (ey + .8 + (i % 2)) * 16, dest: [(d[0] + .5) * 16, (d[1] + .8) * 16], delay: i * .9, dir: 1 }; if (snap) { al.x = al.dest[0]; al.y = al.dest[1]; al.delay = 0; } PROC.walkers.push(al); });
+  const used = []; // each rider gets a tile of their own, never right against something (the campfire, the tent)
+  const roomy = (x, y) => { for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) { const X = x + i, Y = y + j; if (!inb(m, X, Y) || getO(m, X, Y) || m.solidB[Y * m.w + X] || TER[getT(m, X, Y)].solid || TER[getT(m, X, Y)].water) return false; } return !used.some(u => Math.abs(u[0] - x) < 2 && Math.abs(u[1] - y) < 2); };
+  const spot = (tx, ty) => { for (let r = 0; r <= 7; r++) for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) if (Math.max(Math.abs(i), Math.abs(j)) === r && roomy(tx + i, ty + j)) return [tx + i, ty + j]; return freeNear(m, tx, ty, 0, 6); };
+  slots.forEach(([id, tx, ty], i) => { const d = (id === 'herald_w' ? [tx, ty + 1] : spot(tx, ty)) || [tx, ty]; used.push(d); /* the herald stops just in front of his story spot: that tile holds him once he's arrived */ const al = { id, x: (m.w - 1.5) * 16, y: (ey + .8 + (i % 2)) * 16, dest: [(d[0] + .5) * 16, (d[1] + .8) * 16], delay: i * .9, dir: 1 }; if (snap) { al.x = al.dest[0]; al.y = al.dest[1]; al.delay = 0; } PROC.walkers.push(al); });
   // two wagons park beside the road
+  // (weeds, stones, twigs and grass under a parking spot are cleared away: a new farm is full of them)
+  const LIGHT = new Set(['weed', 'stone', 'twig', 'tgrass', 'flower', 'grass', 'bush']);
+  const clearable = (x, y) => { if (!inb(m, x, y) || m.solidB[y * m.w + x] || m.soil[y * m.w + x]) return false; const t = TER[getT(m, x, y)]; if (t.solid || t.water) return false; const o = getO(m, x, y); return !o || (LIGHT.has(o.k) && !o.fixed); };
   const park = [];
-  for (let x = m.w - 8; x > m.w - 30 && park.length < 2; x--) for (let y = 15; y <= 23 && park.length < 2; y++) if (areaFree(m, x, y, 4, 1) && areaFree(m, x, y - 1, 4, 1) && !inPasture(m, x, y) && !park.some(p => Math.abs(p[0] - x) < 6 && Math.abs(p[1] - y) < 3)) park.push([x, y]);
+  for (const y of [17, 22, 16, 23, 15, 24]) for (let x = m.w - 7; x > m.w - 36 && park.length < 2; x--) {
+    let ok = !inPasture(m, x, y) && !park.some(p => Math.abs(p[0] - x) < 6 && Math.abs(p[1] - y) < 3) && !used.some(u => u[0] >= x - 1 && u[0] <= x + 4 && Math.abs(u[1] - y) < 3);
+    for (let j = 0; ok && j < 2; j++) for (let i = 0; ok && i < 4; i++) ok = clearable(x + i, y - j);
+    if (ok) { for (let j = 0; j < 2; j++) for (let i = 0; i < 4; i++) if (getO(m, x + i, y - j)) setO(m, x + i, y - j, null); park.push([x, y]); }
+  }
   park.forEach(([x, y], i) => PROC.wagons.push({ v: i ? 'supply' : 'royal', x: (ex + 6 + i * 6) * 16, y: (y + 1) * 16, px: x, py: y, parked: false, delay: 2 + i * 2.5 }));
   if (snap) for (const W of PROC.wagons) { W.x = W.px * 16; W.parked = true; putObj(m, W.px, W.py, { k: 'wagon', v: W.v, fixed: 1, proc: 1 }); }
 }
@@ -580,7 +677,10 @@ function procFrame(dt) {
   for (const al of PROC.walkers) {
     if (al.gone) continue; if (al.delay > 0) { al.delay -= dt; continue; }
     if (PROC.leaving) { if (al.id === 'herald_w' && !al.left) { al.left = 1; F.heraldHere = 1; } if (allyMove(m, al, (m.w - 1) * 16, 19.8 * 16, 34, dt) || al.x > (m.w - 1.5) * 16) al.gone = true; continue; }
-    if (allyMove(m, al, al.dest[0], al.dest[1], 30, dt)) { al.dir = 0; if (al.id === 'herald_w' && !F.heraldHere) { F.heraldHere = 1; al.gone = true; toast('The royal herald has arrived. He waits by your door.'); } }
+    // never stall the story on a rider who can't get through: no progress for 5 s (or 50 s on the road) and they step to their place
+    al.rt = (al.rt || 0) + dt; const dd = Math.hypot(al.dest[0] - al.x, al.dest[1] - al.y); if (al.best === undefined || dd < al.best - 4) { al.best = dd; al.bt = 0; } else al.bt = (al.bt || 0) + dt;
+    if (al.bt > 5 || al.rt > 50) { al.x = al.dest[0]; al.y = al.dest[1]; }
+    if (allyMove(m, al, al.dest[0], al.dest[1], 30, dt) || dd < 6) { al.dir = 0; if (al.id === 'herald_w' && !F.heraldHere) { F.heraldHere = 1; al.gone = true; toast('The royal herald has arrived. He waits by your door.'); } }
   }
   for (const W of PROC.wagons) {
     if (W.gone || W.parked) continue; if (W.delay > 0) { W.delay -= dt; continue; }
@@ -618,3 +718,112 @@ storyWhere = (f => function (role) {
   if (PL) PL[role] = ['wilds', at[0], at[1]];
   return { map: 'wilds', x: at[0], y: at[1] };
 })(storyWhere);
+/* a gentle ring: within 28 tiles of a town, and along the south edge where the farm and village roads come
+   in, the Wilds only send meadow creatures (playtest: a newcomer met a level-11 boar beside Kingsbridge) */
+spawnEnemy = (f => function (m, k, x, y, lvl) {
+  if (m && m.id === 'wilds' && EN[k] && !EN[k].boss && typeof BIOME_EN !== 'undefined') {
+    const tx = x / 16, ty = y / 16, near = townAt(m, tx, ty, 28) || ty > m.h - 45, M = { day: [['slime', 5], ['blueslime', 1]], night: [['slime', 3], ['blueslime', 2]] }, night = S && (S.time >= 1200 || S.time < 360); // only slimes here: crows circled out of reach and over the walls (round 3)
+    if (near && !(night ? M.night : M.day).some(([id]) => id === k)) { k = wpick(night ? M.night : M.day); lvl = 0; }
+    else if (near) lvl = Math.min(lvl || 0, 1);
+  }
+  return f(m, k, x, y, lvl);
+})(spawnEnemy);
+
+/* ---- townsfolk: people walking each town's streets by day, and vendors behind the Kingsbridge stalls
+   (playtest: "Kingsbridge feels empty, the village is livelier"). Runtime only; hidden from Friends. ---- */
+const CIT_N = { kingsbridge: 12, greyhelm: 6, ashford: 4, saltmere: 5 };
+const CIT_ROLE = { kingsbridge: ['Citizen', 'Merchant', 'Washerwoman', 'Apprentice', 'Scholar', 'Lamplighter', 'Courier', 'Noblewoman'], greyhelm: ['Miner', 'Miner', 'Smelter', 'Hauler'], ashford: ['Woodcutter', 'Forager', 'Trapper'], saltmere: ['Fisher', 'Net mender', 'Sailor', 'Salt raker'] };
+const CIT_LINES = {
+  kingsbridge: ['Mind the carts. They don\'t stop for anyone, not even the mayor.', 'Fresh bread at the inn before nine. After nine, fresh opinions.', 'They say the regent hasn\'t slept since the princess vanished.', 'Knights everywhere this year. My aunt says it means a war. My aunt says that every year.', 'The bridge toll was abolished forty years ago. The toll collector never got the message.'],
+  greyhelm: ['Shift starts at dawn. Ale starts at dusk. Everything in between is rock.', 'Don\'t go below the third level. We don\'t, and we live here.', 'Borek\'s forge never goes cold. Neither does Borek.'],
+  ashford: ['Watch for wolves past the fence. They\'ve been bold.', 'Best mushrooms in the valley grow by the old shrine. Second best grow everywhere else.', 'The sawmill wheel sings when the river\'s high.'],
+  saltmere: ['Tide\'s turning. Always is.', 'Finn\'s fish is fresh. Finn\'s jokes are not.', 'Seen the shark past the reef? Big as a boat. Bigger than my boat.'],
+};
+const HAIRS = ['#1a1210', '#3a2a1a', '#6a4a2a', '#a83a1a', '#c8642a', '#e8d090', '#a8a8a8', '#d8d8d0'], SKINS = ['#f0d0b0', '#e8c0a0', '#e0b48e', '#c8906a', '#a8724e', '#8a5a3a'];
+const CLOTH = ['#6a3a9a', '#2a64a0', '#8a3a2a', '#5a7a3a', '#a87a3a', '#4a4a5a', '#2a6a7a', '#7a5a3a', '#a83a5a', '#d8c8a8'];
+const CITS = [];
+for (const town in CIT_N) for (let i = 0; i < CIT_N[town] + (town === 'kingsbridge' ? 4 : 0); i++) {
+  const id = 'cz_' + town + '_' + i, h = k => Math.abs(strSeed(id + k)), vendor = town === 'kingsbridge' && i >= CIT_N[town];
+  const fem = h('f') % 2, P = { shoe: '#3a2a1a', skin: SKINS[h('s') % SKINS.length], hair: HAIRS[h('h') % HAIRS.length], hs: fem ? ['long', 'bun', 'pony'][h('y') % 3] : ['short', 'short', 'spiky', 'bald'][h('y') % 4],
+    shirt: CLOTH[h('c') % CLOTH.length], pants: CLOTH[h('p') % CLOTH.length] };
+  if (!fem && h('b') % 3 === 0) P.beard = P.hair;
+  if (vendor || h('a') % 4 === 0) P.apron = '#e8dcc0';
+  if (town === 'kingsbridge' && !vendor && h('r') % 5 === 0) { P.robe = P.shirt; P.cape = CLOTH[h('k') % CLOTH.length]; }
+  if (town === 'greyhelm' && h('m') % 2 === 0) P.hat = '#8a6a3a';
+  if (town === 'saltmere' && h('m') % 2 === 0) P.hat = '#2a4a6a';
+  let role = vendor ? 'Stallholder' : CIT_ROLE[town][h('o') % CIT_ROLE[town].length];
+  if (!fem) role = { Washerwoman: 'Washer', Noblewoman: 'Nobleman' }[role] || role; // the role matches the look (playtest: a bearded "Noblewoman")
+  Object.defineProperty(NPCS, id, { value: { n: role, role, shop: 'k_cit', P, love: [], like: [], hate: [], lines: [[]], gifts: [] }, enumerable: false, writable: true, configurable: true });
+  CITS.push({ id, town, vendor, si: i - CIT_N[town] });
+}
+const CITST = {};
+function citSync() {
+  const m = MAPS.wilds; if (!m || !m.towns || cur !== m) return;
+  const day = S.time >= 420 && S.time < 1230, stalls = m.bld.filter(b => b.act === 'kb_stall');
+  m.npcs = (m.npcs || []).filter(n => !n.cit || (day && dist(n.x, n.y, S.p.x, S.p.y) < 1400));
+  if (!day) return;
+  for (const C of CITS) {
+    const T = m.towns.find(t => t.id === C.town); if (!T || m.npcs.some(n => n.id === C.id)) continue;
+    if (dist((T.x + T.w / 2) * 16, (T.y + T.h / 2) * 16, S.p.x, S.p.y) > 1200) continue;
+    let at;
+    if (C.vendor) { const b = stalls[C.si]; if (!b) continue; at = [b.x + 1, b.y - 1]; }
+    else at = citSpot(m, T);
+    if (!at) continue;
+    const x = (at[0] + .5) * 16, y = (at[1] + .8) * 16;
+    m.npcs.push({ id: C.id, cit: 1, x, y, hx: x, hy: y, dir: 0, walk: false, t: 1e9, vx: 0 });
+    CITST[C.id] = { wait: Math.random() * 6, T, vendor: C.vendor };
+  }
+}
+function citSpot(m, T) { // a street or square tile in the town
+  for (let k = 0; k < 40; k++) { const x = T.x + 2 + Math.floor(Math.random() * (T.w - 4)), y = T.y + 2 + Math.floor(Math.random() * (T.h - 4)), t = getT(m, x, y); if ((t === 'p' || t === 'st' || t === 'd') && !getO(m, x, y) && !m.solidB[y * m.w + x]) return [x, y]; }
+  return null;
+}
+function citFrame(dt) {
+  const m = MAPS.wilds; if (!m || cur !== m || !m.npcs) return;
+  for (const n of m.npcs) {
+    if (!n.cit) continue; const st = CITST[n.id]; if (!st) continue;
+    if (n.waitT > 0) { n.waitT -= dt; n.walk = false; continue; }
+    if (st.vendor) { n.dir = 0; continue; }
+    if (st.path) {
+      const node = st.path[st.pi]; if (!node) { st.path = null; n.walk = false; st.wait = 3 + Math.random() * 8; continue; }
+      const wx = (node[0] + .5) * 16, wy = (node[1] + .8) * 16, dx = wx - n.x, dy = wy - n.y, d = Math.hypot(dx, dy);
+      if (d < 2) { st.pi++; continue; }
+      const sp = 21 * dt; n.x += dx / d * Math.min(sp, d); n.y += dy / d * Math.min(sp, d); n.hx = n.x; n.hy = n.y; n.walk = true;
+      n.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : (dy < 0 ? 3 : 0); continue;
+    }
+    st.wait -= dt; if (st.wait > 0) continue;
+    const to = citSpot(m, st.T); if (!to) { st.wait = 3; continue; }
+    const p = findPath(m, Math.floor(n.x / 16), Math.floor((n.y - 2) / 16), to[0], to[1], 2500); if (p) { st.path = p; st.pi = 1; } else st.wait = 2;
+  }
+}
+EVT.on('tick', k => { if (k % 4 === 0 && S && !TITLE) citSync(); });
+EVT.on('map', id => { if (id === 'wilds') citSync(); });
+update = (f => function (dt) { f(dt); if (S && !TITLE) citFrame(dt); })(update);
+doorAction = (f => function (act, who) {
+  if (act !== 'k_cit') return f(act, who);
+  const C = CITS.find(c => c.id === who), pool = C && C.vendor ? ['Apples, cherries, honey from the hill farms! Browse the stall, friend.', 'Best prices in Kingsbridge. Second-best prices too, if you haggle.'] : CIT_LINES[C ? C.town : 'kingsbridge'];
+  storyDialog([[who, pickR(pool)]], C && C.vendor ? { title: TOWNS_AT_ME() || 'On the road', last: 'Browse the stall', done: () => doorAction('kb_stall') } : { title: TOWNS_AT_ME() || 'On the road' });
+})(doorAction);
+
+/* the Wilds' own paths (to the farm, the village, the mine) are laid like the royal roads: straight bridges */
+carvePath = (f => function (m, a, b) { if (m && m.id === 'wilds' && typeof realmRoad === 'function') return realmRoad(m, a, b); return f(m, a, b); })(carvePath);
+
+/* waking at the inn you slept in */
+endDay = (f => function (fainted) {
+  const r = f(fainted), act = S && S.flags && S.flags.innWake;
+  if (act && !fainted) { S.flags.innWake = null; const b = MAPS.wilds && MAPS.wilds.bld.find(b => b.act === act); if (b) { goMap('wilds', (b.door.x + .5) * 16, (b.door.y + 1.8) * 16, 0); toast('You wake rested at ' + (TOWN_ACTS[act] ? TOWN_ACTS[act].name : 'the inn') + '.'); } }
+  else if (S && S.flags) S.flags.innWake = null;
+  return r;
+})(endDay);
+
+/* town jobs you've taken are in the journal, with their progress */
+renderQuests = (f => function (b) {
+  f(b);
+  if (!S || !S.realm) return;
+  const on = TOWN_JOBS.filter(j => { const s = S.realm.q[j.id]; return s && s.on && !s.done; }); if (!on.length) return;
+  const L = el('div', { class: 'list' });
+  for (const j of on) { const s = S.realm.q[j.id], prog = j.t === 'bring' ? Object.entries(j.items).map(([k, n]) => cnt(k) + '/' + n + ' ' + IT[k].n).join(', ') : Math.min(s.n, j.need) + '/' + j.need;
+    L.append(el('div', { class: 'rrow' }, el('div', { class: 'qck' }, '!'), el('div', { class: 'rtxt' }, el('b', null, j.n + ' · ' + (TOWNS[j.town] ? TOWNS[j.town].n : '') + ' (' + j.gold + 'g)'), el('small', null, j.d + ' Progress: ' + prog + '. Hand it in at the ' + (j.barracks ? 'barracks' : 'town hall') + '.')))); }
+  const h = [...b.querySelectorAll('h3')].find(x => /milestones/i.test(x.textContent));
+  const head = el('h3', null, 'Town jobs'); if (h) { b.insertBefore(head, h); b.insertBefore(L, h); } else b.append(head, L);
+})(renderQuests);

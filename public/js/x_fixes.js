@@ -42,7 +42,7 @@ const placeName = id => MAP_N[id] || (typeof REGIONS !== 'undefined' && REGIONS[
 function localMapCanvas(m) {
   const k = Math.max(6, Math.min(14, Math.floor(900 / m.w))), W = m.w * k, H = m.h * k;
   const c = el('canvas', { width: W, height: H }), x = c.getContext('2d');
-  const COL = { g: '#7cb04c', d: '#c8a070', p: '#b8aa98', s: '#e6d29a', w: '#4a92c4', r: '#8a8070', x: '#6a6258', sn: '#e8eef4', a: '#7a6a5a', st: '#9a9284' };
+  const COL = { g: '#7cb04c', d: '#c8a070', p: '#b8aa98', s: '#e6d29a', w: '#4a92c4', r: '#8a8070', x: '#4a4440', sn: '#e8eef4', a: '#7a6a5a', st: '#9a9284', f: '#b07c4c', fl: '#8e8678', mb: '#d8d0c4' };
   for (let j = 0; j < m.h; j++) for (let i = 0; i < m.w; i++) {
     const t = getT(m, i, j), D = TER[t] || {}; x.fillStyle = m.soil[j * m.w + i] ? '#7a5434' : COL[t] || (D.water ? '#4a92c4' : D.solid ? '#7a7266' : '#8ab85a'); x.fillRect(i * k, j * k, k, k);
     const o = getO(m, i, j); if (!o) continue;
@@ -66,7 +66,7 @@ function localMapCanvas(m) {
   const tw = typeof trackTarget === 'function' && trackTarget(); if (tw && tw.map === m.id) { x.font = '700 ' + (fs + 8) + 'px Fredoka, sans-serif'; label('!', (tw.x + .5) * k, (tw.y + .5) * k + 6, '#ffd040'); x.font = '600 ' + fs + 'px Fredoka, sans-serif'; }
   for (const w of m.warps) { const X = (w.x + w.w / 2) * k, Y = (w.y + w.h / 2) * k; x.fillStyle = '#ffd040'; x.fillRect(w.x * k, w.y * k, Math.max(k, w.w * k), Math.max(k, w.h * k));
     const east = w.x >= m.w - 2, west = w.x <= 1, ty = Math.min(H - 8, Math.max(16, Y + (w.y === 0 ? 20 : w.y >= m.h - 2 ? -10 : -(w.h * k) / 2 - 6)));
-    x.textAlign = east ? 'right' : west ? 'left' : 'center'; const wt = (east ? '' : west ? '← ' : '↑ ') + placeName(w.to) + (east ? ' →' : ''), ww = x.measureText(wt).width; label(wt, east ? W - 4 : west ? 4 : Math.max(ww / 2 + 2, Math.min(W - ww / 2 - 2, X)), ty, '#ffe08a'); x.textAlign = 'center'; }
+    x.textAlign = east ? 'right' : west ? 'left' : 'center'; const south = !east && !west && w.y >= m.h - 2, wt = (east ? '' : west ? '← ' : south ? '↓ ' : '↑ ') + placeName(w.to) + (east ? ' →' : ''), ww = x.measureText(wt).width; label(wt, east ? W - 4 : west ? 4 : Math.max(ww / 2 + 2, Math.min(W - ww / 2 - 2, X)), ty, '#ffe08a'); x.textAlign = 'center'; }
   if (cur === m) { const px = S.p.x / 16 * k, py = S.p.y / 16 * k; x.fillStyle = '#e8342a'; x.beginPath(); x.arc(px, py, Math.max(5, k * .6), 0, 6.283); x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 2; x.stroke(); x.lineWidth = 3; label('You', Math.max(14, Math.min(W - 14, px)), py - k - 2 < 12 ? py + k + 12 : py - k - 2, '#ffb0a0'); }
   return c;
 }

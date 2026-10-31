@@ -9,7 +9,7 @@ TOWN_STY = {
     # Kingsbridge, the city
     'kb_hall': dict(roof='hip', rmat='slate', rcol='#3e4a6a', wmat='ashlar', wcol='#e4dccc', trim='#5a4a3a', cross=1, cupola=1, vane=1, portico=1, arched=1,
                     icon='crest', banners='#6a3a9a', boxes=1, lantern=1, tall=1, rf=.44),
-    'kb_temple': dict(roof='hip', rmat='slate', rcol='#4e5a7a', wmat='ashlar', wcol='#f0ece0', trim='#8a8478', portico=1, arched=1, cupola=1, banners='#e8b830', rf=.42),
+    'kb_temple': dict(roof='front', rmat='slate', rcol='#8a3a2a', wmat='stone', wcol='#d8ccb8', trim='#6a4a3a', portico=1, arched=1, banners='#e8702a', rf=.5),   # the Ember's temple: a front gable in ember red, unlike the hall's slate hip
     'kb_inn': dict(roof='side', rmat='shingle', rcol='#9a3e2a', wmat='plaster', wcol='#f2dcae', trim='#4a2e1a', timber=1, lower='stone', dormers=2,
                    chim=('stone', -40), icon='mug', barrels=1, lantern=1, boxes=1, rf=.42),
     'kb_market': dict(roof='hip', rmat='shingle', rcol='#3e7a52', wmat='plaster', wcol='#f4e6bc', trim='#5a3a22', timber=1, door='shop', shopwin=1,

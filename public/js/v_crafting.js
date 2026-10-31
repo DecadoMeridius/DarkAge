@@ -48,7 +48,7 @@ renderCraft = function (b) {
   if (CRAFT_AT) { // at a station: only its recipes, all makeable
     MODAL.opts.st = CRAFT_AT; _renderCraftWB(b);
     const bar = b.querySelector('.chips'); if (bar) [...bar.children].forEach(c => { if (!/Can make/.test(c.textContent)) c.remove(); });
-    b.insertBefore(el('p', { class: 'note' }, 'You are at a ' + STATION_N[CRAFT_AT].toLowerCase() + '.'), b.firstChild.nextSibling);
+    b.insertBefore(el('p', { class: 'note' }, 'You are at ' + (/^[aeiou]/i.test(STATION_N[CRAFT_AT]) ? 'an ' : 'a ') + STATION_N[CRAFT_AT].toLowerCase() + '.'), b.firstChild.nextSibling);
     return;
   }
   if (MODAL.opts.station) { // a shop's own forge window (Brann, the regional forges) is a station too: furnace and anvil
@@ -85,5 +85,5 @@ EVT.on('tick', n => { if (S && !TITLE && n % 5 === 0) placeStarterBench(); });
   for (const r of RC) if (r[0] === 'wood_sword' || r[0] === 'wood_spear') r[2].fiber = 2;
   need('leather', 'tanning', { hide: 1, salt: 1 });
   for (const r of RC) { if (r[0] === 'leather_helm') r[2].padding = 1; if (r[0] === 'leather_body') r[2].straps = 2; if (r[0] === 'leather_boots') r[2].straps = 1; }
-  need('grilled_fish', 'kitchen', { $fish: 1, salt: 1 }); need('mushroom_skewer', 'kitchen', { $mush: 2, herb: 1 });
+  need('grilled_fish', 'kitchen', { $fish: 1 }); /* one dish needs nothing you can't catch on day one (playtest) */ need('mushroom_skewer', 'kitchen', { $mush: 2, herb: 1 });
 }

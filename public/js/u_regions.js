@@ -231,6 +231,11 @@ function hookWilds() {
   }
   if (m.dock) { const [x, y] = m.dock; if (!getO(m, x, y)) setO(m, x, y, { k: 'ferry' }); }
 }
+// where travel puts you: the first open tile below, beside or above the stone, never on it
+function wayLand(m, [x, y]) {
+  for (const [dx, dy] of [[0, 1], [0, 2], [-1, 1], [1, 1], [-1, 0], [1, 0], [0, -1], [-1, 2], [1, 2]]) { const X = x + dx, Y = y + dy; if (inb(m, X, Y) && !getO(m, X, Y) && !m.solidB[Y * m.w + X] && !TER[getT(m, X, Y)].solid && !TER[getT(m, X, Y)].water) return [X, Y]; }
+  return [x, y + 1];
+}
 function putWaystone(m, id, near) {
   S.wayPos = S.wayPos || {};
   if (S.wayPos[id]) { const [x, y] = S.wayPos[id], o = getO(m, x, y); if (!o || o.k !== 'waystone') { if (o) delObj(m, x, y); putObj(m, x, y, { k: 'waystone', id }); } return; }
@@ -248,6 +253,7 @@ initMaps = function () {
   hookWilds();
   putWaystone(MAPS.farm, 'farm', [24, 4]);
   putWaystone(MAPS.village, 'village', [21, 4]);
+  S.ways = S.ways || {}; S.ways.farm = 1; S.ways.village = 1; // home stones are yours from the start (playtest: nobody found the way back)
   const cross = MAPS.wilds.poi.find(p => p.type === 'cross'); if (cross) putWaystone(MAPS.wilds, 'wilds', [cross.x + 3, cross.y + 2]);
 };
 for (const id in REGIONS) PERSIST.push(id);
@@ -291,7 +297,7 @@ function openWaystones(here) {
       if (!pos) for (let i = 0; i < m.o.length; i++) if (m.o[i] && m.o[i].k === 'waystone' && m.o[i].id === id) { pos = [i % m.w, (i / m.w) | 0]; break; }
       if (!pos) continue;
       L.append(el('div', { class: 'rrow' }, el('div', { class: 'rtxt' }, el('b', null, wayName(id)), el('small', null, id === here ? 'You are here.' : (m.name || ''))),
-        el('button', { class: 'btn' + (id === here ? ' off' : ''), on: () => { if (id === here) return; closeModal(); const m2 = S.mounted; _goMapR(mid, (pos[0] + .5) * 16, (pos[1] + 1.8) * 16, 0); S.mounted = m2 && cur.outdoor; SFX.secret(); } }, 'Travel')));
+        el('button', { class: 'btn' + (id === here ? ' off' : ''), on: () => { if (id === here) return; closeModal(); const m2 = S.mounted; { const [lx, ly] = wayLand(m, pos); _goMapR(mid, (lx + .5) * 16, (ly + .8) * 16, 0); } S.mounted = m2 && cur.outdoor; SFX.secret(); } }, 'Travel')));
     }
     b.append(L);
   } }]);
@@ -346,7 +352,7 @@ const _checkPOIsR = checkPOIs;
 checkPOIs = function () {
   const m = cur; if (!m.region) return _checkPOIsR();
   const tx = S.p.x / 16, ty = S.p.y / 16; S.rpoi = S.rpoi || {};
-  const b = BIOMES[m.bio[Math.floor(ty) * m.w + Math.floor(tx)]]; if (b !== m.lastBio) { m.lastBio = b; showBanner(BIONAME[b]); }
+  const b = BIOMES[m.bio[Math.floor(ty) * m.w + Math.floor(tx)]]; if (b !== m.lastBio) { m.lastBio = b; if (!(typeof townAt === 'function' && townAt(m, tx, ty, 1))) showBanner(BIONAME[b]); } /* inside a town its own name stands */
   m.poi.forEach((p, i) => { const k = m.id + i; if (!S.rpoi[k] && dist(tx, ty, p.x, p.y) < 7) { S.rpoi[k] = 1; const nm = p.n || (p.type === 'arena' ? EN[p.boss].n + '\'s territory' : p.type === 'chest' ? 'A hidden cache' : ''); if (nm) showBanner(nm); } });
 };
 

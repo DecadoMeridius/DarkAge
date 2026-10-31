@@ -46,7 +46,7 @@ primaryUse = function () {
   if (!PAUSED && !TITLE && !fishing && S && cur) {
     const k = selKind(), [tx, ty] = clickTarget();
     if (k === 'weapon' && typeof ACTION === 'function' && ACTION()) {
-      const [wx, wy] = mouseWorld(), onEnemy = enemyAt(wx, wy), near = cur.ents.some(e => e.type === 'enemy' && !e.dead && Math.hypot(e.x - S.p.x, e.y - S.p.y) < 200);
+      const [wx, wy] = mouseWorld(), onEnemy = enemyAt(wx, wy), ranged = typeof PS !== 'undefined' && (PS.wt === 'bow' || PS.wt === 'staff'), far = Math.hypot(wx - S.p.x, wy - S.p.y) > 140, near = cur.ents.some(e => e.type === 'enemy' && !e.dead && Math.hypot(e.x - S.p.x, e.y - S.p.y) < 200); // round 3: walking on far clicks made aimed swings drift, so a foe within 200 px means you attack
       if (!onEnemy && !near && !inReach(tx, ty)) { walkTo(tx, ty, hasTarget(tx, ty) ? 'use' : null); return; }
     }
     if (!k) { if (!inReach(tx, ty)) walkTo(tx, ty, hasTarget(tx, ty) ? 'interact' : null); return; } // an empty slot never opens the satchel
@@ -138,15 +138,28 @@ pcCursorDraw = function (m) {
   _pcCursorDrawTrack(m);
   const w = typeof trackTarget === 'function' && trackTarget(); if (!w || TITLE) return;
   let tx, ty; if (w.map === m.id) { tx = (w.x + .5) * 16; ty = (w.y + .5) * 16; } else { const e = exitToward(m, w.map); if (!e) return; tx = e.x * 16; ty = e.y * 16; }
-  const dx = tx - S.p.x, dy = ty - S.p.y, dd = Math.hypot(dx, dy); if (dd < 60) return;
+  // on the same map the arrow follows the walking route, not a straight line through walls (playtest: it pointed into Briarholt's curtain wall)
+  let ax = tx, ay = ty;
+  if (typeof findPath === 'function') { // also toward an exit; targets are usually solid (a person, a door, the tree border), so aim for a free tile beside them (round 5)
+    const key = m.id + ':' + Math.floor(tx / 16) + ',' + Math.floor(ty / 16), now = performance.now();
+    if (TRK.key !== key || now - (TRK.at || 0) > 900) {
+      TRK.key = key; TRK.at = now; TRK.pt = null; const gx = Math.floor(tx / 16), gy = Math.floor(ty / 16), sx = Math.floor(S.p.x / 16), sy = Math.floor((S.p.y - 2) / 16);
+      for (const [ox, oy] of [[0, 0], [0, 1], [0, -1], [1, 0], [-1, 0], [0, 2], [0, -2], [2, 0], [-2, 0], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+        const X = gx + ox, Y = gy + oy; if (!inb(m, X, Y) || solidAt(m, (X + .5) * 16, (Y + .5) * 16)) continue;
+        const p = findPath(m, sx, sy, X, Y, 6000); if (p) { TRK.pt = p.length > 6 ? p[Math.min(p.length - 1, 5)] : null; break; }
+      }
+    }
+    if (TRK.pt) { ax = (TRK.pt[0] + .5) * 16; ay = (TRK.pt[1] + .5) * 16; }
+  }
+  const dx = ax - S.p.x, dy = ay - S.p.y, dd = Math.hypot(tx - S.p.x, ty - S.p.y); if (dd < 60) return;
   // above your head, clear of the body: an arrow that turns smoothly, with the distance and the target's name
   const want = Math.atan2(dy, dx); TRK.a = TRK.a === undefined ? want : TRK.a + Math.atan2(Math.sin(want - TRK.a), Math.cos(want - TRK.a)) * .12;
   const a = TRK.a, cx = Math.round(S.p.x), cy = Math.round(S.p.y - 48);
-  if (w.map === m.id) { const sid = S.story.track, st = stepOf(sid), who = st && st.who && NPCS[st.who] ? NPCS[st.who].n : STORIES[sid].n;
+  if (w.map === m.id) { const sid = S.story.track, st = stepOf(sid), W = st && st.who && (NPCS[st.who] || (typeof SCAST !== 'undefined' && SCAST[st.who])), who = W ? W.n : st && st.t === 'use' ? 'Search here' : st && st.t === 'go' && typeof placeName === 'function' ? placeName(w.map) : STORIES[sid].n;
     g.save(); g.font = '600 6px Fredoka, sans-serif'; g.textAlign = 'center'; g.lineWidth = 2; g.strokeStyle = '#2a1c18'; const t = who + ' · ' + Math.round(dd / 16) + ' m'; g.strokeText(t, cx, cy - 9); g.fillStyle = '#ffe08a'; g.fillText(t, cx, cy - 9); g.restore(); }
   g.save(); g.translate(cx, cy); g.rotate(a); g.fillStyle = '#2a1c18'; g.beginPath(); g.moveTo(8, 0); g.lineTo(-5, -6); g.lineTo(-2, 0); g.lineTo(-5, 6); g.closePath(); g.fill();
   g.fillStyle = '#ffd040'; g.beginPath(); g.moveTo(6, 0); g.lineTo(-4, -4.5); g.lineTo(-1.5, 0); g.lineTo(-4, 4.5); g.closePath(); g.fill(); g.restore();
-  if (w.map !== m.id) { g.save(); g.font = '600 7px Fredoka, sans-serif'; g.textAlign = 'center'; g.lineWidth = 2; g.strokeStyle = '#2a1c18'; const t = 'to ' + (typeof placeName === 'function' ? placeName(w.map) : w.map); g.strokeText(t, cx, cy - 9); g.fillStyle = '#ffe08a'; g.fillText(t, cx, cy - 9); g.restore(); }
+  if (w.map !== m.id) { g.save(); g.font = '600 7px Fredoka, sans-serif'; g.textAlign = 'center'; g.lineWidth = 2; g.strokeStyle = '#2a1c18'; const t = (m.indoor || /^in_/.test(m.id)) && (m.warps || []).some(x => x.to === w.map) ? 'Go outside' : 'to ' + (typeof placeName === 'function' ? placeName(w.map) : w.map); g.strokeText(t, cx, cy - 9); g.fillStyle = '#ffe08a'; g.fillText(t, cx, cy - 9); g.restore(); }
 };
 // the journal says when each story begins; new stories are announced in the morning report
 const STORY_WHEN = { hollow: 'on your second morning', lanterns: 'on day 3', smugglers: 'on day 4', ashcombe: 'on day 5', pilgrims: 'on day 6, or as soon as you find an ember shard' };

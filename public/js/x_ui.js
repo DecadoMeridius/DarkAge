@@ -88,7 +88,7 @@ openModal = function (title, tabs, start, opts) {
 
 /* ---------- B5: getting started + shorter milestone list ---------- */
 const START_STEPS = [
-  ['Buy seeds at Mara\'s store (east, along the road)', () => S.flags && S.flags.boughtSeeds],
+  ['Buy more seeds at Mara\'s store (east, along the road)', () => S.flags && S.flags.boughtSeeds],
   ['Till some soil with the hoe', () => Object.values(MAPS.farm ? MAPS.farm.soil : {}).some(Boolean)],
   ['Plant seeds on tilled soil', () => Object.values(MAPS.farm ? MAPS.farm.soil : {}).some(s => s && s.crop)],
   ['Water your crops with the watering can', () => Object.values(MAPS.farm ? MAPS.farm.soil : {}).some(s => s && s.crop && s.wet)],
@@ -117,7 +117,10 @@ buyRow = function (id, price, label, cb, sub) {
   row.querySelectorAll('.acts .btn').forEach(btn => {
     const n = +(btn.textContent.replace('×', '')) || 1; let sure = 0;
     btn.addEventListener('click', e => {
-      if (price * n > S.gold * .25 && price * n > 200 && !sure) { e.stopImmediatePropagation(); e.preventDefault(); sure = 1; btn.textContent = 'Buy for ' + (price * n).toLocaleString() + 'g?'; setTimeout(() => { sure = 0; if (btn.isConnected) btn.textContent = '×' + n; }, 3000); return; }
+      // ask once for a big spend. The button keeps its own text: the shop reads the amount from it (playtest: the
+      // confirm said "Buy for 235g?", then the click bought one), and the row's own price is shown, not the base price
+      const sm = row.querySelector('small'), shown = +(((sm && sm.textContent.match(/^([\d,]+)g/)) || [])[1] || '').replace(/,/g, '') || price;
+      if (shown * n > S.gold * .25 && shown * n > 200 && !sure) { e.stopImmediatePropagation(); e.preventDefault(); sure = 1; btn.classList.add('warn'); toast('Click ' + btn.textContent + ' again to buy for ' + (shown * n).toLocaleString() + 'g.'); setTimeout(() => { sure = 0; btn.classList.remove('warn'); }, 3000); return; }
       if (/_seed$/.test(id)) { S.flags = S.flags || {}; S.flags.boughtSeeds = 1; }
     }, true);
   });

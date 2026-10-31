@@ -71,6 +71,67 @@ def face(s, x0, x1, y0, y1, lit_left, dark_right, seed=5):
                     s.set(x1 - k, y, mul(c, a))
 
 
+def weather(s, x0, x1, y0, y1, seed, slits=()):
+    """Hand-placed wear on a stone face: hairline cracks with a lit lip, rain streaks under slits and
+    sills, and a few moss tufts tucked under the parapet."""
+    r = rng(seed)
+    for _ in range(max(1, (x1 - x0) * (y1 - y0) // 1400)):
+        x, y = r.randrange(x0 + 3, x1 - 3), r.randrange(y0 + 6, y1 - 10)
+        for _k in range(r.randrange(5, 10)):
+            c = s.get(x, y)
+            if not c[3]:
+                break
+            s.set(x, y, mul(c, .62))
+            n = s.get(x + 1, y)
+            if n[3]:
+                s.set(x + 1, y, mul(n, 1.08))
+            y += 1
+            x += r.choice((-1, 0, 0, 1))
+    for sx, sy in slits:
+        for k in range(r.randrange(8, 16)):
+            c = s.get(sx, sy + k)
+            if c[3]:
+                s.set(sx, sy + k, mul(c, .86 + k * .008))
+    for _ in range(max(1, (x1 - x0) // 40)):
+        x = r.randrange(x0 + 2, x1 - 4)
+        for dx, dy, k in ((0, 0, 1), (1, 0, 2), (2, 0, 1), (1, 1, 0), (0, 1, 0)):
+            if s.get(x + dx, y0 + 1 + dy)[3]:
+                s.set(x + dx, y0 + 1 + dy, MOSS[k])
+
+
+def corbels(s, x0, x1, ytop, step=9, ybase=None):
+    """Machicolations: stepped stone brackets under a parapet with dark drop holes between them.
+    ybase(x) can bend the row round a tower."""
+    for x in range(x0, x1 - 4, step):
+        y = ybase(x + 2) if ybase else ytop
+        s.fill(rect(x + 5, y, step - 5, 5), '#221e28')
+        for yy in range(7):
+            w = 5 if yy < 3 else 5 - (yy - 2)
+            for xx in range(x, x + w):
+                s.set(xx, y + yy, STONE[4] if yy == 0 else STONE[3] if xx == x else STONE[1] if xx == x + w - 1 else STONE[2])
+
+
+def ivy(s, x0, x1, ybot, ytop, seed, n=5):
+    """Climbing ivy drawn vine by vine: a dark stem that wanders up, leaf clusters left and right."""
+    r = rng(seed)
+    for v in range(n):
+        x, y = r.randrange(x0, x1), ybot
+        top = r.randrange(ytop, ybot - 20)
+        side = 1
+        while y > top:
+            if s.get(x, y)[3]:
+                s.set(x, y, MOSS[0])
+            if (ybot - y) % 5 == 0:
+                lx = x + 2 * side
+                for dx, dy, k in ((0, -1, 2), (-1, 0, 1), (0, 0, 1), (1, 0, 2), (0, 1, 0), (-1, 1, 0)):
+                    if s.get(lx + dx, y + dy)[3]:
+                        s.set(lx + dx, y + dy, MOSS[k])
+                side = -side
+            y -= 1
+            if r.random() < .28:
+                x = max(x0, min(x1 - 1, x + r.choice((-1, 1))))
+
+
 def cwall(mask, winter=False):
     s = Canvas(32, PH)
     n, e, so, w = mask & 1, mask & 2, mask & 4, mask & 8
@@ -80,8 +141,10 @@ def cwall(mask, winter=False):
         face(s, 0, 32, FACE_Y, PH, not w, not e, mask + 7)
         if not w and not e:
             pass
-        if (mask * 7) % 3 == 0:   # an arrow slit
+        slit = (mask * 7) % 3 == 0
+        if slit:   # an arrow slit
             s.fill(rect(15, FACE_Y + 14, 2, 14), '#1e1a22'); s.fill(rect(13, FACE_Y + 19, 6, 2), '#1e1a22')
+        weather(s, 0, 32, FACE_Y, PH - 6, mask * 13 + 1, [(16, FACE_Y + 28)] if slit else ())
     if not n:
         merlons(s, 1, 32, TOP_Y - 6)
     if not so:
@@ -91,7 +154,19 @@ def cwall(mask, winter=False):
     if not e:
         merlons(s, 0, 0, TOP_Y - 2, FACE_Y - 2, True, 27)
     s.outline()
-    return winterize(s) if winter else s
+    s = winterize(s) if winter else s
+    if e:
+        return s
+    # a contact shadow on the ground to the east, where nothing joins: light from the top-left, so a run of
+    # wall seen from above reads as raised (playtest: north-south walls looked like flat grey strips)
+    c = Canvas(48, PH)                      # 8 px of padding each side keep the wall centred on its tile
+    c.img.alpha_composite(s.img, (8, 0)); c.px = c.img.load()
+    y0, y1 = (FACE_Y + 4, PH - 1) if not so else (TOP_Y + 2, TOP_Y + 34)   # a joined run: just this tile's stretch
+    for y in range(y0, y1):
+        for k in range(6):
+            if (y + k) % 2 == 0 or k < 4:
+                c.set(40 + k, y, (16, 24, 8, 150 - k * 18))
+    return c
 
 
 def cone_roof(s, cx, apex, base_y, rr):
@@ -136,6 +211,17 @@ def round_body(s, cx, rr, y0, y1, seed):
             s.set(x, y1 - 1, MOSS[1])
 
 
+def string_course(s, cx, rr, y):
+    """A moulded band round a tower: a lit upper lip over a shadowed lower one, bending with the drum."""
+    for x in range(cx - rr, cx + rr):
+        u = (x + .5 - cx) / rr
+        yy = y + int(3 * math.sqrt(max(0, 1 - u * u)))
+        for k, a in ((0, 1.18), (1, 1.05), (2, .62)):
+            c = s.get(x, yy + k)
+            if c[3]:
+                s.set(x, yy + k, mul(c, a))
+
+
 def crenel_ring(s, cx, rr, y):
     """The top of a round tower: a lit stone ring and merlons around its front half."""
     for yy in range(y - 6, y + 7):
@@ -161,8 +247,11 @@ def ctower(winter=False):
     round_body(s, cx, rr, 52, 154, 21)
     for y in range(52, 154):    # the round base: rounded bottom corners
         pass
+    string_course(s, cx, rr, 104)
     for wy in (80, 116):        # arrow slits
         s.fill(rect(cx - 9, wy, 2, 12), '#1e1a22'); s.fill(rect(cx + 6, wy + 6, 2, 10), '#141018')
+    weather(s, cx - rr + 2, cx + rr - 2, 66, 150, 77, [(cx - 8, 92), (cx - 8, 128)])
+    corbels(s, cx - rr + 1, cx + rr - 2, 0, 8, lambda x: 52 + int(6 * math.sqrt(max(0, 1 - ((x - cx) / (rr + 2)) ** 2))))
     crenel_ring(s, cx, rr, 52)
     cone_roof(s, cx, 14, 44, rr + 1)
     s.outline()
@@ -253,10 +342,12 @@ def keep(w=18, h=10, winter=False):
     s.fill(rect(mx0, my0 - 1, mx1 - mx0, 1), STONE[0])
     for k in range(4):    # string course between the floors
         s.fill(rect(mx0, 196 + k, mx1 - mx0, 1), [STONE[4], STONE[3], STONE[1], STONE[0]][k])
-    for wx in list(range(mx0 + 40, dcx - 60, 46)) + list(range(dcx + 64, mx1 - 30, 46)):
+    for wx in (dcx - 156, dcx - 114, dcx + 114, dcx + 156):
         window(s, wx, 140, 14, 34, '#4a3a30', arch=True)
         window(s, wx, 220, 14, 30, '#4a3a30', arch=True, box=True, r=rng(wx))
-    for bx in (dcx - 86, dcx + 70):
+    weather(s, mx0, mx1, my0, gy - 4, 41, [(wx, 252) for wx in (dcx - 156, dcx - 114, dcx + 114, dcx + 156)])
+    corbels(s, mx0 + 2, mx1 - 2, my0 + 1)
+    for bx in (dcx - 90, dcx + 74):
         banner(s, bx, 126, 62)
     foundation(s, mx0 - 1, mx1 + 1, gy, H, '#8a8478')
     # the gatehouse in front of the hall
@@ -268,6 +359,8 @@ def keep(w=18, h=10, winter=False):
             c = s.get(gx1 - k, y)
             if c[3]:
                 s.set(gx1 - k, y, mul(c, a))
+    weather(s, gx0, gx1, 150, 196, 51)
+    corbels(s, gx0 + 2, gx1 - 2, 151)
     merlons(s, gx0 + 1, gx1, 141)
     for x in range(gx0, gx1):   # the gatehouse casts a shadow on the hall to its right
         pass
@@ -306,21 +399,153 @@ def keep(w=18, h=10, winter=False):
         for wy in (130, 190, 250):
             s.fill(rect(tcx - 18, wy, 3, 16), '#1e1a22'); s.fill(rect(tcx + 14, wy + 8, 3, 14), '#141018')
         window(s, tcx - 4, 150, 10, 20, '#4a3a30', arch=True)
+        string_course(s, tcx, 46, 212)
+        weather(s, tcx - 40, tcx + 40, 110, gy - 6, tcx, [(tcx - 17, 146), (tcx - 17, 206)])
+        corbels(s, tcx - 45, tcx + 44, 0, 9, lambda x, t=tcx: 92 + int(6 * math.sqrt(max(0, 1 - ((x - t) / 48) ** 2))))
         crenel_ring(s, tcx, 46, 92)
         cone_roof(s, tcx, 10, 84, 48)
-    for x in range(10, 60):   # ivy up the left tower
-        for y in range(180, gy):
-            if vnoise(x * .2, y * .08, 7) > .64 - (y - 180) / 400:
-                s.set(x, y, MOSS[2] if vnoise(x * .9, y * .9, 2) > .6 else MOSS[1])
+    ivy(s, 12, 60, gy - 1, 140, 7, 10)   # ivy up the left tower
     s.outline()
     c = winterize(s) if winter else s
     c.meta = {'win': [list(r_) for r_ in WINLOG]}
     return c
 
 
+IRONF = ['#1c2622', '#2e3c36', '#4a5e54', '#6e8478']        # painted iron glazing bars, dark green
+LEAF = ['#1e3a24', '#2e5a32', '#468040', '#6aa452']
+FRUIT = ['#e8902a', '#f0c030', '#d8482a']
+
+
+def glass_bay(s, x0, x1, y0, y1, seed, top=None):
+    """A glazed bay: the planting inside first (citrus trees, ferns, fruit), then the glass over it
+    with a sky reflection, diagonal glints on alternate panes and iron bars. top(x) gives a sloped head."""
+    r = rng(seed)
+    crowns = [(r.randrange(x0 + 6, x1 - 6), r.randrange(y0 + 14, y0 + 34), r.randrange(9, 15)) for _ in range(max(2, (x1 - x0) // 22))]
+    for x in range(x0, x1):
+        t0 = top(x) if top else y0
+        for y in range(t0, y1):
+            c = '#2a4440'                                       # the shade inside
+            for cx, cy, rr in crowns:                           # round citrus crowns, lit top-left
+                d = ((x - cx) / rr) ** 2 + ((y - cy) / (rr * .8)) ** 2
+                if d <= 1:
+                    k = 3 if (x - cx) + (y - cy) < -rr * .5 else 2 if (x - cx) + (y - cy) < rr * .3 else 1
+                    if vnoise(x * .5, y * .5, seed) > .7:
+                        k = max(0, k - 1)
+                    c = LEAF[k]
+                if abs(x - cx) <= 1 and y > cy + rr * .6:
+                    c = '#4a3020' if x == cx else '#6a4630'
+            if y > y1 - 10 + int(3 * vnoise(x * .3, 1, seed)):  # ferns along the sill
+                c = LEAF[1 + (x % 3 == 0)]
+            v = (y - t0) / max(1, y1 - t0)
+            g = mix('#d8eef0', '#7aa8b4', v)                     # the sky reflected in the glass
+            s.set(x, y, mix(c, g, .32 if v > .25 else .55))
+    for cx, cy, rr in crowns:                                    # fruit
+        for _ in range(4):
+            fx, fy = cx + r.randrange(-rr + 3, rr - 3), cy + r.randrange(-rr // 2, rr // 2)
+            col = mix(r.choice(FRUIT), '#d8eef0', .25)
+            s.fill(rect(fx, fy, 2, 2), col); s.set(fx, fy, mix(col, '#ffffff', .5))
+    for px0 in range(x0, x1, 16):                                # glints on alternate panes
+        if (px0 // 16) % 2 == 0:
+            for k in range(14):
+                for w in range(3):
+                    x, y = px0 + 3 + k // 2 + w, (top(px0 + 8) if top else y0) + 4 + k
+                    if x < x1 and y < y1 and s.get(x, y)[3]:
+                        s.set(x, y, mix(s.get(x, y), '#ffffff', .45 if w == 1 else .25))
+    for x in list(range(x0, x1, 16)) + [x1 - 2]:                 # mullions with a lit left edge
+        t0 = top(x) if top else y0
+        s.fill(rect(x, t0, 2, y1 - t0), IRONF[1]); s.fill(rect(x, t0, 1, y1 - t0), IRONF[3])
+    for ty in (y0 + (y1 - y0) // 3, y0 + 2 * (y1 - y0) // 3):    # transoms
+        for x in range(x0, x1):
+            if not top or ty > top(x):
+                s.set(x, ty, IRONF[1]); s.set(x, ty - 1, IRONF[2])
+
+
+def glass_roof(s, x0, x1, yb, rise):
+    """A hipped glass roof over a wing: courses of panes, lit on the left, an iron ridge with cresting."""
+    yt = yb - rise
+    for y in range(yt, yb):
+        inset = (yb - y) * .6
+        for x in range(int(x0 + inset), int(x1 - inset)):
+            u = (x - x0) / (x1 - x0)
+            c = mix('#e4f4f6', '#9cc4cc', u) if (y - yt) % 7 else IRONF[2]
+            if (x - x0) % 16 in (0, 1):
+                c = IRONF[1]
+            elif (x + y) % 23 < 2 and (y - yt) % 7:
+                c = mix(c, '#ffffff', .6)
+            s.set(x, y, c)
+    s.fill(rect(x0 - 2, yb, x1 - x0 + 4, 3), IRONF[1]); s.fill(rect(x0 - 2, yb, x1 - x0 + 4, 1), IRONF[3])  # gutter
+    rx0, rx1 = int(x0 + rise * .6), int(x1 - rise * .6)
+    s.fill(rect(rx0, yt - 1, rx1 - rx0, 2), IRONF[0])
+    for x in range(rx0 + 2, rx1 - 1, 6):                          # cresting: little iron fleurs
+        s.fill(rect(x, yt - 4, 1, 3), IRONF[1]); s.set(x - 1, yt - 4, IRONF[2]); s.set(x + 1, yt - 4, IRONF[2]); s.set(x, yt - 5, IRONF[3])
+
+
 def greenhouse(winter=False):
-    c = building('greenhouse', 8, 6, 1, winter)
-    return winterize(c) if winter else c
+    """The castle orangery: two glazed wings on a stone plinth and a taller gabled entrance bay with a
+    fanlight, all in dark green iron. The door sits on the building's door tile (x 128-160)."""
+    W, H = 256, 192
+    s = Canvas(W, H)
+    for y in range(H - 8, H):                                     # contact shadow
+        for x in range(4, W - 4):
+            if ((x - 128) / 124) ** 2 + ((y - (H - 5)) / 3.5) ** 2 <= 1:
+                s.set(x, y, (20, 30, 10, 90))
+    pl = 160                                                      # the plinth top
+    bx0, bx1, ax = 114, 174, 144                                  # the entrance bay and its axis
+    glass_roof(s, 6, bx0 + 4, 92, 30); glass_roof(s, bx1 - 4, W - 6, 92, 30)
+    glass_bay(s, 8, bx0, 95, pl, 11); glass_bay(s, bx1, W - 8, 95, pl, 12)
+
+    def gtop(x):                                                  # the gable over the bay
+        return 40 + int(abs(x + .5 - ax) * .9)
+    glass_bay(s, bx0, bx1, 40, pl, 13, gtop)
+    for x in range(bx0 - 2, bx1 + 2):                             # barge boards
+        y = gtop(x)
+        s.fill(rect(x, y - 3, 1, 3), IRONF[1]); s.set(x, y - 3, IRONF[3] if x < ax else IRONF[2])
+    s.fill(rect(ax - 1, 26, 2, 12), IRONF[1]); s.fill(ellipse(ax, 25, 2, 2), GOLD[2]); s.set(ax - 1, 24, GOLD[3])  # finial
+    for k in range(9):                                            # the fanlight over the door
+        a = math.pi * k / 8
+        for t in range(4, 17):
+            s.set(round(ax - math.cos(a) * t), round(108 - math.sin(a) * t * .9), IRONF[1])
+    for x in range(ax - 17, ax + 18):
+        d = abs(x + .5 - ax) / 17
+        s.set(x, 108 - int(15 * math.sqrt(max(0, 1 - d * d))), IRONF[0])
+    s.fill(rect(ax - 18, 108, 37, 2), IRONF[1])
+    for x0, x1 in ((6, bx0 + 2), (bx1 - 2, W - 6)):              # corner posts
+        for x in (x0, x1 - 3):
+            s.fill(rect(x, 92, 3, pl - 92), IRONF[1]); s.fill(rect(x, 92, 1, pl - 92), IRONF[3])
+    for x in (bx0 - 2, bx1 - 1):
+        s.fill(rect(x, gtop(x), 3, pl - gtop(x)), IRONF[0]); s.fill(rect(x, gtop(x), 1, pl - gtop(x)), IRONF[2])
+    paint_wall(s, rect(4, pl, W - 8, H - 8 - pl), 'ashlar', WALL_COL, 61)       # the stone plinth
+    s.fill(rect(2, pl - 2, W - 4, 3), STONE[3]); s.fill(rect(2, pl - 2, W - 4, 1), STONE[4]); s.fill(rect(2, pl + 1, W - 4, 1), STONE[1])
+    for x in range(4, W - 4):
+        for k in range(3):
+            c = s.get(x, H - 9 - k)
+            if c[3]:
+                s.set(x, H - 9 - k, mul(c, .8))
+        if vnoise(x * .3, 2, 61) > .62:
+            s.set(x, H - 9, MOSS[1])
+    dx0, dw, dh = ax - 13, 26, 50                                # the glazed double door
+    dy0 = H - 8 - dh
+    s.fill(rect(dx0 - 3, dy0 - 3, dw + 6, dh + 3), IRONF[0])
+    for x in range(dx0, dx0 + dw):
+        for y in range(dy0, H - 8):
+            s.set(x, y, mix('#2a4440', '#cfe8ec', .45 - (y - dy0) / dh * .25))
+    for x in (dx0, ax - 1, dx0 + dw - 2):
+        s.fill(rect(x, dy0, 2, dh), IRONF[1])
+    for y in (dy0, dy0 + 16, dy0 + 32, H - 12):
+        s.fill(rect(dx0, y, dw, 2), IRONF[1])
+    for k in range(10):
+        s.set(dx0 + 3 + k // 2, dy0 + 3 + k, mix('#cfe8ec', '#ffffff', .6))
+    s.fill(rect(ax - 4, dy0 + 26, 2, 3), GOLD[2]); s.fill(rect(ax + 2, dy0 + 26, 2, 3), GOLD[2])
+    for k in range(2):                                            # the step
+        s.fill(rect(dx0 - 6 + k * 2, H - 8 + k * 2, dw + 12 - k * 4, 2), STONE[3 - k])
+    for px_ in (24, W - 34):                                      # potted bay trees by the plinth
+        s.fill(rect(px_, H - 22, 10, 12), '#c8582a'); s.fill(rect(px_, H - 22, 10, 2), '#e8804a'); s.fill(rect(px_ + 7, H - 20, 3, 10), '#8a3a1a')
+        s.fill(rect(px_ + 4, H - 26, 2, 4), '#4a3020')
+        s.fill(ellipse(px_ + 5, H - 32, 7, 7), LEAF[1]); s.fill(ellipse(px_ + 3, H - 34, 4, 4), LEAF[3])
+    s.outline()
+    c = winterize(s) if winter else s
+    c.meta = {'win': []}
+    return c
 
 
 # ---- castle furniture -------------------------------------------------------

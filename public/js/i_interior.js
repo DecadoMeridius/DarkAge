@@ -98,9 +98,9 @@ doorAction = function (act, who) {
 };
 const _objInteract = objInteract;
 objInteract = function (m, x, y, o) {
-  if (o.k === 'keeper') { const room = ROOMS[m.id.slice(3)], fur = room && room.f.find(f => f[3]); return { label: 'Talk', fn: () => fur ? _doorAction(fur[3], o.npc) : talkNPC(o.npc) }; }
+  if (o.k === 'keeper') { const room = ROOMS[m.id.slice(3)], fur = room && room.f.find(f => f[3]); return { label: 'Talk', fn: () => fur ? doorAction(fur[3], o.npc) : talkNPC(o.npc) }; }
   if (o.act === 'kitchen') return { label: o.label, fn: () => openMenu('craft', 'kitchen') };
-  if (o.act) return { label: o.label || 'Use', fn: () => _doorAction(o.act) };
+  if (o.act) return { label: o.label || 'Use', fn: () => doorAction(o.act) };
   return _objInteract(m, x, y, o);
 };
 const _stationNear = stationNear;

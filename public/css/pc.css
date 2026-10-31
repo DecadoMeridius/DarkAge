@@ -189,7 +189,7 @@ body:has(#modal:not([hidden])) #pausebtn, body:has(#pauseov) #pausebtn { display
 @media (max-width: 760px) { .hotrow { grid-template-columns: repeat(5, 60px); } }
 .wmap.localmap { width: auto !important; height: auto !important; max-width: 100%; }
 .encycell.dim img { opacity: .4; filter: grayscale(.7); }
-h1, h2, h3, .ph h2, #mtitle, .cinzel { font-variant-ligatures: none; font-feature-settings: "liga" 0, "dlig" 0, "clig" 0; }
+h1, h2, h3, .ph h2, #mtitle, .cinzel { font-variant-ligatures: none; font-feature-settings: "liga" 0, "dlig" 0, "clig" 0, "calt" 0, "swsh" 0, "salt" 0; }
 .pack { grid-template-columns: repeat(7, 60px) !important; }
 .pack .cell.dim img { opacity: .25; }
 .bagtools { margin-bottom: 6px; }
@@ -256,3 +256,7 @@ body:has(#modal:not([hidden])) #ctpanel { display: none; }
 .need { white-space: nowrap; }
 .csreq { display: flex; flex-direction: column; gap: 1px; margin: 3px 0; font-size: 12px; }
 .csreq .ok { color: #2e6a26; } .csreq .no { color: #a8301a; }
+.btn.warn { background: #c8702a !important; color: #fff8e8 !important; }
+/* The "Cinzel" face is Cinzel Decorative, whose lowercase letters are ornamental capitals (Ꞥ for h, Ꝏ for oo):
+   every Cinzel text is set in uppercase, which uses its plain capitals (playtest: "TOWN ꞤALL", "BꝎTS") */
+#banner, #bossbar, .ph h2, h1, h2, h3, #mtitle, .dayw, .perkcard b, #title h1, #tip b, .ccrow > span, #ctxmenu .ctxhead, #tframe b, .cinzel { text-transform: uppercase; }

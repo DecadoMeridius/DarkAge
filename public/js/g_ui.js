@@ -336,7 +336,7 @@ function showFishUI(on) { $('#fish').hidden = !on; }
 let hudKey = '', hudAcc = 0;
 function buildHUD() {
   const hb = $('#hotbar'); hb.innerHTML = '';
-  S.hot.forEach((_, i) => { const s = el('button', { class: 'slot f-slot', id: 'hs' + i }); s.addEventListener('pointerdown', e => { e.preventDefault(); if (PAUSED) return; if (S.sel === i && !isTool(S.hot[i])) openMenu('bag'); S.sel = i; hudKey = ''; hudTick(1); }); hb.append(s); });
+  S.hot.forEach((_, i) => { const s = el('button', { class: 'slot f-slot', id: 'hs' + i }); s.addEventListener('pointerdown', e => { e.preventDefault(); if (PAUSED) return; if (S.sel === i && !isTool(S.hot[i])) { const id = S.hot[i]; if (id && IT[id] && IT[id].eat && has(id)) eat(id); else openMenu('bag'); } /* clicking the selected food again eats it */ S.sel = i; hudKey = ''; hudTick(1); }); hb.append(s); });
   hudKey = '';
 }
 function hudTick(dt) {

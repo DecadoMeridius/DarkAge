@@ -65,6 +65,7 @@ renderAnimals = (f => function (b) {
 
 /* ---------- 2 clicks and input ---------- */
 let CLICK_T = 0, INPUT_GAP = 0;
+for (const ev of ['pointerdown', 'pointerup', 'mouseup', 'click']) addEventListener(ev, e => { if (performance.now() < INPUT_GAP && e.target === cv) { e.stopImmediatePropagation(); e.preventDefault(); } }, true); // the click that closed a dialogue never lands in the world
 addEventListener('mousedown', e => {
   if (performance.now() < INPUT_GAP && e.target === cv) { e.stopImmediatePropagation(); e.preventDefault(); return; }
   CLICK_T = performance.now();
@@ -72,7 +73,7 @@ addEventListener('mousedown', e => {
 // a key held over from a minigame (Space, E) doesn't reach the world as it closes
 fgClose = (f => function () { f(); INPUT_GAP = performance.now() + 350; })(fgClose);
 addEventListener('keydown', e => {
-  if (performance.now() < INPUT_GAP && !MODAL) { e.stopImmediatePropagation(); e.preventDefault(); return; }
+  if (performance.now() < INPUT_GAP && !MODAL && !/^(Key[WASD]|Arrow\w+|Shift\w*)$/.test(e.code)) { e.stopImmediatePropagation(); e.preventDefault(); return; } // movement always gets through (playtest: a held key was lost when a window closed)
   // Esc in a search box closes the window like anywhere else
   if (e.key === 'Escape' && e.target && /input|textarea/i.test(e.target.tagName) && MODAL) { e.target.blur(); closeModal(); e.preventDefault(); }
 }, true);
@@ -108,7 +109,7 @@ clickTarget = function () {
   return [tx, ty];
 };
 function counterNear(m, x, y) {
-  for (let dy = 0; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const [, , o] = mainOf(m, x + dx, y + dy); if (o && /counter|bar/.test(o.k)) return [x + dx, y + dy]; }
+  for (let dy = 0; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const [, , o] = mainOf(m, x + dx, y + dy); if (o && /counter|bar/.test(o.k)) return [x + dx, y + dy]; } // a little wider: Pip's bar sits further from him than Mara's counter
   return null;
 }
 npcWalk = (f => function (dt) {
@@ -370,7 +371,7 @@ recalc = (f => function () {
   showDayReport = (f => function (lines) {
     if (fainted && performance.now() - fainted.t < 8000) {
       const F = fainted, hm = Math.floor(F.at / 60) % 24; fainted = null;
-      lines = [['coin', (/exhaustion/.test(F.msg) ? 'You stayed up past 2 am and collapsed' : 'You were knocked out') + ' (around ' + ((hm % 12) || 12) + (hm < 12 ? ' am' : ' pm') + '). Someone carried you home' + (F.lost > 0 ? ' and took ' + F.lost.toLocaleString() + 'g for the trouble' : '') + '. Sleep in your tent before 2 am next time.']].concat(lines);
+      lines = [['coin', (/exhaustion/.test(F.msg) ? 'You stayed up past 2 am and collapsed' : 'You were knocked out') + ' (around ' + ((hm % 12) || 12) + (hm < 12 ? ' am' : ' pm') + '). Someone carried you to bed' + (F.lost > 0 ? ' and took ' + F.lost.toLocaleString() + 'g for the trouble' : '') + '. Sleep ' + (typeof castleOwned === 'function' && castleOwned() ? 'in a bed' : 'in your tent') + ' before 2 am next time.']].concat(lines);
     }
     fainted = null; return f(lines);
   })(showDayReport);
@@ -485,8 +486,8 @@ renderBag = (f => function (b) {
 
 /* ---------- 9 UI ---------- */
 // short windows are small windows, not full-screen panels
-const SMALL_WIN = new Set(['Home', 'A lost page', 'Request board', 'Sandbox', 'Farm notices', 'Shipping bin']);
-openModal = (f => function () { const box = document.querySelector('#modal'); if (box) box.classList.remove('small'); return f.apply(this, arguments); })(openModal);
+const SMALL_WIN = new Set(['Home', 'A lost page', 'Request board', 'Sandbox', 'Farm notices', 'Shipping bin', 'Waystones', 'Museum', 'Royal Bedchamber']);
+openModal = (f => function () { const box = document.querySelector('#modal'); if (box) box.classList.remove('small'); const r = f.apply(this, arguments); if (MODAL && box && SMALL_WIN.has(MODAL.title)) box.classList.add('small'); return r; })(openModal); // also here: some windows draw without the drawModal wrapper
 drawModal = (f => function () { const r = f.apply(this, arguments); const box = document.querySelector('#modal'); if (MODAL && box && SMALL_WIN.has(MODAL.title)) box.classList.add('small'); return r; })(drawModal);
 // getting off the horse leaves it standing beside you instead of back in the pasture
 toggleRide = (f => function () {

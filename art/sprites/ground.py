@@ -199,6 +199,51 @@ def planks():
     return c
 
 
+def flagstones():
+    """Castle flagstones: squared slabs in staggered courses with dark grout, a lit top-left edge on each slab,
+    a little tone variation from slab to slab and the odd hairline crack."""
+    pal = ['#4e4840', '#7e766a', '#8e8678', '#9c9484', '#b4ac9a']
+    c = Canvas(N, N)
+    r = rng(17)
+    for y in range(N):
+        row = y // 16
+        for x in range(N):
+            sx = (x + (8 if row % 2 else 0)) % N
+            gx, gy = sx % 16, y % 16
+            slab = (sx // 16 + row * 5) % 7
+            if gx == 15 or gy == 15:
+                col = pal[0]
+            elif gy == 0 or gx == 0:
+                col = pal[4] if slab % 3 else pal[3]
+            else:
+                col = pal[2 + (slab % 2)] if (x * 7 + y * 3) % 23 else pal[1]
+            c.set(x, y, col)
+    for _ in range(5):  # hairline cracks
+        x, y = r.randrange(N), r.randrange(N)
+        for k in range(r.randrange(3, 7)):
+            c.set((x + k) % N, (y + (k // 2)) % N, pal[1])
+    return c
+
+
+def marble():
+    """A chequered marble floor for the halls: cream and dove-grey squares with faint veins and fine grout."""
+    a = ['#d8d0c4', '#e8e2d6', '#f4f0e6']
+    b = ['#9c9490', '#aaa29c', '#bab2aa']
+    c = Canvas(N, N)
+    for y in range(N):
+        for x in range(N):
+            light = ((x // 16) + (y // 16)) % 2 == 0
+            P = a if light else b
+            gx, gy = x % 16, y % 16
+            if gx == 15 or gy == 15:
+                col = '#7e7670'
+            else:
+                vein = abs(((x * 3 + y * 2) % 29) - 14) == 0 or abs(((x * 2 - y * 3) % 37) - 18) == 0
+                col = P[0] if vein else P[2] if gx < 2 or gy < 2 else P[1]
+            c.set(x, y, col)
+    return c
+
+
 CAVE = {'earth': ['#4e3a2a', '#6e5238', '#8f6e50', '#a8865f', '#b89870'],
         'ice': ['#5a7290', '#8aa4ba', '#a9bfd1', '#c8dae8', '#e2eef6'],
         'magma': ['#2e1a14', '#4a2e26', '#664236', '#7e5444', '#ff8a3a'],
@@ -267,6 +312,8 @@ def _all():
     out['ground_w'] = water
     out['ground_l'] = lava
     out['ground_f'] = planks
+    out['ground_fl'] = flagstones
+    out['ground_mb'] = marble
     for th, pal in CAVE.items():
         out[f'ground_c_{th}'] = (lambda pal=pal, th=th: speckled(pal, 30 + len(th), 80, 5))
         out[f'ground_xw_{th}'] = (lambda pal=pal: cave_wall(pal))

@@ -429,6 +429,7 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - **Gate and towers:** 2x2 `ctower` objects, and a `cgate` arch whose right half is a non-solid `gpart`, so both gate tiles are open. All have `_w` winter versions.
   - **Buildings:** the keep `bld_castle_18x10` (door act `castle`) and the glasshouses `cgh_W`/`cgh_E` (any season).
   - **Ownership:** `flags.castleOwned`; `castleLand()` adds the grounds and glasshouses to `ownedPlots`.
+- **The art:** the walls, towers and keep have hand-placed wear (`weather`: cracks, rain streaks, moss tufts), machicolations (`corbels`), string courses on the towers and vine-by-vine ivy (`ivy`). The glasshouses are iron-framed orangeries with citrus trees showing through the glass (`greenhouse`, `glass_bay`, `glass_roof`).
 - **The keep has three floors (`KEEP_PLANS`, `genKeepFloor`, rebuilt every load):**
   - **`castle_in`:** throne room with pillars, great hall, library, chapel, kitchen with the great hearth, pantry, armoury, guard room, and an entrance hall with the grand stair up and the stair down.
   - **`castle_up`:** your bedchamber, the solar, Isolde's chamber, the bath, the portrait gallery and the map room.
@@ -470,6 +471,23 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - flight;
   - an old save moving onto the new Wilds.
 
+## The court of Briarholt (`public/js/x_court.js`)
+- **The grounds** (in `genCastle`):
+  - a paved fountain plaza before the keep (the village `fountain` sprite over solid basin tiles);
+  - hedged flower beds with topiaries, and banner poles along the road and by the keep door;
+  - a training yard (dummies, archery targets, hay, a weapon rack), stores (barrels, crates, sacks, hay) and four knights' pavilions.
+  - They're all `furn_<k>` objects. The yard pieces are hand grids in `castle2.py`: `dummy`, `target`, `haybale`, `sbench`, `hedge`, `topiary`, `bpole`, `pavilion`.
+- **People (`COURT`)** appear with the story (`courtOn`), on the grounds and on the keep floors:
+  - **From the day the way opens:** Aldous the steward and Wenna the gardener. They have their own `pre` lines before you own the castle.
+  - **Once owned:** guards at the gate and the keep door plus one walking the grounds, a maid, a stable hand; inside the keep, the cook, a scribe, the chaplain, throne guards, a door warden and maids.
+  - **Once `knightsAtBriar` is set:** knights drill at the dummies (they swing on a timer) and Ser Bram walks the yard.
+  - **After the council (`flags.bloodline` set):** lords and ladies in the gardens, Tobin the bard by the fountain, courtiers in the great hall and a lady's maid upstairs.
+- **How they move and talk:** each walks between its own `spots` on `findPath` (guards on `post`, the walking guard on a `loop`) and pauses between walks.
+  - Talking goes to `k_court` (story steps speak first).
+  - They're runtime-only `m.npcs` entries (`court: 1`, state in `CSTATE`), and NPCS entries hidden from Friends.
+  - During a siege they stay indoors.
+- **Kingdom test** (title screen, `startKingdomTest` in `x_combattest.js`): a throwaway game with The Hollow Crown finished (the herald rides in on the first morning), combat 30, iron gear and 20,000 gold.
+
 ## The realm: a bigger Wilds, towns, guards and patrols (`public/js/x_realm.js`, art `art/sprites/towns.py`)
 - **The Wilds are 440x330** (`WK` 2.2 in `d_world.js`; `WW`, `WH`, `WIN_F`/`WIN_V` for the farm and village roads, `EW`/`EH` for the explored fog). Region gates scale with `regionGateX`. Old saves get a new Wilds once (`S.wildsVer` 2).
 - **Saves of big generated maps store only their changes** (`DELTA_MAP`, `baseSnap`, `diffO`, `applyDelta`; `ms.d`, with `ms.w`/`ms.h` so a map of another size is regenerated): the Wilds, the regions and Briarholt. A save went from ~470 KB to ~80 KB.
@@ -491,3 +509,45 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - They're NPCS entries hidden from the Friends tab, drawn as villagers with a sword and a health bar.
   - **Fighting:** they target the nearest monster in reach (`allyFoes`), move by point collision with a path fallback (`allyMove`), and strike (`allyStrike`). A kill counts as yours if you're within 140 px.
   - **Getting hurt:** monsters next to them hurt them; when beaten they fall back and return later.
+  - **Patrols** spawn on a road end 25-90 tiles from you, so they ride past where you are.
+- **Townsfolk (`CITS`):** people walk each town's streets by day (Kingsbridge 12, Greyhelm 6, Ashford 4, Saltmere 5).
+  - Each has a look made from their id, a role and town lines (`k_cit`), and they're hidden from Friends.
+  - Every Kingsbridge market stall has a vendor.
+- **Roads:** `realmRoad` lays long straight runs that only turn on dry land, so bridges are straight. It clears trees whose canopy would hang over the road. Gateways are paved through to the road.
+- **Placement:**
+  - `townSpot` falls back to the best spot it saw when no ideal one exists (Kingsbridge was missing in some worlds).
+  - Signposts stand beside a gate's road, never in it (`signNear(..., side)`). The crossroads sign points home too.
+- **A gentle ring:** within 28 tiles of a town, and along the Wilds' south edge where the home roads come in, only meadow creatures spawn, at level 0-1.
+- **Waystones:** the farm and village stones are attuned from the start; travel lands on a free tile (`wayLand` in `u_regions.js`).
+- **Walls:** pieces with no east neighbour cast a hard contact shadow on the ground to the east (sprites are 48 wide, 8 px padding each side), so north-south walls read as raised.
+
+## Playtest night fixes (end of `x_court.js`, plus small edits; log in `docs/playtest/night/FINDINGS.md`)
+- **Room furniture:** a room's keeper and its counters call the current `doorAction` (`i_interior.js` used a copy from before the towns, so town menus never opened).
+  - A keeper behind a counter is reached across it (`clickTarget` → `counterNear`).
+  - Furniture inside a room's doorway is cleared.
+- **The story:**
+  - A story waiting on a shopkeeper speaks even while the shop is shut.
+  - Story objects glint gold (the kitchen stove steams) and E reaches them from any neighbouring tile.
+  - Wide buildings' doors open from the tiles either side.
+  - Closing a dialogue blocks world input for 0.4 s.
+  - The journal lists the tracked story first.
+  - The tracker names story characters and says "Go outside" indoors.
+- **The procession:** each rider gets a free tile, and the wagons clear weeds and stones to park. `farm:home` needs a free 3×3 spot (cached as `['farm', x, y, 'roomy']`).
+- **The camera** may scroll slightly past the top and bottom map edges, so the HUD and hotbar never cover you.
+- **New games** start with Trail Bread in hotbar slot 0. Getting-started steps are checked in the background.
+- **Shops:** the big-buy confirm keeps the button's text and uses the row's real price.
+- **Weapons:** with a weapon, any foe within 200 px means a click attacks. Round 3 asked for this after far-click walking made aimed swings drift.
+- **The tracker** follows the walking route. It paths to a free tile beside the target (targets are usually solid), and `exitToward` leads to building doors, the keep's door and its stairs.
+- **Inns** are open all night. After 6 pm they offer "Sleep here until morning" (`S.flags.innWake`, and you wake at the inn), plus a hot meal eaten on the spot.
+- **Town jobs:** kills count within 60 tiles of the job's town, each kill toasts progress, and taken jobs are listed in the journal. With the patrol job on, patrols come every 10 s.
+  - Patrols never stall: stragglers catch up, a stuck leader skips ahead, and a patrol retires after 6 minutes.
+- **The Wilds map:** roads, town footprints, building labels and patrols (purple shields) are drawn.
+- **Waystones** attune when you walk up to one. Briarholt has its own stone (`castle`).
+- **Time:** warnings at 1 am and 1:45. Once Briarholt is yours, a day that ends in the castle wakes you in the royal bedchamber.
+- **Floors and walls:**
+  - New floors: `fl` (flagstones) and `mb` (chequered marble), with `ground_fl` and `ground_mb` in ground.py, for the keep and town rooms.
+  - The throne stands on `dec_dais`.
+  - Wall bodies: an east-west wall run also blocks the tile north of it (`wallBodies`); north-south runs don't, so side gates stay 2 tiles wide.
+- **The court** dines in the great hall at noon and in the evening (`meal` entries). Aldous has `met` lines once you know Isolde, and Isolde lives in the keep after chapter 2.
+- **Fonts:** the "Cinzel" face is Cinzel Decorative, so every Cinzel text is set in uppercase (its lowercase letters are ornamental capitals).
+- **Known data bug, not fixed (it needs a save migration):** the Cheese Press placeable and the Cheese food share the item key `cheese`, and the press definition overwrites the food.

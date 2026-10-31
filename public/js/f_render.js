@@ -42,7 +42,7 @@ function render(dt) {
   if (m !== lastMap) { lastMap = m; chunkBudget = 24; } else chunkBudget = Math.max(chunkBudget, 2);
   const W = cv.width, H = cv.height, Z = pixZoom(H), vw = W / Z, vh = H / Z, sea = S.season;
   let tx = S.p.x - vw / 2, ty = S.p.y - 12 - vh / 2;
-  tx = m.w * 16 < vw ? (m.w * 16 - vw) / 2 : clamp(tx, 0, m.w * 16 - vw); ty = m.h * 16 < vh ? (m.h * 16 - vh) / 2 : clamp(ty, 0, m.h * 16 - vh);
+  tx = m.w * 16 < vw ? (m.w * 16 - vw) / 2 : clamp(tx, 0, m.w * 16 - vw); ty = m.h * 16 < vh ? (m.h * 16 - vh) / 2 : clamp(ty, -Math.max(vh * .05, 40), m.h * 16 - vh + Math.max(vh * .11, 40)); // a little past the edges, so the hotbar and HUD never cover you
   camX += (tx - camX) * Math.min(1, dt * 8); camY += (ty - camY) * Math.min(1, dt * 8); if (Math.abs(camX - tx) > 160 || Math.abs(camY - ty) > 160) { camX = tx; camY = ty; }
   let sx = 0, sy = 0; if (SHAKE > 0) { sx = (Math.random() - .5) * 3; sy = (Math.random() - .5) * 3; }
   const cxp = Math.round((camX + sx) * Z / 2) * 2 / Z, cyp = Math.round((camY + sy) * Z / 2) * 2 / Z; // snap to the art-pixel grid
@@ -79,7 +79,7 @@ function render(dt) {
     }
     const spr = objSprite(o, sea); if (!spr) continue; const DD = OBJ[o.k] || {}, w = (DD.w || 1) * 16;
     if (o.k === 'tree' && o._v === undefined) o._v = hsh(x, y, 11) < .5 ? 0 : 1;
-    L.push({ y: (y + 1) * 16 - (o.k === 'tgrass' ? 6 : 1), f: () => {
+    L.push({ y: (y + 1) * 16 - (o.k === 'tgrass' ? 6 : /^furn_stair/.test(o.k) ? 30 : 1), f: () => { /* stairs lie on the floor: anyone on or before them is drawn over */
       let ox = 0; if (o.shake > 0) { o.shake -= dt; ox = Math.sin(gameT * 60) * 1.2; }
       const dx = x * 16 + (w - spr.ww) / 2 + ox, isTree = DD.tree || o.k === 'ftree' || o.k === 'ancient', dy = (y + 1) * 16 - spr.wh + (isTree ? 3 : 0);
       if (isTree || o.k === 'tgrass' || o.k === 'bush') {
@@ -149,7 +149,7 @@ function drawEnt(e) {
   }
   const E2 = EN[e.k], spr = enemySpr(e.k, typeof enemyFrame === 'function' ? enemyFrame(e) : Math.floor(e.t * 4) % 2);
   if (E2.ai === 'ambush' && !e.awake) { D(SPR.rock, e.x - 8, e.y - 14); return; }
-  const air = E2.ai === 'fly' || E2.ai === 'swoop' ? 10 + Math.sin(e.t * 5) * 2 : E2.ai === 'ghost' ? 4 + Math.sin(e.t * 2) * 2 : (e.hopT > 0 ? Math.sin(e.hopT / .35 * Math.PI) * 6 : 0);
+  const air = E2.ai === 'fly' || E2.ai === 'swoop' ? 6 + Math.sin(e.t * 5) * 2 : E2.ai === 'ghost' ? 4 + Math.sin(e.t * 2) * 2 : (e.hopT > 0 ? Math.sin(e.hopT / .35 * Math.PI) * 6 : 0);
   shadow(e.x, e.y, Math.max(5, spr.ww * .32));
   const AN = typeof enemyAnim === 'function' ? enemyAnim(e, E2) : { x: 0, y: 0, sx: 1, sy: 1 }; g.save(); g.translate(e.x + AN.x, e.y - air + AN.y); if (e.dir < 0 && E2.art !== 'human' && E2.art !== 'slime') g.scale(-1, 1); g.scale(AN.sx, AN.sy);
   const squash = E2.art === 'slime' && e.hopT > 0 ? 1 + Math.sin(e.hopT / .35 * Math.PI) * .12 : 1; g.scale(1 / squash, squash);
@@ -224,6 +224,6 @@ function worldMapCanvas() {
     if (S.meteor) { x.fillStyle = '#fff6a8'; x.fillText('★', S.meteor.x * 3, S.meteor.y * 3 + 5); }
     if (hasPerk('tracker')) for (const [sx, sy] of m.secrets || []) if (EXPL[Math.floor(sy / 4) * EW + Math.floor(sx / 4)]) { x.fillStyle = '#ffd040'; x.fillRect(sx * 3 - 1, sy * 3 - 1, 3, 3); }
     if (cur.id === 'wilds') { x.fillStyle = '#ffffff'; x.beginPath(); x.arc(S.p.x / 16 * 3, S.p.y / 16 * 3, 5, 0, 6.283); x.fill(); x.fillStyle = '#e8342a'; x.beginPath(); x.arc(S.p.x / 16 * 3, S.p.y / 16 * 3, 3, 0, 6.283); x.fill(); }
-    x.fillStyle = OUT; x.font = '18px Fredoka, sans-serif'; x.fillText('Farm', 60 * 3, (m.h - 2) * 3); x.fillText('Village', 100 * 3, (m.h - 2) * 3);
+    x.fillStyle = OUT; x.font = '18px Fredoka, sans-serif'; x.fillText('Farm', (typeof WIN_F !== 'undefined' ? WIN_F : 60) * 3, (m.h - 2) * 3); x.fillText('Village', (typeof WIN_V !== 'undefined' ? WIN_V : 100) * 3, (m.h - 2) * 3);
   });
 }

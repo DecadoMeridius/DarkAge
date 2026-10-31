@@ -19,7 +19,7 @@ HELM = {  # shell, face, extras
     'iron': ('tall', 'slit', ['cross', 'breaths']),
     'steel': ('point', 'visor', ['brow', 'feather']),
     'silver': ('round', 'cheek', ['wings', 'brow']),
-    'gold': ('round', 'T', ['crest', 'brow']),
+    'gold': ('round', 'slit', ['crest', 'brow', 'breaths']),   # a plain slit: the old T visor read as a letter
     'mythril': ('point', 'narrow', ['leaves']),
     'frost': ('round', 'cheek', ['icespikes']),
     'obsidian': ('tall', 'glow', ['horns']),
@@ -127,6 +127,11 @@ def helm(tk, d):
             if d != 2:
                 flat(s, rect(15, 3, 2, 9 if d == 0 else 18), 'plume', 2)
             hline(s, 9, 22 if not side else 23, 10, 'plume', 1)
+        if ex == 'breaths' and side:   # breathing holes and a hinge rivet on the side too (playtest: the side view was a flat slab)
+            for x, y in ((20, 16), (22, 16), (21, 18), (23, 18)):
+                s.set(x, y, SLIT)
+            s.set(13, 13, code('helm', 3)); s.set(13, 14, code('helm', 1))
+            hline(s, 10, 22, 20, 'helm', 1)
         if ex == 'breaths' and d == 0:
             for x in (12, 14, 17, 19):
                 s.set(x, 17, SLIT); s.set(x, 19, SLIT)

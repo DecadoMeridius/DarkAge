@@ -325,7 +325,7 @@ function updateEnemies(m, dt) {
       case 'ghost': if (aggro) { mx = dx / d * spd; my = dy / d * spd; } else wander(); e.x += mx * dt; e.y += my * dt; mx = my = 0; break;
       case 'ambush': if (!e.awake) { if (d < 40) { e.awake = 1; e.flash = .3; } break; } mx = dx / d * spd; my = dy / d * spd; break;
       case 'charge': { const A = e.ai; if (!aggro) { wander(); break; } A.c = (A.c || 0) + dt; if (A.c < 1.4) { mx = dx / d * spd * .4; my = dy / d * spd * .4; } else if (A.c < 1.9) { e.tele2 = 1; A.cx = dx / d; A.cy = dy / d; } else if (A.c < 2.5) { e.tele2 = 0; mx = A.cx * spd * 4; my = A.cy * spd * 4; } else A.c = 0; break; }
-      case 'swoop': { const A = e.ai; A.a = (A.a || Math.random() * 6) + dt * 1.6; if (aggro) { A.c = (A.c || 0) + dt; if (A.c > 3) { mx = dx / d * spd * 2.6; my = dy / d * spd * 2.6; if (A.c > 3.7) A.c = 0; } else { const tx = p.x + Math.cos(A.a) * 50, ty = p.y + Math.sin(A.a) * 40; mx = clamp(tx - e.x, -1, 1) * spd; my = clamp(ty - e.y, -1, 1) * spd; } } else { mx = Math.cos(A.a) * 20; my = Math.sin(A.a) * 20; } e.x += mx * dt; e.y += my * dt; mx = my = 0; break; }
+      case 'swoop': { const A = e.ai; A.a = (A.a || Math.random() * 6) + dt * 1.6; if (aggro) { A.c = (A.c || 0) + dt; if (A.c > 3) { mx = dx / d * spd * 2.6; my = dy / d * spd * 2.6; if (A.c > 3.7) A.c = 0; } else { const tx = p.x + Math.cos(A.a) * 32, ty = p.y + Math.sin(A.a) * 26; mx = clamp(tx - e.x, -1, 1) * spd; my = clamp(ty - e.y, -1, 1) * spd; } } else { mx = Math.cos(A.a) * 20; my = Math.sin(A.a) * 20; } e.x += mx * dt; e.y += my * dt; mx = my = 0; break; }
       case 'ranged': { if (!aggro) { wander(); break; } const want = 70; if (d < want - 10) { mx = -dx / d * spd; my = -dy / d * spd; } else if (d > want + 20) { mx = dx / d * spd; my = dy / d * spd; } else { mx = -dy / d * spd * .5; my = dx / d * spd * .5; } e.ai.s = (e.ai.s || 1 + Math.random()) - dt; if (e.ai.s <= 0) { e.ai.s = 1.8 + Math.random(); const a = Math.atan2(dy, dx); proj(m, e.x, e.y - 10, a, E.shot === 'arrow' ? 150 : 110, e.atk, E.shot || 'rock'); if (E.shot === 'fire') SFX.fire(); } break; }
       case 'boss': bossAI(m, e, dt, dx, dy, d); break;
     }
@@ -480,11 +480,12 @@ function chooseFish(locs) {
 }
 function fishAct() {
   if (fishing.phase === 'wait') { fishing = null; toast('You reel in early. Nothing.'); return; }
+  if (fishing.phase === 'bite' && S.flags && !S.flags.fishTip) { S.flags.fishTip = 1; toast('Reeling in: hold the mouse button to lift the green bar, let go to let it fall. Keep the fish inside it until the catch bar fills.', 'lvl'); } // the first time, say how
   if (fishing.phase === 'bite') { const id = chooseFish(fishing.locs); fishing = { phase: 'reel', id, diff: IT[id].fish.diff, mot: IT[id].fish.mot, pos: .5, v: 0, tgt: .5, zone: .5, zv: 0, prog: .3, t: 0, treasure: Math.random() < .05 + (hasPerk('diver') ? .15 : 0) + PS.luck * .02, tp: .2 + Math.random() * .6, tprog: 0 }; showFishUI(true); }
 }
 function updateFishing(dt) {
   const f = fishing; if (!f) return;
-  if (f.phase === 'wait') { f.t -= dt; if (f.t <= 0) { f.phase = 'bite'; f.t = 2; SFX.bite(); floatText(S.p.x, S.p.y - 46, 'Bite! Click!', '#ffd040'); } return; }
+  if (f.phase === 'wait') { f.t -= dt; if (f.t <= 0) { f.phase = 'bite'; f.t = 3; SFX.bite(); floatText(S.p.x, S.p.y - 46, 'Bite! Click!', '#ffd040'); } return; }
   if (f.phase === 'bite') { f.t -= dt; if (f.t <= 0) { fishing = null; toast('It got away…'); } return; }
   f.t += dt;
   const zs = Math.min(.5, (.2 + S.sk.fishing.l * .015 + (S.tools.rod - 1) * .03) * (hasPerk('patient') ? 1.25 : 1) * (S.bonus.fishzone ? 1.2 : 1) * (S.buffs.some(b => b.fish) ? 1.15 : 1));
@@ -545,7 +546,7 @@ function checkPOIs() {
   const m = cur; if (m.id !== 'wilds') return; S.poiSeen = S.poiSeen || {}; const tx = S.p.x / 16, ty = S.p.y / 16;
   const cx = Math.floor(tx / 4), cy = Math.floor(ty / 4); for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) { const X = cx + i, Y = cy + j; if (X >= 0 && Y >= 0 && X < EW && Y < EH) EXPL[Y * EW + X] = 1; }
   m.poi.forEach((p, i) => { if (!S.poiSeen[i] && dist(tx, ty, p.x, p.y) < 7) { S.poiSeen[i] = 1; const nm = { mine: 'The Old Mine', arena: EN[p.boss] && EN[p.boss].n + '\'s territory', shrine: SHRINES[p.bio] && SHRINES[p.bio].n, cave: 'A hidden cave', grove: 'The Secret Grove', ruins: 'Ancient Ruins', hut: 'Corwin\'s Hut', wreck: 'The Wreck of the Marigold', cabin: 'Abandoned Cabin', fairy: 'A Fairy Ring', merchant: 'Merchant\'s Clearing', cross: 'The Crossroads' }[p.type]; if (nm) { toast('Discovered: ' + nm, 'lvl'); if (p.hidden) SFX.secret(); addXP('foraging', 15); } } });
-  const b = BIOMES[m.bio[Math.floor(ty) * m.w + Math.floor(tx)]]; if (b !== m.lastBio) { m.lastBio = b; showBanner(BIONAME[b]); }
+  const b = BIOMES[m.bio[Math.floor(ty) * m.w + Math.floor(tx)]]; if (b !== m.lastBio) { m.lastBio = b; if (!(typeof townAt === 'function' && townAt(m, tx, ty, 1))) showBanner(BIONAME[b]); } /* inside a town its own name stands */
 }
 /* ---- friendship ---- */
 function fr(id) { return S.friends[id] || (S.friends[id] = { pts: 0, g: 0, t: 0, rew: {} }); }

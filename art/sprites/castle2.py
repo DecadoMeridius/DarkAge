@@ -427,3 +427,280 @@ def scale2x(c):
 
 
 SPRITES.update({f'drake_mount.{i}': (lambda i=i: scale2x(drake_mount(i))) for i in range(3)})
+
+
+# ---- the courtyard: a training yard and a few yard pieces -------------------------------------
+# a straw training dummy: a stitched sack head, a wrapped crossbar with straw poking out of the ends,
+# a roped body with a painted target and a straw fringe, on a post in a wooden foot. Lit on the left.
+DUMMY = ([
+    '..........kkkkkk',
+    '.........kcccvVVk',
+    '........kcCccvvVVk',
+    '........kcckcckvVk',
+    '........kccccvvvVk',
+    '........kcckkkvvVk',
+    '.........kcvvvvVk',
+    '..........kkkkkk',
+    '...........kbBk',
+    'yo.kkkkkkkkkbBkkkkkkkkkkk.oy',
+    'oykcCcccccvvvvvvvvvvvVVVVkyo',
+    'yokvcvvvvvvvvvVVVVVVVVVVVkoy',
+    '.o.kkkkkkkkcvvvVkkkkkkkkk.o.',
+    '........kcCccvvvVk',
+    '........kcCccvvvVk',
+    '........kBBBBBBBBk',
+    '........kcCccvvvVk',
+    '........kcCcrrvvVk',
+    '........kcCrCCrvVk',
+    '........kcCrCrrvVk',
+    '........kcCcrrvvVk',
+    '........kcCccvvvVk',
+    '........kBBBBBBBBk',
+    '........kcCccvvvVk',
+    '.......ykcCccvvvVky',
+    '........kyoyoyoyok',
+    '.........ko.o.o.k',
+] + ['...........kbBk'] * 16 + [
+    '.......kkkkkbBkkkkk',
+    '......kWWwwwbBwwwbBk',
+    '......kbbbbbbBBBBBnk',
+    '......kkkkkkkkkkkkkk',
+])
+
+
+def target():
+    """An archery butt: a round straw boss with painted rings (gold, red, blue, black, white) on a
+    wooden easel, an arrow stuck in the red."""
+    cx, cy, R = 15.5, 13.5, 13
+    rows = []
+    for y in range(28):
+        r = ''
+        for x in range(32):
+            d = ((x - cx) ** 2 + (y - cy) ** 2) ** .5
+            if d > R + .5:
+                r += '.'
+            elif d > R - .7:
+                r += 'k'
+            elif d > R - 2.4:
+                r += 'y' if (x - cx) + (y - cy) < -4 else 'o' if (x - cx) + (y - cy) < 6 else 'O'
+            else:
+                ring = int(d / 2.3)
+                r += ['Y', 'r', 'a', 'J', 'C', 'C'][min(5, ring)]
+                if ring == 4 and (x - cx) + (y - cy) > 4:
+                    r = r[:-1] + 'c'
+        rows.append(r)
+    rows = [list(r) for r in rows]
+    for i, (x, y) in enumerate([(22, 9), (23, 8), (24, 7), (25, 6), (26, 5)]):   # the arrow
+        rows[y][x] = 'b' if i < 4 else 'R'
+    rows[4][27] = 'C'; rows[4][26] = 'R'; rows[5][27] = 'R'
+    legs = []
+    for k in range(14):                                        # the easel: two splayed legs and a back prop
+        r = ['.'] * 32
+        lx, rx = 9 - k // 3, 22 + k // 3
+        r[lx], r[lx + 1], r[lx + 2] = 'k', 'W', 'b'
+        r[rx - 1], r[rx], r[rx + 1] = 'k', 'b', 'B'
+        r[15], r[16] = 'b', 'B'
+        legs.append(r)
+    legs.insert(3, list('......kkkkkkkkkkkkkkkkkkkk......'.replace('kkkkkkkkkkkkkkkkkkkk', 'kWWwwwwwwwwbbbbbbBBk')))
+    return grid([''.join(r) for r in rows + legs])
+
+
+# a hay bale, strapped with two bands of twine, straw ends bristling
+def haybale():
+    rows = ['...kkkkkkkkkkkkkkkkkkkkkkkkk....']
+    for y in range(16):
+        r = '..k' if y else '..k'
+        for x in range(27):
+            if x in (7, 19):
+                c = 'B' if y else 'b'
+            elif y == 0:
+                c = 'Y'
+            elif y < 3:
+                c = 'Y' if (x + y) % 4 else 'y'
+            elif y > 12:
+                c = 'O' if (x + y) % 3 else 'o'
+            else:
+                c = 'y' if (x * 3 + y * 5) % 7 else 'o' if x < 20 else 'O'
+            r += c
+        rows.append(r + 'k' + ('o' if y % 3 == 0 else '.'))
+    rows.append('..kkkkkkkkkkkkkkkkkkkkkkkkkkkk..')
+    return grid(rows)
+
+
+# a stone bench on two block legs (mirrored)
+BENCH = ['.kkkkkkkkkkkkkkk', 'kSSSSSSSSSSSSSSS', 'kSssssssssssssss', 'kmmmmmmmmmmmmmmm', 'kddddddddddddddd', '.kkkkkkkkkkkkkkk'] + \
+        ['..kSsmdk........'] * 6 + ['..kkkkkk........']
+
+SPRITES.update({'furn_dummy': lambda: grid(DUMMY), 'furn_target': target, 'furn_haybale': haybale, 'furn_sbench': lambda: grid(BENCH, True)})
+
+
+# ---- the royal gardens and the knights' camp ----------------------------------------------------
+PAL.update({'L': '#2a5226', 'l': '#3a6e30', 'T': '#c8582a', 't': '#8a3a1a', 'N': '#e8804a'})
+
+
+def hedge():
+    """A clipped box hedge, one tile long so a row of them reads as one hedge: a lit top with leaf
+    clumps, a darker front face, a shadowed foot. The ends are square so neighbours join."""
+    rows = []
+    for y in range(26):
+        r = ''
+        for x in range(32):
+            clump = (x * 7 + (y // 3) * 11) % 9 < 2
+            if y == 0:
+                c = 'k'
+            elif y < 9:                               # the clipped top, lit from the top-left
+                c = 'G' if (x * 5 + y * 3) % 13 < (4 if y < 5 else 2) else 'g' if (x * 2 + y * 7) % 17 else 'l'
+            elif y == 9:
+                c = 'l'
+            elif y < 23:                              # the front face
+                c = 'l' if clump or (x + y * 3) % 7 == 0 else 'g' if (x * 3 + y) % 11 == 0 else 'L'
+            elif y < 25:
+                c = 'L'
+            else:
+                c = 'k'
+            r += c
+        rows.append(r)
+    return grid(rows)
+
+
+def topiary():
+    """A boxwood cone in a terracotta pot."""
+    rows = []
+    for y in range(40):
+        half = 1 + y * .32 if y < 36 else 0
+        r = ''
+        for x in range(24):
+            d = x - 11.5
+            if y >= 36:
+                r += '.'
+                continue
+            if abs(d) > half + .5:
+                r += '.'
+            elif abs(d) > half - .6:
+                r += 'k'
+            else:
+                band = (y % 6) == 5
+                c = 'G' if d < -half * .35 else 'g' if d < half * .3 else 'l'
+                r += 'L' if band and d > 0 else ('l' if band else c)
+        rows.append(r)
+    rows[0] = '...........kk' ; rows[1] = '..........kGgk'
+    pot = ['...kkkkkkkkkkkkkkkkkk', '...kNNNNNNNTTTTTTTTtk', '....kNTTTTTTTTTTTttk', '....kNTTTTTTTTTTTttk', '.....kTTTTTTTTTTttk', '.....kTTTTTTTTTTttk', '......kkkkkkkkkkkk']
+    rows = rows[:36] + pot
+    return grid(rows)
+
+
+# a banner pole: a gilt finial, a crossbar, a swallow-tailed Briarholt banner with the stag, a stone foot
+def banner_pole():
+    rows = ['.......kk.......', '......kYyk......', '......kyok......', '.......kk.......']
+    rows += ['..kkkkkjikkkkk..', '.kIIIIIjiIIIIjk.', '..kkkkkjikkkkk..']
+    stag = ['..y...y..', '..y.y.y..', '...yyy...', '....y....', '...yyy...', '..yyyyy..', '..y...y..']
+    for y in range(40):
+        r = '..k'
+        for x in range(11):
+            if y > 33 and abs(x - 5) < (y - 33) * .9:
+                c = 'j' if x == 5 else 'i' if x == 6 else '.'
+            else:
+                c = 'P' if x == 0 else 'q' if x == 10 else 'p'
+                if 8 <= y < 15 and 1 <= x - 0 <= 9 and stag[y - 8][x - 1:x] == 'y':
+                    c = 'y' if x < 5 else 'o'
+                if y in (2, 30):
+                    c = 'o'
+            r += c
+        r += 'k' if not (y > 33 and abs(10 - 5) < (y - 33) * .9) else '.'
+        rows.append(r.replace('..k.', '...').rstrip('.'))
+    rows += ['.......ji.......'] * 30
+    rows += ['....kkkkkkkk....', '...kSSSSSSssk...', '...kssssssmmk...', '..kkkkkkkkkkkk..']
+    return grid(rows)
+
+
+def pavilion():
+    """A knight's pavilion: a round striped tent in purple and cream, a scalloped valance with gold
+    points, a pennant on the king pole and the door flaps tied open."""
+    W, H = 64, 72
+    rows = [['.'] * W for _ in range(H)]
+    cx = 31.5
+    for y in range(10, 34):                          # the conical roof
+        t = (y - 10) / 24
+        half = 3 + t * 27
+        for x in range(W):
+            d = x - cx
+            if abs(d) <= half:
+                stripe = int((d / max(1, half)) * 5 + 5) % 2
+                c = ('p' if stripe else 'C') if d < half * .3 else ('q' if stripe else 'c')
+                if d < -half * .7:
+                    c = 'P' if stripe else 'C'
+                rows[y][x] = 'k' if abs(d) > half - 1 else c
+    for x in range(2, 62):                           # the valance with gold points
+        rows[34][x] = 'q'; rows[35][x] = 'p'
+        if (x - 2) % 6 < 3:
+            rows[36][x] = 'p'; rows[37][x] = 'y' if (x - 2) % 6 == 1 else 'p'
+    for y in range(36, 66):                          # the walls
+        for x in range(4, 60):
+            stripe = ((x - 4) // 8) % 2
+            c = ('p' if stripe else 'C') if x < 44 else ('q' if stripe else 'c')
+            if x in (4, 59):
+                c = 'k'
+            rows[y][x] = c
+    for y in range(44, 66):                          # the doorway, flaps tied back
+        w = int((y - 44) * .45) + 2
+        for x in range(32 - w, 32 + w):
+            rows[y][x] = 'z' if y > 46 else 'n'
+        rows[y][32 - w - 1] = 'C'; rows[y][32 + w] = 'c'
+    rows[54][32 - 9] = 'y'; rows[54][32 + 9] = 'y'
+    for x in range(4, 60):
+        rows[66][x] = 'k'
+    for y in range(0, 12):                           # king pole and pennant
+        rows[y][31] = 'j'; rows[y][32] = 'i'
+    for k in range(8):
+        for j in range(4 - k // 2):
+            rows[1 + j + k // 3][33 + k] = 'P' if j == 0 else 'p'
+    rows[0][31] = 'Y'; rows[0][32] = 'y'
+    return grid([''.join(r) for r in rows[:67]])
+
+
+SPRITES.update({'furn_hedge': hedge, 'furn_topiary': topiary, 'furn_bpole': banner_pole, 'furn_pavilion': pavilion})
+
+
+def dais():
+    """The throne's dais, painted into the floor under it: a stone platform of squared slabs, three steps down
+    toward the hall (lit treads, shaded risers) and a purple carpet with gold edges up the middle."""
+    W, H = 192, 112
+    rows = []
+    for y in range(H):
+        r = ''
+        for x in range(W):
+            carpet = 64 <= x < 128
+            if y < 72:
+                part = 'top'
+            elif y < 78 or 86 <= y < 92 or 100 <= y < 106:
+                part = 'riser'
+            elif y < 106:
+                part = 'tread'
+            else:
+                part = 'shadow'
+            if part == 'shadow':
+                r += 'n' if (x + y) % 2 == 0 else '.'
+                continue
+            if x in (0, W - 1):
+                r += 'k'; continue
+            if carpet:
+                if x in (64, 127):
+                    c = 'o' if part != 'riser' else 'O'
+                elif x in (65, 126):
+                    c = 'y' if part != 'riser' else 'o'
+                else:
+                    c = 'q' if part == 'riser' else 'P' if y in (0, 78, 92) else 'p'
+            elif part == 'riser':
+                c = 'd' if y not in (72, 86, 100) else 'D'
+            elif y in (0, 78, 92):
+                c = 'S'
+            elif x % 32 == 31 or (part == 'top' and y % 24 == 23):
+                c = 'm'
+            else:
+                c = 's' if (x // 32 + y // 24) % 2 else 'S' if x % 32 < 2 else 's'
+            r += c
+        rows.append(r)
+    return grid(rows)
+
+
+SPRITES['dec_dais'] = dais
