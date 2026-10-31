@@ -205,7 +205,7 @@ function succeed(h) {
   if (h.kind === 'spouse') for (const sk of SK) if (S.sk[sk]) S.sk[sk].tx = oldTx[sk] * .35;
   for (const sk of SK) if (S.sk[sk]) { S.sk[sk].L = lvlFor(S.sk[sk].tx); S.sk[sk].l = Math.min(10, 1 + Math.floor(S.sk[sk].L / 10)); }
   if (S.csk) for (const c in S.csk) S.csk[c].xp = Math.max(c === 'constitution' ? XPT[10] : 0, S.csk[c].xp * .25);
-  S.look = Object.assign({}, DEFAULT_LOOK, look, { name }); F.me = { name, age0: age, d0: dayIndex(), gen: F.me.gen + 1 }; F.bonus = Math.min(.5, F.bonus + .05); F.warnedOld = 0;
+  S.look = Object.assign({}, DEFAULT_LOOK, look, { name }); F.me = { name, age0: age, d0: dayIndex(), gen: F.me.gen + 1 }; F.bonus = Math.round((F.bonus + .1) * 10) / 10; /* +10% XP per generation, no cap: +200% by generation 21 */ F.warnedOld = 0;
   HC_P = null; // redraw the player as the heir
   recalc(); S.p.hp = maxHP(); S.p.st = maxST(); hudKey = '';
   endDay(false); // the heir wakes at home the next morning

@@ -509,6 +509,18 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **The Guild Seam:** the mine mouth in Greyhelm (act `gh_seam`) opens at Hewer rank. `genSeam` makes a dense ore cave (`gseam`), rebuilt every visit, full only on the first visit of the day.
 - **Titles:** `S.titles` and `S.title`; guildmasters greet you by your title. State: `S.guilds[act] = { r, kills }`.
 
+## Generations (`public/js/x_heirs.js`, on top of `x_family.js`)
+- **XP:** each generation adds +10% to every XP gain, life skills (`addXP`) and combat (`cxp` wrapper), with no cap (`F.bonus`): generation 2 is +10%, generation 21 +200%.
+- **Choosing the heir:** the Farewell window lists the spouse and every grown child. The others go their own ways (`F.siblings`, `F.parted`): grown ones set out for distant lands, younger ones live with the surviving parent. The heir's own children start fresh.
+- **The will** (`investiture`, after the heir's first morning):
+  - It reads out the deeds (farm, owned plots, Briarholt) and the guild seals. Guild ranks and every title pass down unchanged.
+  - With Briarholt, the heir is invested by Aldous and chooses Lord or Lady. With the royal bloodline (`flags.bloodline` 1), Isolde crowns them King or Queen.
+  - The style becomes `S.title`.
+- **Suitors** (`S.fam.suitors`, `SUITOR_KIND`: bookish, bold, gentle, merry, crafty):
+  - About 4 within 8 years of your age at all times. They have their own looks, heart scenes, dates, gifts and trade, walk the village by day (`CROWD` walkers), and talk through `k_suitor` (greeting with gifts, romance buttons and a daily Chat).
+  - Those out of range move away at each change of season; new ones arrive.
+  - The original five are courtable while within 15 years of you. `ROMANCE[id]` is registered for each suitor, so the existing Ask out, Propose, wedding and children flow works. A wedding records the spouse's real age.
+
 ## Bandits, packs and goblin tribes (`x_bandits.js`, `x_goblins.js`, art `goblins.py`)
 - **Bandit patrols** (`BANDIT_PATROLS`): 3-5 `bandit`/`archer`/`banditchief` spawn on a Wilds road 26-60 tiles away (not the farm-end roads), from day 3, at most 2 at a time.
   - Each bandit's `home`/`hx` walks with it, so the leash never pulls it back. A patrol goes on along another road at each end and moves on after 7 minutes.

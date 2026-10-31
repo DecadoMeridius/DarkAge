@@ -508,6 +508,13 @@ Four towns have a guild hall. Join for a small fee, then rise through five ranks
 
    Without an heir you can't die. The Family tab (**F**) shows your crest and family tree.
 
+### Generations
+- **When you die:** you choose which grown child (or your spouse) carries on. The other children go their own ways: grown ones set off for distant lands, little ones live with the surviving parent.
+- **What passes down:** everything the family owns and has earned. The farm, your land and Briarholt, your gold and buildings, every guild rank and every title.
+- **The ceremony:** if you hold Briarholt, the heir is invested as Lord or Lady. If you claimed Margit's bloodline before the council, they are crowned King or Queen instead.
+- **XP bonus:** each generation earns +10% more XP on every skill, combat included: +10% for your child, +20% for your grandchild, +200% by the 21st generation.
+- **Marrying again:** new young folk settle in the village each season, always close to your age, so every generation can court, marry and have children of its own.
+
 ## 18. Options
 
 Press **Esc** for Options:
