@@ -149,6 +149,7 @@ pcCursorDraw = (f => function (m) {
     if (!n.court || !COURT_BY[n.id].arms || dist(n.x, n.y, S.p.x, S.p.y) > 420) continue;
     const st = CSTATE[n.id] || {}, side = n.dir === 1 ? -1 : 1, sw = st.swing > 0 ? (1 - st.swing / .3) : 0, ang = -1.2 + sw * 2.4;
     if (n.dir === 3 && !sw) continue; // sheathed behind them when seen from the back
+    if (typeof behindTall === 'function' && behindTall(m, n.x, n.y)) continue; // hidden behind a tower, wall or building: the sword hides too
     heldIcon(ic, n.x + side * 6, n.y - 14, side < 0 ? Math.PI - ang : ang, 12);
   }
 })(pcCursorDraw);

@@ -115,3 +115,32 @@ carvePath = (f => function (m, a, b) {
 Object.assign(FURN, { rails: {}, rails_v: {}, minecart: {}, slag: {}, logpile: { w: 2 }, rowboat: { w: 2 }, fishrack: { w: 2 } });
 for (const k of ['rails', 'rails_v', 'minecart', 'slag', 'logpile', 'rowboat', 'fishrack']) OBJ['furn_' + k] = { solid: k.startsWith('rails') ? 0 : 1, fixed: 1, w: FURN[k].w || 1, h: 1 };
 if (typeof FLAT !== 'undefined') { FLAT.add('furn_rails'); FLAT.add('furn_rails_v'); } // drawn on the ground, under feet
+
+/* walls run on into the towers and gate arches beside them: a wall piece next to a tower or gate counts that
+   side as joined, so it isn't drawn as a wall's end (end parapet, cast shadow) with a gap before the tower */
+const JOINS = new Set(['ctower', 'cgate', 'gpart']);
+function joinTowers(m) {
+  if (!m || !m.o) return m;
+  const joinAt = (x, y) => { if (!inb(m, x, y)) return false; const o = getO(m, x, y); if (!o) return false; if (JOINS.has(o.k)) return true; const mo = mainOf(m, x, y); return !!(mo && mo[2] && JOINS.has(mo[2].k)); };
+  for (let i = 0; i < m.o.length; i++) {
+    const o = m.o[i]; if (!o || o.k !== 'cwall') continue; const x = i % m.w, y = (i / m.w) | 0;
+    let fm = o.fm || 0; if (joinAt(x, y - 1)) fm |= 1; if (joinAt(x + 1, y)) fm |= 2; if (joinAt(x, y + 1)) fm |= 4; if (joinAt(x - 1, y)) fm |= 8; o.fm = fm;
+  }
+  return m;
+}
+genWilds = (f => function () { return joinTowers(f.apply(this, arguments)); })(genWilds);
+if (typeof genCastle === 'function') genCastle = (f => function () { return joinTowers(f.apply(this, arguments)); })(genCastle);
+// Kingsbridge's west and east gates go: a gap in a north-south wall can't read with walls this tall (the wall
+// south of the gap is drawn over the passage and you vanish under it; style audit round 2). Roads come in at
+// the north and south gatehouses instead.
+if (typeof TOWNS !== 'undefined' && TOWNS.kingsbridge) { delete TOWNS.kingsbridge.gates.W; delete TOWNS.kingsbridge.gates.E; }
+
+// is someone at (x, y) standing behind something tall (a tower, wall, gate or building in the rows below)?
+// Things drawn in the overlay pass (guards' swords) skip them, so a sword doesn't float on a tower's face
+function behindTall(m, x, y) {
+  const tx = Math.floor(x / 16), ty = Math.floor((y - 2) / 16);
+  for (const b of m.bld || []) if (tx >= b.x && tx < b.x + b.w && ty < b.y + b.h && ty >= b.y - 3) return true;
+  for (let j = 1; j <= 5; j++) for (let i = -1; i <= 1; i++) { if (!inb(m, tx + i, ty + j)) continue; const o = getO(m, tx + i, ty + j); if (!o) continue; const mo = mainOf(m, tx + i, ty + j), k = mo && mo[2] ? mo[2].k : o.k;
+    if ((k === 'ctower' && j <= 5) || ((k === 'cwall' || k === 'cgate' || k === 'gpart') && j <= 3 && i === 0)) return true; }
+  return false;
+}

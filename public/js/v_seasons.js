@@ -77,11 +77,13 @@ function flameAt(o, x, y) { // world position of an object's flame, from its spr
 function nightLights(m, Z, cxp, cyp, W, H) {
   if (m.dark) return; const nf = m.indoor ? .6 : darkness(); if (nf <= .05) return; // indoors the candles, lamps and fires always glow (art round: "no warmth")
   const R = (x, y, w, h, col, a) => { const X = Math.round((x - cxp) * Z), Y = Math.round((y - cyp) * Z), X2 = Math.round((x + w - cxp) * Z), Y2 = Math.round((y + h - cyp) * Z); if (X2 < 0 || Y2 < 0 || X > W || Y > H) return; g.globalAlpha = a; g.fillStyle = col; g.fillRect(X, Y, X2 - X, Y2 - Y); };
+  // window glow is painted over the finished frame, so it skips windows that someone stands in front of (art round 2: the glow lay over the player)
+  const bodies = [[S.p.x, S.p.y], ...(m.npcs || []).filter(n => !n.home).map(n => [n.x, n.y])], covered = (x, y, w, h) => bodies.some(([bx, by]) => x < bx + 8 && x + w > bx - 8 && y < by + 2 && y + h > by - 34);
   for (const b of m.indoor ? [] : m.bld || []) {
     const f = b.winName && PIX.map[b.winName], win = f && f.meta && f.meta.win; if (!win) continue;
     if ((b.x + b.w) * 16 < cxp || b.x * 16 > cxp + W / Z || (b.y + b.h) * 16 < cyp || b.y * 16 > cyp + H / Z) continue;
     const lit = hsh(b.x, b.y, dayIndex()) < .85 || b.act === 'tavern' || b.act === 'r_inn' || b.kind === 'castle' || /inn|tavern/.test(b.act || ''); if (!lit) continue; // a few households are already asleep
-    for (const [wx, wy, ww, wh] of win) { const x = b.x * 16 + wx / 2, y = b.y * 16 + wy / 2; R(x, y, ww / 2, wh / 2, '#ffc864', .8 * nf); R(x, y, ww / 4, wh / 4, '#fff0b8', .7 * nf); }
+    for (const [wx, wy, ww, wh] of win) { const x = b.x * 16 + wx / 2, y = b.y * 16 + wy / 2; if (covered(x, y, ww / 2, wh / 2)) continue; R(x, y, ww / 2, wh / 2, '#ffc864', .8 * nf); R(x, y, ww / 4, wh / 4, '#fff0b8', .7 * nf); }
   }
   const x0 = Math.floor(cxp / 16) - 1, y0 = Math.floor(cyp / 16) - 1, x1 = x0 + Math.ceil(W / Z / 16) + 3, y1 = y0 + Math.ceil(H / Z / 16) + 4;
   for (let y = Math.max(0, y0); y < Math.min(m.h, y1); y++) for (let x = Math.max(0, x0); x < Math.min(m.w, x1); x++) {

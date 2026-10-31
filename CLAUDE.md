@@ -501,6 +501,13 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **The keep's wall tops** are dark stone coping in 16 px blocks (`pixRoomWalls` in `x_kingdom.js`).
 - **The see-through player** only shows when a tree, a tall object directly in front, a building or a villager really overlaps you.
 
+## The welcome tutorial (`public/js/x_tutorial.js`)
+- **The opening:** on a new game, after the character creator, Lord Ashcombe walks up the farm road to you instead of the arrival letter appearing. The `openModal` wrapper swallows the 'Hollowmere Farm' letter while `S.flags.tutIntro` is set.
+- **The choice:** he welcomes you, then offers "Show me around" (starts `STORIES.welcome`, "A New Start") or "I know my way around a farm" (one line of tips, then he leaves).
+- **The tasks:** each is a `cond` step whose completion lines are Ashcombe calling out the next task: scythe weeds (hay), till, plant, water, chop, mine, make something at the workbench (`S.stats.crafted` above `S.flags.tutCraft0`). Then he walks you to the village plaza, you meet Mara, and you sleep. A note on the tent ends it (250g, 3 Trail Bread).
+- **Ashcombe on the farm:** a hidden NPCS walker (`tut_ashcombe`, `k_tut`). He stands by you while you work, repeats the current task when you talk to him, walks home after the village step, and is gone the next day.
+- **State:** `S.flags.tutWalk` (1 arriving, 2 staying, 3 leaving). Old saves never see it.
+
 ## The Warrens under Briarholt (`public/js/x_warrens.js`, art `art/sprites/vermin.py`)
 - **The way in:** a broken hole (`furn_hole`, act `k_warren`) in the Wine Cellar floor of `castle_down` at (17, 9) drops into `warren_1` to `warren_3`. Rope ladders (`furn_ropeup`, `k_wup`) lead back up.
 - **The maps** (`genWarren`, `caveCore` earth theme, dark) are rebuilt every visit and never saved; a save made there loads on the farm.

@@ -602,7 +602,7 @@ pcCursorDraw = (f => function (m) {
   const ic = typeof itemIcon === 'function' ? itemIcon('steel_sword') : null;
   for (const al of ALLIES) {
     if (al.down > 0 || al.gone || dist(al.x, al.y, S.p.x, S.p.y) > 420) continue;
-    if (ic && typeof heldIcon === 'function') { const side = al.dir === 1 ? -1 : 1, sw = al.swing > 0 ? (1 - al.swing / .3) : 0, ang = -1.2 + sw * 2.4; heldIcon(ic, al.x + side * 6, al.y - 14, side < 0 ? Math.PI - ang : ang, 12); }
+    if (ic && typeof heldIcon === 'function' && !(typeof behindTall === 'function' && behindTall(m, al.x, al.y))) { const side = al.dir === 1 ? -1 : 1, sw = al.swing > 0 ? (1 - al.swing / .3) : 0, ang = -1.2 + sw * 2.4; heldIcon(ic, al.x + side * 6, al.y - 14, side < 0 ? Math.PI - ang : ang, 12); }
     if (al.hp < al.mhp) { const w = 16, k = Math.max(0, al.hp / al.mhp); g.fillStyle = '#2a1c18'; g.fillRect(Math.round(al.x - w / 2) - 1, Math.round(al.y - 40) - 1, w + 2, 4); g.fillStyle = '#4ac850'; g.fillRect(Math.round(al.x - w / 2), Math.round(al.y - 40), Math.round(w * k), 2); }
   }
   // a town's name when you walk in

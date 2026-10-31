@@ -246,7 +246,7 @@ def crenel_ring(s, cx, rr, y):
 
 def ctower(winter=False):
     s = Canvas(64, 192)        # a head taller than the 128 px curtain walls
-    cx, rr = 32, 26
+    cx, rr = 32, 30   # the drum fills both tiles, so walls and gates butt up against it (gaps showed beside towers)
     for y in range(182, 190):   # contact shadow
         for x in range(4, 60):
             if ((x - 32) / 28) ** 2 + ((y - 184) / 5) ** 2 <= 1:

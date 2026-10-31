@@ -166,7 +166,7 @@ const SHOP_WORD = { store: 'Shop', smith: 'Smithy', tavern: 'Tavern menu', stabl
 const _talkNPCF4 = talkNPC;
 talkNPC = function (id) {
   const N = NPCS[id];
-  if (!N || !N.shop || !cur || cur.id !== 'village' || (typeof festToday === 'function' && festToday()) || /^kid/.test(id)) return _talkNPCF4(id);
+  if (!N || !N.shop || !SHOP_WORD[N.shop] || !cur || (cur.id !== 'village' && !(cur.id === 'in_tavern' && N.shop !== 'tavern')) || (typeof festToday === 'function' && festToday()) || /^kid/.test(id)) return _talkNPCF4(id);
   if (typeof storyTalk === 'function' && storyTalk(id)) return;
   openModal(N.n, [{ id: 't', label: 'Talk', render: b => {
     greet(b, id);
