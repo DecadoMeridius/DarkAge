@@ -509,6 +509,23 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **The Guild Seam:** the mine mouth in Greyhelm (act `gh_seam`) opens at Hewer rank. `genSeam` makes a dense ore cave (`gseam`), rebuilt every visit, full only on the first visit of the day.
 - **Titles:** `S.titles` and `S.title`; guildmasters greet you by your title. State: `S.guilds[act] = { r, kills }`.
 
+## Round-3 polish (0.8.0)
+- **Pixel text** (`x_pixeltext.js`, loaded last):
+  - `g.fillText` and `g.strokeText` on the world canvas draw cached bitmaps made at art-pixel resolution, with hard pixels and a 1-px outline in the stroke colour. A caller that strokes the same text just before filling gets the outline.
+  - HTML UI and map canvases are untouched.
+- **Walls:**
+  - Town wall masks no longer wrap round rows (west and east walls were "joined sideways").
+  - North-south runs draw a shaded east face (`cwall`, 80 px canvas) and a shadow past it.
+- **Cliff tops** are a touch lighter than the ground, with a 3-px lit far rim (`cliffTop` in `h_pixel.js`).
+- **Turf roofs** are laid in sod rows with a lit ridge, and their flowers are rare (`roof_px` in `buildings.py`).
+- **Variety:**
+  - Kingsbridge's stalls cycle the four regional stall designs.
+  - Each town's inn keeps the shared seats but has its own floor, walls and props (`INN_LOOK` in `x_terrain.js`).
+- **Mounted NPCs:** an NPC entry with `horse: <coat>` is drawn mounted (`drawNpcRider`). The herald's procession rides.
+- **HUD:** `#abil` (Z/X/C and Focus) sits centred just above the hotbar.
+- **Clicks:** acting on something refuses routes over three times the straight distance plus 15 tiles (`walkTo` in `m_core.js`).
+- **Guilds:** halls are labelled "Guild" on the map; a toast says when a rank is ready; each guild has its own first-rank title; Hewer needs Mining 5.
+
 ## Generations (`public/js/x_heirs.js`, on top of `x_family.js`)
 - **XP:** each generation adds +10% to every XP gain, life skills (`addXP`) and combat (`cxp` wrapper), with no cap (`F.bonus`): generation 2 is +10%, generation 21 +200%.
 - **Choosing the heir:** the Farewell window lists the spouse and every grown child. The others go their own ways (`F.siblings`, `F.parted`): grown ones set out for distant lands, younger ones live with the surviving parent. The heir's own children start fresh.

@@ -20,8 +20,8 @@ const GUILDS = {
     blurb: 'Hewers, delvers and masters of the deep rock. Members dig the Guild Seam, Greyhelm\'s own mine, where the ore runs thick.',
     props: [['coal', 1, 3], ['coal', 2, 3], ['anvil', 8, 3], ['crate', 10, 3], ['weapons', 10, 6], ['barrel', 1, 6], ['lamp', 6, 3], ['minecart', 1, 7]],
     ranks: [
-      { title: 'Initiate' },
-      { title: 'Hewer', tasks: [{ t: 'bring', items: { copper_ore: 20, coal: 10 } }, { t: 'skill', k: 'mining', L: 10 }],
+      { title: 'Initiate of the Pick' },
+      { title: 'Hewer', tasks: [{ t: 'bring', items: { copper_ore: 20, coal: 10 } }, { t: 'skill', k: 'mining', L: 5 }],
         reward: { gold: 300, unlock: 'The Guild Seam: the mine mouth in Greyhelm\'s north-east corner is open to you.' } },
       { title: 'Delver', tasks: [{ t: 'stat', f: () => S.stats.deepest || 0, n: 10, label: 'Reach floor 10 of the Deep' }, { t: 'bring', items: { iron_ore: 25, iron_bar: 5 } }, { t: 'skill', k: 'mining', L: 25 }],
         reward: { items: { ring_delver: 1 }, text: 'The Delver\'s Band (+4 defence, +1 luck)' } },
@@ -39,7 +39,7 @@ const GUILDS = {
     blurb: 'Trackers and bowmen who keep the forest roads safe. The Lodge makes its own bows, for its own members only.',
     props: [['weapons', 1, 3], ['weapons', 3, 3], ['hay', 9, 3], ['barrel', 10, 3], ['logpile', 9, 6], ['lamp', 6, 3]],
     ranks: [
-      { title: 'Initiate' },
+      { title: 'Initiate of the Lodge' },
       { title: 'Tracker', tasks: [{ t: 'kills', en: ['wolf', 'icewolf', 'direwolf', 'rimewolf'], n: 8, label: 'Slay 8 wolves' }, { t: 'bring', items: { hide: 6 } }],
         reward: { items: { hunt_bow: 1, arrow: 60 }, text: 'The Huntsman\'s Bow, made by the Lodge for its own' } },
       { title: 'Stalker', tasks: [{ t: 'kills', en: ['boar'], n: 10, label: 'Slay 10 wild boars' }, { t: 'bring', items: { fang: 8, leather: 4 } }, { t: 'cskill', k: 'ranged', L: 20 }],
@@ -58,7 +58,7 @@ const GUILDS = {
     blurb: 'Rod, net and harpoon. The Anglers keep the old charms of the coast and share them only with their own.',
     props: [['nets', 1, 3], ['nets', 9, 3], ['barrel', 3, 3], ['tub', 10, 6], ['crate', 1, 6], ['lamp', 6, 3], ['rowboat', 8, 7]],
     ranks: [
-      { title: 'Initiate' },
+      { title: 'Initiate of the Nets' },
       { title: 'Netter', tasks: [{ t: 'stat', f: () => S.stats.fish || 0, n: 15, label: 'Catch 15 fish' }, { t: 'bring', items: { clam: 5 } }],
         reward: { items: { ring_angler: 1 }, text: 'The Angler\'s Charm (+2 luck)' } },
       { title: 'Angler', tasks: [{ t: 'stat', f: () => S.stats.fish || 0, n: 50, label: 'Catch 50 fish' }, { t: 'skill', k: 'fishing', L: 20 }],
@@ -77,7 +77,7 @@ const GUILDS = {
     blurb: 'The farmers who feed the capital. Members get the Guild\'s old seed lines, its tonics, and its tools.',
     props: [['plant', 1, 3], ['plant', 10, 3], ['sack', 3, 3], ['sack', 8, 3], ['hay', 1, 6], ['barrel', 10, 6], ['lamp', 6, 3]],
     ranks: [
-      { title: 'Initiate' },
+      { title: 'Initiate of the Furrow' },
       { title: 'Planter', tasks: [{ t: 'stat', f: () => S.stats.harvest || 0, n: 40, label: 'Harvest 40 crops' }, { t: 'bring', items: { wheat: 10 } }],
         reward: { items: { rich_compost: 15, growth_tonic: 5 }, text: 'Rich compost and growth tonic from the Guild stores' } },
       { title: 'Cultivator', tasks: [{ t: 'stat', f: () => S.stats.harvest || 0, n: 200, label: 'Harvest 200 crops' }, { t: 'skill', k: 'farming', L: 25 }],
@@ -152,7 +152,7 @@ function openGuild(act, who) {
       const g = gState(act);
       if (!g) {
         b.append(el('p', null, G.blurb), el('p', { class: 'note' }, 'Joining costs ' + G.fee + 'g. Members climb five ranks, each with its own title and rewards you can\'t get anywhere else.'));
-        b.append(el('div', { class: 'acts' }, el('button', { class: 'btn big', on: () => { if (S.gold < G.fee) { toast('The fee is ' + G.fee + 'g.'); return; } S.gold -= G.fee; S.guilds = S.guilds || {}; S.guilds[act] = { r: 0, kills: {} }; S.titles = S.titles || []; if (!S.titles.includes('Initiate')) S.titles.push('Initiate'); SFX.ok(); closeModal(); storyDialog([[G.master.id, 'Welcome to the ' + G.name + ', Initiate. Here\'s what we ask of you before you rise.']], { title: G.name, done: () => openGuild(act, k) }); } }, 'Join the guild (' + G.fee + 'g)')));
+        b.append(el('div', { class: 'acts' }, el('button', { class: 'btn big', on: () => { if (S.gold < G.fee) { toast('The fee is ' + G.fee + 'g.'); return; } S.gold -= G.fee; S.guilds = S.guilds || {}; S.guilds[act] = { r: 0, kills: {} }; S.titles = S.titles || []; if (!S.titles.includes(G.ranks[0].title)) S.titles.push(G.ranks[0].title); SFX.ok(); closeModal(); storyDialog([[G.master.id, 'Welcome to the ' + G.name + ', ' + G.ranks[0].title + '. Here\'s what we ask of you before you rise.']], { title: G.name, done: () => openGuild(act, k) }); } }, 'Join the guild (' + G.fee + 'g)')));
         return;
       }
       const R = G.ranks[g.r], N = G.ranks[g.r + 1];
@@ -224,3 +224,12 @@ renderQuests = (f => function (b) {
     L.append(el('div', { class: 'rrow' }, el('div', { class: 'qck' }, '⚒'), el('div', { class: 'rtxt' }, el('b', null, G.name + ' · ' + G.ranks[g.r].title), ' (' + TOWNS[G.town].n + ')', el('br'), N ? 'Next, ' + N.title + ': ' + N.tasks.map(t => { const x = taskInfo(act, t); return (x.ok ? '✓ ' : '') + x.label; }).join('; ') : 'Highest rank reached'))); }
   b.append(L);
 })(renderQuests);
+
+// rank ready: a notice when everything the next rank asks is done (round 3: the hunter met the Tracker rank far
+// from Ashford and nothing said so)
+EVT.on('tick', k => {
+  if (k % 5 || !S || TITLE || !S.guilds) return;
+  for (const act in S.guilds) { const G = GUILDS[act], g = S.guilds[act], N = G && G.ranks[g.r + 1]; if (!N) continue;
+    const ready = N.tasks.every(t => taskInfo(act, t).ok);
+    if (ready && g.told !== g.r) { g.told = g.r; toast(G.name + ": you're ready for the rank of " + N.title + '. Report to ' + G.master.n + ' in ' + TOWNS[G.town].n + '.', 'lvl'); SFX.ok(); } }
+});

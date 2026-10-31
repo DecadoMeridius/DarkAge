@@ -54,11 +54,13 @@ function walkTo(tx, ty, then) {
   let goals = !then && passable(m, tx, ty) ? [[tx, ty]] : [];
   if (!goals.length) for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) if (passable(m, tx + dx, ty + dy)) goals.push([tx + dx, ty + dy]);
   goals.sort((a, b) => Math.hypot(a[0] - px, a[1] - py) - Math.hypot(b[0] - px, b[1] - py));
+  let long = false;
   for (const [gx, gy] of goals) {
     const path = findPath(m, px, py, gx, gy);
+    if (path && then && path.length > Math.hypot(gx - px, gy - py) * 3 + 15) { long = true; continue; } // a click on a rock 6 tiles away once marched the player round a cliff into a boss arena (round 3)
     if (path) { WALK = { path, i: 1, goal: [gx, gy], target: [tx, ty], then, stuck: 0, last: [S.p.x, S.p.y] }; return true; }
   }
-  toast("You can't reach that.", 'bad'); return false;
+  toast(long ? "That's a long way round from here." : "You can't reach that.", 'bad'); return false;
 }
 function stopWalk() { WALK = null; INPUT.x = INPUT.y = 0; }
 function faceTileAt(tx, ty) {

@@ -260,3 +260,6 @@ body:has(#modal:not([hidden])) #ctpanel { display: none; }
 /* The "Cinzel" face is Cinzel Decorative, whose lowercase letters are ornamental capitals (Ꞥ for h, Ꝏ for oo):
    every Cinzel text is set in uppercase, which uses its plain capitals (playtest: "TOWN ꞤALL", "BꝎTS") */
 #banner, #bossbar, .ph h2, h1, h2, h3, #mtitle, .dayw, .perkcard b, #title h1, #tip b, .ccrow > span, #ctxmenu .ctxhead, #tframe b, .cinzel { text-transform: uppercase; }
+
+/* the skills (Z / X / C) and Focus sit centred just above the hotbar, where the eye already is (asked 2026-10-31) */
+#abil { left: 50% !important; right: auto !important; transform: translateX(-50%) !important; bottom: 104px !important; }

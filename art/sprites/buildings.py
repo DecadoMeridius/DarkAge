@@ -57,7 +57,7 @@ STY = {
 }
 
 REGION_STY = {  # town buildings of the four regions (Phase 11b)
-    'hm_hall': dict(roof='side', rmat='turf', rcol='#5a8a3a', wmat='stone', wcol='#8a8a86', trim='#4a3020', cross=1, chim=('stone', -40), banners='#2a4a8a', icon='mug', lantern=1, rf=.46),
+    'hm_hall': dict(roof='side', rmat='turf', rcol='#5a8a3a', wmat='stone', wcol='#8a8a86', trim='#4a3020', cross=1, chim=('stone', -40), banners='#2a4a8a', icon='crest', lantern=1, rf=.46),
     'hm_forge': dict(roof='side', rmat='slate', rcol='#4a4e5a', wmat='stone', wcol='#7a7a78', trim='#3a2a1a', door='double', chim=('forge', 10), icon='anvil', coal=1, barrels=1, rf=.48),
     'hm_house': dict(roof='side', rmat='turf', rcol='#4f7e36', wmat='stone', wcol='#9a948a', trim='#4a3020', chim=('stone', -22), shut='#6a3a2a', boxes=1, rf=.5),
     'fm_lodge': dict(roof='side', rmat='shingle', rcol='#5a4a40', wmat='logs', wcol='#7a5a3a', trim='#3a2618', snow=1, icicles=1, chim=('stone', -34), banners='#4a7ab0', icon='mug', lantern=1, rf=.48),
@@ -104,13 +104,18 @@ def roof_px(mat, pal, a, b, k, seed):
         elif ra == 0 and (b + band) % 2:
             c = I(4)
         return c
-    if mat == 'turf':  # sod roof: grass with tufts and a few flowers
-        f = vnoise(b * .35, a * .35, seed)
-        c = I(3) if f > .62 else I(2) if f > .3 else I(1)
-        if (b * 7 + a * 13) % 23 == 0:
-            c = I(4)
-        if (b * 5 + a * 11) % 97 == 0:
-            c = hx('#f4e86a')
+    if mat == 'turf':  # sod roof laid in rows down the slope: a lit ridge, shadowed sod edges, tuft tips, a few flowers
+        f = vnoise(b * .3, a * .2, seed)
+        lv = 2 + (1 if f > .72 else -1 if f < .22 else 0)
+        if a < 2:
+            lv = 3                                   # the ridge catches the light
+        if a % 6 == 5 and (b + a) % 4 != 0:
+            lv = 1                                   # the lower edge of each row of sods, in shadow
+        elif a % 6 == 0 and (b * 3 + a) % 5 == 0:
+            lv = 3                                   # grass tips poking over the row below
+        c = I(lv)
+        if (b * 5 + a * 11) % 97 == 0 and vnoise(b * .08, a * .08, seed + 5) > .78:
+            c = hx('#f4e86a')                        # a few patches of flowers, not a sprinkle
         return c
     if mat == 'glass':
         c = hx('#bfe8f4') if (b // 10 + a // 8) % 2 else hx('#a8d8ec')

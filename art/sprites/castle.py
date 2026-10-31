@@ -166,13 +166,30 @@ def cwall(mask, winter=False):
         return s
     # a contact shadow on the ground to the east, where nothing joins: light from the top-left, so a run of
     # wall seen from above reads as raised (playtest: north-south walls looked like flat grey strips)
-    c = Canvas(64, PH)                      # 16 px of padding each side keep the wall centred on its tile
-    c.img.alpha_composite(s.img, (16, 0)); c.px = c.img.load()
+    c = Canvas(80, PH)                      # 24 px of padding each side keep the wall centred on its tile
+    c.img.alpha_composite(s.img, (24, 0)); c.px = c.img.load()
+    side = not w and (n or so)              # part of a north-south run: show its east face, in shade (round 3: "a flat strip")
+    fy0, fy1 = TOP_Y + 2, (TOP_Y + 34 if so else PH - 1)
+    x0 = 56
+    if side:
+        for y in range(fy0, fy1):
+            for x in range(x0, x0 + 14):
+                row = (y - fy0) // 6
+                joint = (y - fy0) % 6 == 5 or (x + row * 5) % 12 == 0
+                c.set(x, y, '#2a2630' if joint else (STONE[0] if x > x0 + 8 else mix(STONE[0], STONE[1], .5)))
+            c.set(x0, y, STONE[3]); c.set(x0 + 14, y, '#141018')   # the lit lip where the walk meets the face, and its dark foot
+        if not so:                          # the foot of the end tile: a darker, mossy course
+            for x in range(x0, x0 + 14):
+                for yy in range(PH - 6, PH - 1):
+                    cc = c.get(x, yy)
+                    if cc[3]:
+                        c.set(x, yy, mul(cc, .8))
+    sx = 63 if side else 48                # the shadow falls just past the wall (and its face)
     y0, y1 = (FACE_Y + 4, PH - 1) if not so else (TOP_Y + 2, TOP_Y + 34)   # a joined run: just this tile's stretch
     for y in range(y0, y1):                 # a wall ~4 tiles tall throws a wide shadow (art round: north-south runs read as paths)
         for k in range(14):
             if k < 9 or (y + k) % 2 == 0:
-                c.set(48 + k, y, (16, 24, 8, 140 - k * 7))
+                c.set(sx + 8 + k, y, (16, 24, 8, 140 - k * 7))
     return c
 
 

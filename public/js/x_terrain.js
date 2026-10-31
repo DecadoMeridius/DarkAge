@@ -152,3 +152,29 @@ findInteract = (f => function () {
   for (const [dx, dy] of [[0, -1], [1, 0], [-1, 0], [0, 1], [1, -1], [-1, -1], [1, 1], [-1, 1]]) { const o = getO(m, px + dx, py + dy); if (o && o.k === 'waystone') return objInteract(m, px + dx, py + dy, o); }
   return r;
 })(findInteract);
+
+/* variety (art round 3: "all four stalls are identical; the inns are the same room"): Kingsbridge's market stalls
+   use the four regional stall designs, and every town's inn keeps the shared seating (the patrons' seats) but
+   gets its own floor, walls and dressing */
+if (typeof TOWNS !== 'undefined' && TOWNS.kingsbridge) { let i = 0; for (const b of TOWNS.kingsbridge.b) if (b[0] === 'stall') b[0] = ['stall', 'hm_stall', 'sr_stall', 'fm_stall'][i++ % 4]; }
+{
+  const INN_LOOK = {
+    kingsbridge: { floor: 'mb', wall: 'stone', add: [['plant', 12, 8], ['bookshelf', 9, 3]], d: [['dec_rug_purple', 9, 6, 0, 8], ['dec_banner_royal', 7, 1, 4, 2], ['dec_banner_royal', 2, 1, 4, 2], ['dec_painting', 11, 1, 0, 10]] },
+    greyhelm: { floor: 'fl', wall: 'stone', add: [['minecart', 12, 8], ['coal', 12, 5], ['weapons', 9, 3]], d: [['dec_rug_red', 9, 6, 0, 8], ['dec_banner_red', 7, 1, 4, 2]] },
+    ashford: { floor: 'f', wall: 'plank', add: [['logpile', 11, 8], ['hay', 12, 5], ['weapons', 9, 3]], d: [['dec_rug_green', 9, 6, 0, 8], ['dec_window', 12, 1, 0, 6]] },
+    saltmere: { floor: 'f', wall: 'plank', add: [['nets', 12, 8], ['tub', 12, 5], ['barrel', 9, 3]], d: [['dec_rug_small', 9, 6, 0, 8], ['dec_window', 12, 1, 0, 6], ['dec_window', 3, 1, 0, 6]] },
+  };
+  for (const act in (typeof TOWN_ACTS !== 'undefined' ? TOWN_ACTS : {})) {
+    if (actType(act) !== 'inn' || !ROOMS[act]) continue; const L = INN_LOOK[TOWN_ACTS[act].town]; if (!L) continue;
+    const R0 = ROOMS[act]; R0.floor = L.floor; R0.wall = L.wall; R0.d = L.d;
+    R0.f = R0.f.filter(([k, x, y]) => !L.add.some(([, ax, ay]) => ax === x && ay === y)).concat(L.add.filter(([k]) => FURN[k]));
+  }
+}
+
+// someone on horseback (the herald's procession): the horse with its tack, and the rider in the riding pose
+function drawNpcRider(n) {
+  const N = NPCS[n.id]; if (!N) return; const right = n.dir === 2 || (n.dir !== 1 && n.lastH !== 1); if (n.dir === 1 || n.dir === 2) n.lastH = n.dir;
+  const spr = animalSpr('horse', n.horse, n.walk ? Math.floor(gameT * 12) : 0), bob = n.walk && Math.floor(gameT * 10) % 2 ? .5 : 0;
+  shadow(n.x, n.y, 14); g.save(); g.translate(n.x, n.y); if (!right) g.scale(-1, 1); D(spr, -spr.ww / 2, -spr.wh + 1); const tack = PIX.get('horse_tack'); if (tack) D(tack, -tack.ww / 2, -tack.wh + 1); g.restore();
+  const ps = humanSpr('npc' + n.id + 'r', N.P, 2, 'ride'); g.save(); g.translate(n.x, n.y - bob); if (!right) g.scale(-1, 1); D(ps, -7.5, -39.5, 16, 32); g.restore();
+}

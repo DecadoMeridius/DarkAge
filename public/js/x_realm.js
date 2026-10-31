@@ -350,7 +350,7 @@ function stampTown(m, id, T, ox, oy) {
   for (const [tx, ty] of T.towers || []) for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) ring.delete(key(tx + i, ty - j));
   for (const k of ring) {
     const x = k % T.w, y = (k / T.w) | 0, [X, Y] = G(x, y);
-    if (T.walls === 'stone') { const fm = (ring.has(key(x, y - 1)) ? 1 : 0) | (ring.has(key(x + 1, y)) ? 2 : 0) | (ring.has(key(x, y + 1)) ? 4 : 0) | (ring.has(key(x - 1, y)) ? 8 : 0); setO(m, X, Y, { k: 'cwall', fm, fixed: 1 }); }
+    if (T.walls === 'stone') { const fm = (ring.has(key(x, y - 1)) ? 1 : 0) | (x < T.w - 1 && ring.has(key(x + 1, y)) ? 2 : 0) | (ring.has(key(x, y + 1)) ? 4 : 0) | (x > 0 && ring.has(key(x - 1, y)) ? 8 : 0); /* no wrapping round to the next row: west and east walls read as joined sideways (round 3) */ setO(m, X, Y, { k: 'cwall', fm, fixed: 1 }); }
     else setO(m, X, Y, { k: 'fence', fixed: 1 });
   }
   for (const [tx, ty] of T.towers || []) putObj(m, ox + tx, oy + ty, { k: 'ctower', fixed: 1 });
@@ -622,7 +622,7 @@ worldMapCanvas = (f => function () {
   { // each town building by what it is (playtest: nobody could find the barracks)
     const TAG = { inn: 'Inn', shop: 'Shop', smith: 'Forge', fish: 'Fish', bank: 'Bank', temple: 'Temple', hall: 'Hall', barracks: 'Barracks' };
     x.font = '700 10px Fredoka, sans-serif'; x.textAlign = 'center'; x.lineWidth = 3; x.strokeStyle = '#2a1c18'; x.fillStyle = '#ffe8a8';
-    for (const b of m.bld) { if (!TOWN_ACTS[b.act]) continue; const t = TAG[actType(b.act)] || 'Shop', X = (b.x + b.w / 2) * 3, Y = (b.y + b.h / 2) * 3 + 4; x.strokeText(t, X, Y); x.fillText(t, X, Y); }
+    for (const b of m.bld) { if (!TOWN_ACTS[b.act]) continue; const t = typeof GUILDS !== 'undefined' && GUILDS[b.act] ? 'Guild' : TAG[actType(b.act)] || 'Shop', X = (b.x + b.w / 2) * 3, Y = (b.y + b.h / 2) * 3 + 4; x.strokeText(t, X, Y); x.fillText(t, X, Y); }
   }
   x.font = '700 18px Fredoka, sans-serif'; x.textAlign = 'center'; x.lineWidth = 4; x.strokeStyle = '#2a1c18'; x.fillStyle = '#fff2c8'; // the home labels again, over the roads
   for (const [t, X] of [['Farm', WIN_F], ['Village', WIN_V]]) { x.strokeText(t, X * 3, (m.h - 3) * 3); x.fillText(t, X * 3, (m.h - 3) * 3); }
@@ -701,7 +701,7 @@ function procFrame(dt) {
     if (PROC.leaving) { W.x += 30 * dt; W.dir = 1; if (W.x > ex + 40) W.gone = true; continue; }
     W.x -= 30 * dt; if (W.x <= W.px * 16) { W.x = W.px * 16; W.parked = true; putObj(m, W.px, W.py, { k: 'wagon', v: W.v, fixed: 1, proc: 1 }); }
   }
-  m.npcs = (m.npcs || []).filter(n => !n.proc).concat(PROC.walkers.filter(a => !a.gone && a.delay <= 0 && !(a.id === 'herald_w' && F.heraldHere && !PROC.leaving)).map(a => Object.assign(a._n || (a._n = { proc: 1 }), { id: a.id, x: a.x, y: a.y, hx: a.x, hy: a.y, dir: a.dir, walk: a.walk, t: 1e9, vx: 0 })));
+  m.npcs = (m.npcs || []).filter(n => !n.proc).concat(PROC.walkers.filter(a => !a.gone && a.delay <= 0 && !(a.id === 'herald_w' && F.heraldHere && !PROC.leaving)).map((a, i) => Object.assign(a._n || (a._n = { proc: 1, horse: Object.keys(COATS.horse)[(i * 2 + 1) % Object.keys(COATS.horse).length] }), { id: a.id, x: a.x, y: a.y, hx: a.x, hy: a.y, dir: a.dir, walk: a.walk, t: 1e9, vx: 0 }))); // the knights and the herald ride (round 3: they walked)
   if (PROC.leaving && PROC.walkers.every(a => a.gone) && PROC.wagons.every(W => W.gone)) procClear();
 }
 EVT.on('map', id => { if (id !== 'farm' && PROC) procClear(); });
