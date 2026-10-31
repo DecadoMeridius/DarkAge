@@ -72,7 +72,7 @@ function localMapCanvas(m) {
 }
 const _renderMapF = renderMap;
 renderMap = function (b) {
-  const small = cur && !cur.region && cur.id !== 'wilds' && !cur.dark && !(cur.id || '').startsWith('in_') && MODAL.opts.mapView !== 'wilds';
+  const small = cur && !cur.region && cur.id !== 'wilds' && MODAL.opts.mapView !== 'wilds' && (MODAL.opts.mapView === 'local' || ((!cur.dark || cur.warren || cur.id === 'gseam') && !(cur.id || '').startsWith('in_'))); // the Warrens and the Seam have their own map; the Back button always works (art round 2)
   if (!small) { _renderMapF(b); if (cur && cur.id !== 'wilds' && !cur.region) b.prepend(el('button', { class: 'btn ghost', on: () => { MODAL.opts.mapView = 'local'; refresh(); } }, 'Back to the map of ' + placeName(cur.id))); return; }
   b.append(el('div', { class: 'acts' }, el('b', null, placeName(cur.id)), el('span', { style: 'flex:1' }), el('button', { class: 'btn ghost', on: () => { MODAL.opts.mapView = 'wilds'; refresh(); } }, 'Map of the Wilds and regions')));
   const c = localMapCanvas(cur); c.className = 'wmap localmap'; b.append(el('div', { class: 'mapbox' }, c), el('p', { class: 'note' }, 'Yellow: exits and signposts. Brown: buildings. Red: you.'));

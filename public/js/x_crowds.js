@@ -34,7 +34,7 @@ const crowdAdd = (id, n, role, extra) => {
 };
 VILLAGE_FOLK.forEach(([n, role, hs], i) => crowdAdd('vf_' + i, n, role, { map: 'village', walk: 1, from: 450 + i * 25, to: 1110 - (i % 3) * 30, hs, lines: VILLAGE_LINES }));
 // patrons: a stool, a bench or the bar front, facing their table or the bar (same layout in the tavern and every inn)
-const SEATS = [[5, 7, 2], [8, 7, 1], [9, 7, 2], [12, 7, 1], [3, 6, 3], [1, 8, 3], [4, 6, 3]];
+const SEATS = [[5, 7, 2], [8, 7, 1], [9, 7, 2], [12, 7, 1], [6, 8, 3], [1, 8, 3], [10, 8, 3]]; // none at the bar front: they blocked the keeper (art round 2)
 const INN_ROOMS = () => ['tavern', ...Object.keys(typeof TOWN_ACTS !== 'undefined' ? TOWN_ACTS : {}).filter(a => actType(a) === 'inn')];
 for (const room of INN_ROOMS()) SEATS.forEach(([x, y, dir], i) => {
   const busy = i < 2 ? [660, 840] : null; // the first two come for lunch as well as the evening

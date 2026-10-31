@@ -119,3 +119,85 @@ def ropeup():
 
 
 SPRITES.update({'furn_hole': hole, 'furn_ropeup': ropeup})
+
+
+# ---- what the rats leave lying about (art round 2: "the Warrens look like the mine; the cheese reads as hay") ----
+STRAW = ['#6a5422', '#9a7a34', '#c8a24a', '#e8c86a']
+BONE = ['#8a826e', '#c8c0a8', '#ece4cc']
+CHEESE = ['#a8761e', '#e0a830', '#f6d25a', '#fff0a0']
+
+
+def nest():
+    """A rats' nest: a ring of chewed straw and rag round a hollow, with gnawed bones."""
+    s = Canvas(44, 26)
+    for x, y in ellipse(22, 15, 20, 9.5):
+        n = vnoise(x * .6, y * .9, 7)
+        s.set(x, y, STRAW[3] if n > .72 and y < 13 else STRAW[2] if n > .5 else STRAW[1] if n > .3 else STRAW[0])
+    for x, y in ellipse(22, 16, 11, 5):                          # the hollow in the middle
+        s.set(x, y, '#2a1e12' if y > 14 else '#3a2a18')
+    for x0, y0 in ((8, 10), (31, 12)):                          # rag scraps
+        for i in range(5):
+            s.set(x0 + i, y0 + (i % 2), '#7a3a3a' if i < 3 else '#5a2a2a')
+    for (x0, y0, L) in ((14, 20, 7), (27, 21, 6)):              # gnawed bones on the rim
+        for i in range(L):
+            s.set(x0 + i, y0, BONE[1]); s.set(x0 + i, y0 + 1, BONE[0])
+        s.set(x0 - 1, y0, BONE[2]); s.set(x0 + L, y0 + 1, BONE[2])
+    s.outline()
+    return s
+
+
+def cheese():
+    """Stolen cheese: a whole wheel with a wedge cut out, nibbled."""
+    s = Canvas(34, 26)
+    for x, y in ellipse(15, 15, 13, 9):
+        s.set(x, y, CHEESE[2] if y < 12 else CHEESE[1])
+    for x, y in ellipse(15, 11, 13, 5):                          # the top of the wheel
+        s.set(x, y, CHEESE[3] if x < 12 else CHEESE[2])
+    for x, y in [(21 + i, 9 + j) for i in range(7) for j in range(9) if j >= i * .9]:   # the cut wedge
+        s.set(x, y, (0, 0, 0, 0))
+    for x, y in ((8, 14), (13, 18), (18, 15), (10, 20)):         # holes
+        s.set(x, y, CHEESE[0]); s.set(x + 1, y, CHEESE[1])
+    for x in (26, 27, 29):                                       # nibble marks on the edge
+        s.set(x, 15, (0, 0, 0, 0))
+    s.outline()
+    return s
+
+
+def bones():
+    s = Canvas(32, 16)
+    for (x0, y0, L, up) in ((4, 9, 12, 0), (12, 6, 10, 1), (17, 11, 9, 0)):
+        for i in range(L):
+            y = y0 - (i // 4 if up else 0)
+            s.set(x0 + i, y, BONE[1]); s.set(x0 + i, y + 1, BONE[0])
+        s.set(x0 - 1, y0, BONE[2]); s.set(x0 - 1, y0 + 1, BONE[1])
+    for x, y in ellipse(25, 6, 3.5, 3):                          # a small skull
+        s.set(x, y, BONE[2] if y < 6 else BONE[1])
+    s.set(24, 6, '#1e1a16'); s.set(26, 6, '#1e1a16')
+    s.outline()
+    return s
+
+
+def hole2():
+    """The way down, take two: a jagged break in the cellar flagstones, not a tidy manhole."""
+    s = Canvas(36, 32)
+    pts = [(4, 14), (8, 8), (14, 6), (20, 9), (27, 5), (32, 11), (31, 19), (26, 25), (18, 24), (11, 27), (5, 21)]
+    from px import poly
+    edge = poly(pts)
+    for x, y in edge:
+        n = vnoise(x * .5, y * .5, 9)
+        s.set(x, y, FLAG[3] if n > .6 and y < 14 else FLAG[2] if n > .4 else FLAG[1])
+    inner = poly([(9, 14), (12, 10), (19, 12), (25, 9), (28, 13), (26, 20), (18, 21), (12, 22), (8, 18)])
+    for x, y in inner:
+        s.set(x, y, '#0a0608' if y > 13 else '#1a1216')
+    for x, y in inner:                                           # the broken far lip, lit
+        if (x, y - 1) not in inner and y < 14:
+            s.set(x, y - 1, FLAG[0])
+    for y in range(13, 22):                                      # a rope tied off and dropping in
+        s.set(17, y, ROPE[1] if y % 3 else ROPE[2])
+    for x, y in ((2, 10), (33, 8), (6, 27), (30, 24), (20, 2)):  # cracked-off chips
+        s.set(x, y, FLAG[2]); s.set(x + 1, y + 1, FLAG[0])
+    s.outline()
+    return s
+
+
+SPRITES.update({'furn_nest': nest, 'furn_cheesewheel': cheese, 'furn_bones': bones, 'furn_hole': hole2})

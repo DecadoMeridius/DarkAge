@@ -144,3 +144,11 @@ function behindTall(m, x, y) {
     if ((k === 'ctower' && j <= 5) || ((k === 'cwall' || k === 'cgate' || k === 'gpart') && j <= 3 && i === 0)) return true; }
   return false;
 }
+
+// a waystone answers from any tile beside it, not only the one in front (art round 2: Ashford's wouldn't open)
+findInteract = (f => function () {
+  const r = f.apply(this, arguments); if (r) return r;
+  const m = cur; if (!m || !S) return r; const px = Math.floor(S.p.x / 16), py = Math.floor((S.p.y - 2) / 16);
+  for (const [dx, dy] of [[0, -1], [1, 0], [-1, 0], [0, 1], [1, -1], [-1, -1], [1, 1], [-1, 1]]) { const o = getO(m, px + dx, py + dy); if (o && o.k === 'waystone') return objInteract(m, px + dx, py + dy, o); }
+  return r;
+})(findInteract);

@@ -18,7 +18,9 @@ if (typeof BOSS_KIT !== 'undefined') BOSS_KIT.ratking = [['charge', 'summon:rat'
 I('rat_tail', 'Rat Tail', 'loot', 6, 'root', '#d89a8a');
 I('bug_shell', 'Roach Shell', 'loot', 14, 'scale', '#6a4a2a');
 I('rat_crown', 'Rat King\'s Crown', 'loot', 2500, 'crown', '#e8b830', '#d8342a', { desc: 'A crown the Rat King stole from somewhere. It still smells of him' });
-Object.assign(FURN, { hole: {}, ropeup: {} });
+Object.assign(FURN, { hole: {}, ropeup: {}, nest: { w: 2 }, cheesewheel: {}, bones: {} });
+for (const k of ['nest', 'cheesewheel', 'bones']) OBJ['furn_' + k] = { solid: k !== 'bones', fixed: 1, w: FURN[k].w || 1, h: 1 };
+if (typeof FLAT !== 'undefined') FLAT.add('furn_bones');
 OBJ.furn_hole = { solid: 1, fixed: 1, w: 1, h: 1 }; OBJ.furn_ropeup = { solid: 1, fixed: 1, w: 1, h: 1 };
 if (typeof FLAT !== 'undefined') FLAT.add('furn_hole');
 // the hole in the Wine Cellar floor, beside the kegs
@@ -39,12 +41,12 @@ function genWarren(n) {
   m.hole = boss ? null : [far % W, (far / W) | 0];
   // the rats' leavings: straw nests, gnawed bones, a few rocks and the odd crate dragged down from the cellar
   for (const i of floors) { if (m.o[i] || D[i] < 3) continue; const r = R();
-    if (r < .012) m.o[i] = { k: 'furn_hay', fixed: 1 }; else if (r < .016) m.o[i] = { k: 'furn_crate', fixed: 1 }; else if (r < .06) m.o[i] = { k: 'rock', cave: 1 }; else if (r < .066) m.o[i] = { k: 'ore_copper', cave: 1 }; }
+    if (r < .012) m.o[i] = { k: 'furn_nest', fixed: 1 }; else if (r < .02) m.o[i] = { k: 'furn_bones', fixed: 1 }; else if (r < .024) m.o[i] = { k: 'furn_cheesewheel', fixed: 1 }; else if (r < .027) m.o[i] = { k: 'furn_crate', fixed: 1 }; else if (r < .06) m.o[i] = { k: 'rock', cave: 1 }; else if (r < .066) m.o[i] = { k: 'ore_copper', cave: 1 }; }
   if (n === 2 || (boss && !S.flags.ratChest)) { const c = floors.filter(i => !m.o[i] && D[i] > 8); if (c.length) { const i = c[Math.floor(R() * c.length)]; m.o[i] = { k: 'chest', tier: boss ? 4 : 3, mine: 1, warren: n }; } }
   const lvl = [0, 4, 7, 10][n];
   if (boss) { if (ratKingHome()) spawnEnemy(m, 'ratking', W / 2 * 16, H / 2 * 16 - 8, lvl); }
   else { const pool = n === 1 ? [['rat', 6], ['roach', 3], ['plaguerat', 1]] : [['rat', 4], ['plaguerat', 3], ['bigrat', 2], ['roach', 2]], cnt = n === 1 ? 9 : 13;
-    for (let k = 0; k < cnt; k++) { const c = floors[Math.floor(R() * floors.length)]; if (D[c] < 7 || m.o[c]) continue; spawnEnemy(m, wpick(pool, R()), (c % W + .5) * 16, (((c / W) | 0) + .8) * 16, lvl); } }
+    for (let k = 0; k < cnt; k++) { const c = floors[Math.floor(R() * floors.length)]; if (D[c] < 11 || m.o[c]) continue; /* never at the ladder you came down (art round 2) */ spawnEnemy(m, wpick(pool, R()), (c % W + .5) * 16, (((c / W) | 0) + .8) * 16, lvl); } }
   return m;
 }
 function enterWarren(n, up) {

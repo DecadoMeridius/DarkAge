@@ -69,7 +69,7 @@ const TOWNS = {
       ['cottage', 3, 15, 5, 5, 'k_house'], ['af_hut', 10, 16, 4, 4, 'k_house'], ['af_saw', 20, 15, 6, 5, 'af_saw', 'Ashford Sawmill'], ['af_hut', 27, 16, 4, 4, 'k_house']],
     props: [['well', 12, 22], ['furn_lumber', 27, 21], ['furn_lumber', 21, 22], ['tree', 2, 2], ['tree', 8, 2], ['tree', 29, 2], ['tree', 2, 22], ['tree', 30, 22], ['tree', 24, 3],
       ['lantern', 15, 11], ['lantern', 18, 11], ['lantern', 15, 14], ['lantern', 18, 14], ['furn_barrel', 9, 11], ['flower', 6, 11], ['flower', 7, 11], ['flower', 12, 11],
-      ['furn_logpile', 5, 22], ['furn_logpile', 23, 11], ['furn_logpile', 29, 21], ['stump', 8, 23], ['stump', 25, 23], ['furn_hay', 31, 11]],
+      ['furn_logpile', 5, 22], ['furn_logpile', 30, 10], ['furn_logpile', 29, 21], ['stump', 8, 23], ['stump', 25, 23], ['furn_hay', 31, 11]],
     guards: [[1, 11], [32, 14]],
     spots: [[14, 19], [8, 13], [24, 21], [19, 11]] },
   saltmere: { n: 'Saltmere', kind: 'Village', bio: 'coast', w: 32, h: 24, ground: 's', walls: null, sea: 1,
@@ -421,7 +421,7 @@ genWilds = (f => function () {
 const townAt = (m, tx, ty, pad = 0) => (m && m.towns || []).find(T => tx >= T.x - pad && tx < T.x + T.w + pad && ty >= T.y - pad && ty < T.y + T.h + pad);
 /* no monsters spawn in or next to a town */
 spawnEnemy = (f => function (m, k, x, y, lvl) {
-  if (m && m.id === 'wilds' && m.towns && EN[k] && !EN[k].boss && townAt(m, x / 16, y / 16, 10)) return { type: 'enemy', k, x, y, dead: true, hp: 0, mhp: 1, st: {}, ai: { cd: {} } };
+  if (m && m.id === 'wilds' && m.towns && EN[k] && !EN[k].boss && !window.SPAWN_RAW && townAt(m, x / 16, y / 16, 10)) return { type: 'enemy', k, x, y, dead: true, hp: 0, mhp: 1, st: {}, ai: { cd: {} } };
   return f(m, k, x, y, lvl);
 })(spawnEnemy);
 /* town trees are part of the town */
@@ -615,6 +615,7 @@ let LAST_TOWN = null;
 worldMapCanvas = (f => function () {
   const c = f(), m = MAPS.wilds; if (!m || !m.towns) return c; const x = c.getContext('2d');
   if (m.roadT) { x.fillStyle = '#d8b878'; for (const i of m.roadT) x.fillRect((i % m.w) * 3, ((i / m.w) | 0) * 3, 3, 3); } // the roads are known, explored or not
+  if (typeof BANDIT_PATROLS !== 'undefined') for (const P of BANDIT_PATROLS) { const L = P.members.find(e => !e.dead); if (!L) continue; const X = L.x / 16 * 3, Y = L.y / 16 * 3; x.fillStyle = '#2a1c18'; x.fillRect(X - 5, Y - 5, 10, 10); x.fillStyle = '#d8342a'; x.fillRect(X - 4, Y - 4, 8, 8); } // bandits in red
   for (const P of PATROLS) { const L = P.members.find(a => !a.gone); if (!L) continue; const X = L.x / 16 * 3, Y = L.y / 16 * 3; x.fillStyle = '#2a1c18'; x.fillRect(X - 5, Y - 5, 10, 10); x.fillStyle = '#9a66cc'; x.fillRect(X - 4, Y - 4, 8, 8); x.fillStyle = '#ffe080'; x.fillRect(X - 1, Y - 3, 2, 6); x.fillRect(X - 3, Y - 1, 6, 2); } // knight patrols on the road
   for (const T of m.towns) { x.strokeStyle = T.kind === 'City' || TOWNS[T.id].walls === 'stone' ? '#8a8478' : '#8a6a3a'; x.lineWidth = 3; x.strokeRect(T.x * 3, T.y * 3, T.w * 3, T.h * 3); x.fillStyle = 'rgba(216,200,168,.35)'; x.fillRect(T.x * 3, T.y * 3, T.w * 3, T.h * 3); } // each town's walls or fence
   { // each town building by what it is (playtest: nobody could find the barracks)
@@ -732,7 +733,7 @@ storyWhere = (f => function (role) {
 /* a gentle ring: within 28 tiles of a town, and along the south edge where the farm and village roads come
    in, the Wilds only send meadow creatures (playtest: a newcomer met a level-11 boar beside Kingsbridge) */
 spawnEnemy = (f => function (m, k, x, y, lvl) {
-  if (m && m.id === 'wilds' && EN[k] && !EN[k].boss && typeof BIOME_EN !== 'undefined') {
+  if (m && m.id === 'wilds' && EN[k] && !EN[k].boss && !window.SPAWN_RAW && typeof BIOME_EN !== 'undefined') { // SPAWN_RAW: bandit patrols spawn as themselves
     const tx = x / 16, ty = y / 16, near = townAt(m, tx, ty, 28) || ty > m.h - 45, M = { day: [['slime', 5], ['blueslime', 1]], night: [['slime', 3], ['blueslime', 2]] }, night = S && (S.time >= 1200 || S.time < 360); // only slimes here: crows circled out of reach and over the walls (round 3)
     if (near && !(night ? M.night : M.day).some(([id]) => id === k)) { k = wpick(night ? M.night : M.day); lvl = 0; }
     else if (near) lvl = Math.min(lvl || 0, 1);

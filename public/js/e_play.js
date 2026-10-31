@@ -360,7 +360,7 @@ let spawnAcc = 0;
 function wildSpawns(m, dt) {
   spawnAcc += dt; if (spawnAcc < 1) return; spawnAcc = 0;
   const p = S.p, ptx = p.x / 16, pty = p.y / 16, night = S.time >= 1200 || S.time < 360;
-  m.ents = m.ents.filter(e => e.type !== 'enemy' || EN[e.k].boss || dist(e.x, e.y, p.x, p.y) < 36 * 16);
+  m.ents = m.ents.filter(e => e.type !== 'enemy' || EN[e.k].boss || dist(e.x, e.y, p.x, p.y) < (e.bandit ? 110 : 36) * 16); // bandit patrols roam further
   for (const a of m.arenas) {
     const bk = a.boss, avail = !S.bosses[bk] || dayIndex() - ((S.bossDay || {})[bk] || 0) >= 7;
     if (!avail || m.ents.some(e => e.k === bk)) continue;
