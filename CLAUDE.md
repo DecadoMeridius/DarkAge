@@ -501,6 +501,24 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **The keep's wall tops** are dark stone coping in 16 px blocks (`pixRoomWalls` in `x_kingdom.js`).
 - **The see-through player** only shows when a tree, a tall object directly in front, a building or a villager really overlaps you.
 
+## The Warrens under Briarholt (`public/js/x_warrens.js`, art `art/sprites/vermin.py`)
+- **The way in:** a broken hole (`furn_hole`, act `k_warren`) in the Wine Cellar floor of `castle_down` at (17, 9) drops into `warren_1` to `warren_3`. Rope ladders (`furn_ropeup`, `k_wup`) lead back up.
+- **The maps** (`genWarren`, `caveCore` earth theme, dark) are rebuilt every visit and never saved; a save made there loads on the farm.
+- **Enemies:**
+  - Cellar Rat, Plague Rat, Giant Rat (charges) and Cellar Roach. They drop `rat_tail` and `bug_shell`.
+  - **The Rat King** (`ratking`, kit: charge, summoning rats and plague rats, circling; triple charge in phase 2) holds floor 3.
+  - He drops `rat_crown` (2,500g) and returns 7 days after he's beaten (`S.flags.ratKing`). The nest's chest is there once (`S.flags.ratChest`).
+- **Art:** hand-placed point templates like the beasts in `handdrawn.py`. `rat_f(k)` draws each size at its own scale (`rat` 1, `bigrat` 1.5, `ratking` 2.5 with a crown) so pixels stay crisp, and fixed pinks `K`/`Q` keep tails, ears and feet pink on every coat.
+
+## Walls, terrain, roads and town trades (`public/js/x_terrain.js`, art `castle.py`, `townprops.py`)
+- **Walls:** `cwall` sprites are 128 art px tall (`PH`); towers 192. North-south runs have raised parapets and a 14 px dithered east shadow (64 px wide canvas, 16 px padding).
+- **Cliffs:** `connectCliffs` joins every open pocket of 12+ tiles to the map by a 2-wide pass, and cuts a 2-wide gap through thin (1-2 tile) cliff ridges once per 20x20 cell, in the Wilds and the regions.
+- **Roads:** `realmRoad` is a Z (long leg, a turn on dry land, across, on). It merges onto an older road within 3 tiles. Side paths (`carvePath`) and the towns branch off the nearest road already laid.
+- **Town trades:**
+  - Greyhelm stands on stony ground with a mine mouth, rails (`furn_rails`, flat and walkable), mine carts and slag heaps.
+  - Ashford has log piles and stumps.
+  - Saltmere has rowboats and fish-drying racks.
+
 ## The realm: a bigger Wilds, towns, guards and patrols (`public/js/x_realm.js`, art `art/sprites/towns.py`)
 - **The Wilds are 440x330** (`WK` 2.2 in `d_world.js`; `WW`, `WH`, `WIN_F`/`WIN_V` for the farm and village roads, `EW`/`EH` for the explored fog). Region gates scale with `regionGateX`. Old saves get a new Wilds once (`S.wildsVer` 2).
 - **Saves of big generated maps store only their changes** (`DELTA_MAP`, `baseSnap`, `diffO`, `applyDelta`; `ms.d`, with `ms.w`/`ms.h` so a map of another size is regenerated): the Wilds, the regions and Briarholt. A save went from ~470 KB to ~80 KB.

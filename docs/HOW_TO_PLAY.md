@@ -419,6 +419,10 @@ Each region has:
 - **At night** the keep's windows glow, and torches burn at the gate and the keep door.
 - **Furniture:** the wardrobe changes your clothes, the war table shows the realm's map, and the royal chests open your storage.
 - **Briarholt's waystone** is just inside the grounds.
+- **The Warrens:** a broken hole in the Wine Cellar floor leads down into three floors of rat tunnels:
+  - cellar rats, plague rats, giant rats that charge, and roaches;
+  - on the third floor, the **Rat King** in his stolen crown. He calls more rats in and charges, three times in a row when he's hurt.
+  - Beat him for his crown (worth 2,500g). He's back a week later.
 - **Once it's yours:** its courtyard is farmland, its two glasshouses grow any crop in any season, and you can sleep in the royal bed.
 
 **The story** brings:

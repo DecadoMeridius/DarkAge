@@ -31,6 +31,15 @@ On 2026-10-31, four AI testers played a snapshot of the game, judging feel and l
 - **Enter** only presses a window's button when the window has just that one main button and no list. In the sandbox, Enter had been selling goods.
 - **The Kingdom test** starts with 30,000 gold, enough for the deed.
 
+## Fixed in the second pass (0.6.1)
+- **#1 and #2, walls:** castle and town walls are about 4 tiles tall, towers a head taller, and the gate a proper gatehouse with a tall arch. North-south runs have raised parapets and a wide cast shadow.
+- **#3, cliff mazes:** every walled-off pocket is joined to the map, and thin ridges have regular 2-wide gaps.
+- **#4, roads:** one clean Z-shaped road per route. Roads merge, and side paths branch off the nearest road, so the map shows a tree instead of a grid.
+- **#5, town character:**
+  - Greyhelm: a mine mouth, rails, carts, slag heaps and stony ground.
+  - Ashford: log piles.
+  - Saltmere: rowboats and fish-drying racks.
+
 ## Still open (ranked)
 
 1. **Castle walls:** north-south curtain walls look like flat paths with no face or battlements. All walls are low (about 2.5 tiles), and the gate arch is barely taller than the player. Needs taller walls, a battlement edge on the north-south runs, and a real gatehouse.
