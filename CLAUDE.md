@@ -181,6 +181,7 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **Autosave** every 500 ticks (5 minutes) on a saveable map with no window open, plus the existing morning save.
 - Saves live per address: the dev server is pinned to `localhost:5173`. The desktop build serves the game from `app://game/` (`electron/main.cjs`), so its saves are separate from the browser's.
 - **Test sandbox** (title screen button): a throwaway game where `saveGame` does nothing and Delete/Save are hidden; a yard with every station (and an ember core for power), a supply crate and the bank holding every ingredient, automation tier 5, skills 75, 1,000,000 gold. At a station each recipe gets a Get button that moves its ingredients from the supply crate into the backpack.
+- **Developer mode** (`x_devmode.js`): a checkbox on the title screen, off by default and remembered in `localStorage` `emberhollow_dev`. The test scenarios (Test sandbox, Combat test, Kingdom test) show only while it's on.
 - **Testing without touching the player's save:** use `http://[::1]:5173` (a different origin, so different storage) for automated tests.
 
 ## Crafting jobs (`public/js/x_craftjobs.js`)
