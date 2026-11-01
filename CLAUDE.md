@@ -511,7 +511,7 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 
 ## Round-3 polish (0.8.0)
 - **Pixel text** (`x_pixeltext.js`, loaded last):
-  - `g.fillText` and `g.strokeText` on the world canvas draw cached bitmaps made at art-pixel resolution, with hard pixels and a 1-px outline in the stroke colour. A caller that strokes the same text just before filling gets the outline.
+  - `g.fillText` and `g.strokeText` on the world canvas draw from a hand-drawn 5x7 pixel font (`PXFONT`, capitals, digits, punctuation, arrows, ♥ ★ ✓ ✗), one font pixel per art pixel (doubled for fonts of 13 px and up), with a 1-px outline in the stroke colour. Bitmaps are cached and drawn with smoothing off, so text stays sharp at any zoom or resolution. A caller that strokes the same text just before filling gets the outline.
   - HTML UI and map canvases are untouched.
 - **Walls:**
   - Town wall masks no longer wrap round rows (west and east walls were "joined sideways").
