@@ -510,9 +510,7 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **Titles:** `S.titles` and `S.title`; guildmasters greet you by your title. State: `S.guilds[act] = { r, kills }`.
 
 ## Round-3 polish (0.8.0)
-- **Pixel text** (`x_pixeltext.js`, loaded last):
-  - `g.fillText` and `g.strokeText` on the world canvas draw from a hand-drawn 5x7 pixel font (`PXFONT`, capitals, digits, punctuation, arrows, ♥ ★ ✓ ✗), one font pixel per art pixel (doubled for fonts of 13 px and up), with a 1-px outline in the stroke colour. Bitmaps are cached and drawn with smoothing off, so text stays sharp at any zoom or resolution. A caller that strokes the same text just before filling gets the outline.
-  - HTML UI and map canvases are untouched.
+- **World text** uses the normal fonts (Fredoka), drawn by the canvas at screen resolution. A pixel-font version was tried and dropped at the user's request.
 - **Walls:**
   - Town wall masks no longer wrap round rows (west and east walls were "joined sideways").
   - North-south runs draw a shaded east face (`cwall`, 80 px canvas) and a shadow past it.
