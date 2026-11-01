@@ -35,11 +35,11 @@ GLOW = {'obsidian': '#e060ff', 'cinder': '#ffb040'}
 
 
 def shell(kind, d):
-    if d == 2:
-        xs = range(9, 24)
-        m = {(x, y) for x in xs for y in range(4, 22)}
-        m -= {(x, y) for x, y in m if y < 7 and (x < 11 or x > 21)}
-        m -= {(x, y) for x, y in m if y < 5 and (x < 13 or x > 19)}
+    if d == 2:   # a helm in profile: domed crown, a straight face plate, the chin sloping back, a neck guard flaring behind
+        rows = {4: (14, 19), 5: (12, 21), 6: (11, 22), 7: (10, 23), 8: (10, 23)}
+        rows.update({y: (10, 23) for y in range(9, 15)})
+        rows.update({15: (10, 23), 16: (10, 23), 17: (10, 22), 18: (10, 22), 19: (9, 21), 20: (9, 21), 21: (8, 20)})
+        m = {(x, y) for y, (x0, x1) in rows.items() for x in range(x0, x1 + 1)}
         if kind == 'tall':
             m |= {(x, y) for x in range(10, 23) for y in range(3, 7)}
         if kind == 'point':
@@ -91,6 +91,11 @@ def helm(tk, d):
             for y in (16, 18):
                 s.set(13, y, SLIT); s.set(19, y, SLIT)
     if side:
+        hline(s, 11, 23, 10, 'helm', 3); hline(s, 11, 23, 11, 'helm', 1)          # the brow ridge, lit above and shadowed below
+        hline(s, 9, 18, 19, 'helm', 3)                                                 # the lip of the neck guard
+        if face in ('slit', 'glow', 'T', 'visor'):
+            for (x, y) in ((16, 15), (18, 15), (17, 17), (19, 17)):                    # breathing holes in the cheek
+                s.set(x, y, SLIT)
         hole = {'open': rect(17, 10, 7, 10), 'nasal': rect(17, 10, 7, 10), 'cheek': rect(18, 10, 6, 9), 'narrow': rect(18, 11, 6, 8),
                 'teeth': rect(18, 11, 6, 8), 'spectacle': rect(17, 10, 7, 10)}.get(face)
         if hole:
@@ -242,7 +247,8 @@ def pauldron(s, kind, cx, d, side=False):
 
 def chest(s, pat, tk, d):
     side = d == 2
-    body = poly([(9, 22), (23, 22), (22, 38), (10, 38)]) if not side else poly([(11, 22), (21, 22), (22, 30), (21, 38), (11, 38)]) - rect(14, 24, 4, 13)
+    # in profile: a breastplate that swells forward at the chest and a straight back, no cut-out (the arm swings in front)
+    body = poly([(9, 22), (23, 22), (22, 38), (10, 38)]) if not side else poly([(11, 22), (20, 22), (23, 26), (23, 30), (21, 38), (11, 38), (10, 30)])
     cel(s, body, 'armor')
     x0, x1 = (10, 22) if not side else (11, 21)
     if pat == 'straps' and d == 0:
@@ -279,7 +285,11 @@ def chest(s, pat, tk, d):
     if d != 2:
         hline(s, 10, 21, 37, 'trim', 1); hline(s, 10, 21, 36, 'trim', 2)
     else:
-        hline(s, 11, 21, 37, 'trim', 1)
+        hline(s, 11, 21, 37, 'trim', 1); hline(s, 11, 21, 36, 'trim', 2)
+        for y in range(23, 36):
+            if (11, y) in body:
+                s.set(11, y, code('armor', 3))                                          # the lit backplate edge
+        flat(s, line(20, 23, 22, 27), 'armor', 3); flat(s, line(22, 28, 21, 35), 'armor', 1)   # the chest swell: lit on top, shadow below
 
 
 def armor(tk, d):
