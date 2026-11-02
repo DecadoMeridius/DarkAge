@@ -151,7 +151,8 @@ function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
       if (md === 6) { d[o] = 12; d[o + 1] = 8; d[o + 2] = 10; d[o + 3] = 255; continue; }
       if (md === 1) { d[o] = 230; d[o + 1] = 246; d[o + 2] = 255; d[o + 3] = 255; continue; }
       if (md === 2) { d[o] = 255; d[o + 1] = 207; d[o + 2] = 122; d[o + 3] = 255; continue; }
-      const T = texs[L], tw = tws[L], hx = (((ox * GK + X) % P64) + P64) % P64, to = (((hy * tw / P64) | 0) * tw + ((hx * tw / P64) | 0)) * 4;
+      const T = texs[L], tw = tws[L], P = tw > 64 ? tw : P64, hx = (((ox * GK + X) % P) + P) % P, hyy = (((oy * GK + Y) % P) + P) % P;  // a styled texture repeats every tw px (128 art px), a plain one every 64 art px
+      const to = (((hyy * tw / P) | 0) * tw + ((hx * tw / P) | 0)) * 4;
       let r = T ? T[to] : 128, gg = T ? T[to + 1] : 128, b = T ? T[to + 2] : 128;
       if (!wet[L]) { const v = vary[i], wv = warmv[i]; r = r * v + wv; gg = gg * v + wv * .4; b = b * v - wv * .3; }
       if (md === 3 || md === 4) { const k = md === 3 ? .62 : .78; r *= k; gg *= k; b *= k * 1.06; }
@@ -159,8 +160,11 @@ function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
       d[o] = r; d[o + 1] = gg; d[o + 2] = b; d[o + 3] = 255;
     }
   }
-  x.putImageData(img, 0, 0); x.setTransform(GK, 0, 0, GK, 0, 0);
-  pixCliffsAndBridges(x, m, cx, cy, M, s);
+  x.putImageData(img, 0, 0);
+  // cliffs and bridges are drawn in art pixels on their own layer, then laid on smoothly (soft, not 4x blocks)
+  const cl = mk(N, N); pixCliffsAndBridges(cl.getContext('2d'), m, cx, cy, M, s);
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(cl, 0, 0, NH, NH); x.imageSmoothingEnabled = false;
+  x.setTransform(GK, 0, 0, GK, 0, 0);
   c.m = M * GK; c.span = SP * GK; c.hi = GK;
   return c;
 }

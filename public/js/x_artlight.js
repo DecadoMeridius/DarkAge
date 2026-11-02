@@ -68,8 +68,8 @@ if (typeof nightLights === 'function') nightLights = (f => function () { NL_ON =
 g.fillRect = (f => function (x, y, w, h) {
   f.apply(this, arguments);
   if (!NL_ON || this.globalAlpha < .05 || w > 400) return;
-  const cx = x + w / 2, cy = y + h / 2, r = Math.max(w, h) * 2.6 + 6, ga = this.globalAlpha, op = this.globalCompositeOperation;
-  const gr = this.createRadialGradient(cx, cy, 0, cx, cy, r); gr.addColorStop(0, 'rgba(255,190,110,.5)'); gr.addColorStop(1, 'rgba(255,170,90,0)');
-  this.globalCompositeOperation = 'lighter'; this.globalAlpha = ga * .45; this.fillStyle = gr; f.call(this, cx - r, cy - r, 2 * r, 2 * r);
+  const cx = x + w / 2, cy = y + h / 2, r = Math.max(w, h) * 4 + 14, ga = this.globalAlpha, op = this.globalCompositeOperation;
+  const gr = this.createRadialGradient(cx, cy, 0, cx, cy, r); gr.addColorStop(0, 'rgba(255,190,110,.75)'); gr.addColorStop(.35, 'rgba(255,160,80,.28)'); gr.addColorStop(1, 'rgba(255,150,70,0)');
+  this.globalCompositeOperation = 'lighter'; this.globalAlpha = Math.min(1, ga * .9); this.fillStyle = gr; f.call(this, cx - r, cy - r, 2 * r, 2 * r);
   this.globalCompositeOperation = op; this.globalAlpha = ga;
 })(g.fillRect);

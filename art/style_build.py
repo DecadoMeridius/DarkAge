@@ -24,6 +24,7 @@ import restyle  # noqa: E402
 
 args = [a for a in sys.argv[1:] if not a.startswith('--')]
 STYLE = args[0] if args else 'painterly'
+TRIES = next((int(a.split('=', 1)[1]) for a in sys.argv[1:] if a.startswith('--tries=')), 6)
 ONLY = next((a.split('=', 1)[1].split(',') for a in sys.argv[1:] if a.startswith('--only=')), None)
 GEN, K, GK = 4, 3, 4               # generate at 4x, store objects at 3x, ground at 4x
 SHEET_PX = 62000                    # art px per sheet (about 1 MP at 4x)
@@ -37,6 +38,23 @@ LOOK = {
 }
 KEEP = ('Each object keeps its exact silhouette, size, position, colours and design; nothing may stay pixel art. '
         'Do not add anything and do not move anything. The background stays plain flat grey with no shadows and no light.')
+# soft natural grounds: the model turns their big flat patches into embossed 3D blobs unless told to keep them flat
+FLAT_GROUND = {'ground_a', 'ground_c_ice', 'ground_c_void', 'ground_d', 'ground_d_0', 'ground_d_2', 'ground_d_3', 'ground_g_2', 'ground_g_3',
+               'ground_i', 'ground_s', 'ground_s_0', 'ground_s_2', 'ground_s_3', 'ground_sn', 'ground_st', 'ground_st_0', 'ground_st_2',
+               'ground_st_3', 'ground_w', 'ground_p_3'}
+FLAT_TXT = ('Turn this into a seamless hand-painted texture of {} seen from straight above, for a fantasy RPG: rich, detailed '
+            'painterly brushwork in these same colours, small natural detail spread evenly over the whole image, nothing large. '
+            'Uniform everywhere: no centre, no frame, no border, no swirl, no big shapes, no objects. Flat lighting.')
+MAT = {'a': 'grey volcanic ash and cinders', 'c_ice': 'a frozen ice cave floor with frost', 'c_void': 'a dark violet crystal cave floor',
+       'd': 'packed brown dirt with pebbles', 'g': 'short grass', 'i': 'smooth blue ice with frost and cracks', 's': 'fine beach sand',
+       'sn': 'fresh soft snow', 'st': 'rough grey-brown rocky ground with gravel', 'w': 'calm deep blue water with many small soft ripples',
+       'p': 'snow-dusted cobblestone paving'}
+def MATERIAL(n):
+    k = n[len('ground_'):]; base = k.split('_')[0] if not k.startswith('c_') else k
+    m = MAT.get(base, MAT.get(k, 'natural ground'))
+    if k.endswith('_3') and base not in ('p',): m += ' with a light dusting of snow'
+    if base == 'g' and k.endswith('_2'): m = 'short autumn grass with fallen leaves'
+    return m
 GROUND_TXT = (' This is a seamless ground texture seen from straight above; keep it an even, seamless, flat texture '
               'with the same colours and pattern scale, no objects, no lighting.')
 
@@ -144,7 +162,9 @@ def trim_bg(raw, mask, bgc):
         if (grown == reach).all(): break
         reach = grown
     cut = Image.fromarray(((~reach[1:-1, 1:-1]) * 255).astype(np.uint8)).resize(mask.size, Image.BILINEAR)
-    return Image.fromarray(np.minimum(np.asarray(mask), np.asarray(cut)))
+    out = np.minimum(np.asarray(mask), np.asarray(cut))
+    if out.sum() < np.asarray(mask).sum() * .75: return mask   # it ran into the object itself (grey metal, grey stone): keep the outline
+    return Image.fromarray(out)
 
 
 def objects(key, names):
@@ -187,16 +207,24 @@ def highpass(im, frac=.12):
 
 
 def ground(n):
+    """a 4x4 tiling restyled; the centre 2x2 becomes a 128 px tile (a longer repeat than the 64 px original),
+    made seamless and high-passed"""
     w, h = atlas[n]['w'], atlas[n]['h']
     big = crop(n).resize((w * GEN, h * GEN), Image.NEAREST)
-    tile = Image.new('RGBA', (w * 3 * GEN, h * 3 * GEN))
-    for j in range(3):
-        for i in range(3): tile.paste(big, (i * w * GEN, j * h * GEN))
-    res = restyle_sheet(n, tile, LOOK[STYLE] + GROUND_TXT)
-    part = res.crop((w * GEN, h * GEN, 2 * w * GEN, 2 * h * GEN))
-    full = Image.new('L', part.size, 255)
-    part = highpass(seamless(match(part, big, full)))
-    return {n: (part.resize((w * GK, h * GK), Image.LANCZOS), GK)}
+    tile = Image.new('RGBA', (w * 4 * GEN, h * 4 * GEN))
+    for j in range(4):
+        for i in range(4): tile.paste(big, (i * w * GEN, j * h * GEN))
+    flat = n in FLAT_GROUND
+    if flat:   # paint a fresh texture of the material from its colours alone (random pixels of the original, softened), so nothing repeats or gets copied as a blob
+        src_ = np.asarray(crop(n).convert('RGB')).reshape(-1, 3); rng = np.random.default_rng(len(n))
+        small = src_[rng.integers(0, len(src_), (h * 4 // 2) * (w * 4 // 2))].reshape(h * 4 // 2, w * 4 // 2, 3)
+        tile = Image.fromarray(small.astype(np.uint8)).resize(tile.size, Image.BICUBIC).filter(ImageFilter.GaussianBlur(GEN * 1.5)).convert('RGBA')
+    if n == 'ground_w': res = tile   # the model paints water as one big swirl; its soft colour field reads as calm water (the game adds glints)
+    else: res = restyle_sheet(n + ('_mat' if flat else '_x4'), tile, (FLAT_TXT.format(MATERIAL(n)) if flat else LOOK[STYLE] + GROUND_TXT))
+    part = res.crop((w * GEN, h * GEN, 3 * w * GEN, 3 * h * GEN))
+    ref = tile.crop((w * GEN, h * GEN, 3 * w * GEN, 3 * h * GEN))
+    part = highpass(seamless(match(part, ref, Image.new('L', part.size, 255))), .08)
+    return {n: (part.resize((2 * w * GK, 2 * h * GK), Image.LANCZOS), GK)}
 
 
 """Palette-swap templates (channel codes RGB(255, ch, level), level 4 = outline): each is painted in neutral
@@ -279,7 +307,7 @@ def templates(key, names):
     what = what or 'animation frames of a ' + key.split('_', 2)[2].rsplit('_', 1)[0].replace('_', ' ') + ' game character'
     prompt = LOOK[STYLE] + f' These are {what}. ' + KEEP + ' Keep the grey-toned colours as they are.'
     best = {}
-    for attempt in range(3):   # a sheet where a figure didn't fit is painted again with another seed; each sprite keeps its best try
+    for attempt in range(TRIES):   # a sheet where a figure didn't fit is painted again with another seed; each sprite keeps its best try
         res = restyle_sheet(key if attempt == 0 else f'{key}_r{attempt}', sheet, prompt, seed=7 + attempt * 101)
         r_ = np.asarray(res.convert('RGB')); bgc = np.median(np.concatenate([r_[0], r_[-1], r_[:, 0], r_[:, -1]]), 0).astype(np.int16)
         for n, (x, y) in pos.items():
