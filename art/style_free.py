@@ -377,36 +377,41 @@ def build():
         key = f'F_{gen}_' + '_'.join(sorted(n[:5] for n in ns))[:40] + f'_{len(ns)}'
         if key in seen: key += f'_b{i}'   # two sheets with the same short name must not share a cache
         seen.add(key)
-        base, sheet, pos, pad = paint_sheet(key, ns, gen)
-        CELLS[:] = [(px * gen, py * gen, (px + sb.atlas[m]['w']) * gen, (py + sb.atlas[m]['h']) * gen) for m, (px, py) in pos.items()]
-        imgs = {(): base}
-        comp = set(CASTLE_WITH) & set(ns) if any(n.startswith('bld_castle') for n in ns) else set()   # company: cut from their own sheets
-        kids = [n for n in par if root(n, par)[0] in pos and root(n, par)[0] not in comp]   # (no edits for the company)
-        for n in sorted(kids, key=lambda n: len(root(n, par)[1])):
-            b, path = root(n, par)
-            for j in range(1, len(path) + 1):   # each edit on the sheet once, built on the one before
-                if path[:j] in imgs: continue
-                e = path[j - 1]
-                if e is None: imgs[path[:j]] = imgs[path[:j - 1]]; continue
-                what = EDIT[e.split(':')[0]].format(*e.split(':')[1:])
-                ed = sb.restyle_sheet(f'{key}_' + '_'.join(str(x).replace(':', '-').replace(' ', '') for x in path[:j] if x), imgs[path[:j - 1]], VAR.format(what))
-                imgs[path[:j]] = realign(ed, imgs[path[:j - 1]])
-        glow = True   # window light: computed from each painting (see window_glow)
-        for n in [n for n in pos if n not in comp] + kids:
-            b, path = root(n, par); x, y = pos[b]
-            if b in failed: failed.append(n); continue   # a variant of a failed base goes the old way too, so they match
-            got = cut(imgs[path], b, x, y, pad, gen, None)
-            if got and not path: BASEOFF[b] = got[1]
-            if got and b not in PLACE: PLACE[b] = place(b, got[0], gen)   # variants stand where their base does (they're realigned to it)
-            if got: got = (got[0], (PLACE[b][0] + (got[1][0] - BASEOFF[b][0] if b in BASEOFF else 0), PLACE[b][1] + (got[1][1] - BASEOFF[b][1] if b in BASEOFF else 0)))
-            f = frame_of(n, got, gen) if got else None
-            if f: frames[n] = f
-            else: failed.append(n); continue
-            if glow is not None and len(f) > 2 and (sb.atlas[n].get('meta') or {}).get('win'):
-                part, (ox, oy) = got; X, Y = x * gen + ox, y * gen + oy
-                gl = window_glow(part, sb.atlas[n]['meta']['win'], ox, oy, gen)
-                frames[n + '_glow'] = (gl.resize(f[0].size, Image.LANCZOS), sb.K, f[2])
-        print(f'[{i + 1}/{len(sheets)}] {key} ({len(ns)} + {len(kids)} variants)', flush=True)
+        def one(key=key, gen=gen, ns=ns):
+            frames, failed = {}, []
+            base, sheet, pos, pad = paint_sheet(key, ns, gen)
+            CELLS[:] = [(px * gen, py * gen, (px + sb.atlas[m]['w']) * gen, (py + sb.atlas[m]['h']) * gen) for m, (px, py) in pos.items()]
+            imgs = {(): base}
+            comp = set(CASTLE_WITH) & set(ns) if any(n.startswith('bld_castle') for n in ns) else set()   # company: cut from their own sheets
+            kids = [n for n in par if root(n, par)[0] in pos and root(n, par)[0] not in comp]   # (no edits for the company)
+            for n in sorted(kids, key=lambda n: len(root(n, par)[1])):
+                b, path = root(n, par)
+                for j in range(1, len(path) + 1):   # each edit on the sheet once, built on the one before
+                    if path[:j] in imgs: continue
+                    e = path[j - 1]
+                    if e is None: imgs[path[:j]] = imgs[path[:j - 1]]; continue
+                    what = EDIT[e.split(':')[0]].format(*e.split(':')[1:])
+                    ed = sb.restyle_sheet(f'{key}_' + '_'.join(str(x).replace(':', '-').replace(' ', '') for x in path[:j] if x), imgs[path[:j - 1]], VAR.format(what))
+                    imgs[path[:j]] = realign(ed, imgs[path[:j - 1]])
+            glow = True   # window light: computed from each painting (see window_glow)
+            for n in [n for n in pos if n not in comp] + kids:
+                b, path = root(n, par); x, y = pos[b]
+                if b in failed: failed.append(n); continue   # a variant of a failed base goes the old way too, so they match
+                got = cut(imgs[path], b, x, y, pad, gen, None)
+                if got and not path: BASEOFF[b] = got[1]
+                if got and b not in PLACE: PLACE[b] = place(b, got[0], gen)   # variants stand where their base does (they're realigned to it)
+                if got: got = (got[0], (PLACE[b][0] + (got[1][0] - BASEOFF[b][0] if b in BASEOFF else 0), PLACE[b][1] + (got[1][1] - BASEOFF[b][1] if b in BASEOFF else 0)))
+                f = frame_of(n, got, gen) if got else None
+                if f: frames[n] = f
+                else: failed.append(n); continue
+                if glow is not None and len(f) > 2 and (sb.atlas[n].get('meta') or {}).get('win'):
+                    part, (ox, oy) = got; X, Y = x * gen + ox, y * gen + oy
+                    gl = window_glow(part, sb.atlas[n]['meta']['win'], ox, oy, gen)
+                    frames[n + '_glow'] = (gl.resize(f[0].size, Image.LANCZOS), sb.K, f[2])
+            return frames, failed, len(kids)
+        fr_, fa_, nk = sb.stage_cached(key, ns + [n for n in par if root(n, par)[0] in ns], one)
+        frames.update(fr_); failed += fa_
+        print(f'[{i + 1}/{len(sheets)}] {key} ({len(ns)} + {nk} variants)', flush=True)
     if failed: print('  no fitting painting, painted to the pixel outline:', ' '.join(failed), flush=True)
     # the rest the old way: tiling pieces, animation frames, and whatever failed above
     rest = sorted(hybrid | set(failed))

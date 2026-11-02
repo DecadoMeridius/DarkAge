@@ -125,6 +125,31 @@ def sheets_for(names, cap=None):
     return out
 
 
+# The CPU stage (cut-outs, template fitting, ground prep) is cached per sheet in comfyui/style/<style>/cache/,
+# keyed on the sheet's paintings (every <tag>_*out.png: name, size, time), its sprites' pixel art and the builder's
+# own code; a rebuild that changes a few sprites redoes only those sheets, then packs. --nocache skips it.
+import hashlib, pickle
+CODE_HASH = hashlib.sha1(b''.join(p_.read_bytes() for p_ in sorted(Path(__file__).parent.glob('style_*.py')))).hexdigest()
+def stage_key(tag, names):
+    h = hashlib.sha1((CODE_HASH + tag + '|' + ','.join(sorted(names))).encode())
+    for f in sorted(list(WORK.glob(f'{tag}_out.png')) + list(WORK.glob(f'{tag}_*out.png'))):
+        st = f.stat(); h.update(f'{f.name}:{st.st_size}:{st.st_mtime_ns};'.encode())
+    for n in sorted(names):
+        if n in atlas: h.update(crop(n).tobytes())
+    return h.hexdigest()
+def stage_cached(tag, names, fn):
+    if '--nocache' in sys.argv or '--audit' in sys.argv or '--check' in sys.argv: return fn()
+    cf = WORK / 'cache' / f'{tag}.pkl'
+    if cf.exists():
+        try:
+            d = pickle.loads(cf.read_bytes())
+            if d['key'] == stage_key(tag, names): return d['val']
+        except Exception: pass
+    val = fn()
+    cf.parent.mkdir(parents=True, exist_ok=True); cf.write_bytes(pickle.dumps({'key': stage_key(tag, names), 'val': val}))   # keyed after: retries add paintings
+    return val
+
+
 STALE = []
 def restyle_sheet(key, sheet, prompt, seed=7, denoise=1.0, steps=4, img2=None):
     if denoise < 1: key += f'_d{int(round(denoise * 100))}' + (f's{steps}' if steps != 4 else '')
@@ -264,6 +289,10 @@ def likeness(part, n, bgc):
 OBJ_TRIES = [(0, 1.0, 4), (0, .92, 12), (1, .92, 12)]
 OBJ_IOU = .75
 def objects(key, names):
+    return stage_cached(key, names, lambda: objects__(key, names))
+
+
+def objects__(key, names):
     global GEN
     if max(max(atlas[n]['w'], atlas[n]['h']) for n in names) <= 40:   # icons and little props: twice the size, so the model has room and doesn't blow them up
         GEN = 8
@@ -358,6 +387,10 @@ def highpass(im, frac=.12):
 
 
 def ground(n):
+    return stage_cached(n, [n], lambda: ground__(n))
+
+
+def ground__(n):
     """a 4x4 tiling restyled (or, for FLAT_GROUND, a colour field painted as the material); the centre 2x2 becomes a
     128 px tile (paving 3x3, 192 px), made seamless (paving: quilted) and high-passed"""
     w, h = atlas[n]['w'], atlas[n]['h']
@@ -467,6 +500,10 @@ def soften(im):
 
 
 def templates(key, names):
+    return stage_cached(key, names, lambda: templates__(key, names))
+
+
+def templates__(key, names):
     global GEN
     if key.startswith('T_hb_'):   # characters are small: paint them much bigger so the model has room for brushwork
         GEN = 10
