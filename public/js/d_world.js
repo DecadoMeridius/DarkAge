@@ -24,7 +24,11 @@ function newState(seed) {
 const WK = 2.2, WW = Math.round(200 * WK), WH = Math.round(150 * WK), WIN_F = Math.round(60 * WK), WIN_V = Math.round(100 * WK), EW = Math.ceil(WW / 4), EH = Math.ceil(WH / 4);
 function newMap(id, w, h, fill) { return { id, w, h, t: new Array(w * h).fill(fill), o: new Array(w * h).fill(null), soil: {}, warps: [], bld: [], ents: [], solidB: new Uint8Array(w * h), outdoor: true, dark: false, npcs: [], poi: [], arenas: [] }; }
 const inb = (m, x, y) => x >= 0 && y >= 0 && x < m.w && y < m.h;
-function setT(m, x, y, t) { if (inb(m, x, y)) { m.t[y * m.w + x] = t; m.cv = (m.cv || 0) + 1; } }
+function setT(m, x, y, t) { // a tile change repaints only the ground chunks that show it (and their neighbours' edges), not the whole map
+  if (!inb(m, x, y) || m.t[y * m.w + x] === t) return; m.t[y * m.w + x] = t;
+  const C = typeof CH !== 'undefined' ? CH : 16; m.cvc = m.cvc || {};
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const k = Math.floor((x + dx) / C) + ',' + Math.floor((y + dy) / C); m.cvc[k] = (m.cvc[k] || 0) + 1; }
+}
 function getT(m, x, y) { return inb(m, x, y) ? m.t[y * m.w + x] : 'r'; }
 function getO(m, x, y) { return inb(m, x, y) ? m.o[y * m.w + x] : null; }
 function setO(m, x, y, o) { if (inb(m, x, y)) m.o[y * m.w + x] = o; }

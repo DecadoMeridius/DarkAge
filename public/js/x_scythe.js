@@ -32,7 +32,7 @@ function scytheSwing(m, tx, ty, lvl) {
     }
   }
   const [fx, fy] = facePt(); if (fib) popTo(m, fx, fy, 'fiber', fib); if (hay) popTo(m, fx, fy, 'hay', hay);
-  if (fib || hay) { addXP('foraging', fib * .5); noiseBurst(.07, .04, 2500); CHUNK.clear(); }
+  if (fib || hay) { addXP('foraging', fib * .5); noiseBurst(.07, .04, 2500); }   // (no CHUNK.clear: grass isn't part of the ground picture, and repainting it all flashed)
   return fib + crops > 0;
 }
 

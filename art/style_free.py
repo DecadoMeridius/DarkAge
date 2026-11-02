@@ -125,6 +125,12 @@ def cut(res, n, x, y, pad, gen, bgc):
     win = res.crop((X0, Y0, min(res.width, (x + w + pad) * gen), min(res.height, (y + h + pad) * gen)))
     a = np.asarray(win.convert('RGB'), dtype=np.int16)
     fg = ~background(a)
+    if CELLS:   # never take paint that lies nearer to a neighbouring sprite's cell (a painted stump spread into the twig's)
+        H_, W_ = fg.shape; yy, xx = np.mgrid[:H_, :W_]; yy = yy + Y0; xx = xx + X0
+        dist = lambda c: np.hypot(np.maximum(0, np.maximum(c[0] - xx, xx - c[2])), np.maximum(0, np.maximum(c[1] - yy, yy - c[3])))
+        own = dist((x * gen, y * gen, (x + w) * gen, (y + h) * gen))
+        for c in CELLS:
+            if c != (x * gen, y * gen, (x + w) * gen, (y + h) * gen): fg &= own <= dist(c)
     fg = np.asarray(Image.fromarray((fg * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.MinFilter(5)).filter(ImageFilter.MaxFilter(3))) > 0
     # connected parts touching the middle of the sprite's own box
     from collections import deque
@@ -169,8 +175,9 @@ def cut(res, n, x, y, pad, gen, bgc):
     return part.crop((bx0, by0, bx1, by1)), (X0 + bx0 - x * gen, Y0 + by0 - y * gen)   # and where it sits against the sprite's box, GEN px
 
 
-def paint_sheet(key, names, gen, seed=7):
-    sheet, pos, pad = sheet_for(names, gen, soft=gen == 8 or bool(REDO & set(names)) and not any(n.startswith('bld_') for n in names))
+def paint_sheet(key, names, gen, seed=7, soft=None):
+    if soft is None: soft = gen == 8 or bool(REDO & set(names)) and not any(n.startswith('bld_') for n in names)
+    sheet, pos, pad = sheet_for(names, gen, soft=soft)
     order = sorted(pos, key=lambda n: (pos[n][1], pos[n][0]))
     bld = BLD if all(n.startswith('bld_') for n in names) else ''
     if STYLE_REF.exists(): res = sb.restyle_sheet(key, sheet, FREE_REF.format('; '.join(describe(n) for n in order), bld), seed=seed, img2=STYLE_REF)
@@ -230,7 +237,11 @@ def plan(names):
         elif n.endswith('_ruin') and n[:-5] in S: p, e = n[:-5], 'ruin'
         elif n + '_off' in S: p, e = n + '_off', 'lit'
         elif n + '_empty' in S: p, e = n + '_empty', 'fill'
-        if p and p in S and (sb.atlas[p]['w'], sb.atlas[p]['h']) == (sb.atlas[n]['w'], sb.atlas[n]['h']): par[n] = (p, e)
+        if p and p in S and (sb.atlas[p]['w'], sb.atlas[p]['h']) == (sb.atlas[n]['w'], sb.atlas[n]['h']):
+            # a variant the pixel art doesn't change (charwood looks the same every season) stays the same painting
+            a_, b_ = np.asarray(sb.crop(p), dtype=np.int16), np.asarray(sb.crop(n), dtype=np.int16)
+            same = (np.abs(a_ - b_).sum(-1) > 30).mean() < .03   # (charwood's seasons differ by a few ember pixels)
+            par[n] = (p, None if same else e)
     return par
 
 
@@ -344,7 +355,7 @@ def window_glow(part, wins, ox, oy, gen):
 
 def build():
     names = [n for n in sb.atlas if not n.startswith(('hb_', 'ic_', 'ground_')) and not sb.is_template(n)]
-    hybrid = {n for n in names if re.search(r'\.\d+$', n) or sb.family(n) in HYBRID_FAM or n.startswith('gi_')}   # item icons stay true to their design (a free hoe became a battleaxe)
+    hybrid = {n for n in names if re.search(r'\.\d+$', n) or sb.family(n) in HYBRID_FAM or n.startswith('gi_') or n in FAITHFUL}   # item icons stay true to their design (a free hoe became a battleaxe)
     free = [n for n in names if n not in hybrid]
     par = plan(free)
     bases = [n for n in free if n not in par]
@@ -367,6 +378,7 @@ def build():
         if key in seen: key += f'_b{i}'   # two sheets with the same short name must not share a cache
         seen.add(key)
         base, sheet, pos, pad = paint_sheet(key, ns, gen)
+        CELLS[:] = [(px * gen, py * gen, (px + sb.atlas[m]['w']) * gen, (py + sb.atlas[m]['h']) * gen) for m, (px, py) in pos.items()]
         imgs = {(): base}
         comp = set(CASTLE_WITH) & set(ns) if any(n.startswith('bld_castle') for n in ns) else set()   # company: cut from their own sheets
         kids = [n for n in par if root(n, par)[0] in pos and root(n, par)[0] not in comp]   # (no edits for the company)
@@ -374,8 +386,10 @@ def build():
             b, path = root(n, par)
             for j in range(1, len(path) + 1):   # each edit on the sheet once, built on the one before
                 if path[:j] in imgs: continue
-                e = path[j - 1]; what = EDIT[e.split(':')[0]].format(*e.split(':')[1:])
-                ed = sb.restyle_sheet(f'{key}_' + '_'.join(x.replace(':', '-').replace(' ', '') for x in path[:j]), imgs[path[:j - 1]], VAR.format(what))
+                e = path[j - 1]
+                if e is None: imgs[path[:j]] = imgs[path[:j - 1]]; continue
+                what = EDIT[e.split(':')[0]].format(*e.split(':')[1:])
+                ed = sb.restyle_sheet(f'{key}_' + '_'.join(str(x).replace(':', '-').replace(' ', '') for x in path[:j] if x), imgs[path[:j - 1]], VAR.format(what))
                 imgs[path[:j]] = realign(ed, imgs[path[:j - 1]])
         glow = True   # window light: computed from each painting (see window_glow)
         for n in [n for n in pos if n not in comp] + kids:
@@ -401,14 +415,32 @@ def build():
     for n in rest: fams.setdefault(sb.family(n), []).append(n)
     for f, ns in sorted(fams.items()):
         for i, s in enumerate(sb.sheets_for(ns)): frames.update(sb.objects(f'{f}_{i}', s))   # style_build's keys, so its cached sheets are reused
+    # what's still pixel art after that (weeds, some machines and icons the outline painting couldn't fit) is painted
+    # freely, softened, a family to a sheet (so a machine's frames come out alike)
+    left = [n for n in rest if n not in frames and sb.family(n) not in HYBRID_FAM]
+    lf = {}
+    for n in left: lf.setdefault(sb.family(n), []).append(n)
+    for f, ns in sorted(lf.items()):
+        gen = 8 if max(max(sb.atlas[n]['w'], sb.atlas[n]['h']) for n in ns) <= 40 else 4
+        base, sheet, pos, pad = paint_sheet(f'L_{f}_{len(ns)}', ns, gen, soft=True)
+        CELLS[:] = [(px * gen, py * gen, (px + sb.atlas[m]['w']) * gen, (py + sb.atlas[m]['h']) * gen) for m, (px, py) in pos.items()]
+        for n, (x, y) in pos.items():
+            got = cut(base, n, x, y, pad, gen, None)
+            if got: got = (got[0], place(n, got[0], gen))
+            fr = frame_of(n, got, gen) if got else None
+            if fr: frames[n] = fr
+        print('  painted freely at last:', f, sum(n in frames for n in ns), '/', len(ns), flush=True)
     return frames
 
 
 # painted wrong the first time (2026-11-02: a fire in the well, a bare lamp post, a glossy fountain, the keep too tall):
 # each gets a sheet of its own, so it's painted again with its description and nothing else to confuse it
 PLACE, BASEOFF = {}, {}
+PIXEL_ONLY = {'twig', 'stump'}   # kept as pixel art in the painted style (no painting of them looked right, 2026-11-02)
+FAITHFUL = {'fountain'}   # painted over its own outline: freely painted, the round fountain always came out with 3D depth
+CELLS = []   # the cells of the sheet being cut (GEN px boxes)
 CASTLE_WITH = ['bld_tavern_7x6', 'bld_manor_7x5']   # painted again with the keep only as style company (their own frames come from their own sheets)
-REDO = {'well', 'lantern_off', 'fountain', 'bld_castle_18x10', 'board', 'storage'}
+REDO = {'well', 'lantern_off', 'bld_castle_18x10', 'board', 'storage'}
 ONLY = next((a.split('=', 1)[1].split(',') for a in sys.argv if a.startswith('--only=')), None)
 if __name__ == '__main__' and '--build' in sys.argv:
     frames = build()
@@ -416,12 +448,13 @@ if __name__ == '__main__' and '--build' in sys.argv:
     # templates (creatures, crops, icons) and ground: as style_build makes them (cached)
     tfam = {}
     for n in sb.atlas:
-        if not n.startswith(('en_', 'an_', 'crop_', 'ic_')) or not sb.is_template(n): continue
+        if not n.startswith(('crop_', 'ic_')) or not sb.is_template(n): continue   # creatures (en_, an_) stay pixel templates, smoothed in the game like characters: painted frames each came out a different size, so they shrank as they walked, and leaked grey
         f = 'T_' + (re.sub(r'(_atk)?\.\d+$', '', n) if n.startswith(('en_', 'an_')) else n.split('_')[0])
         tfam.setdefault(f, []).append(n)
     for f, ns in sorted(tfam.items()):
         for i, s in enumerate(sb.sheets_for(ns)): frames.update(sb.templates(f'{f}_{i}', s))
     for n in [n for n in sb.atlas if n.startswith('ground_')]: frames.update(sb.ground(n))
+    for n in PIXEL_ONLY: frames.pop(n, None)
     sb.pack(frames); sys.exit()
 
 

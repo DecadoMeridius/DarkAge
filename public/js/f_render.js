@@ -2,13 +2,13 @@
 let camX = 0, camY = 0, HC_P = null, UIDN = 0, lastMap = null, chunkBudget = 16;
 const lightC = document.createElement('canvas'), lg = lightC.getContext('2d');
 const WEATHER = [], AMB = [], SMOKE = [];
-const CHUNK = new Map();
+const CHUNK = new Map(), CHUNK_LAST = new Map();
 function getChunk(m, cx, cy) {
   if (!m.uid) m.uid = ++UIDN;
-  const key = m.uid + '|' + (m.cv || 0) + '|' + cx + ',' + cy + '|' + (m.indoor || m.dark ? 0 : S.season);
+  const pos = m.uid + '|' + cx + ',' + cy, key = pos + '|' + (m.cv || 0) + '.' + (m.cvc && m.cvc[cx + ',' + cy] || 0) + '|' + (m.indoor || m.dark ? 0 : S.season);
   const e = CHUNK.get(key); if (e) { e.t = gameT; return e.c; }
-  if (chunkBudget <= 0) return null; chunkBudget--;
-  const c = paintChunk(m, cx, cy); CHUNK.set(key, { c, t: gameT });
+  if (chunkBudget <= 0) { const old = CHUNK_LAST.get(pos); return old || null; } chunkBudget--;   // until it's repainted, the old picture of that chunk stays (no blank flash)
+  const c = paintChunk(m, cx, cy); CHUNK.set(key, { c, t: gameT }); CHUNK_LAST.set(pos, c);
   if (CHUNK.size > 56) { let ok = null, ot = 1e9; for (const [k2, v] of CHUNK) if (v.t < ot) { ot = v.t; ok = k2; } CHUNK.delete(ok); }
   return c;
 }

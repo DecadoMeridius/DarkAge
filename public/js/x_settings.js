@@ -104,6 +104,7 @@ for (const type of ['keydown', 'keyup']) addEventListener(type, e => {
 }, true);
 
 /* ---- the Options tab ---- */
+let KEYPOP = 0;   // the key bindings popup is open
 const _renderOptsSet = renderOpts;
 renderOpts = function (b) {
   _renderOptsSet(b);
@@ -121,6 +122,15 @@ renderOpts = function (b) {
     keys.append(el('div', { class: 'rrow' }, el('div', { class: 'rtxt' }, el('b', null, n)), el('div', { class: 'acts' },
       el('button', { class: 'btn' + (REBIND === id ? '' : ' ghost'), on: () => { REBIND = id; refresh(); } }, REBIND === id ? 'Press a key… (Esc cancels)' : KEYNAME(cur_)),
       cur_ !== def ? el('button', { class: 'btn ghost', on: () => { delete SETTINGS.binds[id]; saveSettings(); buildKeymap(); refresh(); } }, 'Reset') : null))); }
-  sec.append(el('h3', null, 'Controls'), el('p', { class: 'note' }, 'Click an action, then press the key you want for it. Esc always closes windows.'), keys);
+  // the bindings are a popup over the Options tab (they took up most of it)
+  sec.append(el('h3', null, 'Controls'), el('div', { class: 'acts' }, el('span', { style: 'display:inline-block;width:120px' }, 'Keys'), el('button', { class: 'btn', on: () => { KEYPOP = 1; refresh(); } }, 'Key bindings…')));
   b.prepend(sec);
+  if (KEYPOP) {
+    const box = el('div', { class: 'f-panel' }); box.style.cssText = 'position:relative;max-width:520px;width:92%;max-height:80vh;overflow:auto;padding:14px';
+    box.append(el('h3', null, 'Key bindings'), el('p', { class: 'note' }, 'Click an action, then press the key you want for it. Esc always closes windows.'), keys,
+      el('div', { class: 'acts', style: 'justify-content:flex-end;margin-top:8px' }, el('button', { class: 'btn', on: () => { KEYPOP = 0; REBIND = null; refresh(); } }, 'Done')));
+    const ov = el('div', null, box); ov.style.cssText = 'position:fixed;inset:0;background:rgba(10,6,4,.55);display:flex;align-items:center;justify-content:center;z-index:60';
+    ov.onclick = e => { if (e.target === ov) { KEYPOP = 0; REBIND = null; refresh(); } };
+    b.append(ov);
+  }
 };

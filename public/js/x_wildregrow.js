@@ -29,7 +29,7 @@ function wildSpot(m, x0, y0, w = 1, h = 1) {
 }
 function regrowElsewhere(m, x0, y0, o) {
   const D = OBJ[o.k] || {}, p = wildSpot(m, x0, y0, D.w || 1, D.h || 1); if (!p) return false;
-  putObj(m, p[0], p[1], Object.assign({}, o)); if (m === cur) CHUNK.clear(); return true;
+  putObj(m, p[0], p[1], Object.assign({}, o)); return true;
 }
 
 /* trees: the overnight stump check in endDay calls this for wild maps */

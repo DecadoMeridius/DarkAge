@@ -421,7 +421,7 @@ genWilds = (f => function () {
 const townAt = (m, tx, ty, pad = 0) => (m && m.towns || []).find(T => tx >= T.x - pad && tx < T.x + T.w + pad && ty >= T.y - pad && ty < T.y + T.h + pad);
 /* no monsters spawn in or next to a town */
 spawnEnemy = (f => function (m, k, x, y, lvl) {
-  if (m && m.id === 'wilds' && m.towns && EN[k] && !EN[k].boss && !window.SPAWN_RAW && townAt(m, x / 16, y / 16, 10)) return { type: 'enemy', k, x, y, dead: true, hp: 0, mhp: 1, st: {}, ai: { cd: {} } };
+  if (m && m.id === 'wilds' && m.towns && EN[k] && !EN[k].boss && !window.SPAWN_RAW && !(typeof SANDBOX !== 'undefined' && SANDBOX) && townAt(m, x / 16, y / 16, 10)) return { type: 'enemy', k, x, y, dead: true, hp: 0, mhp: 1, st: {}, ai: { cd: {} } };
   return f(m, k, x, y, lvl);
 })(spawnEnemy);
 /* town trees are part of the town */
@@ -731,12 +731,14 @@ storyWhere = (f => function (role) {
   if (PL) PL[role] = ['wilds', at[0], at[1]];
   return { map: 'wilds', x: at[0], y: at[1] };
 })(storyWhere);
-/* a gentle ring: within 28 tiles of a town, and along the south edge where the farm and village roads come
-   in, the Wilds only send meadow creatures (playtest: a newcomer met a level-11 boar beside Kingsbridge) */
+/* a gentle ring: within 18 tiles of a town, and along the south edge where the farm and village roads come
+   in, the Wilds send their creatures weak (level 0-1), flyers as slimes (playtest: a newcomer met a level-11 boar beside Kingsbridge) */
 spawnEnemy = (f => function (m, k, x, y, lvl) {
-  if (m && m.id === 'wilds' && EN[k] && !EN[k].boss && !window.SPAWN_RAW && typeof BIOME_EN !== 'undefined') { // SPAWN_RAW: bandit patrols spawn as themselves
-    const tx = x / 16, ty = y / 16, near = townAt(m, tx, ty, 28) || ty > m.h - 45, M = { day: [['slime', 5], ['blueslime', 1]], night: [['slime', 3], ['blueslime', 2]] }, night = S && (S.time >= 1200 || S.time < 360); // only slimes here: crows circled out of reach and over the walls (round 3)
-    if (near && !(night ? M.night : M.day).some(([id]) => id === k)) { k = wpick(night ? M.night : M.day); lvl = 0; }
+  // (2026-11-02: it used to swap everything for slimes within 28 tiles of a town and 45 rows of the south edge, so wolves,
+  // boars and goblins hardly ever showed. Now the real creatures come, only weak; crows still become slimes there.)
+  if (m && m.id === 'wilds' && EN[k] && !EN[k].boss && !window.SPAWN_RAW && !(typeof SANDBOX !== 'undefined' && SANDBOX) && typeof BIOME_EN !== 'undefined') { // SPAWN_RAW: bandit patrols spawn as themselves
+    const tx = x / 16, ty = y / 16, near = townAt(m, tx, ty, 18) || ty > m.h - 22;
+    if (near && /crow|bird|bat/.test(k)) { k = 'slime'; lvl = 0; }   // flyers circled out of reach and over the walls (round 3)
     else if (near) lvl = Math.min(lvl || 0, 1);
   }
   return f(m, k, x, y, lvl);

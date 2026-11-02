@@ -273,7 +273,7 @@ humanSpr = function (key, P, dir, f) {
   if (P.quiver && d !== 3) add('hb_quiver_' + d);
   if (P.hood) add(`hb_hood_${d}_back`); else if (!P.helm) add(`hb_hair_${hs}_${d}_back`);
   add(ride ? 'hb_ride_2' : `hb_body_${d}_${f}`, wf >= 0 ? bob : 0, 0); // 'ride' = seated pose, facing right if (P.ribs) add('hb_ribs_' + d);
-  if (P.robe) add('hb_robe_' + d); if (P.apron) add('hb_apron_' + d); if (P.belt) add('hb_belt_' + d); if (P.armS && !P.robe) add('hb_arm_' + P.armS + '_' + d); if (P.vest) add('hb_vest_' + d); if (P.quiver && d === 3) add('hb_quiver_3');
+  if (P.robe) add('hb_robe_' + d); if (P.apron) add('hb_apron_' + d); if (P.belt) add('hb_belt_' + d); if (P.armS && !P.robe) { const a = armFit('hb_arm_' + P.armS + '_' + d, d, ride ? null : f); if (a) L.push([a, bob, lx]); } if (P.vest) add('hb_vest_' + d); if (P.quiver && d === 3) add('hb_quiver_3');
   if (P.cape && d === 3) add('hb_cape_3');
   if (P.beard) add('hb_beard_' + d); if (P.ears) add('hb_ears_' + d);
   if (!P.helm && !P.hood && hs !== 'bald') add(`hb_hair_${hs}_${d}_front`);
@@ -290,6 +290,31 @@ humanSpr = function (key, P, dir, f) {
   const out = dir === 1 ? flipC(c) : c; out.ww = 16; out.wh = 32; if (K > 1) out.hi = K;
   return HC[k] = out;
 };
+/* body armour is one picture per facing, drawn for the standing arms: per body frame, its sleeves are taken away
+   where an arm has moved off and the arm's sleeve (shirt channel) is coloured as armour where it has moved to, so
+   the armour swings with the arms (playtest 2026-11-02). Template codes: RGB(255, channel, level). */
+const ARMFIT = {}, ARM_CH = HCH.indexOf('armor'), SHIRT_CH = HCH.indexOf('shirt');
+function armFit(name, d, f) {
+  const A = PIX.get(name); if (!A || f === null || f === undefined || f === 0 || f === 'tuck') return A;
+  const k = name + '|' + f; if (ARMFIT[k]) return ARMFIT[k];
+  const S = PIX.get(`hb_body_${d}_0`), F = PIX.get(`hb_body_${d}_${f}`); if (!S || !F || A.width !== 32) return A;
+  const px = c => mk(32, 64, x => x.drawImage(c, 0, 0)).getContext('2d').getImageData(0, 0, 32, 64).data;
+  const s = px(S), fr = px(F), out = mk(32, 64, x => x.drawImage(A, 0, 0)), ox = out.getContext('2d'), id = ox.getImageData(0, 0, 32, 64), a = id.data;
+  const shirt = (q, i) => q[i + 3] > 0 && q[i] === 255 && q[i + 1] === SHIRT_CH && q[i + 2] < 5;
+  const same = i => s[i] === fr[i] && s[i + 1] === fr[i + 1] && s[i + 2] === fr[i + 2] && s[i + 3] === fr[i + 3];
+  // is the standing arm armoured here (plate sleeves) or cloth (only shoulder plates)? judged on the arm pixels that move
+  let moved = 0, covered = 0;
+  for (let i = 0; i < a.length; i += 4) if (!same(i) && shirt(s, i)) { moved++; if (a[i + 3] > 0) covered++; }
+  const plate = moved > 0 && covered / moved > .5;
+  for (let i = 0; i < a.length; i += 4) {
+    if (same(i)) continue;
+    if (shirt(s, i)) a[i + 3] = 0;   // the arm was here standing and has moved: no floating sleeve
+    if (plate && shirt(fr, i)) { a[i] = 255; a[i + 1] = ARM_CH; a[i + 2] = fr[i + 2]; a[i + 3] = 255; }   // the arm is here now: armoured sleeve
+  }
+  ox.putImageData(id, 0, 0); out.ww = A.ww; out.wh = A.wh;
+  return ARMFIT[k] = out;
+}
+
 /* 1px outline around opaque pixels (a_core's outline() is stubbed out by the painted art) */
 function pixOutline(c, col) {
   const x = c.getContext('2d'), W = c.width, H = c.height, d = x.getImageData(0, 0, W, H), a = d.data, src = new Uint8Array(W * H), [r, g2, b] = col ? h2r(col) : [0, 0, 0];

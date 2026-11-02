@@ -102,7 +102,7 @@ const styleGlow = n => { const st = STYLE_ATLAS[SETTINGS.artStyle]; return n && 
 // switching: drop every cached sprite and painted chunk so they're made again from the new atlas
 function applyArtStyle() {
   return loadStyle(SETTINGS.artStyle).then(() => {
-    PIX.cache = {}; PXG.tex = {}; if (typeof CHUNK !== 'undefined') CHUNK.clear();
+    PIX.cache = {}; PXG.tex = {}; if (typeof CHUNK !== 'undefined') { CHUNK.clear(); CHUNK_LAST.clear(); }
     for (const C of [HC, ACACHE, ECACHE, CROPSPR, ICACHE, GICACHE, IURL]) for (const k in C) delete C[k];
     if (typeof buildObjects === 'function') buildObjects();
     for (const id in MAPS) { const m = MAPS[id]; if (m && m.bld) for (const b of m.bld) b.sprName = null; }
@@ -129,3 +129,10 @@ markStyled(); applyGraphics = (f => function () { const r = f.apply(this, argume
 const gpuCopy = c => { const d = mk(c.width, c.height, x => x.drawImage(c, 0, 0)); for (const k of ['m', 'span', 'hi', 'ww', 'wh', 'ax', 'ay', 'lum', 'cast', 'off']) if (c[k] !== undefined) d[k] = c[k]; return d; };
 paintChunk = (f => function () { const c = f.apply(this, arguments); return c && c.hi ? gpuCopy(c) : c; })(paintChunk);
 pixTemplate = (f => function () { const c = f.apply(this, arguments); return c && c.hi ? gpuCopy(c) : c; })(pixTemplate);
+// animals and enemies stay pixel templates in a styled mode (painted frames came out a different size each, so they
+// shrank as they walked); like characters they're rounded with Scale2x and given the painted light
+pixTemplate = (f => function (name) {
+  const c = f.apply(this, arguments);
+  if (!c || c.hi || SETTINGS.artStyle === 'pixel' || !/^(en_|an_)/.test(name)) return c;
+  const s = paintedLook(scale2x(scale2x(c))); s.ww = c.ww; s.wh = c.wh; if (c.ax !== undefined) { s.ax = c.ax; s.ay = c.ay; } return s;
+})(pixTemplate);

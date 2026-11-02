@@ -361,7 +361,7 @@ def ground(n):
     """a 4x4 tiling restyled (or, for FLAT_GROUND, a colour field painted as the material); the centre 2x2 becomes a
     128 px tile (paving 3x3, 192 px), made seamless (paving: quilted) and high-passed"""
     w, h = atlas[n]['w'], atlas[n]['h']
-    big = crop(n).resize((w * GEN, h * GEN), Image.NEAREST)
+    big = crop(n).convert('RGB').resize((w * GEN, h * GEN), Image.BICUBIC).filter(ImageFilter.GaussianBlur(GEN * .55)).convert('RGBA')   # softened: crisp enlarged pixels come back as tidied pixel art
     tile = Image.new('RGBA', (w * 4 * GEN, h * 4 * GEN))
     rng_ = np.random.default_rng(7)
     for j in range(4):
@@ -375,7 +375,7 @@ def ground(n):
         small = src_[rng.integers(0, len(src_), (h * 4 // 2) * (w * 4 // 2))].reshape(h * 4 // 2, w * 4 // 2, 3)
         tile = Image.fromarray(small.astype(np.uint8)).resize(tile.size, Image.BICUBIC).filter(ImageFilter.GaussianBlur(GEN * 1.5)).convert('RGBA')
     if n == 'ground_w': res = tile   # the model paints water as one big swirl; its soft colour field reads as calm water (the game adds glints)
-    else: res = restyle_sheet(n + ('_mat' if flat else '_rx4' if n in PAVING else '_x4'), tile, (FLAT_TXT.format(MATERIAL(n)) if flat else LOOK[STYLE] + GROUND_TXT))
+    else: res = restyle_sheet(n + ('_mat' if flat else '_rx4s' if n in PAVING else '_x4s'), tile, (FLAT_TXT.format(MATERIAL(n)) if flat else LOOK[STYLE] + GROUND_TXT))
     pave = n in PAVING   # stones: 3x3 of the painting (a 192 px repeat), wrapped by a seam cut that runs between the stones
     T = 3 if pave else 2
     a0 = .4 if pave else 1
