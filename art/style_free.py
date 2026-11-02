@@ -409,10 +409,24 @@ def build():
                     gl = window_glow(part, sb.atlas[n]['meta']['win'], ox, oy, gen)
                     frames[n + '_glow'] = (gl.resize(f[0].size, Image.LANCZOS), sb.K, f[2])
             return frames, failed, len(kids)
-        fr_, fa_, nk = sb.stage_cached(key, ns + [n for n in par if root(n, par)[0] in ns], one)
+        fr_, fa_, nk = sb.stage_cached(key, ns + [n for n in par if root(n, par)[0] in ns], one, 'free')
         frames.update(fr_); failed += fa_
         print(f'[{i + 1}/{len(sheets)}] {key} ({len(ns)} + {nk} variants)', flush=True)
     if failed: print('  no fitting painting, painted to the pixel outline:', ' '.join(failed), flush=True)
+    # the twig and the stump on a roomy sheet of their own (on the small sheet the painted stump reached into the twig's
+    # cell, half stump, half twig); these frames replace the ones above
+    ROOMY = [n for n in ('twig', 'stump') if n in bases]
+    if ROOMY and not (ONLY and not any(n.startswith(tuple(ONLY)) for n in ROOMY)):
+        global PAD
+        P0, PAD = PAD, 1.2
+        try: base, sheet, pos, pad = paint_sheet('F_8_roomy_twig_stump', ROOMY, 8, soft=True)
+        finally: PAD = P0
+        CELLS[:] = [(px * 8, py * 8, (px + sb.atlas[m]['w']) * 8, (py + sb.atlas[m]['h']) * 8) for m, (px, py) in pos.items()]
+        for n, (x, y) in pos.items():
+            got = cut(base, n, x, y, pad, 8, None)
+            if got: got = (got[0], place(n, got[0], 8))
+            fr = frame_of(n, got, 8) if got else None
+            if fr: frames[n] = fr
     # the rest the old way: tiling pieces, animation frames, and whatever failed above
     rest = sorted(hybrid | set(failed))
     if ONLY: rest = [n for n in rest if n.startswith(tuple(ONLY))]
@@ -441,11 +455,11 @@ def build():
 # painted wrong the first time (2026-11-02: a fire in the well, a bare lamp post, a glossy fountain, the keep too tall):
 # each gets a sheet of its own, so it's painted again with its description and nothing else to confuse it
 PLACE, BASEOFF = {}, {}
-PIXEL_ONLY = {'twig', 'stump'}   # kept as pixel art in the painted style (no painting of them looked right, 2026-11-02)
-FAITHFUL = {'fountain'}   # painted over its own outline: freely painted, the round fountain always came out with 3D depth
+PIXEL_ONLY = set()   # sprites kept as pixel art in the painted style
+FAITHFUL = set()   # painted over their own outline (the fountain was, but alone on a sheet the model zoomed in and its top and base were cut off)
 CELLS = []   # the cells of the sheet being cut (GEN px boxes)
 CASTLE_WITH = ['bld_tavern_7x6', 'bld_manor_7x5']   # painted again with the keep only as style company (their own frames come from their own sheets)
-REDO = {'well', 'lantern_off', 'bld_castle_18x10', 'board', 'storage'}
+REDO = {'well', 'lantern_off', 'fountain', 'bld_castle_18x10', 'board', 'storage'}
 ONLY = next((a.split('=', 1)[1].split(',') for a in sys.argv if a.startswith('--only=')), None)
 if __name__ == '__main__' and '--build' in sys.argv:
     frames = build()
@@ -453,7 +467,7 @@ if __name__ == '__main__' and '--build' in sys.argv:
     # templates (creatures, crops, icons) and ground: as style_build makes them (cached)
     tfam = {}
     for n in sb.atlas:
-        if not n.startswith(('crop_', 'ic_')) or not sb.is_template(n): continue   # creatures (en_, an_) stay pixel templates, smoothed in the game like characters: painted frames each came out a different size, so they shrank as they walked, and leaked grey
+        if not n.startswith(('en_', 'an_', 'crop_', 'ic_')) or not sb.is_template(n): continue   # creatures: frames matched to each other (style_build creature_frames)
         f = 'T_' + (re.sub(r'(_atk)?\.\d+$', '', n) if n.startswith(('en_', 'an_')) else n.split('_')[0])
         tfam.setdefault(f, []).append(n)
     for f, ns in sorted(tfam.items()):

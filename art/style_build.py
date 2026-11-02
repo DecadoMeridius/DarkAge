@@ -129,24 +129,27 @@ def sheets_for(names, cap=None):
 # keyed on the sheet's paintings (every <tag>_*out.png: name, size, time), its sprites' pixel art and the builder's
 # own code; a rebuild that changes a few sprites redoes only those sheets, then packs. --nocache skips it.
 import hashlib, pickle
-CODE_HASH = hashlib.sha1(b''.join(p_.read_bytes() for p_ in sorted(Path(__file__).parent.glob('style_*.py')))).hexdigest()
-def stage_key(tag, names):
-    h = hashlib.sha1((CODE_HASH + tag + '|' + ','.join(sorted(names))).encode())
+# Each kind of sheet has a version: bump the one whose code you change (only its sheets are redone). It used to be a
+# hash of style_*.py, so any edit redid every sheet; b3b46441 is that hash at the time, kept so those caches stay valid.
+CODE_VER = {'obj': 'b3b46441f927239c4b267b11848c37398279b1fb', 'tmpl': 'b3b46441f927239c4b267b11848c37398279b1fb', 'creature': 'creature-fit-1',
+            'ground': 'b3b46441f927239c4b267b11848c37398279b1fb', 'free': 'b3b46441f927239c4b267b11848c37398279b1fb'}
+def stage_key(tag, names, kind='obj'):
+    h = hashlib.sha1((CODE_VER[kind] + tag + '|' + ','.join(sorted(names))).encode())
     for f in sorted(list(WORK.glob(f'{tag}_out.png')) + list(WORK.glob(f'{tag}_*out.png'))):
         st = f.stat(); h.update(f'{f.name}:{st.st_size}:{st.st_mtime_ns};'.encode())
     for n in sorted(names):
         if n in atlas: h.update(crop(n).tobytes())
     return h.hexdigest()
-def stage_cached(tag, names, fn):
+def stage_cached(tag, names, fn, kind='obj'):
     if '--nocache' in sys.argv or '--audit' in sys.argv or '--check' in sys.argv: return fn()
     cf = WORK / 'cache' / f'{tag}.pkl'
     if cf.exists():
         try:
             d = pickle.loads(cf.read_bytes())
-            if d['key'] == stage_key(tag, names): return d['val']
+            if d['key'] == stage_key(tag, names, kind): return d['val']
         except Exception: pass
     val = fn()
-    cf.parent.mkdir(parents=True, exist_ok=True); cf.write_bytes(pickle.dumps({'key': stage_key(tag, names), 'val': val}))   # keyed after: retries add paintings
+    cf.parent.mkdir(parents=True, exist_ok=True); cf.write_bytes(pickle.dumps({'key': stage_key(tag, names, kind), 'val': val}))   # keyed after: retries add paintings
     return val
 
 
@@ -387,7 +390,7 @@ def highpass(im, frac=.12):
 
 
 def ground(n):
-    return stage_cached(n, [n], lambda: ground__(n))
+    return stage_cached(n, [n], lambda: ground__(n), 'ground')
 
 
 def ground__(n):
@@ -464,7 +467,7 @@ def encode(part, ch_big, mask):
     return img_
 
 
-def register(res, n, x, y, pad, bgc=None):
+def register(res, n, x, y, pad, bgc=None, sc_fixed=None, ret_sc=False):
     """find where (and how much bigger) the model painted sprite n near its cell (x, y art px; pad art px of
     room round it) and return that region at the sprite's own size and place, GEN px"""
     w, h = atlas[n]['w'], atlas[n]['h']
@@ -475,7 +478,7 @@ def register(res, n, x, y, pad, bgc=None):
     b = np.abs(np.asarray(win.convert('RGB').resize((ww, wh), Image.BOX), dtype=np.int16) - (np.array(BG[:3]) if bgc is None else bgc)).sum(-1) > 30   # bgc: the sheet's own background (the model sometimes tints it)
     m0 = crop(n).getchannel('A')
     best, bp = -1e9, (1.0, (x * GEN - X0) // S, (y * GEN - Y0) // S)
-    for sc in np.linspace(.55, 1.7, 24):
+    for sc in ([sc_fixed] if sc_fixed else np.linspace(.55, 1.7, 24)):
         mw, mh = max(1, int(w * GEN * sc / S)), max(1, int(h * GEN * sc / S))
         if mw > ww or mh > wh: continue
         a = np.asarray(m0.resize((mw, mh), Image.BOX)) > 100
@@ -486,7 +489,8 @@ def register(res, n, x, y, pad, bgc=None):
                 if v > best: best, bp = v, (sc, ox, oy)
     sc, ox, oy = bp
     L, T = ox * S, oy * S
-    return win.crop((L, T, L + int(w * GEN * sc), T + int(h * GEN * sc))).resize((w * GEN, h * GEN), Image.LANCZOS)
+    out = win.crop((L, T, L + int(w * GEN * sc), T + int(h * GEN * sc))).resize((w * GEN, h * GEN), Image.LANCZOS)
+    return (out, sc) if ret_sc else out
 
 
 def soften(im):
@@ -500,7 +504,7 @@ def soften(im):
 
 
 def templates(key, names):
-    return stage_cached(key, names, lambda: templates__(key, names))
+    return stage_cached(key, names, lambda: templates__(key, names), 'creature' if key.startswith(('T_en_', 'T_an_')) else 'tmpl')
 
 
 def templates__(key, names):
@@ -529,10 +533,11 @@ def templates_(key, names, pad):
     # drawing (img2img), which keeps the shapes; each sprite keeps its best try. Characters (--hb) only use img2img.
     dn = DENOISE or (.72 if key.startswith('T_hb_') else 1.0)
     tries = [(a, dn) for a in range(TRIES)] + ([(a, .8) for a in range(3)] if dn == 1 else [])
-    best = {}
+    best, tried = {}, []
     for attempt, d_ in tries:
         res = restyle_sheet(key if attempt == 0 else f'{key}_r{attempt}', soft if d_ < 1 else sheet, prompt, seed=7 + attempt * 101, denoise=d_)
         r_ = np.asarray(res.convert('RGB')); bgc = np.median(np.concatenate([r_[0], r_[-1], r_[:, 0], r_[:, -1]]), 0).astype(np.int16)
+        tried.append((res, bgc))
         for n, (x, y) in pos.items():
             if n in best and best[n][0] >= .6: continue
             neu, ch = info[n]; fw, fh = atlas[n]['w'] * K, atlas[n]['h'] * K
@@ -552,11 +557,47 @@ def templates_(key, names, pad):
             ch_big = np.asarray(Image.fromarray(ch).resize((fw, fh), Image.NEAREST))
             best[n] = (fit, encode(part, ch_big, mask))
         if all(b[0] >= .6 for b in best.values()): break
+    if key.startswith(('T_en_', 'T_an_')): return creature_frames(tried, pos, pad, info)
     bad = [n for n, b in best.items() if b[0] < .45]
     if bad and key.startswith(('T_en_', 'T_an_')):   # a creature that's half painted would flicker as it walks: all or nothing
         print('  poor fit, whole creature kept as pixel art:', key, ' '.join(bad), flush=True); return {}
     if bad: print('  poor fit, kept as pixel art:', ' '.join(bad), flush=True)
     return {n: (b[1], K, 'lum') for n, b in best.items() if b[0] >= .45}
+
+
+
+def creature_frames(tried, pos, pad, info):
+    """a creature's frames must match each other, or it changes size and shape as it walks: all from the one painting
+    (of the tries) where its worst frame fits best, all cut at that painting's median scale, and each with exactly
+    its pixel frame's outline. Pixels inside that the model left as background card take the pixel art's colour
+    instead (the grey fill seen in the game)"""
+    def fit_of(res, bgc, n, x, y, sc=None):
+        part, s_ = register(res, n, x, y, pad, bgc, sc_fixed=sc, ret_sc=True)
+        fgb = np.abs(np.asarray(part.convert('RGB'), dtype=np.int16) - bgc).sum(-1) > 50
+        om = np.asarray(crop(n).getchannel('A').resize(part.size, Image.NEAREST)) > 100
+        return (om & fgb).sum() / max(1, (om | fgb).sum()), s_, part
+    scored = []
+    for res, bgc in tried:
+        r = {n: fit_of(res, bgc, n, x, y) for n, (x, y) in pos.items()}
+        scored.append((min(v[0] for v in r.values()), res, bgc, r))
+    worst, res, bgc, r = max(scored, key=lambda t: t[0])
+    if worst < .4: print('  poor fit, whole creature kept as pixel art:', ' '.join(pos), flush=True); return {}
+    sc = float(np.median([v[1] for v in r.values()]))
+    out = {}
+    for n, (x, y) in pos.items():
+        neu, ch = info[n]; fw, fh = atlas[n]['w'] * K, atlas[n]['h'] * K
+        part = fit_of(res, bgc, n, x, y, sc)[2].resize((fw, fh), Image.LANCZOS)
+        mask = crop(n).getchannel('A').resize((fw, fh), Image.NEAREST).filter(ImageFilter.GaussianBlur(K * .35))
+        mask = mask.point(lambda a: 0 if a < 70 else 255 if a > 185 else int((a - 70) * 255 / 115))
+        nb = neu.resize((fw, fh), Image.NEAREST)
+        a = np.asarray(part.convert('RGB'), dtype=np.int16)
+        card = np.abs(a - bgc).sum(-1) < 60
+        card = np.asarray(Image.fromarray((card * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3))) > 0
+        a = np.where(card[..., None], np.asarray(nb.convert('RGB'), dtype=np.int16), a)
+        part = match(Image.fromarray(a.astype(np.uint8)).convert('RGBA'), nb, mask)
+        ch_big = np.asarray(Image.fromarray(ch).resize((fw, fh), Image.NEAREST))
+        out[n] = (encode(part, ch_big, mask), K, 'lum')
+    return out
 
 
 def pack(frames):

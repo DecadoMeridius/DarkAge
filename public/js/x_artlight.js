@@ -34,27 +34,42 @@ function sunNow(m) {
 // each castable sprite's shadow: its silhouette from the base up, flipped (row 0 = the base), blurred; made once.
 // The base is the lowest row that's really part of the object, not grass or a soft edge below it, so the shadow
 // starts at the wall and not under a transparent strip.
-const CASTC = new WeakMap();
-function castOf(c) {
-  let s = CASTC.get(c); if (s) return s;
-  const w = c.width, h = c.height, ppu = w / c.ww, B = Math.ceil(ppu * 2);
-  const a = mk(w, h, x => x.drawImage(c, 0, 0)).getContext('2d').getImageData(0, 0, w, h).data; let base = h - 1, most = 0; const cnt = new Array(h).fill(0);
+const CASTC = new WeakMap(), CASTQ = [];
+// Made at a quarter of the sprite's resolution (a soft shadow needs no more) and not in the middle of a frame: a
+// sprite seen for the first time is queued and gets its shadow a moment later (building them on the spot stuttered)
+function castMake(c) {
+  const ppu = c.width / c.ww, q = Math.max(1, Math.round(ppu / 1.5)), w = Math.ceil(c.width / q), h = Math.ceil(c.height / q), B = 3;
+  const small = mk(w, h, x => { x.imageSmoothingEnabled = true; x.drawImage(c, 0, 0, w, h); });
+  const a = small.getContext('2d').getImageData(0, 0, w, h).data; let base = h - 1, most = 0; const cnt = new Array(h).fill(0);
   for (let y = 0; y < h; y++) { let n = 0; for (let x = 0; x < w; x++) if (a[(y * w + x) * 4 + 3] > 160) n++; cnt[y] = n; most = Math.max(most, n); }
   while (base > 0 && cnt[base] < most * .3) base--;
   const H = base + 1, sil = mk(w + 2 * B, H + 2 * B, x => {
-    x.setTransform(1, 0, 0, -1, B, H + B); x.drawImage(c, 0, 0, w, H, 0, 0, w, H);
+    x.setTransform(1, 0, 0, -1, B, H + B); x.drawImage(small, 0, 0, w, H, 0, 0, w, H);
     x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = 'rgb(46,44,86)'; x.fillRect(0, 0, w + 2 * B, H + 2 * B);   // a cool shade, not black
   });
-  s = mk(sil.width, sil.height, x => { x.filter = `blur(${Math.max(2, ppu * 1.1)}px)`; x.drawImage(sil, 0, 0); });
-  s.B = B; s.base = base; s.ppu = ppu; CASTC.set(c, s); return s;
+  const s = mk(sil.width, sil.height, x => { x.filter = 'blur(1.5px)'; x.drawImage(sil, 0, 0); });
+  s.B = B * q; s.base = (base + 1) * q - 1; s.q = q; CASTC.set(c, s); return s;
 }
+function castOf(c) {
+  const s = CASTC.get(c); if (s) return s;
+  if (!c.__castQ) { c.__castQ = 1; CASTQ.push(c); }
+  return null;
+}
+// build queued shadows in spare time: up to ~3 ms a frame
+(function castPump() {
+  const t0 = performance.now();
+  while (CASTQ.length && performance.now() - t0 < 3) castMake(CASTQ.shift());
+  requestAnimationFrame(castPump);
+})();
 g.drawImage = (f => function (img, a1, a2, a3, a4) {
   if (img && img.cast && arguments.length === 5 && STYLED() && LIGHT_K > .02 && !g.__noCast) {
     const s = castOf(img), k = a3 / img.width, ga = this.globalAlpha, over = 2.5;   // starts 2.5 world px inside the object: drawn first, so the object hides the overlap
+    if (s) {
     this.save(); this.globalAlpha = ga * .46 * LIGHT_K * SUNP.k; g.__noCast = 1;
     this.translate(a1, a2 + (s.base + 1) * k - over); this.transform(1, 0, SUNP.sx, SUNP.sy, 0, 0);
-    f.call(this, s, -s.B * k, -s.B * k, s.width * k, s.height * k);
+    f.call(this, s, -s.B * k, -s.B * k, s.width * s.q * k, s.height * s.q * k);
     g.__noCast = 0; this.restore();
+    }
   }
   return f.apply(this, arguments);
 })(g.drawImage);
