@@ -62,7 +62,7 @@ Each step shows in your journal with an arrow. If you'd rather find your own way
 - **What can I do here?** A small panel under the menu buttons (top right) lists what you can do with whatever is in front of you, each with its key: open a crate, talk, enter a shop (it names the building), hitch an implement, get off your horse.
 - **The menu dock** in the top right has a labelled tile for every window: Bag, Recipes, Skills, Tree, Combat, Animals, Friends, Family, Collections, Lore (the encyclopedia), Map, Quests and Options. The open one is lit; click it again to close.
 - **Shop signs:** every shop has a painted sign by its door (a mug for the tavern, an anvil for the smithy, a horseshoe for the stables...).
-- **Rebinding:** every key can be rebound in **Options**.
+- **Rebinding:** every key can be rebound in **Options → Key bindings…**.
 - **The hotbar** is at the top of the backpack (**I**). Drag items and tools onto it, drag slots to rearrange them, and drag a slot back into the bag (or right click it) to take it off.
 
 ## 3. Days, energy and health
@@ -520,10 +520,11 @@ Four towns have a guild hall. Join for a small fee, then rise through five ranks
 Press **Esc** for Options:
 - **Volume:** master, music, effects and ambience.
 - **Zoom.**
+- **Art style:** Pixel art (the default) or Painterly (preview), a hand-painted look with a moving sun, soft shadows that follow the time of day, and lit windows at night. It switches instantly.
 - **Particles.**
 - **FPS counter.**
 - **Fullscreen.**
-- **Key rebinding** for every action.
+- **Key bindings…** opens a window where you can rebind every action.
 - **Saving**, and deleting the current save slot.
 
 ## 19. Tips
