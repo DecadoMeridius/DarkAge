@@ -70,6 +70,8 @@ function pickWild(m, x, y, o) {
   if (o.k === 'mushroom') id = pickR(['red_cap', 'morel'].filter(k => IT[k]));
   else { const L = ((FORAGE[bio] || FORAGE.meadow || [])[S.season] || []).filter(k => IT[k]); id = L.find(k => IT[k].sh === 'flower') || pickR(L.length ? L : ['dandelion']); }
   if (!id || !IT[id]) return;
+  if (S.p.st < 1) { toast('Too tired to pick anything. Eat or sleep.', 'bad'); SFX.bad(); return; }
+  useStamina(1);   // picking costs 1 energy like other work (2026-11-02)
   setO(m, x, y, null); give(id, 1, forageQ()); addXP('foraging', 3); SFX.pop(); sparkle(x, y, '#f5e08a');
   (S.respawn = S.respawn || []).push({ map: m.id, x, y, o: { k: o.k, v: o.v }, at: worldMin() + 2 * 1440 });
 }

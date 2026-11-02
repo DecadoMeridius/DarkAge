@@ -18,8 +18,23 @@ PIX.load = (f => function () { return f.apply(this, arguments).then(() => loadSt
 // a painted sprite that must use another's painting: the lit lamp's painted glow kept a pink disc of the magenta card
 // (the game draws lamp light itself at night)
 const STYLE_ALIAS = { lantern: 'lantern_off' };
+// pieces that must join their neighbours (fence runs, tilled soil beds) keep the pixel sprite, rounded and lit like the
+// characters (painted one by one they came out as a jumble of posts and separate squares)
+const STYLE_SMOOTH = /^(fence|soil_)/;
+// paintings that came out bigger than the object is: fitted back inside the pixel sprite's box (standing on its base)
+const STYLE_FIT = /^(well$|bld_barn_)/;
+// creatures whose paintings didn't hold up (drawn 2-3x as Old Snapper and the Frost Giant): their pixel animation,
+// rounded and lit like the characters (pixTemplate wrapper)
+const STYLE_SKIP = /^en_(crab|yeti)(_atk)?\./;
 PIX.get = (f => function (n) {
-  const st = STYLE_ATLAS[SETTINGS.artStyle], sf = st && st.map[STYLE_ALIAS[n] || n];
+  const st = STYLE_ATLAS[SETTINGS.artStyle];
+  if (st && STYLE_SMOOTH.test(n)) {
+    if (this.cache[n]) return this.cache[n];
+    const p = f.call(this, n); if (!p || !p.width) return p;
+    const sm = paintedLook(scale2x(scale2x(p))); sm.ww = p.ww; sm.wh = p.wh; if (p.ax !== undefined) { sm.ax = p.ax; sm.ay = p.ay; }
+    return this.cache[n] = sm;
+  }
+  const sf = st && !STYLE_SKIP.test(n) && st.map[STYLE_ALIAS[n] || n];
   if (!sf) return f.call(this, n);
   if (this.cache[n]) return this.cache[n];
   const base = this.map[n] || this.map[n.replace(/_glow$/, '')] || { w: sf.w / sf.k, h: sf.h / sf.k };   // a building's night glow shares its box
@@ -28,6 +43,7 @@ PIX.get = (f => function (n) {
   if (sf.k > 1) c.hi = sf.k;
   if (sf.t) c.lum = 1;
   if (sf.ox !== undefined) c.off = [sf.ox / 2, sf.oy / 2, sf.w / sf.k / 2, sf.h / sf.k / 2];   // a free painting: where it lies against the pixel box (x_artlight.js)
+  if (c.off && STYLE_FIT.test(n)) { const [, , w, h] = c.off, k = Math.min(1, c.ww / w, c.wh / h); if (k < 1) c.off = [(c.ww - w * k) / 2, c.wh - h * k, w * k, h * k]; }
   return this.cache[n] = c;
 })(PIX.get);
 // a hi-res sprite (more than 2 px per world unit, so copies made from one count too) is drawn smoothly on the
@@ -42,7 +58,7 @@ g.drawImage = (f => function (img) {
 function styledSwap(c, ramps) {
   const x = c.getContext('2d'), id = x.getImageData(0, 0, c.width, c.height), a = id.data;
   for (let i = 0; i < a.length; i += 4) {
-    if (!a[i + 3] || a[i + 2] !== 254) continue;
+    if (!a[i + 3] || a[i + 2] < 250 || a[i] > 40) continue;   // code pixels: B 254, R the channel; semi-transparent edge pixels come back from the canvas a little off 254 (they stayed raw: blue specks on outlines)
     const r = ramps[a[i]] || ramps[0], lv = (a[i + 1] - 20) / 200 * 3;
     let R, G, B;
     if (lv <= 0) { const k = Math.max(.35, 1 + lv * .45); R = r[0][0] * k; G = r[0][1] * k; B = r[0][2] * k; }
@@ -111,14 +127,14 @@ function styleGlow(n) {
   if (GLOWC.has(n)) return GLOWC.get(n);
   const c = PIX.get(n), f = PIX.map[n], wins = f && f.meta && f.meta.win; if (!c || !wins || !c.width) { GLOWC.set(n, null); return null; }
   const W = c.width, H = c.height, a = mk(W, H, x => x.drawImage(c, 0, 0)).getContext('2d').getImageData(0, 0, W, H).data;
-  const sx = W / f.w, sy = H / f.h, m = Math.max(2, Math.round(Math.min(sx, sy) * 2));   // painting px per pixel-art px, margin 2 art px
+  const sx = W / f.w, sy = H / f.h, m = Math.max(1, Math.round(Math.min(sx, sy) * .5));   // painting px per pixel-art px, margin half an art px (wider caught planters, frames and signs)
   const mask = mk(W, H), mx = mask.getContext('2d'), id = mx.createImageData(W, H), d = id.data;
   for (const [wx, wy, ww, wh] of wins) {
     const x0 = Math.max(0, Math.floor(wx * sx) - m), x1 = Math.min(W, Math.ceil((wx + ww) * sx) + m), y0 = Math.max(0, Math.floor(wy * sy) - m), y1 = Math.min(H, Math.ceil((wy + wh) * sy) + m);
     for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
       const i = (y * W + x) * 4; if (a[i + 3] < 200) continue;
       const r = a[i], g_ = a[i + 1], b = a[i + 2], lum = (r * 3 + g_ * 6 + b) / 10;
-      if (b > r + 12 || lum < 70) { d[i] = 255; d[i + 1] = 214; d[i + 2] = 130; d[i + 3] = 255; }
+      if ((b > r + 18 && b > g_) || lum < 55) { d[i] = 255; d[i + 1] = 214; d[i + 2] = 130; d[i + 3] = 255; }
     }
   }
   mx.putImageData(id, 0, 0);

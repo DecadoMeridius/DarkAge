@@ -76,6 +76,18 @@ function render(dt) {
     if (c) { const X0 = Math.round((cx * P - cxp) * Z), X1 = Math.round(((cx + 1) * P - cxp) * Z), Y0 = Math.round((cy * P - cyp) * Z), Y1 = Math.round(((cy + 1) * P - cyp) * Z); g.setTransform(1, 0, 0, 1, 0, 0); if (c.hi) g.imageSmoothingEnabled = true; g.drawImage(c, c.m, c.m, c.span, c.span, X0, Y0, X1 - X0, Y1 - Y0); g.imageSmoothingEnabled = false; g.setTransform(Z, 0, 0, Z, -cxp * Z, -cyp * Z); }
     else for (let y = cy * CH; y < Math.min(m.h, cy * CH + CH); y++) for (let x = cx * CH; x < Math.min(m.w, cx * CH + CH); x++) { g.fillStyle = groundStyle(paintKey(m, x, y), m.dark || m.indoor ? 0 : sea, m.theme).base; g.fillRect(x * 16, y * 16, 16.1, 16.1); }
   }
+  // past the top and bottom map edges (the camera may scroll a little past them) the edge chunks are drawn mirrored,
+  // so there's ground there instead of a dark strip
+  if (cyp < 0 || cyp + vh > m.h * 16) for (let cx = Math.floor(x0 / CH); cx <= Math.floor((x1 - 1) / CH); cx++) for (const top of [true, false]) {
+    if (top ? cyp >= 0 : cyp + vh <= m.h * 16) continue;
+    const ey = top ? 0 : Math.floor((m.h - 1) / CH), c = CHUNK_LAST.get(m.uid + '|' + cx + ',' + ey); if (!c) continue;
+    const X0 = Math.round((cx * P - cxp) * Z), X1 = Math.round(((cx + 1) * P - cxp) * Z), edge = Math.round(((top ? 0 : m.h * 16) - cyp) * Z), Hs = Math.round(P * Z);
+    const rows = top ? 0 : (m.h * 16 - ey * P);   // the bottom chunk may be cut by the map edge: mirror its last rows
+    g.setTransform(1, 0, 0, -1, 0, 2 * edge); if (c.hi) g.imageSmoothingEnabled = true;
+    if (top) g.drawImage(c, c.m, c.m, c.span, c.span, X0, edge, X1 - X0, Hs);
+    else { const sh = c.span * rows / P; g.drawImage(c, c.m, c.m, c.span, sh, X0, edge - Math.round(rows * Z), X1 - X0, Math.round(rows * Z)); }
+    g.imageSmoothingEnabled = false; g.setTransform(Z, 0, 0, Z, -cxp * Z, -cyp * Z);
+  }
   // paint the ring of chunks just outside the view ahead of time, in what's left of this frame's ground time
   { const ca = Math.floor(x0 / CH) - 1, cb = Math.floor((x1 - 1) / CH) + 1, ra = Math.floor(y0 / CH) - 1, rb = Math.floor((y1 - 1) / CH) + 1;
     for (let cy = ra; cy <= rb && performance.now() < CHUNK_DEADLINE; cy++) for (let cx = ca; cx <= cb; cx++) {

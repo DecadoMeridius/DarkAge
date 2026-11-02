@@ -35,6 +35,7 @@ function sunNow(m) {
 // The base is the lowest row that's really part of the object, not grass or a soft edge below it, so the shadow
 // starts at the wall and not under a transparent strip.
 const CASTC = new WeakMap(), CASTQ = [];
+const FOOT = mk(64, 64, x => { const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(46,44,86,1)'); gr.addColorStop(.6, 'rgba(46,44,86,.45)'); gr.addColorStop(1, 'rgba(46,44,86,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); });
 // Made at a quarter of the sprite's resolution (a soft shadow needs no more) and not in the middle of a frame: a
 // sprite seen for the first time is queued and gets its shadow a moment later (building them on the spot stuttered)
 function castMake(c) {
@@ -48,6 +49,9 @@ function castMake(c) {
     x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = 'rgb(46,44,86)'; x.fillRect(0, 0, w + 2 * B, H + 2 * B);   // a cool shade, not black
   });
   const s = mk(sil.width, sil.height, x => { x.filter = 'blur(2.5px)'; x.drawImage(sil, 0, 0); });
+  // the foot: the opaque span of the base row (centre and width, in sprite px)
+  let l = w, r_ = 0; for (let x = 0; x < w; x++) if (a[(base * w + x) * 4 + 3] > 160) { l = Math.min(l, x); r_ = Math.max(r_, x); }
+  s.fx = (l <= r_ ? (l + r_ + 1) / 2 : w / 2) * q; s.fw = (l <= r_ ? Math.max(r_ - l + 1, w * .25) : w * .5) * q;
   s.B = B * q; s.base = (base + 1) * q - 1; s.q = q; CASTC.set(c, s); return s;
 }
 function castOf(c) {
@@ -69,6 +73,10 @@ g.drawImage = (f => function (img, a1, a2, a3, a4) {
     this.translate(a1, a2 + (s.base + 1) * k - over); this.transform(1, 0, SUNP.sx, SUNP.sy, 0, 0);
     f.call(this, s, -s.B * k, -s.B * k, s.width * s.q * k, s.height * s.q * k);
     g.__noCast = 0; this.restore();
+    // a soft contact shadow at the foot, so the cast shadow never looks detached from the trunk or wall
+    const fw = Math.min(a3, s.fw * k * 1.15); this.globalAlpha = ga * .38 * LIGHT_K * SUNP.k;
+    f.call(this, FOOT, a1 + (s.fx * k) - fw / 2, a2 + (s.base + 1) * k - fw * .16, fw, fw * .3);
+    this.globalAlpha = ga;
     }
   }
   return f.apply(this, arguments);
@@ -104,7 +112,12 @@ pixGrade = (f => function (m, W, H) {
   g.globalCompositeOperation = 'source-over';
   const vg = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .38, W / 2, H / 2, Math.hypot(W, H) * .62);
   vg.addColorStop(0, 'rgba(14,8,22,0)'); vg.addColorStop(1, `rgba(14,8,22,${m.dark ? .5 : .42})`);
-  g.fillStyle = vg; g.fillRect(0, 0, W, H); g.restore();
+  g.fillStyle = vg; g.fillRect(0, 0, W, H);
+  // at night the painted water stayed the brightest thing on screen (blue passes the night grade): a warm multiply that
+  // takes most from blue
+  const night = m.dark || m.indoor ? 0 : 1 - day;
+  if (night > .02) { g.globalCompositeOperation = 'multiply'; g.fillStyle = `rgba(205,200,150,${.75 * night})`; g.fillRect(0, 0, W, H); }
+  g.restore();
 })(pixGrade);
 // after dark, every window and flame nightLights paints also gets a soft warm halo
 let NL_ON = 0;
@@ -172,9 +185,9 @@ if (typeof nightLights === 'function') nightLights = (f => function (m, Z, cxp, 
 const gradeCss = () => { const c = document.getElementById('cv'); if (c) c.style.filter = STYLED() ? 'contrast(1.1) saturate(1.18)' : ''; };
 gradeCss(); applyGraphics = (f => function () { const r = f.apply(this, arguments); gradeCss(); return r; })(applyGraphics);
 
-// boss hazards and telegraphs are flat pixel shapes: softened in a painted style (they looked unfinished there)
+// boss hazards and telegraphs are flat pixel shapes: a little lighter in a painted style
 if (typeof drawHazards === 'function') drawHazards = (f => function () {
   if (!STYLED()) return f.apply(this, arguments);
-  g.save(); g.filter = 'blur(1.2px)'; g.globalAlpha *= .85;
+  g.save(); g.globalAlpha *= .85;   // (a blur filter here froze the game during quake rings: a canvas filter per shape is far too slow)
   try { return f.apply(this, arguments); } finally { g.restore(); }
 })(drawHazards);

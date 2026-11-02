@@ -507,8 +507,13 @@ def templates(key, names):
     return stage_cached(key, names, lambda: templates__(key, names), 'creature' if key.startswith(('T_en_', 'T_an_')) else 'tmpl')
 
 
+BIG_ARTS = ()   # (tried 2026-11-02: crab and yeti painted at twice the resolution came out cut off and blocky; the game shows those two as smoothed pixel art, STYLE_SKIP)
 def templates__(key, names):
-    global GEN
+    global GEN, K
+    if key.startswith(BIG_ARTS):
+        GEN, K = 8, 6
+        try: return templates_(key, names, max(12, int(.45 * max(max(atlas[n]['w'], atlas[n]['h']) for n in names))))
+        finally: GEN, K = 4, 3
     if key.startswith('T_hb_'):   # characters are small: paint them much bigger so the model has room for brushwork
         GEN = 10
         try: return templates_(key, names, 6)

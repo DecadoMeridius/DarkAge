@@ -525,6 +525,7 @@ Press **Esc** for Options:
 - **FPS counter.**
 - **Fullscreen.**
 - **Key bindings…** opens a window where you can rebind every action.
+- **Cursor:** arrow, sword, gauntlet or a big crosshair.
 - **Saving**, and deleting the current save slot.
 
 ## 19. Tips

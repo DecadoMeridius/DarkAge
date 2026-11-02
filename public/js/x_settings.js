@@ -138,3 +138,40 @@ renderOpts = function (b) {
     b.append(ov);
   }
 };
+
+/* ---- mouse cursors (Options → Controls → Cursor), asked 2026-11-02: the crosshair wasn't clear enough. Drawn here as
+   32x32 images with a dark outline and a light fill so they read on any ground; SETTINGS.cursor ---- */
+const CURSORS = {
+  arrow: ['Arrow', [2, 2], x => { x.beginPath(); x.moveTo(3, 3); x.lineTo(3, 25); x.lineTo(9, 19); x.lineTo(13, 28); x.lineTo(17, 26); x.lineTo(13, 17); x.lineTo(21, 17); x.closePath(); x.fillStyle = '#fff6e0'; x.fill(); x.lineWidth = 2; x.strokeStyle = '#2a1a10'; x.stroke(); }],
+  sword: ['Sword', [3, 3], x => {
+    x.lineCap = 'round'; x.strokeStyle = '#2a1a10'; x.lineWidth = 6; x.beginPath(); x.moveTo(4, 4); x.lineTo(21, 21); x.stroke();
+    x.strokeStyle = '#e8eef4'; x.lineWidth = 3; x.beginPath(); x.moveTo(4, 4); x.lineTo(20, 20); x.stroke();
+    x.strokeStyle = '#2a1a10'; x.lineWidth = 6; x.beginPath(); x.moveTo(16, 26); x.lineTo(26, 16); x.moveTo(22, 22); x.lineTo(28, 28); x.stroke();
+    x.strokeStyle = '#d8a030'; x.lineWidth = 3; x.beginPath(); x.moveTo(16, 26); x.lineTo(26, 16); x.stroke(); x.strokeStyle = '#7a4a2a'; x.beginPath(); x.moveTo(22, 22); x.lineTo(28, 28); x.stroke(); }],
+  gauntlet: ['Gauntlet', [6, 2], x => {
+    x.fillStyle = '#c8ccd4'; x.strokeStyle = '#2a1a10'; x.lineWidth = 2;
+    x.beginPath(); x.roundRect(4, 2, 6, 15, 3); x.fill(); x.stroke();
+    x.beginPath(); x.roundRect(4, 13, 20, 14, 4); x.fill(); x.stroke();
+    x.beginPath(); x.moveTo(10, 15); x.lineTo(10, 19); x.moveTo(15, 15); x.lineTo(15, 19); x.moveTo(20, 15); x.lineTo(20, 19); x.stroke(); }],
+  ring: ['Big crosshair', [16, 16], x => {
+    for (const [c, w] of [['#2a1a10', 5], ['#fff6e0', 2]]) { x.strokeStyle = c; x.lineWidth = w; x.beginPath(); x.arc(16, 16, 9, 0, 6.283); x.moveTo(16, 1); x.lineTo(16, 9); x.moveTo(16, 23); x.lineTo(16, 31); x.moveTo(1, 16); x.lineTo(9, 16); x.moveTo(23, 16); x.lineTo(31, 16); x.stroke(); }
+    x.fillStyle = '#e8342a'; x.fillRect(15, 15, 2, 2); }],
+  cross: ['Crosshair (old)', null, null],
+};
+if (SETTINGS.cursor === undefined) SETTINGS.cursor = 'arrow';
+function applyCursor() {
+  const c = CURSORS[SETTINGS.cursor] || CURSORS.arrow, cv_ = document.getElementById('cv');
+  let css = 'crosshair';
+  if (c[2]) { const k = document.createElement('canvas'); k.width = k.height = 32; c[2](k.getContext('2d')); css = `url(${k.toDataURL()}) ${c[1][0]} ${c[1][1]}, auto`; }
+  if (cv_) cv_.style.cursor = css;
+  document.body.style.cursor = c[2] && SETTINGS.cursor !== 'ring' ? css : '';   // menus get the arrow-like ones too
+}
+applyCursor();
+applyGraphics = (f => function () { const r = f.apply(this, arguments); applyCursor(); return r; })(applyGraphics);
+renderOpts = (f => function (b) {
+  f.apply(this, arguments);
+  const h = [...b.querySelectorAll('h3')].find(e => e.textContent === 'Controls'); if (!h) return;
+  const row = el('div', { class: 'acts wrap' }, el('span', { style: 'display:inline-block;width:120px' }, 'Cursor'),
+    ...Object.entries(CURSORS).map(([v, [n]]) => el('button', { class: 'btn' + (SETTINGS.cursor === v ? '' : ' ghost'), on: () => { SETTINGS.cursor = v; saveSettings(); applyCursor(); refresh(); } }, n)));
+  h.after(row);
+})(renderOpts);
