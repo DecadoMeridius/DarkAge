@@ -9,7 +9,8 @@ cleanly); variants (winter, upgrades, ruins, seasons, lit, filled) are word edit
 same object. Frames keep the pixel sprite's box and carry ox / oy: where the painting lies against it (x_artlight.js).
 Tiling pieces (walls, fences, gates) and animation frames are still painted to the pixel outline (style_build.py).
 """
-import re, sys
+import json, re, sys
+from pathlib import Path
 from PIL import Image, ImageDraw, ImageFilter
 import numpy as np
 sys.argv = [sys.argv[0], 'painterly'] + sys.argv[1:]
@@ -461,7 +462,7 @@ def build():
 # painted wrong the first time (2026-11-02: a fire in the well, a bare lamp post, a glossy fountain, the keep too tall):
 # each gets a sheet of its own, so it's painted again with its description and nothing else to confuse it
 PLACE, BASEOFF = {}, {}
-ROOMY_SHEETS = [('F_8_roomy_twig_stump', ['twig', 'stump']),
+ROOMY_SHEETS = [
                 ('F_8_roomy_rocks', ['stone', 'rock', 'rockS', 'rockA', 'rockC', 'clay_mound', 'salt_crust']),
                 ('F_8_roomy_ores', sorted(n for n in sb.atlas if n.startswith('ore_')))]
 PIXEL_ONLY = set()   # sprites kept as pixel art in the painted style
@@ -483,6 +484,12 @@ if __name__ == '__main__' and '--build' in sys.argv:
         for i, s in enumerate(sb.sheets_for(ns)): frames.update(sb.templates(f'{f}_{i}', s))
     for n in [n for n in sb.atlas if n.startswith('ground_')]: frames.update(sb.ground(n))
     for n in PIXEL_ONLY: frames.pop(n, None)
+    # pinned frames: paintings the user approved, kept as they are whatever the sheets do (art/pinned/<style>/:
+    # <name>.png + pinned.json with k, ox, oy). The twig and stump of 0.9.1 were lost once to a repaint.
+    pdir = Path(__file__).parent / 'pinned' / sb.STYLE
+    if (pdir / 'pinned.json').exists():
+        for n, m in json.loads((pdir / 'pinned.json').read_text()).items():
+            frames[n] = (Image.open(pdir / f'{n}.png').convert('RGBA'), m['k'], {'ox': m['ox'], 'oy': m['oy']})
     sb.pack(frames); sys.exit()
 
 
