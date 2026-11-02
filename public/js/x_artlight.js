@@ -15,7 +15,7 @@ PIX.get = (f => function (n) {
   if (c && c.hi && !c.lum && c.cast === undefined) c.cast = CAST_NO.test(n) ? 0 : 1;
   return c;
 })(PIX.get);
-if (typeof swayFrame === 'function') swayFrame = (f => function (c) { const s = f.apply(this, arguments); if (s && c && s !== c) s.cast = c.cast; return s; })(swayFrame);
+if (typeof swayFrame === 'function') swayFrame = (f => function (c) { const s = f.apply(this, arguments); if (s && c && s !== c) { s.cast = c.cast; s.off = c.off; } return s; })(swayFrame);
 
 const CASTC = new WeakMap(), SH_A = .62, SH_B = .2;
 function castOf(c) {
@@ -73,3 +73,17 @@ g.fillRect = (f => function (x, y, w, h) {
   this.globalCompositeOperation = 'lighter'; this.globalAlpha = Math.min(1, ga * .9); this.fillStyle = gr; f.call(this, cx - r, cy - r, 2 * r, 2 * r);
   this.globalCompositeOperation = op; this.globalAlpha = ga;
 })(g.fillRect);
+
+// Freely painted frames (art/style_free.py) keep their pixel sprite's box as ww / wh, so positions, collisions, clicks,
+// windows and chimneys stay where they were, and carry `off` = [x, y, w, h]: where the painting really lies against
+// that box, in world units (it may spill past it). Any 5-argument draw of such a frame is moved onto the painting.
+// On the world canvas this wrapper is the outermost one, so the cast shadow above sees the painted shape.
+let OFF_IN = 0;
+const offDraw = f => function (img, a1, a2, a3, a4) {
+  const o = img && img.off;
+  if (!o || OFF_IN || arguments.length !== 5) return f.apply(this, arguments);
+  const sx = a3 / img.ww, sy = a4 / img.wh; OFF_IN = 1;
+  try { return f.call(this, img, a1 + o[0] * sx, a2 + o[1] * sy, o[2] * sx, o[3] * sy); } finally { OFF_IN = 0; }
+};
+CanvasRenderingContext2D.prototype.drawImage = offDraw(CanvasRenderingContext2D.prototype.drawImage);
+g.drawImage = offDraw(g.drawImage);

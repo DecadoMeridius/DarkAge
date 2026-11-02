@@ -43,8 +43,8 @@ def upload(p):
     return json.loads(api('/upload/image', body, {'Content-Type': f'multipart/form-data; boundary={b}'}))['name']
 
 
-def graph(img, prompt, seed, mp=1.0):
-    return {
+def graph(img, prompt, seed, mp=1.0, denoise=1.0, steps=4, img2=None):
+    g = {
         '1': {'class_type': 'UNETLoader', 'inputs': {'unet_name': 'qwen_image_edit_2511_fp8mixed.safetensors', 'weight_dtype': 'default'}},
         '2': {'class_type': 'LoraLoaderModelOnly', 'inputs': {'model': ['1', 0], 'lora_name': 'Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors', 'strength_model': 1.0}},
         '3': {'class_type': 'ModelSamplingAuraFlow', 'inputs': {'model': ['2', 0], 'shift': 3.1}},
@@ -59,14 +59,21 @@ def graph(img, prompt, seed, mp=1.0):
         '12': {'class_type': 'FluxKontextMultiReferenceLatentMethod', 'inputs': {'conditioning': ['10', 0], 'reference_latents_method': 'index_timestep_zero'}},
         '13': {'class_type': 'VAEEncode', 'inputs': {'pixels': ['8', 0], 'vae': ['6', 0]}},
         '14': {'class_type': 'KSampler', 'inputs': {'model': ['4', 0], 'positive': ['11', 0], 'negative': ['12', 0], 'latent_image': ['13', 0],
-                                                    'seed': seed, 'steps': 4, 'cfg': 1.0, 'sampler_name': 'euler', 'scheduler': 'simple', 'denoise': 1.0}},
+                                                    'seed': seed, 'steps': steps, 'cfg': 1.0, 'sampler_name': 'euler', 'scheduler': 'simple', 'denoise': denoise}},
         '15': {'class_type': 'VAEDecode', 'inputs': {'samples': ['14', 0], 'vae': ['6', 0]}},
         '16': {'class_type': 'SaveImage', 'inputs': {'images': ['15', 0], 'filename_prefix': 'emberhollow'}},
     }
+    if img2:   # a second reference (the output keeps image 1's size and layout)
+        g['17'] = {'class_type': 'LoadImage', 'inputs': {'image': img2}}
+        g['18'] = {'class_type': 'ImageScaleToTotalPixels', 'inputs': {'image': ['17', 0], 'upscale_method': 'lanczos', 'megapixels': mp, 'resolution_steps': 8}}
+        for k in ('9', '10'): g[k]['inputs']['image2'] = ['18', 0]
+    return g
 
 
-def run(img, prompt, out, seed=7, mp=1.0):
-    pid = json.loads(api('/prompt', json.dumps({'prompt': graph(img, prompt, seed, mp)}).encode(), {'Content-Type': 'application/json'}))['prompt_id']
+def run(img, prompt, out, seed=7, mp=1.0, denoise=1.0, steps=4, img2=None):
+    """denoise below 1 starts from the input image itself (img2img), so the drawing keeps its shapes; ComfyUI runs the
+    last `steps` of int(steps / denoise), so more steps give finer strengths (4 steps: 1 or .8 and below)"""
+    pid = json.loads(api('/prompt', json.dumps({'prompt': graph(img, prompt, seed, mp, denoise, steps, img2)}).encode(), {'Content-Type': 'application/json'}))['prompt_id']
     t = time.time()
     while True:
         h = json.loads(api('/history/' + pid)).get(pid)

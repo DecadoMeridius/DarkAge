@@ -120,9 +120,10 @@ paintChunk = function (m, cx, cy) {
    The canvas keeps a GK scale, so the cliffs, bridges and room walls drawn on it afterwards stay in art px. */
 function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
   const texs = layers.map(L => groundPixels(L, s, th)), tws = texs.map(T => T ? Math.round(Math.sqrt(T.length / 4)) : 64);
+  const SOFT = { s: 1, a: 1, st: 1, d: 1, sn: 1, g: 1, i: 1 }, soft = layers.map(L => !!SOFT[L]);   // natural grounds take the mirrored copy; paving and floors would show doubled stones
   const wet = layers.map(L => L === 'w' || L === 'l'), mode = new Uint8Array(N * N);   // 1 foam, 2 lava foam, 3/4 lip, 5 rim, 6 outside a room
-  const vary = new Float32Array(N * N), warmv = new Float32Array(N * N);   // broad light and colour drift, so the texture doesn't read as repeating tiles
-  for (let py = 0; py < N; py++) for (let px_ = 0; px_ < N; px_++) { const ax = ox + px_, ay = oy + py, i = py * N + px_; vary[i] = .86 + fbm(ax * .011, ay * .011, 31, 3) * .28; warmv[i] = (fbm(ax * .007 + 40, ay * .007, 37, 2) - .5) * 26; }
+  const vary = new Float32Array(N * N), warmv = new Float32Array(N * N), mixw = new Float32Array(N * N);   // broad light and colour drift, and patches where a mirrored, shifted copy of the texture takes over, so it doesn't read as repeating tiles
+  for (let py = 0; py < N; py++) for (let px_ = 0; px_ < N; px_++) { const ax = ox + px_, ay = oy + py, i = py * N + px_; vary[i] = .86 + fbm(ax * .011, ay * .011, 31, 3) * .28; warmv[i] = (fbm(ax * .007 + 40, ay * .007, 37, 2) - .5) * 26; const t = Math.min(1, Math.max(0, (fbm(ax * .021 + 9, ay * .021, 43, 2) - .4) * 5)); mixw[i] = t * t * (3 - 2 * t); }
   for (let py = 0; py < N; py++) for (let px_ = 0; px_ < N; px_++) {
     const i = py * N + px_, L = lay[i]; if (L === 255) { mode[i] = 6; continue; }
     const up = py > 0 ? lay[i - N] : L, up2 = py > 1 ? lay[i - 2 * N] : L, dn = py < N - 1 ? lay[i + N] : L;
@@ -154,6 +155,11 @@ function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
       const T = texs[L], tw = tws[L], P = tw > 64 ? tw : P64, hx = (((ox * GK + X) % P) + P) % P, hyy = (((oy * GK + Y) % P) + P) % P;  // a styled texture repeats every tw px (128 art px), a plain one every 64 art px
       const to = (((hyy * tw / P) | 0) * tw + ((hx * tw / P) | 0)) * 4;
       let r = T ? T[to] : 128, gg = T ? T[to + 1] : 128, b = T ? T[to + 2] : 128;
+      const mw = soft[L] ? mixw[i] : 0;
+      if (T && mw > 0) {   // the second copy: mirrored and shifted by an odd amount (both still tile)
+        const t2 = ((((hyy + (P * .37 | 0)) % P) * tw / P | 0) * tw + ((P - 1 - (hx + (P * .61 | 0)) % P) * tw / P | 0)) * 4;
+        r += (T[t2] - r) * mw; gg += (T[t2 + 1] - gg) * mw; b += (T[t2 + 2] - b) * mw;
+      }
       if (!wet[L]) { const v = vary[i], wv = warmv[i]; r = r * v + wv; gg = gg * v + wv * .4; b = b * v - wv * .3; }
       if (md === 3 || md === 4) { const k = md === 3 ? .62 : .78; r *= k; gg *= k; b *= k * 1.06; }
       else if (md === 5) { r += (255 - r) * .14; gg += (255 - gg) * .14; b += (255 - b) * .08; }

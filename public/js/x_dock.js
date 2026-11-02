@@ -4,8 +4,8 @@
 const DOCK = [['bag', 'Bag', 'i'], ['craft', 'Recipes', 'b'], ['skills', 'Skills', 'k'], ['tree', 'Tree', 't'], ['cskills', 'Combat', 'v'], ['animals', 'Animals', 'n'],
   ['friends', 'Friends', 'p'], ['family', 'Family', 'f'], ['coll', 'Collect', 'o'], ['ency', 'Lore', 'u'], ['map', 'Map', 'm'], ['quests', 'Quests', 'j'], ['opts', 'Options', 'Escape']];
 function uiIcon(id, px = 32) {
-  const t = PIX.get('ui_' + id); const c = el('canvas', { width: 16, height: 16, class: 'uiic' });
-  if (t) { const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(t, 0, 0, 16, 16); }
+  const t = PIX.get('ui_' + id), S = t && t.hi ? t.width : 16; const c = el('canvas', { width: S, height: S, class: 'uiic' });
+  if (t) { const x = c.getContext('2d'); x.imageSmoothingEnabled = !!t.hi; x.drawImage(t, 0, 0, S, S); }
   c.style.width = c.style.height = px + 'px'; return c;
 }
 function buildDock() {

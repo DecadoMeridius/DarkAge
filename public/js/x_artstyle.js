@@ -24,6 +24,7 @@ PIX.get = (f => function (n) {
   c.ww = base.w / 2; c.wh = base.h / 2; if (base.ax !== undefined) { c.ax = base.ax / 2; c.ay = base.ay / 2; }
   if (sf.k > 1) c.hi = sf.k;
   if (sf.t) c.lum = 1;
+  if (sf.ox !== undefined) c.off = [sf.ox / 2, sf.oy / 2, sf.w / sf.k / 2, sf.h / sf.k / 2];   // a free painting: where it lies against the pixel box (x_artlight.js)
   return this.cache[n] = c;
 })(PIX.get);
 // a hi-res sprite (more than 2 px per world unit, so copies made from one count too) is drawn smoothly on the
@@ -68,9 +69,20 @@ function scale2x(c) {
   x.putImageData(id, 0, 0); out.ww = c.ww; out.wh = c.wh; return out;
 }
 // a touch of softness and the painted light (warm top-left, cool bottom-right) so they sit in the painted world
+// (painting the character layers with the model was tried at several strengths: low ones leave the pixels, higher
+// ones re-pose some frames and not others, so the figure jumps. This shading is the same on every frame instead.)
 function paintedLook(c) {
-  const W = c.width, H = c.height, out = mk(W, H, x => {
+  const W = c.width, H = c.height, d = Math.max(2, Math.round(W / c.ww / 2)), out = mk(W, H, x => {
     x.filter = 'blur(0.6px)'; x.drawImage(c, 0, 0); x.filter = 'none';
+    // form shading: a soft shade inside the bottom-right edges and a warm lit rim along the top-left ones
+    const inv = (dx, dy) => mk(W, H, y => { y.fillStyle = '#000'; y.fillRect(0, 0, W, H); y.globalCompositeOperation = 'destination-out'; y.drawImage(c, dx, dy); });
+    const edge = (dx, dy, col, op, a) => {
+      const m = mk(W, H, y => { y.filter = `blur(${d * .8}px)`; y.drawImage(inv(dx, dy), 0, 0); y.filter = 'none'; y.globalCompositeOperation = 'source-in'; y.fillStyle = col; y.fillRect(0, 0, W, H); });
+      x.globalCompositeOperation = op; x.globalAlpha = a; x.drawImage(m, 0, 0); x.globalAlpha = 1;
+    };
+    edge(-d * 1.5, -d * 1.5, 'rgb(40,30,70)', 'multiply', .55);
+    edge(d, d, 'rgb(255,226,170)', 'screen', .35);
+    x.globalCompositeOperation = 'source-over';
     x.globalCompositeOperation = 'soft-light'; const gr = x.createLinearGradient(0, 0, W, H);
     gr.addColorStop(0, 'rgba(255,226,180,.55)'); gr.addColorStop(.5, 'rgba(128,128,128,0)'); gr.addColorStop(1, 'rgba(50,40,80,.6)');
     x.fillStyle = gr; x.fillRect(0, 0, W, H);
@@ -93,6 +105,7 @@ function applyArtStyle() {
     if (typeof buildObjects === 'function') buildObjects();
     for (const id in MAPS) { const m = MAPS[id]; if (m && m.bld) for (const b of m.bld) b.sprName = null; }
     if (typeof refreshBuildings === 'function') refreshBuildings();
+    if (typeof buildDock === 'function') buildDock();
   });
 }
 let ART_APPLIED = SETTINGS.artStyle;
@@ -111,6 +124,6 @@ markStyled(); applyGraphics = (f => function () { const r = f.apply(this, argume
 // Chrome keeps a canvas on the CPU once it has been read back (getImageData), and then uploads it again on every
 // draw: cheap for small pixel sprites, slow for hi-res chunks and recoloured templates. Hand back a fresh copy,
 // which stays on the GPU.
-const gpuCopy = c => { const d = mk(c.width, c.height, x => x.drawImage(c, 0, 0)); for (const k of ['m', 'span', 'hi', 'ww', 'wh', 'ax', 'ay', 'lum', 'cast']) if (c[k] !== undefined) d[k] = c[k]; return d; };
+const gpuCopy = c => { const d = mk(c.width, c.height, x => x.drawImage(c, 0, 0)); for (const k of ['m', 'span', 'hi', 'ww', 'wh', 'ax', 'ay', 'lum', 'cast', 'off']) if (c[k] !== undefined) d[k] = c[k]; return d; };
 paintChunk = (f => function () { const c = f.apply(this, arguments); return c && c.hi ? gpuCopy(c) : c; })(paintChunk);
 pixTemplate = (f => function () { const c = f.apply(this, arguments); return c && c.hi ? gpuCopy(c) : c; })(pixTemplate);
