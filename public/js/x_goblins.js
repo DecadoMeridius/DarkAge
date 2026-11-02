@@ -89,6 +89,8 @@ function campTick() {
   }
 }
 EVT.on('tick', k => { if (k % 2 === 0 && S && !TITLE) campTick(); });
-EVT.on('map', id => { if (id === 'wilds' && S && S.gcamp) for (const k in S.gcamp) S.gcamp[k].here = 0; });
+// moved camps keep their new place after loading a save (the map marker reads m.gcamps)
+const campPlaces = () => { const m = MAPS.wilds; if (!m || !m.gcamps || !S || !S.gcamp) return; for (const C of m.gcamps) { const st = S.gcamp[C.i]; if (st && st.pos) { C.x = st.pos[0]; C.y = st.pos[1]; C.size = st.pos[2]; } } };
+EVT.on('map', id => { campPlaces(); if (id === 'wilds' && S && S.gcamp) for (const k in S.gcamp) S.gcamp[k].here = 0; });
 // the tribe stays near camp: kept out of the 36-tile despawn while you're about, and they never wander off
 wildSpawns = (f => function (m, dt) { const keep = m.ents.filter(e => e.camp !== undefined && !e.dead); const r = f.apply(this, arguments); for (const e of keep) if (!m.ents.includes(e)) m.ents.push(e); return r; })(wildSpawns);

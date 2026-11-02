@@ -161,6 +161,7 @@ objInteract = function (m, x, y, o) {
   if (o.k === 'storage') return { label: S.mounted && selKind() === 'cart' ? 'Unload cart' : 'Open', fn: () => S.mounted && selKind() === 'cart' ? unloadCart(o) : openCrate(o) };
   if (o.k === 'triphammer') return { label: 'Set up', fn: () => openHammer(o, m, x, y) };
   if (o.k === 'treadwheel') return { label: 'Feed', fn: () => { let n = 0; while (has('hay') && accept(o, 'hay', 1, true) && n < 40) { take('hay'); accept(o, 'hay'); n++; } toast(n ? 'Fed ' + n + ' hay. It powers things within 7 tiles while it has hay.' : 'The treadwheel runs on hay.'); } };
+  if (o.k === 'channel' && o.clog) return { label: 'Clear debris', fn: () => { if (S.p.st < 1) { toast('Too tired. Eat or sleep.', 'bad'); return; } useStamina(1); o.clog = 0; waterChannels(m); SFX.pop(); sparkle(x, y, '#9ad0ff'); toast('Channel cleared: the water flows again.', 'good'); } };
   if (o.k === 'channel') return { label: 'Turn', fn: () => { o.v = o.v ? 0 : 1; waterChannels(m); } };
   if (STATIONS[o.k]) return { label: 'Open', fn: () => openStation(o, m, x, y) };
   if (o.k === 'windmill' || o.k === 'waterwheel') return { label: 'Inspect', fn: () => { scanPower(m); toast(m.power.some(p => p[0] === x && p[1] === y) ? 'Turning. Powers everything within 7 tiles.' : 'Not turning: a waterwheel must touch water.'); } };
@@ -203,7 +204,7 @@ const _objSpriteA = objSprite;
 objSprite = function (o, season) {
   const f = Math.floor(gameT * 4) % 2;
   if (isBelt(o)) return beltSprite(o, cur && (cur.power || []).length ? f : 0); // belts scroll while the farm has power
-  if (o.k === 'channel') return PIX.get('channel_' + (o.v ? 'v' : 'h') + '.' + (o.wet ? 1 : 0));
+  if (o.k === 'channel') return o.clog ? cloggedChannel(o.v) : PIX.get('channel_' + (o.v ? 'v' : 'h') + '.' + (o.wet ? 1 : 0));
   if (o.k === 'oven' || o.k === 'triphammer' || o.k === 'treadwheel') return PIX.get(o.k + '.' + (o.on ? (o.k === 'oven' ? 1 : f) : 0));
   if (o.k === 'smelter' || o.k === 'kiln') return PIX.get(o.k + '.' + (o.on ? 1 : 0));
   if (o.k === 'mill') return PIX.get('mill.' + (o.on ? f : 0));
@@ -265,9 +266,9 @@ function openHammer(o, m, x, y) {
    channels; soil next to a wet channel is watered each morning ---- */
 function waterChannels(m) {
   const W = m.w, wet = new Set(), q = [];
-  const isCh = (x, y) => inb(m, x, y) && m.o[y * W + x] && m.o[y * W + x].k === 'channel';
+  const isCh = (x, y) => inb(m, x, y) && m.o[y * W + x] && m.o[y * W + x].k === 'channel' && !m.o[y * W + x].clog;   // a piece choked with leaves stops the water (2026-11-03)
   for (let i = 0; i < m.o.length; i++) {
-    const o = m.o[i]; if (!o || o.k !== 'channel') continue; o.wet = 0; const x = i % W, y = i / W | 0;
+    const o = m.o[i]; if (!o || o.k !== 'channel') continue; o.wet = 0; if (o.clog) continue; const x = i % W, y = i / W | 0;
     if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => inb(m, x + dx, y + dy) && (TER[getT(m, x + dx, y + dy)].water || ['fwell', 'well'].includes((mainOf(m, x + dx, y + dy)[2] || {}).k)))) { wet.add(i); q.push([x, y]); }
   }
   while (q.length) { const [x, y] = q.pop(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, ni = ny * W + nx; if (isCh(nx, ny) && !wet.has(ni)) { wet.add(ni); q.push([nx, ny]); } } }
@@ -281,7 +282,23 @@ function waterFromChannels() {
   }
 }
 const _endDayA2 = endDay;
-endDay = function (f) { _endDayA2(f); try { waterFromChannels(); } catch (e) { console.error(e); } };
+endDay = function (f) { _endDayA2(f); try { clogChannels(); waterFromChannels(); } catch (e) { console.error(e); } };
+/* Channels water every morning for free, so they'd outdo the best sprinklers: each connected run of channel has a
+   10% chance each morning that one piece fills with leaves and debris. Water stops there (the soil past it stays dry)
+   until you clear it (interact, 1 energy). */
+function clogChannels() {
+  for (const m of farmMaps()) {
+    const W = m.w, seen = new Set();
+    for (let i = 0; i < m.o.length; i++) {
+      const o = m.o[i]; if (!o || o.k !== 'channel' || seen.has(i)) continue;
+      const run = [], q = [i]; seen.add(i);
+      while (q.length) { const k = q.pop(); run.push(k); const x = k % W, y = k / W | 0;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = (y + dy) * W + x + dx; if (inb(m, x + dx, y + dy) && !seen.has(n) && m.o[n] && m.o[n].k === 'channel') { seen.add(n); q.push(n); } } }
+      if (Math.random() < .1) { const k = run[Math.floor(Math.random() * run.length)]; if (!m.o[k].clog) { m.o[k].clog = 1; if (m.id === 'farm') CHANNEL_NEWS++; } }
+    }
+  }
+}
+let CHANNEL_NEWS = 0;
 
 /* ---- horse cart: while riding with the cart selected, what you pick up goes in the cart;
    interact with a storage crate to unload it ---- */
@@ -298,3 +315,25 @@ give = function (id, n = 1, q = 0, quiet) {
 function unloadCart(o) { o.inv = o.inv || {}; let n = 0; for (const k in S.cart || {}) { o.inv[k] = (o.inv[k] || 0) + S.cart[k]; n += S.cart[k]; } S.cart = {}; toast(n ? 'Unloaded ' + n + ' items into the crate.' : 'The cart is empty.'); SFX.ok(); }
 const _hudTickA = hudTick;
 hudTick = function (dt) { _hudTickA(dt); if (S && !TITLE && $('#pL') && S.mounted && selKind() === 'cart') $('#pL').innerHTML = '<kbd>Cart</kbd>' + sum(S.cart) + ' / ' + CART_CAP + ' (interact with a storage crate to unload)'; };
+
+// a choked channel: the dry piece with a heap of leaves, twigs and muck drawn over it (made once per direction)
+const CLOGC = {};
+function cloggedChannel(v) {
+  const k = v ? 'v' : 'h'; if (CLOGC[k] && CLOGC[k].__style === SETTINGS.artStyle) return CLOGC[k];
+  const base = PIX.get('channel_' + k + '.0'); if (!base) return null;
+  const W = base.width, H = base.height, s = W / base.ww, R = rng(7);
+  const c = mk(W, H, x => {
+    x.drawImage(base, 0, 0);
+    const cols = ['#7a5a2a', '#a8742a', '#c8902a', '#6a7a2a', '#5a3a1a', '#8a6a3a'];
+    for (let i = 0; i < 46; i++) { const px = (3 + R() * 10) * s, py = (4 + R() * 9) * s, r = (.8 + R() * 1.6) * s;
+      x.fillStyle = cols[i % cols.length]; x.beginPath(); x.ellipse(px, py, r, r * .6, R() * 3, 0, 6.283); x.fill(); }
+    x.strokeStyle = '#4a2e14'; x.lineWidth = Math.max(1, s * .6);
+    for (let i = 0; i < 4; i++) { const px = (3 + R() * 9) * s, py = (5 + R() * 7) * s; x.beginPath(); x.moveTo(px, py); x.lineTo(px + (R() * 6 - 1) * s, py + (R() * 3 - 1.5) * s); x.stroke(); }
+  });
+  c.ww = base.ww; c.wh = base.wh; c.hi = base.hi; c.__style = SETTINGS.artStyle; return CLOGC[k] = c;
+}
+// the morning report says when a channel on the farm clogged overnight
+if (typeof showDayReport === 'function') showDayReport = (f => function (lines) {
+  if (CHANNEL_NEWS && Array.isArray(lines)) lines.push(['bad', CHANNEL_NEWS === 1 ? 'Leaves and debris choked one of your water channels. Clear it to get the water flowing.' : CHANNEL_NEWS + ' water channels are choked with leaves and debris. Clear them to get the water flowing.']);
+  CHANNEL_NEWS = 0; return f.apply(this, arguments);
+})(showDayReport);

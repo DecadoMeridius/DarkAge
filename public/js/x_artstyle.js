@@ -22,7 +22,7 @@ const STYLE_ALIAS = { lantern: 'lantern_off' };
 // characters (painted one by one they came out as a jumble of posts and separate squares)
 const STYLE_SMOOTH = /^(fence|soil_|waystone)/;   // (the waystone's painted frames came out cut up and misaligned)
 // paintings that came out bigger than the object is: fitted back inside the pixel sprite's box (standing on its base)
-const STYLE_FIT = /^(well$|bld_barn_)/;
+const STYLE_FIT = /^(well$|bld_barn_|bld_kb_market_)/;
 // creatures whose paintings didn't hold up (drawn 2-3x as Old Snapper and the Frost Giant): their pixel animation,
 // rounded and lit like the characters (pixTemplate wrapper)
 const STYLE_SKIP = /^en_(crab|yeti)(_atk)?\./;
@@ -138,18 +138,29 @@ function styleGlow(n) {
   if (GLOWC.has(n)) return GLOWC.get(n);
   const c = PIX.get(n), f = PIX.map[n], wins = f && f.meta && f.meta.win; if (!c || !wins || !c.width) { GLOWC.set(n, null); return null; }
   const W = c.width, H = c.height, a = mk(W, H, x => x.drawImage(c, 0, 0)).getContext('2d').getImageData(0, 0, W, H).data;
-  const sx = W / f.w, sy = H / f.h, m = Math.max(1, Math.round(Math.min(sx, sy) * .5));   // painting px per pixel-art px, margin half an art px (wider caught planters, frames and signs)
-  const mask = mk(W, H), mx = mask.getContext('2d'), id = mx.createImageData(W, H), d = id.data;
-  for (const [wx, wy, ww, wh] of wins) {
-    const x0 = Math.max(0, Math.floor(wx * sx) - m), x1 = Math.min(W, Math.ceil((wx + ww) * sx) + m), y0 = Math.max(0, Math.floor(wy * sy) - m), y1 = Math.min(H, Math.ceil((wy + wh) * sy) + m);
-    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
-      const i = (y * W + x) * 4; if (a[i + 3] < 200) continue;
-      const r = a[i], g_ = a[i + 1], b = a[i + 2], lum = (r * 3 + g_ * 6 + b) / 10;
-      if ((b > r + 18 && b > g_) || lum < 55) { d[i] = 255; d[i + 1] = 214; d[i + 2] = 130; d[i + 3] = 255; }
-    }
+  // The paintings are free, so their windows aren't where the pixel art's were: the windows are found in the painting:
+  // glass-coloured patches (bluish, or dark and cool) of window size, in the band of the wall where the pixel art had
+  // its windows (by proportion of the height, so a blue slate roof doesn't count)
+  const ys = wins.map(w => [w[1] / f.h, (w[1] + w[3]) / f.h]), band = [Math.max(0, Math.min(...ys.map(v => v[0])) - .12) * H, Math.min(1, Math.max(...ys.map(v => v[1])) + .1) * H];
+  const ppa = W / (c.off ? c.off[2] * 2 : f.w), glass = new Uint8Array(W * H);
+  for (let y = Math.floor(band[0]); y < Math.ceil(band[1]); y++) for (let x = 0; x < W; x++) {
+    const i = (y * W + x) * 4; if (a[i + 3] < 200) continue;
+    const r = a[i], g_ = a[i + 1], b = a[i + 2], lum = (r * 3 + g_ * 6 + b) / 10;
+    if ((b > r + 14 && b >= g_ - 4 && lum < 160) || (lum < 45 && b >= r - 4)) glass[y * W + x] = 1;
+  }
+  const mask = mk(W, H), mx = mask.getContext('2d'), id = mx.createImageData(W, H), d = id.data, seen = new Uint8Array(W * H);
+  const minA = (2.5 * ppa) ** 2, maxA = (26 * ppa) ** 2;   // a window is between about 2.5 and 26 art px across
+  for (let s0 = 0; s0 < W * H; s0++) {
+    if (!glass[s0] || seen[s0]) continue;
+    const q = [s0], comp = []; seen[s0] = 1; let x0 = W, x1 = 0, y0 = H, y1 = 0;
+    while (q.length) { const k = q.pop(), x = k % W, y = (k / W) | 0; comp.push(k); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+      for (const n of [k - 1, k + 1, k - W, k + W]) if (n >= 0 && n < W * H && glass[n] && !seen[n] && Math.abs((n % W) - x) <= 1) { seen[n] = 1; q.push(n); } }
+    const bw = x1 - x0 + 1, bh = y1 - y0 + 1, fill = comp.length / (bw * bh);
+    if (comp.length < minA || bw * bh > maxA || bw > bh * 3.5 || bh > bw * 4 || fill < .35) continue;
+    for (const k of comp) { const i = k * 4; d[i] = 255; d[i + 1] = 214; d[i + 2] = 130; d[i + 3] = 255; }
   }
   mx.putImageData(id, 0, 0);
-  const out = mk(W, H, x => { x.filter = `blur(${Math.max(1, sx * .6)}px)`; x.drawImage(mask, 0, 0); x.filter = 'none'; x.globalAlpha = .7; x.drawImage(mask, 0, 0); });
+  const out = mk(W, H, x => { x.filter = `blur(${Math.max(1, ppa * .6)}px)`; x.drawImage(mask, 0, 0); x.filter = 'none'; x.globalAlpha = .7; x.drawImage(mask, 0, 0); });
   out.ww = c.ww; out.wh = c.wh; out.off = c.off; out.hi = c.hi;
   GLOWC.set(n, out); return out;
 }

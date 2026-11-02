@@ -418,21 +418,22 @@ def build():
     # Small objects that came out wrong on the crowded small sheet get roomy sheets of their own, with each one named
     # in the prompt (on the small sheet the stump reached into the twig's cell; rocks and ores stayed pixel-like).
     # These frames replace the ones above.
-    for skey, wanted in ROOMY_SHEETS:
+    for skey, wanted, *rg in ROOMY_SHEETS:
+        rgen = rg[0] if rg else 8
         ns_ = [n for n in wanted if n in bases]
         if not ns_ or (ONLY and not any(n.startswith(tuple(ONLY)) for n in ns_)): continue
         P0, PAD = PAD, 1.0
         try:
-            sheet, pos, pad = sheet_for(ns_, 8, soft=True)
+            sheet, pos, pad = sheet_for(ns_, rgen, soft=rgen == 8)
             order = sorted(pos, key=lambda n: (pos[n][1], pos[n][0]))
-            prompt = FREE.format('') + ' The objects are, row by row from the top left: ' + '; '.join(describe(n) for n in order) + '.'
-            base = sb.restyle_sheet(skey, sheet, prompt)
+            prompt = FREE.format(BLD if all(n.startswith('bld_') for n in ns_) else '') + ' The objects are, row by row from the top left: ' + '; '.join(describe(n) for n in order) + '.'
+            base = sb.restyle_sheet(skey, sheet, prompt, seed=rg[1] if len(rg) > 1 else 7)
         finally: PAD = P0
-        CELLS[:] = [(px * 8, py * 8, (px + sb.atlas[m]['w']) * 8, (py + sb.atlas[m]['h']) * 8) for m, (px, py) in pos.items()]
+        CELLS[:] = [(px * rgen, py * rgen, (px + sb.atlas[m]['w']) * rgen, (py + sb.atlas[m]['h']) * rgen) for m, (px, py) in pos.items()]
         for n, (x, y) in pos.items():
-            got = cut(base, n, x, y, pad, 8, None)
-            if got: got = (got[0], place(n, got[0], 8))
-            fr = frame_of(n, got, 8) if got else None
+            got = cut(base, n, x, y, pad, rgen, None)
+            if got: got = (got[0], place(n, got[0], rgen))
+            fr = frame_of(n, got, rgen) if got else None
             if fr: frames[n] = fr
     # Machines with a fire: the idle frame (.0) painted unlit, then the same sheet edited to light the fire for the
     # lit frame (.1), so both are the same machine (painted to the outline, the idle frames came out burning)
@@ -486,7 +487,8 @@ def build():
 PLACE, BASEOFF = {}, {}
 ROOMY_SHEETS = [
                 ('F_8_roomy_rocks', ['stone', 'rock', 'rockS', 'rockA', 'rockC', 'clay_mound', 'salt_crust']),
-                ('F_8_roomy_ores', sorted(n for n in sb.atlas if n.startswith('ore_')))]
+                ('F_8_roomy_ores', sorted(n for n in sb.atlas if n.startswith('ore_'))),
+                ('F_2_roomy_kb_bank', ['bld_kb_bank_6x5'], 2, 31)]   # cut off on its shared sheet (2026-11-03); seed 31 (7 drew a walled fort). The emporium is pinned
 LITPAIRS = {'stonefurnace': 'a small stone furnace', 'smelter': 'an iron-banded brick smelter', 'blastfurnace': 'a tall brick blast furnace',
             'emberforge': 'a magical ember forge with a pointed top', 'kiln': 'a domed clay charcoal kiln', 'oven': 'a stone bread oven'}
 PIXEL_ONLY = set()   # sprites kept as pixel art in the painted style

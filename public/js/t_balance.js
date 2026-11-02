@@ -105,3 +105,25 @@ window.simPacing = function (days = 28, opts = {}) {
     ['Journeyman', 'Reach level 30 in every life skill', () => allLife(30), 8000],
     ['Grandmaster', 'Reach level 99 in any skill', () => LIFE.some(k => lifeL(k) >= 99), 25000]);
 }
+
+/* Made-goods prices follow their materials (balance pass 2026-11-03: a steel helm sold for 340g but took ~890g of
+   bars and parts; starforged gear sold for under a tenth of its materials). Run once every script has added its
+   recipes (grips, padding, regional parts...). Each price only rises, never falls:
+   - bars and parts: at least what their ingredients are worth;
+   - weapons, armour and rings: at least 1.4x their materials. They sell back for half (0.7x materials), so making
+     gear just to sell is never a money loop, and making your own is clearly cheaper than buying. */
+const MADE_K = { bar: 1, part: 1, weapon: 1.4, armor: 1.4, ring: 1.4 };   // (1.15 on bars stacked into gear: a steel helm came to 2,100g)
+function matCost(id, recipes, seen = new Set()) {
+  const rs = recipes[id]; if (!rs || seen.has(id)) return IT[id] ? IT[id].p : 0;
+  seen.add(id); let best = Infinity;
+  for (const [n, ing] of rs) { let s = 0; for (const k in ing) s += ing[k] * (IT[k] ? IT[k].p : 0); best = Math.min(best, s / (n || 1)); }
+  seen.delete(id); return best;
+}
+function priceMadeGoods() {
+  const recipes = {};
+  for (const r of RC) { const [o, n, ing] = r; if (IT[o] && ing) (recipes[o] = recipes[o] || []).push([n || 1, ing]); }
+  const kind = it => it.t === 'bar' ? 'bar' : (it.t === 'part' || it.sh === 'part') ? 'part' : it.t;
+  for (const pass of [['bar', 'part'], ['bar', 'part'], ['weapon', 'armor', 'ring']])   // intermediates twice (parts made of bars), then gear on the new prices
+    for (const id in IT) { const it = IT[id], k = kind(it); if (!pass.includes(k) || !recipes[id]) continue; const c = matCost(id, recipes); if (isFinite(c) && c > 0) it.p = Math.max(it.p, Math.round(c * MADE_K[k])); }
+}
+document.addEventListener('DOMContentLoaded', priceMadeGoods);

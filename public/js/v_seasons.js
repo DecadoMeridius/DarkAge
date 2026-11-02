@@ -84,7 +84,7 @@ function nightLights(m, Z, cxp, cyp, W, H) {
     const f = b.winName && PIX.map[b.winName], win = f && f.meta && f.meta.win; if (!win) continue;
     if ((b.x + b.w) * 16 < cxp || b.x * 16 > cxp + W / Z || (b.y + b.h) * 16 < cyp || b.y * 16 > cyp + H / Z) continue;
     const lit = hsh(b.x, b.y, dayIndex()) < .85 || b.act === 'tavern' || b.act === 'r_inn' || b.kind === 'castle' || /inn|tavern/.test(b.act || ''); if (!lit) continue; // a few households are already asleep
-    const gs = typeof styleGlow === 'function' && styleGlow(b.winName); // a painted style: its own lit windows, added over the building (x_artstyle.js)
+    let gs = null; try { gs = typeof styleGlow === 'function' && styleGlow(b.winName); } catch (e) { gs = null; }   // a failing glow must never stop the rest of the night lights // a painted style: its own lit windows, added over the building (x_artstyle.js)
     if (gs) { g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = Math.min(1, nf * 1.1); g.drawImage(gs, (b.x * 16 - cxp) * Z, (b.y * 16 - cyp) * Z, gs.ww * Z, gs.wh * Z); g.restore(); continue; }
     for (const [wx, wy, ww, wh] of win) { const x = b.x * 16 + wx / 2, y = b.y * 16 + wy / 2; if (covered(x, y, ww / 2, wh / 2)) continue; R(x, y, ww / 2, wh / 2, '#ffc864', .8 * nf); R(x, y, ww / 4, wh / 4, '#fff0b8', .7 * nf); }
   }
