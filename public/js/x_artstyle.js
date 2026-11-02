@@ -20,7 +20,7 @@ PIX.load = (f => function () { return f.apply(this, arguments).then(() => loadSt
 const STYLE_ALIAS = { lantern: 'lantern_off' };
 // pieces that must join their neighbours (fence runs, tilled soil beds) keep the pixel sprite, rounded and lit like the
 // characters (painted one by one they came out as a jumble of posts and separate squares)
-const STYLE_SMOOTH = /^(fence|soil_)/;
+const STYLE_SMOOTH = /^(fence|soil_|waystone)/;   // (the waystone's painted frames came out cut up and misaligned)
 // paintings that came out bigger than the object is: fitted back inside the pixel sprite's box (standing on its base)
 const STYLE_FIT = /^(well$|bld_barn_)/;
 // creatures whose paintings didn't hold up (drawn 2-3x as Old Snapper and the Frost Giant): their pixel animation,
@@ -31,7 +31,7 @@ PIX.get = (f => function (n) {
   if (st && STYLE_SMOOTH.test(n)) {
     if (this.cache[n]) return this.cache[n];
     const p = f.call(this, n); if (!p || !p.width) return p;
-    const sm = paintedLook(scale2x(scale2x(p))); sm.ww = p.ww; sm.wh = p.wh; if (p.ax !== undefined) { sm.ax = p.ax; sm.ay = p.ay; }
+    const sm = smoothUp(p);
     return this.cache[n] = sm;
   }
   const sf = st && !STYLE_SKIP.test(n) && st.map[STYLE_ALIAS[n] || n];
@@ -69,7 +69,7 @@ function styledSwap(c, ramps) {
 }
 pixTemplate = (f => function (name, ramps, swap) {
   const t = PIX.get(name); if (!t || !t.lum) return f.apply(this, arguments);
-  const c = mk(t.width, t.height, x => x.drawImage(t, 0, 0)); styledSwap(c, ramps); c.ww = t.ww; c.wh = t.wh; c.hi = t.hi; return c;
+  const c = mkCPU(t.width, t.height, x => x.drawImage(t, 0, 0)); styledSwap(c, ramps);   // read back in normal memory; gpuCopy below puts the result on the GPU c.ww = t.ww; c.wh = t.wh; c.hi = t.hi; return c;
 })(pixTemplate);
 // characters stay layered pixel templates (painting every walk frame on its own would flicker); in a styled mode
 // they get two Scale2x passes, which round the pixel steps into smooth edges, and are drawn smoothly
@@ -109,13 +109,24 @@ function paintedLook(c) {
   });
   out.ww = c.ww; out.wh = c.wh; return out;
 }
-const SMOOTH = new WeakMap();
-humanSpr = (f => function () {
+// the smoothing runs on the GPU: a high-quality smooth enlargement (scale2x read every pixel back to the CPU, and
+// building characters' frames that way was the microstutter in busy towns)
+function gpuUp(c, k) { const o = mk(c.width * k, c.height * k, x => { x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(c, 0, 0, c.width * k, c.height * k); }); o.ww = c.ww; o.wh = c.wh; if (c.ax !== undefined) { o.ax = c.ax; o.ay = c.ay; } return o; }
+const smoothUp = c => { const s = paintedLook(gpuUp(c, 4)); if (c.ax !== undefined) { s.ax = c.ax; s.ay = c.ay; } return s; };
+const SMOOTH = new WeakMap(), WARMQ = [], WARMED = new Set();
+humanSpr = (f => function (key, P, dir, fr) {
   const c = f.apply(this, arguments);
   if (!c || SETTINGS.artStyle === 'pixel' || c.width >= c.ww * 4) return c;
-  let s = SMOOTH.get(c); if (!s) { s = paintedLook(scale2x(scale2x(c))); SMOOTH.set(c, s); }
+  let s = SMOOTH.get(c); if (!s) { s = smoothUp(c); SMOOTH.set(c, s); }
+  // its other walk frames are built in spare time, ready before the next step
+  if (typeof fr === 'string' && /^w\d$/.test(fr)) { const wk = key + '|' + dir; if (!WARMED.has(wk)) { WARMED.add(wk); for (let i = 0; i < 8; i++) WARMQ.push([key, P, dir, 'w' + i]); } }
   return s;
 })(humanSpr);
+(function warmPump() {
+  const t0 = performance.now();
+  while (WARMQ.length && performance.now() - t0 < 2.5) { const [k, P, d, fr] = WARMQ.shift(); try { humanSpr(k, P, d, fr); } catch (e) {} }
+  requestAnimationFrame(warmPump);
+})();
 // the painted night glow of a building's windows (art/style_free.py), or null
 // Worked out here from the painted building (made once per building): the painting's glass (bluish or dark pixels)
 // near where each window sits, mapped by proportion from the pixel sprite's meta.win (the painting may be a little
@@ -145,7 +156,7 @@ function styleGlow(n) {
 // switching: drop every cached sprite and painted chunk so they're made again from the new atlas
 function applyArtStyle() {
   return loadStyle(SETTINGS.artStyle).then(() => {
-    PIX.cache = {}; PXG.tex = {}; GLOWC.clear(); if (typeof CHUNK !== 'undefined') { CHUNK.clear(); CHUNK_LAST.clear(); }
+    PIX.cache = {}; PXG.tex = {}; GLOWC.clear(); WARMED.clear(); WARMQ.length = 0; if (typeof CHUNK !== 'undefined') { CHUNK.clear(); CHUNK_LAST.clear(); }
     for (const C of [HC, ACACHE, ECACHE, CROPSPR, ICACHE, GICACHE, IURL]) for (const k in C) delete C[k];
     if (typeof buildObjects === 'function') buildObjects();
     for (const id in MAPS) { const m = MAPS[id]; if (m && m.bld) for (const b of m.bld) b.sprName = null; }
@@ -177,5 +188,5 @@ pixTemplate = (f => function () { const c = f.apply(this, arguments); return c &
 pixTemplate = (f => function (name) {
   const c = f.apply(this, arguments);
   if (!c || c.hi || SETTINGS.artStyle === 'pixel' || !/^(en_|an_)/.test(name)) return c;
-  const s = paintedLook(scale2x(scale2x(c))); s.ww = c.ww; s.wh = c.wh; if (c.ax !== undefined) { s.ax = c.ax; s.ay = c.ay; } return s;
+  return smoothUp(c);
 })(pixTemplate);

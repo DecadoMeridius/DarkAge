@@ -16,7 +16,7 @@ const PIX = {
   get(n) {
     if (this.cache[n]) return this.cache[n];
     const f = this.map[n]; if (!f) return null;
-    const c = mk(f.w, f.h, x => x.drawImage(this.img, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h));
+    const c = (/^(hb_|en_|an_|crop_)/.test(n) ? mkCPU : mk)(f.w, f.h, x => x.drawImage(this.img, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h));   // character layers and creature/crop templates are only read on the CPU (humanSpr, pixTemplate): kept in normal memory
     c.ww = f.w / 2; c.wh = f.h / 2; if (f.ax !== undefined) { c.ax = f.ax / 2; c.ay = f.ay / 2; }
     return this.cache[n] = c;
   },
@@ -316,11 +316,11 @@ humanSpr = function (key, P, dir, f) {
   if (P.hat) add('hb_hat_' + d); if (P.crown) add('hb_crown_' + d);
   if (tuck) { L.length = 0; add('hb_body_0_tuck', 0, 0); } // the roll is the curled body alone
   const K = Math.max(1, ...L.map(([img]) => img.hi || 1)); // an art style's layers are K px per art px (x_artstyle.js)
-  const c = mk(32 * K, 64 * K, x => { for (const [img, dy, dx] of L) x.drawImage(img, (dx || 0) * K, dy * K, 32 * K, 64 * K); });
+  const c = mkCPU(32 * K, 64 * K, x => { for (const [img, dy, dx] of L) x.drawImage(img, (dx || 0) * K, dy * K, 32 * K, 64 * K); });   // read back below (pixSwap, pixOutline): kept in normal memory
   if (K > 1 && typeof styledSwap === 'function') styledSwap(c, humanRamps(P));
   pixSwap(c, humanRamps(P), P.eye || P.glow ? [[0x2b, 0x1d, 0x18], h2r(P.glow || P.eye)] : null);
   if (K === 1) pixOutline(c, null); // selective: each edge is a darker shade of what it touches (painted layers have their own edges)
-  const out = dir === 1 ? flipC(c) : c; out.ww = 16; out.wh = 32; if (K > 1) out.hi = K;
+  const out = dir === 1 ? flipC(c) : mk(c.width, c.height, x => x.drawImage(c, 0, 0)); out.ww = 16; out.wh = 32;   // the finished frame on the GPU (c stays in normal memory) if (K > 1) out.hi = K;
   return HC[k] = out;
 };
 /* body armour is one picture per facing, drawn for the standing arms: per body frame, its sleeves are taken away
@@ -331,8 +331,8 @@ function armFit(name, d, f) {
   const A = PIX.get(name); if (!A || f === null || f === undefined || f === 0 || f === 'tuck') return A;
   const k = name + '|' + f; if (ARMFIT[k]) return ARMFIT[k];
   const S = PIX.get(`hb_body_${d}_0`), F = PIX.get(`hb_body_${d}_${f}`); if (!S || !F || A.width !== 32) return A;
-  const px = c => mk(32, 64, x => x.drawImage(c, 0, 0)).getContext('2d').getImageData(0, 0, 32, 64).data;
-  const s = px(S), fr = px(F), out = mk(32, 64, x => x.drawImage(A, 0, 0)), ox = out.getContext('2d'), id = ox.getImageData(0, 0, 32, 64), a = id.data;
+  const px = c => mkCPU(32, 64, x => x.drawImage(c, 0, 0)).getContext('2d').getImageData(0, 0, 32, 64).data;
+  const s = px(S), fr = px(F), out = mkCPU(32, 64, x => x.drawImage(A, 0, 0)), ox = out.getContext('2d'), id = ox.getImageData(0, 0, 32, 64), a = id.data;
   const shirt = (q, i) => q[i + 3] > 0 && q[i] === 255 && q[i + 1] === SHIRT_CH && q[i + 2] < 5;
   const same = i => s[i] === fr[i] && s[i + 1] === fr[i + 1] && s[i + 2] === fr[i + 2] && s[i + 3] === fr[i + 3];
   // is the standing arm armoured here (plate sleeves) or cloth (only shoulder plates)? judged on the arm pixels that move
@@ -376,7 +376,8 @@ function pixSwap(c, ramps, swap) {
 }
 function pixTemplate(name, ramps, swap) {
   const t = PIX.get(name); if (!t) return null;
-  const c = mk(t.width, t.height, x => x.drawImage(t, 0, 0)); pixSwap(c, ramps, swap); c.ww = t.ww; c.wh = t.wh; return c;
+  const w = mkCPU(t.width, t.height, x => x.drawImage(t, 0, 0)); pixSwap(w, ramps, swap);   // recoloured in normal memory, the result copied to the GPU
+  const c = mk(t.width, t.height, x => x.drawImage(w, 0, 0)); c.ww = t.ww; c.wh = t.wh; if (t.ax !== undefined) { c.ax = t.ax; c.ay = t.ay; } return c;
 }
 
 /* ---- crops ---- */

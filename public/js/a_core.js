@@ -46,6 +46,8 @@ const rgba = (hex, a) => { const [r, g2, b] = h2r(hex); return `rgba(${r},${g2},
 
 /* ---- canvas helpers ---- */
 function mk(w, h, f) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; if (f) f(x, c); return c; }
+// a canvas in normal memory, for pixels the code reads back (getImageData on a GPU canvas makes the CPU wait for the GPU)
+function mkCPU(w, h, f) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d', { willReadFrequently: true }); x.imageSmoothingEnabled = false; if (f) f(x, c); return c; }
 function px(x, X, Y, W, H, c) { x.fillStyle = c; x.fillRect(X, Y, W, H); }
 function ell(x, cx, cy, rx, ry, c) { x.fillStyle = c; for (let j = -ry; j <= ry; j++) { const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (j * j) / (ry * ry || 1)))); x.fillRect(cx - w, cy + j, w * 2 + 1, 1); } }
 /* shaded blob: base with lighter top-left, darker bottom-right */
