@@ -53,7 +53,7 @@ function render(dt) {
   const P = CH * 16;
   for (let cy = Math.floor(y0 / CH); cy <= Math.floor((y1 - 1) / CH); cy++) for (let cx = Math.floor(x0 / CH); cx <= Math.floor((x1 - 1) / CH); cx++) {
     const c = getChunk(m, cx, cy);
-    if (c) { const X0 = Math.round((cx * P - cxp) * Z), X1 = Math.round(((cx + 1) * P - cxp) * Z), Y0 = Math.round((cy * P - cyp) * Z), Y1 = Math.round(((cy + 1) * P - cyp) * Z); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(c, c.m, c.m, c.span, c.span, X0, Y0, X1 - X0, Y1 - Y0); g.setTransform(Z, 0, 0, Z, -cxp * Z, -cyp * Z); }
+    if (c) { const X0 = Math.round((cx * P - cxp) * Z), X1 = Math.round(((cx + 1) * P - cxp) * Z), Y0 = Math.round((cy * P - cyp) * Z), Y1 = Math.round(((cy + 1) * P - cyp) * Z); g.setTransform(1, 0, 0, 1, 0, 0); if (c.hi) g.imageSmoothingEnabled = true; g.drawImage(c, c.m, c.m, c.span, c.span, X0, Y0, X1 - X0, Y1 - Y0); g.imageSmoothingEnabled = false; g.setTransform(Z, 0, 0, Z, -cxp * Z, -cyp * Z); }
     else for (let y = cy * CH; y < Math.min(m.h, cy * CH + CH); y++) for (let x = cx * CH; x < Math.min(m.w, cx * CH + CH); x++) { g.fillStyle = groundStyle(paintKey(m, x, y), m.dark || m.indoor ? 0 : sea, m.theme).base; g.fillRect(x * 16, y * 16, 16.1, 16.1); }
   }
   // ---- animated water & soil ----

@@ -157,7 +157,7 @@ function pixRoomWalls(x, m, cx, cy, M) {
   }
   for (const [n, tx, ty, ox, oy] of m.decals || []) {
     const c = PIX.get(n); if (!c) continue;
-    x.drawImage(c, M + (tx - cx * CH) * 32 + (ox || 0), M + (ty - cy * CH) * 32 + (oy || 0));
+    x.drawImage(c, M + (tx - cx * CH) * 32 + (ox || 0), M + (ty - cy * CH) * 32 + (oy || 0), c.ww * 2, c.wh * 2); // art px (an art style's decals are bigger canvases)
   }
   // soft shadow along the foot of the back wall
   if (cy === 0) for (let i = -1; i <= CH; i++) { const X = cx * CH + i; if (X > 0 && X < m.w - 1) { P(M + i * 32, M + 3 * 32, 32, 3, 'rgba(20,10,8,.35)'); P(M + i * 32, M + 3 * 32 + 3, 32, 2, 'rgba(20,10,8,.15)'); } }
@@ -165,7 +165,7 @@ function pixRoomWalls(x, m, cx, cy, M) {
 const _paintChunkPx = paintChunk;
 paintChunk = function (m, cx, cy) {
   const c = _paintChunkPx(m, cx, cy);
-  if (m.indoor && m.theme === 'indoor' && c.m !== undefined) pixRoomWalls(c.getContext('2d'), m, cx, cy, c.m);
+  if (m.indoor && m.theme === 'indoor' && c.m !== undefined) pixRoomWalls(c.getContext('2d'), m, cx, cy, c.m / (c.hi || 1)); /* a hi-res (art style) chunk keeps its scale */
   return c;
 };
 

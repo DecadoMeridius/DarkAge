@@ -8,3 +8,10 @@ __pycache__/
 .claude/settings.local.json
 release/
 *.log
+
+# local ComfyUI app and its outputs (only the restyle script is kept)
+comfyui/*
+!comfyui/restyle.py
+!comfyui/preview_tmpl.py
+# art-style example screenshots (large PNGs, kept locally)
+docs/artstyles/

@@ -80,6 +80,8 @@ paintChunk = function (m, cx, cy) {
     }
     lay[py * N + px_] = L;
   }
+  const GK = (PIX.get('ground_g_0') || {}).hi || 1;   // an art style with hi-res ground (x_artstyle.js)
+  if (GK > 1) return pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK);
   const c = mk(N, N), x = c.getContext('2d'), img = x.createImageData(N, N), d = img.data;
   const texs = layers.map(L => groundPixels(L, s, th));
   const wet = layers.map(L => L === 'w' || L === 'l');
@@ -112,6 +114,56 @@ paintChunk = function (m, cx, cy) {
   c.m = M; c.span = SP;
   return c;
 };
+
+/* the same ground at GK px per art pixel, for art styles whose ground textures are hi-res: terrain shapes, foam,
+   lips and rims are worked out per art pixel exactly as above, the texture is sampled at full resolution.
+   The canvas keeps a GK scale, so the cliffs, bridges and room walls drawn on it afterwards stay in art px. */
+function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
+  const texs = layers.map(L => groundPixels(L, s, th)), tws = texs.map(T => T ? Math.round(Math.sqrt(T.length / 4)) : 64);
+  const wet = layers.map(L => L === 'w' || L === 'l'), mode = new Uint8Array(N * N);   // 1 foam, 2 lava foam, 3/4 lip, 5 rim, 6 outside a room
+  const vary = new Float32Array(N * N), warmv = new Float32Array(N * N);   // broad light and colour drift, so the texture doesn't read as repeating tiles
+  for (let py = 0; py < N; py++) for (let px_ = 0; px_ < N; px_++) { const ax = ox + px_, ay = oy + py, i = py * N + px_; vary[i] = .86 + fbm(ax * .011, ay * .011, 31, 3) * .28; warmv[i] = (fbm(ax * .007 + 40, ay * .007, 37, 2) - .5) * 26; }
+  for (let py = 0; py < N; py++) for (let px_ = 0; px_ < N; px_++) {
+    const i = py * N + px_, L = lay[i]; if (L === 255) { mode[i] = 6; continue; }
+    const up = py > 0 ? lay[i - N] : L, up2 = py > 1 ? lay[i - 2 * N] : L, dn = py < N - 1 ? lay[i + N] : L;
+    const lf = px_ > 0 ? lay[i - 1] : L, rt = px_ < N - 1 ? lay[i + 1] : L;
+    if (wet[L]) {
+      const near1 = [up, dn, lf, rt].some(n => !wet[n]);
+      const near2 = !near1 && ((py > 1 && !wet[up2]) || (py < N - 2 && !wet[lay[i + 2 * N]]) || (px_ > 1 && !wet[lay[i - 2]]) || (px_ < N - 2 && !wet[lay[i + 2]]));
+      if (near1 || (near2 && (px_ + py) % 2 === 0)) mode[i] = layers[L] === 'l' ? 2 : 1;
+    } else if (up > L || up2 > L) mode[i] = up > L ? 3 : 4;
+    else if (dn < L || lf < L || rt < L) mode[i] = 5;
+  }
+  const NH = N * GK, P64 = 64 * GK, c = mk(NH, NH), x = c.getContext('2d'), img = x.createImageData(NH, NH), d = img.data;
+  for (let Y = 0; Y < NH; Y++) {
+    const py = (Y / GK) | 0, hy = (((oy * GK + Y) % P64) + P64) % P64;
+    const gy = (Y + .5) / GK - .5, y0 = Math.max(0, Math.min(N - 2, Math.floor(gy))), fy = Math.min(1, Math.max(0, gy - y0));
+    for (let X = 0; X < NH; X++) {
+      let i = py * N + ((X / GK) | 0), L = lay[i];
+      // where terrains meet, take the one with the most bilinear weight here, so edges run smoothly instead of in art-pixel steps
+      const gx = (X + .5) / GK - .5, x0 = Math.max(0, Math.min(N - 2, Math.floor(gx))), j00 = y0 * N + x0, la = lay[j00], lb = lay[j00 + 1], lc = lay[j00 + N], ld = lay[j00 + N + 1];
+      if (la !== lb || la !== lc || la !== ld) {
+        const fx = Math.min(1, Math.max(0, gx - x0)), w = [(1 - fx) * (1 - fy), fx * (1 - fy), (1 - fx) * fy, fx * fy], js = [j00, j00 + 1, j00 + N, j00 + N + 1];
+        let best = -1, bw = -1; for (let q = 0; q < 4; q++) { const Lq = lay[js[q]]; let s = 0; for (let r = 0; r < 4; r++) if (lay[js[r]] === Lq) s += w[r]; if (s > bw) { bw = s; best = q; } }
+        i = js[best]; L = lay[i];
+      }
+      const md = mode[i], o = (Y * NH + X) * 4;
+      if (md === 6) { d[o] = 12; d[o + 1] = 8; d[o + 2] = 10; d[o + 3] = 255; continue; }
+      if (md === 1) { d[o] = 230; d[o + 1] = 246; d[o + 2] = 255; d[o + 3] = 255; continue; }
+      if (md === 2) { d[o] = 255; d[o + 1] = 207; d[o + 2] = 122; d[o + 3] = 255; continue; }
+      const T = texs[L], tw = tws[L], hx = (((ox * GK + X) % P64) + P64) % P64, to = (((hy * tw / P64) | 0) * tw + ((hx * tw / P64) | 0)) * 4;
+      let r = T ? T[to] : 128, gg = T ? T[to + 1] : 128, b = T ? T[to + 2] : 128;
+      if (!wet[L]) { const v = vary[i], wv = warmv[i]; r = r * v + wv; gg = gg * v + wv * .4; b = b * v - wv * .3; }
+      if (md === 3 || md === 4) { const k = md === 3 ? .62 : .78; r *= k; gg *= k; b *= k * 1.06; }
+      else if (md === 5) { r += (255 - r) * .14; gg += (255 - gg) * .14; b += (255 - b) * .08; }
+      d[o] = r; d[o + 1] = gg; d[o + 2] = b; d[o + 3] = 255;
+    }
+  }
+  x.putImageData(img, 0, 0); x.setTransform(GK, 0, 0, GK, 0, 0);
+  pixCliffsAndBridges(x, m, cx, cy, M, s);
+  c.m = M * GK; c.span = SP * GK; c.hi = GK;
+  return c;
+}
 
 /* raised cliff ground: every r / x tile is solid, so mark the whole block, not only its
    bottom face. Darker top, rock side walls where it meets open ground, a lit far edge and
@@ -214,10 +266,12 @@ humanSpr = function (key, P, dir, f) {
   if (P.helm) add(P.helmS && PIX.has('hb_helm_' + P.helmS + '_' + d) ? 'hb_helm_' + P.helmS + '_' + d : 'hb_helm_' + d); if (P.plume && !P.helmS) add('hb_plume_' + d);
   if (P.hat) add('hb_hat_' + d); if (P.crown) add('hb_crown_' + d);
   if (tuck) { L.length = 0; add('hb_body_0_tuck', 0, 0); } // the roll is the curled body alone
-  const c = mk(32, 64, x => { for (const [img, dy, dx] of L) x.drawImage(img, dx || 0, dy); });
+  const K = Math.max(1, ...L.map(([img]) => img.hi || 1)); // an art style's layers are K px per art px (x_artstyle.js)
+  const c = mk(32 * K, 64 * K, x => { for (const [img, dy, dx] of L) x.drawImage(img, (dx || 0) * K, dy * K, 32 * K, 64 * K); });
+  if (K > 1 && typeof styledSwap === 'function') styledSwap(c, humanRamps(P));
   pixSwap(c, humanRamps(P), P.eye || P.glow ? [[0x2b, 0x1d, 0x18], h2r(P.glow || P.eye)] : null);
-  pixOutline(c, null); // selective: each edge is a darker shade of what it touches
-  const out = dir === 1 ? flipC(c) : c; out.ww = 16; out.wh = 32;
+  if (K === 1) pixOutline(c, null); // selective: each edge is a darker shade of what it touches (painted layers have their own edges)
+  const out = dir === 1 ? flipC(c) : c; out.ww = 16; out.wh = 32; if (K > 1) out.hi = K;
   return HC[k] = out;
 };
 /* 1px outline around opaque pixels (a_core's outline() is stubbed out by the painted art) */

@@ -237,7 +237,7 @@ function itemIcon(id) {
 const IURL = {};
 function iconURL(id, q) {
   const k = id + (q ? '#' + q : ''); if (IURL[k]) return IURL[k];
-  const c = itemIcon(id), b = document.createElement('canvas'); b.width = b.height = 72; const x = b.getContext('2d'); x.imageSmoothingEnabled = false;
+  const c = itemIcon(id), b = document.createElement('canvas'); b.width = b.height = 72; const x = b.getContext('2d'); x.imageSmoothingEnabled = c.width > 64; x.imageSmoothingQuality = 'high'; /* an art style's icons are hi-res */
   x.drawImage(c, 4, 4, 64, 64);
   if (q) { const col = ['', '#d8e2ec', '#ffd040', '#ff7a2a'][q]; x.save(); x.translate(13, 59); x.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 5 : 11, a = i / 10 * 6.283 - 1.57; x.lineTo(Math.cos(a) * r, Math.sin(a) * r); } x.closePath(); x.fillStyle = col; x.strokeStyle = INK; x.lineWidth = 3; x.stroke(); x.fill(); x.restore(); }
   return IURL[k] = b.toDataURL();

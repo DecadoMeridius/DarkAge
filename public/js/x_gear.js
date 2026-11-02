@@ -26,9 +26,10 @@ itemIcon = function (id) {
       const name = it.sh === 'helm' ? 'hb_helm_' + tk + '_0' : 'hb_arm_' + tk + '_0', t = PIX.get(name);
       if (t) {
         const ramps = HCH.map(n => pixRamp(n === 'plume' || n === 'trim' ? GEAR_ACC[tk] : it.c));
-        const full = mk(t.width, t.height, x => x.drawImage(t, 0, 0)); pixSwap(full, ramps); pixOutline(full, null);
+        const K = t.hi || 1, full = mk(t.width, t.height, x => x.drawImage(t, 0, 0)); // K: an art style's scale
+        if (t.lum) styledSwap(full, ramps); else { pixSwap(full, ramps); pixOutline(full, null); }
         const [sy, h] = it.sh === 'helm' ? [-1, 26] : [16, 26]; // the head, or the chest and shoulders
-        c = mk(32, 32, x => x.drawImage(full, 0, Math.max(0, sy), 32, h, 0, 3 + Math.max(0, -sy), 32, h)); c.ww = c.wh = 16;
+        c = mk(32 * K, 32 * K, x => x.drawImage(full, 0, Math.max(0, sy) * K, 32 * K, h * K, 0, (3 + Math.max(0, -sy)) * K, 32 * K, h * K)); c.ww = c.wh = 16; if (K > 1) c.hi = K;
       }
     }
   }

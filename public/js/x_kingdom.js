@@ -248,7 +248,7 @@ pixRoomWalls = (f => function (x, m, cx, cy, M) {
     if (open(X - 1, Y)) { P(bx, by, 4, 32, pal.trim[1]); P(bx + 3, by, 1, 32, pal.trim[0]); }
     if (open(X, Y - 1)) P(bx, by, 32, 2, pal.trim[2]);
   }
-  for (const [n, tx, ty, ox, oy] of m.decals || []) { const c = PIX.get(n); if (c) x.drawImage(c, M + (tx - cx * CH) * 32 + (ox || 0), M + (ty - cy * CH) * 32 + (oy || 0)); }
+  for (const [n, tx, ty, ox, oy] of m.decals || []) { const c = PIX.get(n); if (c) x.drawImage(c, M + (tx - cx * CH) * 32 + (ox || 0), M + (ty - cy * CH) * 32 + (oy || 0), c.ww * 2, c.wh * 2); }
 })(pixRoomWalls);
 
 /* the room you walk into is named */

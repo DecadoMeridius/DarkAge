@@ -21,7 +21,7 @@ enemySpr = (_f => function (k, f) {
   if (!PIX.has(name)) name = base + '.0';
   let c = pixTemplate(name, [pixRamp(E2.col || '#888888'), pixRamp(sh(E2.col || '#888888', -1.4))], E2.eye ? [[0x2b, 0x1d, 0x18], h2r(E2.eye)] : null);
   if (!c) return _f(k, 0);
-  if (sc !== 1) { const s2 = mk(Math.round(c.width * sc), Math.round(c.height * sc), x => x.drawImage(c, 0, 0, Math.round(c.width * sc), Math.round(c.height * sc))); s2.ww = c.ww * sc; s2.wh = c.wh * sc; c = s2; }
+  if (sc !== 1) { const s2 = mk(Math.round(c.width * sc), Math.round(c.height * sc), x => x.drawImage(c, 0, 0, Math.round(c.width * sc), Math.round(c.height * sc))); s2.ww = c.ww * sc; s2.wh = c.wh * sc; s2.hi = c.hi; c = s2; }
   return ECACHE[key] = c;
 })(enemySpr);
 
