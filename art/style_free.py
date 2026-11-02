@@ -10,7 +10,7 @@ same object. Frames keep the pixel sprite's box and carry ox / oy: where the pai
 Tiling pieces (walls, fences, gates) and animation frames are still painted to the pixel outline (style_build.py).
 """
 import re, sys
-from PIL import Image, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 import numpy as np
 sys.argv = [sys.argv[0], 'painterly'] + sys.argv[1:]
 import style_build as sb
@@ -23,9 +23,67 @@ FREE = ('Transform these pixel-art game sprites into beautiful, richly detailed 
         'Nothing may stay pixel art. Do not add new objects. The background stays plain flat magenta: no shadows, no '
         'light rays, no glow, no ground.')
 BLD = ' Keep doors and windows about where they are.'
+# every base sheet gets the same style reference as a second image: the painted example scenes the user picked
+# (docs/artstyles/painterly, village and town side by side), so sheets painted separately keep that one style
+STYLE_REF = sb.WORK / 'STYLE_REF.png' if '--ref' in sys.argv else sb.WORK / 'no_style_ref'   # off: tried 2026-11-02, the model copies objects out of the reference (a barn and a well on the fountain's sheet) and the example scenes made the paintings more pixel-like
+FREE_REF = ('Image 1 is a sheet of pixel-art game sprites on magenta. Repaint every one of them as hand-painted fantasy RPG '
+            'art in exactly the painting style of the scene in image 2: the same brushwork, rich detail, warm saturated colours and light. The sprites '
+            'are, row by row from the top left: {}. The pixel art is only a rough guide to what each one is, how big it is '
+            'and where it stands: redesign it freely with more detail and charm, but keep every object in its own place and '
+            'about its size.{} Nothing may stay pixel art. Do not copy anything from image 2 and do not add new objects. '
+            'The background stays plain flat magenta: no shadows, no light rays, no glow, no ground.')
+NIGHT = ('warm golden candlelight glows from inside every window, the panes lit bright yellow and orange; keep the '
+         'daylight colours everywhere else, change nothing else')   # the difference from the day painting is the night window glow
 VAR = ('Edit these painted game objects: {}. Keep everything else exactly as it is: the same painted style, designs, '
        'colours, sizes and positions. Paint the change in the same soft painted brushwork. The background stays plain '
        'flat magenta.')
+
+
+# what each object is, so the model doesn't guess from the pixels (a fire in the well, a lamp post with no lamp)
+REGION = {'kb': 'a grand walled city', 'hm': 'turf-roofed highland stone', 'fm': 'a snowy northern log', 'ew': 'a desert basalt',
+          'sr': 'a whitewashed seaside', 'af': "a woodcutters' village", 'sm': 'a fishing village', 'gh': 'a walled mining town'}
+DESC = {
+    'well': 'a round stone water well with a little wooden roof, a rope and a wooden bucket',
+    'lantern_off': 'a tall iron street lamp post with an unlit glass lantern hanging from its arm',
+    'lantern': 'a tall iron street lamp post with a glass lantern hanging from its arm',
+    'fountain': 'a stone fountain with a round basin and water spouting from a tiered column',
+    'statue': 'a stone statue of a knight on a plinth', 'altar': 'a carved stone altar', 'shrine': 'an ember shrine: a stone brazier with a glowing ember',
+    'board': 'a wooden notice board with pinned papers', 'sign': 'a wooden signpost', 'grave': 'a stone gravestone', 'tent': 'a canvas camping tent',
+    'cart': 'a wooden hand cart', 'wreck': 'the wreck of a wooden boat', 'ferry': 'a wooden ferry boat at a jetty', 'cave': 'a dark cave mouth in rock',
+    'scarecrow': 'a straw scarecrow', 'ruinwall': 'a crumbling ivy-covered stone ruin wall', 'cracked': 'a cracked boulder', 'meteor': 'a glowing meteorite',
+    'boulder': 'a large grey boulder', 'obsboulder': 'a black obsidian boulder', 'iceboulder': 'a boulder of blue ice', 'crystalnode': 'a cluster of crystals',
+    'rock': 'a grey rock', 'rockS': 'a small rock', 'rockA': 'a rock', 'rockC': 'a rock', 'stone': 'a small grey stone', 'twig': 'a fallen twig', 'log': 'a cut log',
+    'stump': 'a tree stump', 'bramble': 'a thorny bramble bush', 'fern': 'a fern', 'cattail': 'cattail reeds', 'mushroom': 'a mushroom', 'shell': 'a seashell',
+    'page': 'a lost torn journal page', 'shard': 'a glowing ember shard', 'dead': 'a dead dry bush', 'bin': 'a wooden shipping bin', 'storage': 'a storage chest',
+    'clay_mound': 'a mound of wet clay', 'salt_crust': 'a crust of white salt', 'soil_dry': 'dry tilled soil', 'soil_wet': 'wet dark tilled soil',
+    'ladder': 'a ladder going down a hole', 'upladder': 'a ladder going up', 'sprinkler': 'a garden sprinkler', 'qsprinkler': 'a copper sprinkler',
+    'isprinkler': 'an iron sprinkler', 'ballista': 'a wooden ballista', 'barricade': 'a wooden barricade of spikes', 'drakeling': 'a small sleeping dragon',
+    'keg': 'a wooden keg on a stand', 'jar': 'a preserves jar', 'cheese': 'a wooden cheese press', 'loom': 'a weaving loom', 'oilpress': 'an oil press',
+    'smoker': 'a fish smoker', 'tanrack': 'a leather tanning rack', 'seedhopper': 'a seed hopper machine', 'ledger': 'a storehouse ledger desk',
+    'churn': 'a butter churn', 'compostbin': 'a compost bin', 'forge': 'a stone forge with a fire', 'horse_tack': 'a saddle on a stand',
+}
+CODE = {'gshack': 'goblin shack', 'gtotem': 'goblin totem', 'gspit': 'goblin roasting spit', 'sbench': 'stone bench', 'bpole': 'banner pole',
+        'stairup': 'staircase going up', 'stairdown': 'staircase going down', 'ropeup': 'rope ladder', 'royalbed': 'royal four-poster bed',
+        'throne_h': 'throne', 'wartable': 'war table with a map', 'minecart': 'mine cart', 'rails': 'mine rails', 'rails_v': 'mine rails',
+        'chandler': "ship chandler's shop", 'dg': 'dungeon entrance', 'fish': "fishmonger's shop", 'saw': 'sawmill', 'kegs': 'stacked kegs'}
+
+
+def describe(n):
+    """a few words for what sprite n is"""
+    if n in DESC: return DESC[n]
+    p = re.sub(r'_\d+x\d+(_\w+)?$', '', n); p = re.sub(r'_\d$', '', p)
+    parts = p.split('_'); kind = parts[0]
+    if kind == 'bld':
+        rest = parts[1:]
+        if rest[:1] == ['dg']: return f'a dungeon entrance carved into a rocky hillside, in {REGION.get(rest[1], "a")} style'
+        reg = REGION.get(rest[0]) if rest and rest[0] in REGION else None
+        if reg: rest = rest[1:]
+        what = ' '.join(CODE.get(x, x) for x in rest if len(x) > 1)
+        return f'{reg} {what} building' if reg else f'a {what} building'
+    if kind in ('furn', 'dec'): parts = parts[1:]
+    if kind == 'ore': return f'a rock with {parts[1]} ore veins'
+    if kind == 'pet': return f'a {parts[1]} bed'
+    return 'a ' + ' '.join(CODE.get(x, x) for x in parts)
 
 
 def background(a):
@@ -94,7 +152,10 @@ def cut(res, n, x, y, pad, gen, bgc):
 
 def paint_sheet(key, names, gen, seed=7):
     sheet, pos, pad = sheet_for(names, gen)
-    res = sb.restyle_sheet(key, sheet, FREE.format(BLD if all(n.startswith('bld_') for n in names) else ''), seed=seed)
+    order = sorted(pos, key=lambda n: (pos[n][1], pos[n][0]))
+    bld = BLD if all(n.startswith('bld_') for n in names) else ''
+    if STYLE_REF.exists(): res = sb.restyle_sheet(key, sheet, FREE_REF.format('; '.join(describe(n) for n in order), bld), seed=seed, img2=STYLE_REF)
+    else: res = sb.restyle_sheet(key, sheet, FREE.format(bld), seed=seed)
     return res, sheet, pos, pad
 
 
@@ -237,13 +298,28 @@ def build():
                 e = path[j - 1]; what = EDIT[e.split(':')[0]].format(*e.split(':')[1:])
                 ed = sb.restyle_sheet(f'{key}_' + '_'.join(x.replace(':', '-').replace(' ', '') for x in path[:j]), imgs[path[:j - 1]], VAR.format(what))
                 imgs[path[:j]] = realign(ed, imgs[path[:j - 1]])
+        glow = None
+        if any((sb.atlas[n].get('meta') or {}).get('win') for n in list(pos) + kids):   # buildings with windows: where the painting's windows are lit
+            lit = realign(sb.restyle_sheet(f'{key}_night', base, VAR.format(NIGHT)), base)
+            a, l = np.asarray(base.convert('RGB'), dtype=np.float32), np.asarray(lit.convert('RGB'), dtype=np.float32)
+            d = np.clip(l - a, 0, 255); lum = l @ np.array([.3, .59, .11], dtype=np.float32)
+            warm = (l[..., 0] > l[..., 2] + 40) & (d.sum(-1) > 90) & (lum > 150) & ~background(l.astype(np.int16))   # only bright warm light, never the card
+            glow = Image.fromarray((d * warm[..., None]).clip(0, 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(gen * .4))
         for n in list(pos) + kids:
             b, path = root(n, par); x, y = pos[b]
             if b in failed: failed.append(n); continue   # a variant of a failed base goes the old way too, so they match
             got = cut(imgs[path], b, x, y, pad, gen, None)
             f = frame_of(n, got, gen) if got else None
             if f: frames[n] = f
-            else: failed.append(n)
+            else: failed.append(n); continue
+            if glow is not None and len(f) > 2 and (sb.atlas[n].get('meta') or {}).get('win'):
+                part, (ox, oy) = got; X, Y = x * gen + ox, y * gen + oy
+                gl = glow.crop((X, Y, X + part.width, Y + part.height)).convert('RGBA')
+                near = Image.new('L', gl.size, 0); dr = ImageDraw.Draw(near); m_ = 5 * gen   # only near the building's windows
+                for wx, wy, ww, wh in sb.atlas[n]['meta']['win']: dr.rectangle((wx * gen - ox - m_, wy * gen - oy - m_, (wx + ww) * gen - ox + m_, (wy + wh) * gen - oy + m_), fill=255)
+                near = near.filter(ImageFilter.GaussianBlur(gen * 2))
+                gl.putalpha(Image.fromarray(np.minimum(np.asarray(part.getchannel('A')), np.asarray(near))))
+                frames[n + '_glow'] = (gl.resize(f[0].size, Image.LANCZOS), sb.K, f[2])
         print(f'[{i + 1}/{len(sheets)}] {key} ({len(ns)} + {len(kids)} variants)', flush=True)
     if failed: print('  no fitting painting, painted to the pixel outline:', ' '.join(failed), flush=True)
     # the rest the old way: tiling pieces, animation frames, and whatever failed above

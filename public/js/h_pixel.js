@@ -120,6 +120,8 @@ paintChunk = function (m, cx, cy) {
    The canvas keeps a GK scale, so the cliffs, bridges and room walls drawn on it afterwards stay in art px. */
 function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
   const texs = layers.map(L => groundPixels(L, s, th)), tws = texs.map(T => T ? Math.round(Math.sqrt(T.length / 4)) : 64);
+  const tmean = texs.map(T => { if (!T) return [128, 128, 128]; const a = [0, 0, 0]; for (let i = 0; i < T.length; i += 64) { a[0] += T[i]; a[1] += T[i + 1]; a[2] += T[i + 2]; } const n = T.length / 64; return a.map(v => v / n); });
+  const TC = .7;   // a painted ground is calmer than its texture (the example scenes: shadows read on it)
   const SOFT = { s: 1, a: 1, st: 1, d: 1, sn: 1, g: 1, i: 1 }, soft = layers.map(L => !!SOFT[L]);   // natural grounds take the mirrored copy; paving and floors would show doubled stones
   const wet = layers.map(L => L === 'w' || L === 'l'), mode = new Uint8Array(N * N);   // 1 foam, 2 lava foam, 3/4 lip, 5 rim, 6 outside a room
   const vary = new Float32Array(N * N), warmv = new Float32Array(N * N), mixw = new Float32Array(N * N);   // broad light and colour drift, and patches where a mirrored, shifted copy of the texture takes over, so it doesn't read as repeating tiles
@@ -160,6 +162,7 @@ function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
         const t2 = ((((hyy + (P * .37 | 0)) % P) * tw / P | 0) * tw + ((P - 1 - (hx + (P * .61 | 0)) % P) * tw / P | 0)) * 4;
         r += (T[t2] - r) * mw; gg += (T[t2 + 1] - gg) * mw; b += (T[t2 + 2] - b) * mw;
       }
+      if (!wet[L]) { const M = tmean[L]; r = M[0] + (r - M[0]) * TC; gg = M[1] + (gg - M[1]) * TC; b = M[2] + (b - M[2]) * TC; }
       if (!wet[L]) { const v = vary[i], wv = warmv[i]; r = r * v + wv; gg = gg * v + wv * .4; b = b * v - wv * .3; }
       if (md === 3 || md === 4) { const k = md === 3 ? .62 : .78; r *= k; gg *= k; b *= k * 1.06; }
       else if (md === 5) { r += (255 - r) * .14; gg += (255 - gg) * .14; b += (255 - b) * .08; }

@@ -126,7 +126,7 @@ def sheets_for(names, cap=None):
 
 
 STALE = []
-def restyle_sheet(key, sheet, prompt, seed=7, denoise=1.0, steps=4):
+def restyle_sheet(key, sheet, prompt, seed=7, denoise=1.0, steps=4, img2=None):
     if denoise < 1: key += f'_d{int(round(denoise * 100))}' + (f's{steps}' if steps != 4 else '')
     src = WORK / f'{key}_in.png'; res = WORK / f'{key}_out.png'
     src.parent.mkdir(parents=True, exist_ok=True)
@@ -139,7 +139,7 @@ def restyle_sheet(key, sheet, prompt, seed=7, denoise=1.0, steps=4):
     if not res.exists():
         sheet.save(src)
         mp = min(2.2, max(.6, sheet.width * sheet.height / 1e6))
-        restyle.run(restyle.upload(src), prompt, res, seed=seed, mp=mp, denoise=denoise, steps=steps)
+        restyle.run(restyle.upload(src), prompt, res, seed=seed, mp=mp, denoise=denoise, steps=steps, img2=restyle.upload(img2) if img2 else None)
     return align(Image.open(res).convert('RGBA').resize(sheet.size, Image.LANCZOS), sheet)
 
 

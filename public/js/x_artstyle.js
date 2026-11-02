@@ -19,7 +19,7 @@ PIX.get = (f => function (n) {
   const st = STYLE_ATLAS[SETTINGS.artStyle], sf = st && st.map[n];
   if (!sf) return f.call(this, n);
   if (this.cache[n]) return this.cache[n];
-  const base = this.map[n] || { w: sf.w / sf.k, h: sf.h / sf.k };
+  const base = this.map[n] || this.map[n.replace(/_glow$/, '')] || { w: sf.w / sf.k, h: sf.h / sf.k };   // a building's night glow shares its box
   const c = mk(sf.w, sf.h, x => x.drawImage(st.imgs[sf.p || 0], sf.x, sf.y, sf.w, sf.h, 0, 0, sf.w, sf.h));
   c.ww = base.w / 2; c.wh = base.h / 2; if (base.ax !== undefined) { c.ax = base.ax / 2; c.ay = base.ay / 2; }
   if (sf.k > 1) c.hi = sf.k;
@@ -97,6 +97,8 @@ humanSpr = (f => function () {
   let s = SMOOTH.get(c); if (!s) { s = paintedLook(scale2x(scale2x(c))); SMOOTH.set(c, s); }
   return s;
 })(humanSpr);
+// the painted night glow of a building's windows (art/style_free.py), or null
+const styleGlow = n => { const st = STYLE_ATLAS[SETTINGS.artStyle]; return n && st && st.map[n + '_glow'] ? PIX.get(n + '_glow') : null; };
 // switching: drop every cached sprite and painted chunk so they're made again from the new atlas
 function applyArtStyle() {
   return loadStyle(SETTINGS.artStyle).then(() => {
