@@ -56,7 +56,7 @@ function genCastle() {
   for (let y = 0; y <= 48; y++) { road(7, y); road(8, y); }
   for (let x = 7; x <= GATE + 1; x++) { road(x, 47); road(x, 48); }
   for (let y = 19; y <= 48; y++) { road(GATE, y); road(GATE + 1, y); }
-  for (let x = 16; x <= 56; x++) { road(x, 32); }                       // the cross path to the glasshouses
+  for (let x = 21; x <= 52; x++) { road(x, 32); }                       // the cross path to the glasshouse doors (it used to run on to the side walls, which have no gate)
   road(21, 31); road(52, 31);
   // the courtyard: lawns, beds and lanterns
   const scatter = (n, x0, y0, x1, y1, f) => { for (let i = 0; i < n; i++) { const x = x0 + Math.floor(R() * (x1 - x0)), y = y0 + Math.floor(R() * (y1 - y0)); if (!getO(m, x, y) && getT(m, x, y) === 'g') f(x, y); } };

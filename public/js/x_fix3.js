@@ -214,11 +214,11 @@ if (IT.haft) IT.haft.p = 8; if (IT.grip) IT.grip.p = Math.min(IT.grip.p, 8);
 if (ANIMAL.goat) ANIMAL.goat.price = 1200;
 const _newStateF3 = newState;
 newState = function (seed) { const o = _newStateF3(seed); if (o.inv && o.inv.bread) { o.inv.trail_bread = (o.inv.trail_bread || 0) + o.inv.bread; delete o.inv.bread; } return o; };
-// a signpost where the paddock road ends, and a few weeds, stones and twigs near the tent on a new farm
+// a few weeds, stones and twigs near the tent on a new farm
 const _genFarmF3 = genFarm;
 genFarm = function () {
   const m = _genFarmF3();
-  if (typeof signAt === 'function') signAt(m, 31, 8, 'The road east ends at the paddock. To the village: take the lower road, south of the fence.');
+  // (the paddock signpost was taken out again: not every farm road needs a sign; old saves lose it in the 'map' handler below)
   S.flags = S.flags || {};
   if (!S.flags.tentDebris && S.freshFarm) { S.flags.tentDebris = 1; const R2 = rng(S.seed + 77);
     for (let k = 0; k < 40; k++) { const x = 3 + Math.floor(R2() * 22), y = 11 + Math.floor(R2() * 7); if (getT(m, x, y) !== 'g' || getO(m, x, y) || m.solidB[y * m.w + x] || (Math.abs(x - 10) < 3 && y < 12)) continue; setO(m, x, y, R2() < .45 ? { k: 'weed' } : R2() < .6 ? { k: 'stone' } : R2() < .8 ? { k: 'twig' } : { k: 'tgrass' }); } }
@@ -258,3 +258,5 @@ renderCSkills = function (b) {
 
 /* ---------- 9 text ---------- */
 for (const k in IT) { const it = IT[k]; if (typeof it.desc === 'string') it.desc = it.desc.replace(/\.\s*$/, ''); }
+
+EVT.on('map', id => { const m = MAPS[id]; if (id !== 'farm' || !m) return; for (let i = 0; i < m.o.length; i++) { const o = m.o[i]; if (o && o.k === 'sign' && /ends at the paddock/.test(o.text || '')) m.o[i] = null; } });

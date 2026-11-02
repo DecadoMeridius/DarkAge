@@ -198,7 +198,8 @@ def defringe(part, mask, gen):
     for band in (max(2, gen), max(1, gen // 2)):   # thin things (bows, poles) get a narrower band, or none
         known = np.asarray(mask.filter(ImageFilter.MinFilter(2 * band + 1))) > 250
         if known.sum() >= area * .45: break
-    else: return part, mask
+    else:   # too thin for a band: just the mask (returning the part as it was left it opaque, a box of card)
+        out = part.convert('RGBA'); out.putalpha(mask); return out, mask
     rgb = np.asarray(part.convert('RGB'), dtype=np.float32).copy()
     for r in (band, band * 2, band * 4, band * 8):
         k = known.astype(np.float32); den = boxblur(k, r)

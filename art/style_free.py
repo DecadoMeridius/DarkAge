@@ -15,13 +15,17 @@ import numpy as np
 sys.argv = [sys.argv[0], 'painterly'] + sys.argv[1:]
 import style_build as sb
 
+# the game's view, for every object: flat and straight-on like the pixel art (painted freely, objects drifted into
+# a turned 3D view: an isometric keep and cottage, a fountain seen from an angle)
+FLAT = ('Paint everything flat and straight-on, in exactly the same view as the pixel art: fronts facing us, tops seen '
+        'from above, like a classic 2D top-down RPG. No perspective, no isometric or turned 3D view.')
 KEY = (255, 0, 255, 255)   # a magenta card: whatever the model paints on it (shadows, glow) stays magenta-ish
 FREE = ('Transform these pixel-art game sprites into beautiful, richly detailed hand-painted fantasy RPG art in the '
         'style of a painted storybook: visible oil brush strokes, soft form shading, rich colour, the same three-quarter top-down view. '
         'The pixel art is only a rough guide to what each object is, how big it is and where it stands: redesign it '
         'freely with more detail and charm, but keep every object in its own place and about its size.{} '
         'Nothing may stay pixel art. Do not add new objects. The background stays plain flat magenta: no shadows, no '
-        'light rays, no glow, no ground.')
+        'light rays, no glow, no ground. ' + FLAT)
 BLD = ' Keep doors and windows about where they are.'
 # every base sheet gets the same style reference as a second image: the painted example scenes the user picked
 # (docs/artstyles/painterly, village and town side by side), so sheets painted separately keep that one style
@@ -31,9 +35,7 @@ FREE_REF = ('Image 1 is a sheet of pixel-art game sprites on magenta. Repaint ev
             'are, row by row from the top left: {}. The pixel art is only a rough guide to what each one is, how big it is '
             'and where it stands: redesign it freely with more detail and charm, but keep every object in its own place and '
             'about its size.{} Nothing may stay pixel art. Do not copy anything from image 2 and do not add new objects. '
-            'The background stays plain flat magenta: no shadows, no light rays, no glow, no ground.')
-NIGHT = ('warm golden candlelight glows from inside every window, the panes lit bright yellow and orange; keep the '
-         'daylight colours everywhere else, change nothing else')   # the difference from the day painting is the night window glow
+            'The background stays plain flat magenta: no shadows, no light rays, no glow, no ground. ' + FLAT)
 VAR = ('Edit these painted game objects: {}. Keep everything else exactly as it is: the same painted style, designs, '
        'colours, sizes and positions. Paint the change in the same soft painted brushwork. The background stays plain '
        'flat magenta.')
@@ -95,13 +97,24 @@ def background(a):
 PAD = .35   # room round each sprite (of its size) for the painting to grow into
 
 
-def sheet_for(names, gen):
+def soften_up(im, gen):
+    """enlarge without pixel steps: smooth enlargement, then a blur of about half an art px (colour premultiplied, so
+    the edge doesn't pick up a dark rim) and the outline sharpened back"""
+    a = np.asarray(im.resize((im.width * gen, im.height * gen), Image.BICUBIC), dtype=np.float32); al = a[..., 3:] / 255
+    pm = Image.fromarray(np.clip(np.concatenate([a[..., :3] * al, a[..., 3:]], -1), 0, 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(gen * .55))
+    b = np.asarray(pm, dtype=np.float32); A = b[..., 3:] / 255
+    return Image.fromarray(np.clip(np.concatenate([b[..., :3] / np.maximum(A, 1e-3), np.clip((A - .5) * 3 + .5, 0, 1) * 255], -1), 0, 255).astype(np.uint8))
+
+
+def sheet_for(names, gen, soft=False):
     pads = {n: int(max(sb.atlas[n]['w'], sb.atlas[n]['h']) * PAD) for n in names}
     pad = max(pads.values())
     (w, h), pos = sb.shelf(names, pad=pad)
     sheet = Image.new('RGBA', (w * gen, h * gen), KEY)
     for n, (x, y) in pos.items():
-        sheet.alpha_composite(sb.crop(n).resize((sb.atlas[n]['w'] * gen, sb.atlas[n]['h'] * gen), Image.NEAREST), (x * gen, y * gen))
+        im = sb.crop(n)
+        im = soften_up(im, gen) if soft else im.resize((im.width * gen, im.height * gen), Image.NEAREST)
+        sheet.alpha_composite(im, (x * gen, y * gen))
     return sheet, pos, pad
 
 
@@ -146,12 +159,18 @@ def cut(res, n, x, y, pad, gen, bgc):
     ys, xs = np.nonzero(alpha)
     bx0, bx1, by0, by1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
     m = Image.fromarray((alpha * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(gen * .25))
-    part = win.copy(); part, m = sb.defringe(part, m, gen); part.putalpha(m)
+    part = win.copy(); part, m = sb.defringe(part, m, gen)
+    # despill: near the edge, pink and magenta tints from the card are pulled back to neutral (min(r, b) down to g)
+    edge = np.asarray(m.filter(ImageFilter.MinFilter(2 * (3 * gen) + 1))) < 250
+    px_ = np.asarray(part.convert('RGB'), dtype=np.int16).copy(); r, g_, b = px_[..., 0], px_[..., 1], px_[..., 2]
+    sp = np.clip(np.minimum(r, b) - g_ - 8, 0, None) * edge
+    px_[..., 0] -= sp; px_[..., 2] -= sp
+    part = Image.fromarray(np.clip(px_, 0, 255).astype(np.uint8)).convert('RGBA'); part.putalpha(m)
     return part.crop((bx0, by0, bx1, by1)), (X0 + bx0 - x * gen, Y0 + by0 - y * gen)   # and where it sits against the sprite's box, GEN px
 
 
 def paint_sheet(key, names, gen, seed=7):
-    sheet, pos, pad = sheet_for(names, gen)
+    sheet, pos, pad = sheet_for(names, gen, soft=gen == 8 or bool(REDO & set(names)) and not any(n.startswith('bld_') for n in names))
     order = sorted(pos, key=lambda n: (pos[n][1], pos[n][0]))
     bld = BLD if all(n.startswith('bld_') for n in names) else ''
     if STYLE_REF.exists(): res = sb.restyle_sheet(key, sheet, FREE_REF.format('; '.join(describe(n) for n in order), bld), seed=seed, img2=STYLE_REF)
@@ -245,7 +264,7 @@ def frame_of(n, got, gen):
     """the cut painting as an atlas frame: free (ox / oy against the pixel box) or fitted into the box (CONTAIN)"""
     part, (ox, oy) = got
     bw, bh = sb.atlas[n]['w'], sb.atlas[n]['h']; pw, ph = part.width / gen, part.height / gen
-    lim = (.25, 4) if n.startswith(CONTAIN) else (.45, 1.8)   # icons and decals are fitted into their box anyway
+    lim = (.25, 4) if n.startswith(CONTAIN) else (.45, 2.2)   # icons and decals are fitted into their box anyway
     if not (lim[0] < pw / bw < lim[1] and lim[0] < ph / bh < lim[1]): return None
     if n.startswith(CONTAIN):
         s = min(bw / pw, bh / ph); im = part.resize((max(1, int(pw * s * sb.K)), max(1, int(ph * s * sb.K))), Image.LANCZOS)
@@ -272,25 +291,85 @@ def realign(ed, base):
     return out
 
 
+def door_x(part, n, gen):
+    """where the door is in a painted building (art px from its left), found by matching the pixel sprite's door
+    strip along the bottom of the painting; None if nothing matches well"""
+    bw, bh = sb.atlas[n]['w'], sb.atlas[n]['h']; dcx = (bw // 32 // 2) * 32 + 16
+    lum = lambda im: np.asarray(im.convert('L'), dtype=np.float32)
+    T = lum(sb.crop(n))[bh - 50:bh - 2, dcx - 26:dcx + 26]; T = T - T.mean()
+    P = lum(part.resize((max(1, part.width // gen), max(1, part.height // gen)), Image.BOX)); ph, pw = P.shape
+    best, bx = -2, None
+    th, tw = T.shape
+    if tw == 0 or th == 0 or ph < th or pw < tw: return None
+    for Y in range(max(0, ph - th - 14), ph - th + 1):
+        for X in range(0, pw - T.shape[1]):
+            W_ = P[Y:Y + T.shape[0], X:X + T.shape[1]]; W_ = W_ - W_.mean()
+            c = float((W_ * T).sum() / (np.sqrt((W_ * W_).sum() * (T * T).sum()) + 1e-3))
+            if c > best: best, bx = c, X + 26
+    return bx if best > .35 else None
+
+
+def place(n, part, gen):
+    """where a free painting goes against its pixel box (art px): the model sometimes draws a whole sheet shifted,
+    so the place on the sheet means nothing. Standing on the box's bottom line; buildings with their painted door
+    on the entrance (the middle tile of the bottom row, buildings.py dcx), everything else centred"""
+    bw, bh = sb.atlas[n]['w'], sb.atlas[n]['h']; pw, ph = part.width / gen, part.height / gen
+    ox = (bw - pw) / 2
+    if n.startswith('bld_') and 'stall' not in n:
+        dx = door_x(part, n, gen)
+        if dx is not None and abs((bw // 32 // 2) * 32 + 16 - dx - ox) < 40: ox = (bw // 32 // 2) * 32 + 16 - dx
+    return ox * gen, (bh - ph) * gen
+
+
+def window_glow(part, wins, ox, oy, gen):
+    """the lit windows of a painted building, worked out from the day painting: the glass (bluish or dark pixels)
+    within reach of each window the pixel sprite has, filled with one even warm light, brighter in the middle.
+    (A model-painted night version was tried: it lit walls and painted the panes in rainbow bands.)"""
+    a = np.asarray(part.convert('RGB'), dtype=np.int16); al = np.asarray(part.getchannel('A')) > 200
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]; lum = (r * 3 + g * 6 + b) / 10
+    glass = al & ((b > r + 12) | (lum < 70))
+    near = np.zeros(glass.shape, bool); m_ = 3 * gen; H, W = glass.shape
+    for wx, wy, ww, wh in wins:
+        x0, y0 = max(0, int(wx * gen - ox - m_)), max(0, int(wy * gen - oy - m_))
+        near[y0:max(y0, int((wy + wh) * gen - oy + m_)), x0:max(x0, int((wx + ww) * gen - ox + m_))] = True
+    m = glass & near
+    mi = Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(3)).filter(ImageFilter.MaxFilter(3))   # no single specks
+    core = np.asarray(mi.filter(ImageFilter.MinFilter(max(3, gen | 1)))) > 0
+    soft = np.asarray(mi.filter(ImageFilter.GaussianBlur(gen * .5)), dtype=np.float32) / 255
+    out = np.zeros((H, W, 4), np.uint8)
+    out[..., 0] = 255; out[..., 1] = np.where(core, 222, 176); out[..., 2] = np.where(core, 140, 84)
+    out[..., 3] = (soft * 255).astype(np.uint8)
+    return Image.fromarray(out)
+
+
 def build():
     names = [n for n in sb.atlas if not n.startswith(('hb_', 'ic_', 'ground_')) and not sb.is_template(n)]
-    hybrid = {n for n in names if re.search(r'\.\d+$', n) or sb.family(n) in HYBRID_FAM}
+    hybrid = {n for n in names if re.search(r'\.\d+$', n) or sb.family(n) in HYBRID_FAM or n.startswith('gi_')}   # item icons stay true to their design (a free hoe became a battleaxe)
     free = [n for n in names if n not in hybrid]
     par = plan(free)
     bases = [n for n in free if n not in par]
     frames, failed = {}, []
-    sheets = base_sheets(bases)
+    # grouped sheets, as the trees and houses the user liked were painted.
+    # Small sprites (8x) and the redone props are fed softened (drawn at 2x, then smoothly enlarged): crisp enlarged
+    # pixels came back as tidied pixel art, a soft input comes back painted, like the houses. The redone props share
+    # one sheet; the keep is painted beside two village buildings (CASTLE_WITH), else it came out isometric 3D.
+    sheets = [(g, [n for n in ns if n not in REDO]) for g, ns in base_sheets(bases)]
+    sheets = [(g, ns) for g, ns in sheets if ns]
+    sheets += [(4, sorted(n for n in REDO if n in bases and not n.startswith('bld_')))]
+    sheets += [(gen_for(n), [n] + CASTLE_WITH) for n in sorted(REDO) if n in bases and n.startswith('bld_castle')]
     if ONLY: sheets = [(g, ns) for g, ns in sheets if any(n.startswith(tuple(ONLY)) for n in ns)]
     print(f'{len(sheets)} free sheets ({len(bases)} bases, {len(par)} variants), {len(hybrid)} kept to the pixel outline', flush=True)
     if '--dry' in sys.argv: return {}
     seen = set()
+    global PLACE, BASEOFF; PLACE, BASEOFF = {}, {}
     for i, (gen, ns) in enumerate(sheets):
         key = f'F_{gen}_' + '_'.join(sorted(n[:5] for n in ns))[:40] + f'_{len(ns)}'
         if key in seen: key += f'_b{i}'   # two sheets with the same short name must not share a cache
         seen.add(key)
         base, sheet, pos, pad = paint_sheet(key, ns, gen)
         imgs = {(): base}
-        kids = [n for n in par if root(n, par)[0] in pos]
+        comp = set(CASTLE_WITH) & set(ns) if any(n.startswith('bld_castle') for n in ns) else set()   # company: cut from their own sheets
+        kids = [n for n in par if root(n, par)[0] in pos and root(n, par)[0] not in comp]   # (no edits for the company)
         for n in sorted(kids, key=lambda n: len(root(n, par)[1])):
             b, path = root(n, par)
             for j in range(1, len(path) + 1):   # each edit on the sheet once, built on the one before
@@ -298,27 +377,20 @@ def build():
                 e = path[j - 1]; what = EDIT[e.split(':')[0]].format(*e.split(':')[1:])
                 ed = sb.restyle_sheet(f'{key}_' + '_'.join(x.replace(':', '-').replace(' ', '') for x in path[:j]), imgs[path[:j - 1]], VAR.format(what))
                 imgs[path[:j]] = realign(ed, imgs[path[:j - 1]])
-        glow = None
-        if any((sb.atlas[n].get('meta') or {}).get('win') for n in list(pos) + kids):   # buildings with windows: where the painting's windows are lit
-            lit = realign(sb.restyle_sheet(f'{key}_night', base, VAR.format(NIGHT)), base)
-            a, l = np.asarray(base.convert('RGB'), dtype=np.float32), np.asarray(lit.convert('RGB'), dtype=np.float32)
-            d = np.clip(l - a, 0, 255); lum = l @ np.array([.3, .59, .11], dtype=np.float32)
-            warm = (l[..., 0] > l[..., 2] + 40) & (d.sum(-1) > 90) & (lum > 150) & ~background(l.astype(np.int16))   # only bright warm light, never the card
-            glow = Image.fromarray((d * warm[..., None]).clip(0, 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(gen * .4))
-        for n in list(pos) + kids:
+        glow = True   # window light: computed from each painting (see window_glow)
+        for n in [n for n in pos if n not in comp] + kids:
             b, path = root(n, par); x, y = pos[b]
             if b in failed: failed.append(n); continue   # a variant of a failed base goes the old way too, so they match
             got = cut(imgs[path], b, x, y, pad, gen, None)
+            if got and not path: BASEOFF[b] = got[1]
+            if got and b not in PLACE: PLACE[b] = place(b, got[0], gen)   # variants stand where their base does (they're realigned to it)
+            if got: got = (got[0], (PLACE[b][0] + (got[1][0] - BASEOFF[b][0] if b in BASEOFF else 0), PLACE[b][1] + (got[1][1] - BASEOFF[b][1] if b in BASEOFF else 0)))
             f = frame_of(n, got, gen) if got else None
             if f: frames[n] = f
             else: failed.append(n); continue
             if glow is not None and len(f) > 2 and (sb.atlas[n].get('meta') or {}).get('win'):
                 part, (ox, oy) = got; X, Y = x * gen + ox, y * gen + oy
-                gl = glow.crop((X, Y, X + part.width, Y + part.height)).convert('RGBA')
-                near = Image.new('L', gl.size, 0); dr = ImageDraw.Draw(near); m_ = 5 * gen   # only near the building's windows
-                for wx, wy, ww, wh in sb.atlas[n]['meta']['win']: dr.rectangle((wx * gen - ox - m_, wy * gen - oy - m_, (wx + ww) * gen - ox + m_, (wy + wh) * gen - oy + m_), fill=255)
-                near = near.filter(ImageFilter.GaussianBlur(gen * 2))
-                gl.putalpha(Image.fromarray(np.minimum(np.asarray(part.getchannel('A')), np.asarray(near))))
+                gl = window_glow(part, sb.atlas[n]['meta']['win'], ox, oy, gen)
                 frames[n + '_glow'] = (gl.resize(f[0].size, Image.LANCZOS), sb.K, f[2])
         print(f'[{i + 1}/{len(sheets)}] {key} ({len(ns)} + {len(kids)} variants)', flush=True)
     if failed: print('  no fitting painting, painted to the pixel outline:', ' '.join(failed), flush=True)
@@ -332,6 +404,11 @@ def build():
     return frames
 
 
+# painted wrong the first time (2026-11-02: a fire in the well, a bare lamp post, a glossy fountain, the keep too tall):
+# each gets a sheet of its own, so it's painted again with its description and nothing else to confuse it
+PLACE, BASEOFF = {}, {}
+CASTLE_WITH = ['bld_tavern_7x6', 'bld_manor_7x5']   # painted again with the keep only as style company (their own frames come from their own sheets)
+REDO = {'well', 'lantern_off', 'fountain', 'bld_castle_18x10', 'board', 'storage'}
 ONLY = next((a.split('=', 1)[1].split(',') for a in sys.argv if a.startswith('--only=')), None)
 if __name__ == '__main__' and '--build' in sys.argv:
     frames = build()

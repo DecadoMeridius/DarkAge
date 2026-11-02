@@ -122,10 +122,10 @@ function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
   const texs = layers.map(L => groundPixels(L, s, th)), tws = texs.map(T => T ? Math.round(Math.sqrt(T.length / 4)) : 64);
   const tmean = texs.map(T => { if (!T) return [128, 128, 128]; const a = [0, 0, 0]; for (let i = 0; i < T.length; i += 64) { a[0] += T[i]; a[1] += T[i + 1]; a[2] += T[i + 2]; } const n = T.length / 64; return a.map(v => v / n); });
   const TC = .7;   // a painted ground is calmer than its texture (the example scenes: shadows read on it)
-  const SOFT = { s: 1, a: 1, st: 1, d: 1, sn: 1, g: 1, i: 1 }, soft = layers.map(L => !!SOFT[L]);   // natural grounds take the mirrored copy; paving and floors would show doubled stones
+  const SOFT = { s: 1, a: 1, st: 1, d: 1, sn: 1, g: 1, i: 1, p: 2 }, soft = layers.map(L => SOFT[L] || 0);   // 2: paving switches copies sharply (a soft blend showed doubled stones)   // natural grounds take the mirrored copy; paving and floors would show doubled stones
   const wet = layers.map(L => L === 'w' || L === 'l'), mode = new Uint8Array(N * N);   // 1 foam, 2 lava foam, 3/4 lip, 5 rim, 6 outside a room
-  const vary = new Float32Array(N * N), warmv = new Float32Array(N * N), mixw = new Float32Array(N * N);   // broad light and colour drift, and patches where a mirrored, shifted copy of the texture takes over, so it doesn't read as repeating tiles
-  for (let py = 0; py < N; py++) for (let px_ = 0; px_ < N; px_++) { const ax = ox + px_, ay = oy + py, i = py * N + px_; vary[i] = .86 + fbm(ax * .011, ay * .011, 31, 3) * .28; warmv[i] = (fbm(ax * .007 + 40, ay * .007, 37, 2) - .5) * 26; const t = Math.min(1, Math.max(0, (fbm(ax * .021 + 9, ay * .021, 43, 2) - .4) * 5)); mixw[i] = t * t * (3 - 2 * t); }
+  const vary = new Float32Array(N * N), warmv = new Float32Array(N * N), mixw = new Float32Array(N * N), mixs = new Uint8Array(N * N);   // broad light and colour drift, and patches where a mirrored, shifted copy of the texture takes over, so it doesn't read as repeating tiles
+  for (let py = 0; py < N; py++) for (let px_ = 0; px_ < N; px_++) { const ax = ox + px_, ay = oy + py, i = py * N + px_; vary[i] = .86 + fbm(ax * .011, ay * .011, 31, 3) * .28; warmv[i] = (fbm(ax * .007 + 40, ay * .007, 37, 2) - .5) * 26; const fb = fbm(ax * .021 + 9, ay * .021, 43, 2), t = Math.min(1, Math.max(0, (fb - .4) * 5)); mixw[i] = t * t * (3 - 2 * t); const f2 = fbm(ax * .017 + 71, ay * .017 + 13, 47, 2); mixs[i] = f2 > .56 ? 2 : fb > .48 ? 1 : 0; }
   for (let py = 0; py < N; py++) for (let px_ = 0; px_ < N; px_++) {
     const i = py * N + px_, L = lay[i]; if (L === 255) { mode[i] = 6; continue; }
     const up = py > 0 ? lay[i - N] : L, up2 = py > 1 ? lay[i - 2 * N] : L, dn = py < N - 1 ? lay[i + N] : L;
@@ -157,8 +157,11 @@ function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
       const T = texs[L], tw = tws[L], P = tw > 64 ? tw : P64, hx = (((ox * GK + X) % P) + P) % P, hyy = (((oy * GK + Y) % P) + P) % P;  // a styled texture repeats every tw px (128 art px), a plain one every 64 art px
       const to = (((hyy * tw / P) | 0) * tw + ((hx * tw / P) | 0)) * 4;
       let r = T ? T[to] : 128, gg = T ? T[to + 1] : 128, b = T ? T[to + 2] : 128;
-      const mw = soft[L] ? mixw[i] : 0;
-      if (T && mw > 0) {   // the second copy: mirrored and shifted by an odd amount (both still tile)
+      const mw = soft[L] === 2 ? (mixs[i] ? 1 : 0) : soft[L] ? mixw[i] : 0;
+      if (T && soft[L] === 2 && mixs[i] === 2) {   // paving's third copy: turned a quarter (rows for columns) and shifted
+        const t3 = ((((hx + (P * .23 | 0)) % P) * tw / P | 0) * tw + (((hyy + (P * .71 | 0)) % P) * tw / P | 0)) * 4;
+        r = T[t3]; gg = T[t3 + 1]; b = T[t3 + 2];
+      } else if (T && mw > 0) {   // the second copy: mirrored and shifted by an odd amount (both still tile)
         const t2 = ((((hyy + (P * .37 | 0)) % P) * tw / P | 0) * tw + ((P - 1 - (hx + (P * .61 | 0)) % P) * tw / P | 0)) * 4;
         r += (T[t2] - r) * mw; gg += (T[t2 + 1] - gg) * mw; b += (T[t2 + 2] - b) * mw;
       }
