@@ -54,7 +54,7 @@ DESC = {
     'cart': 'a wooden hand cart', 'wreck': 'the wreck of a wooden boat', 'ferry': 'a wooden ferry boat at a jetty', 'cave': 'a dark cave mouth in rock',
     'scarecrow': 'a straw scarecrow', 'ruinwall': 'a crumbling ivy-covered stone ruin wall', 'cracked': 'a cracked boulder', 'meteor': 'a glowing meteorite',
     'boulder': 'a large grey boulder', 'obsboulder': 'a black obsidian boulder', 'iceboulder': 'a boulder of blue ice', 'crystalnode': 'a cluster of crystals',
-    'rock': 'a grey rock', 'rockS': 'a small rock', 'rockA': 'a rock', 'rockC': 'a rock', 'stone': 'a small grey stone', 'twig': 'a fallen twig', 'log': 'a cut log',
+    'rock': 'a grey boulder-like rock', 'rockS': 'a small grey rock', 'rockA': 'a mossy grey rock', 'rockC': 'a cracked brown rock', 'stone': 'a small grey stone', 'twig': 'a fallen twig', 'log': 'a cut log',
     'stump': 'a tree stump', 'bramble': 'a thorny bramble bush', 'fern': 'a fern', 'cattail': 'cattail reeds', 'mushroom': 'a mushroom', 'shell': 'a seashell',
     'page': 'a lost torn journal page', 'shard': 'a glowing ember shard', 'dead': 'a dead dry bush', 'bin': 'a wooden shipping bin', 'storage': 'a storage chest',
     'clay_mound': 'a mound of wet clay', 'salt_crust': 'a crust of white salt', 'soil_dry': 'dry tilled soil', 'soil_wet': 'wet dark tilled soil',
@@ -83,7 +83,7 @@ def describe(n):
         what = ' '.join(CODE.get(x, x) for x in rest if len(x) > 1)
         return f'{reg} {what} building' if reg else f'a {what} building'
     if kind in ('furn', 'dec'): parts = parts[1:]
-    if kind == 'ore': return f'a rock with {parts[1]} ore veins'
+    if kind == 'ore': return f'a grey rock with glinting {parts[1]} ore veins and nuggets'
     if kind == 'pet': return f'a {parts[1]} bed'
     return 'a ' + ' '.join(CODE.get(x, x) for x in parts)
 
@@ -413,13 +413,19 @@ def build():
         frames.update(fr_); failed += fa_
         print(f'[{i + 1}/{len(sheets)}] {key} ({len(ns)} + {nk} variants)', flush=True)
     if failed: print('  no fitting painting, painted to the pixel outline:', ' '.join(failed), flush=True)
-    # the twig and the stump on a roomy sheet of their own (on the small sheet the painted stump reached into the twig's
-    # cell, half stump, half twig); these frames replace the ones above
-    ROOMY = [n for n in ('twig', 'stump') if n in bases]
-    if ROOMY and not (ONLY and not any(n.startswith(tuple(ONLY)) for n in ROOMY)):
+    # Small objects that came out wrong on the crowded small sheet get roomy sheets of their own, with each one named
+    # in the prompt (on the small sheet the stump reached into the twig's cell; rocks and ores stayed pixel-like).
+    # These frames replace the ones above.
+    for skey, wanted in ROOMY_SHEETS:
+        ns_ = [n for n in wanted if n in bases]
+        if not ns_ or (ONLY and not any(n.startswith(tuple(ONLY)) for n in ns_)): continue
         global PAD
-        P0, PAD = PAD, 1.2
-        try: base, sheet, pos, pad = paint_sheet('F_8_roomy_twig_stump', ROOMY, 8, soft=True)
+        P0, PAD = PAD, 1.0
+        try:
+            sheet, pos, pad = sheet_for(ns_, 8, soft=True)
+            order = sorted(pos, key=lambda n: (pos[n][1], pos[n][0]))
+            prompt = FREE.format('') + ' The objects are, row by row from the top left: ' + '; '.join(describe(n) for n in order) + '.'
+            base = sb.restyle_sheet(skey, sheet, prompt)
         finally: PAD = P0
         CELLS[:] = [(px * 8, py * 8, (px + sb.atlas[m]['w']) * 8, (py + sb.atlas[m]['h']) * 8) for m, (px, py) in pos.items()]
         for n, (x, y) in pos.items():
@@ -455,6 +461,9 @@ def build():
 # painted wrong the first time (2026-11-02: a fire in the well, a bare lamp post, a glossy fountain, the keep too tall):
 # each gets a sheet of its own, so it's painted again with its description and nothing else to confuse it
 PLACE, BASEOFF = {}, {}
+ROOMY_SHEETS = [('F_8_roomy_twig_stump', ['twig', 'stump']),
+                ('F_8_roomy_rocks', ['stone', 'rock', 'rockS', 'rockA', 'rockC', 'clay_mound', 'salt_crust']),
+                ('F_8_roomy_ores', sorted(n for n in sb.atlas if n.startswith('ore_')))]
 PIXEL_ONLY = set()   # sprites kept as pixel art in the painted style
 FAITHFUL = set()   # painted over their own outline (the fountain was, but alone on a sheet the model zoomed in and its top and base were cut off)
 CELLS = []   # the cells of the sheet being cut (GEN px boxes)
