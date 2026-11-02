@@ -77,7 +77,11 @@ function applyGraphics() {
   if (SETTINGS.fps && !f) { f = el('div', { id: 'fpsbox' }); Object.assign(f.style, { position: 'fixed', left: '8px', bottom: '8px', zIndex: 60, font: '600 12px Fredoka, sans-serif', color: '#fff6e0', background: 'rgba(42,28,24,.7)', padding: '2px 6px', pointerEvents: 'none' }); document.body.append(f); }
   if (!SETTINGS.fps && f) f.remove();
 }
-{ let n = 0, t0 = performance.now(); const tick = () => { n++; const t = performance.now(); if (t - t0 >= 1000) { const f = document.getElementById('fpsbox'); if (f) f.textContent = Math.round(n * 1000 / (t - t0)) + ' fps'; n = 0; t0 = t; } requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
+// the frame rate follows the screen's refresh (vsync), so the counter also shows how long the game's own work takes
+// per frame: the real headroom (16.7 ms is a 60 Hz frame)
+let FRAME_MS = 0;
+if (typeof loop === 'function') loop = (f => function () { const t = performance.now(); try { return f.apply(this, arguments); } finally { FRAME_MS = FRAME_MS * .92 + (performance.now() - t) * .08; } })(loop);
+{ let n = 0, t0 = performance.now(); const tick = () => { n++; const t = performance.now(); if (t - t0 >= 1000) { const f = document.getElementById('fpsbox'); if (f) f.textContent = Math.round(n * 1000 / (t - t0)) + ' fps · ' + FRAME_MS.toFixed(1) + ' ms work'; n = 0; t0 = t; } requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
 applyGraphics();
 
 /* ---- controls: rebinding ---- */
