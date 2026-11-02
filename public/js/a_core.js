@@ -45,7 +45,10 @@ function sh(hex, k) {
 const rgba = (hex, a) => { const [r, g2, b] = h2r(hex); return `rgba(${r},${g2},${b},${a})`; };
 
 /* ---- canvas helpers ---- */
-function mk(w, h, f) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; if (f) f(x, c); return c; }
+// the browser may drop a canvas's pixels under GPU memory pressure (context lost: it comes back blank); cached sprites
+// carry __lost so the caches rebuild them (playtest 2026-11-03: guards drawn as floating swords)
+const markLost = c => c.addEventListener('contextlost', () => { c.__lost = 1; });
+function mk(w, h, f) { const c = document.createElement('canvas'); c.width = w; c.height = h; markLost(c); const x = c.getContext('2d'); x.imageSmoothingEnabled = false; if (f) f(x, c); return c; }
 // a canvas in normal memory, for pixels the code reads back (getImageData on a GPU canvas makes the CPU wait for the GPU)
 function mkCPU(w, h, f) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d', { willReadFrequently: true }); x.imageSmoothingEnabled = false; if (f) f(x, c); return c; }
 function px(x, X, Y, W, H, c) { x.fillStyle = c; x.fillRect(X, Y, W, H); }

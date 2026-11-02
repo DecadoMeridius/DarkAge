@@ -8,7 +8,7 @@ let CHUNK_DEADLINE = 0, CHUNK_SYNC = 0;   // this frame's time for ground painti
 function getChunk(m, cx, cy, prefetch) {
   if (!m.uid) m.uid = ++UIDN;
   const pos = m.uid + '|' + cx + ',' + cy, key = pos + '|' + (m.cv || 0) + '.' + (m.cvc && m.cvc[cx + ',' + cy] || 0) + '|' + (m.indoor || m.dark ? 0 : S.season);
-  const e = CHUNK.get(key); if (e) { e.t = gameT; return e.c; }
+  const e = CHUNK.get(key); if (e && !e.c.__lost) { e.t = gameT; return e.c; } if (e) CHUNK.delete(key);
   // painted-style ground is painted in slices (CHUNK_JOBS), a few ms a frame, the old picture shown meanwhile; a chunk
   // with nothing to show yet on a fresh map, or after a jump, is finished at once
   const job = CHUNK_JOBS.get(key);
@@ -29,7 +29,11 @@ function getChunk(m, cx, cy, prefetch) {
   trimChunks();
   return c;
 }
-function trimChunks() { while (CHUNK.size > 72) { let ok = null, ot = 1e9; for (const [k2, v] of CHUNK) if (v.t < ot) { ot = v.t; ok = k2; } CHUNK.delete(ok); } }
+function trimChunks() {
+  while (CHUNK.size > 72) { let ok = null, ot = 1e9; for (const [k2, v] of CHUNK) if (v.t < ot) { ot = v.t; ok = k2; } CHUNK.delete(ok); }
+  // the stand-in pictures go with them (this map grew without end: GPU memory pressure blanked sprites)
+  if (CHUNK_LAST.size > 90) { const keep = new Set([...CHUNK.keys()].map(k => k.split('|').slice(0, 2).join('|'))); for (const k of [...CHUNK_LAST.keys()]) if (!keep.has(k)) CHUNK_LAST.delete(k); }
+}
 const PAINT_MAP_SET = m => { if (typeof PAINT_MAP === 'undefined') return null; const v = PAINT_MAP; PAINT_MAP = m; return v; };
 function playerPal() {
   const b = S.eq.body ? IT[S.eq.body] : null, h = S.eq.helm ? IT[S.eq.helm] : null, bt = S.eq.boots ? IT[S.eq.boots] : null;

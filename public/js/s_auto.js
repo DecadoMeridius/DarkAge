@@ -162,7 +162,6 @@ objInteract = function (m, x, y, o) {
   if (o.k === 'triphammer') return { label: 'Set up', fn: () => openHammer(o, m, x, y) };
   if (o.k === 'treadwheel') return { label: 'Feed', fn: () => { let n = 0; while (has('hay') && accept(o, 'hay', 1, true) && n < 40) { take('hay'); accept(o, 'hay'); n++; } toast(n ? 'Fed ' + n + ' hay. It powers things within 7 tiles while it has hay.' : 'The treadwheel runs on hay.'); } };
   if (o.k === 'channel' && o.clog) return { label: 'Clear debris', fn: () => { if (S.p.st < 1) { toast('Too tired. Eat or sleep.', 'bad'); return; } useStamina(1); o.clog = 0; waterChannels(m); SFX.pop(); sparkle(x, y, '#9ad0ff'); toast('Channel cleared: the water flows again.', 'good'); } };
-  if (o.k === 'channel') return { label: 'Turn', fn: () => { o.v = o.v ? 0 : 1; waterChannels(m); } };
   if (STATIONS[o.k]) return { label: 'Open', fn: () => openStation(o, m, x, y) };
   if (o.k === 'windmill' || o.k === 'waterwheel') return { label: 'Inspect', fn: () => { scanPower(m); toast(m.power.some(p => p[0] === x && p[1] === y) ? 'Turning. Powers everything within 7 tiles.' : 'Not turning: a waterwheel must touch water.'); } };
   return _objInteractA(m, x, y, o);
@@ -204,7 +203,7 @@ const _objSpriteA = objSprite;
 objSprite = function (o, season) {
   const f = Math.floor(gameT * 4) % 2;
   if (isBelt(o)) return beltSprite(o, cur && (cur.power || []).length ? f : 0); // belts scroll while the farm has power
-  if (o.k === 'channel') return o.clog ? cloggedChannel(o.v) : PIX.get('channel_' + (o.v ? 'v' : 'h') + '.' + (o.wet ? 1 : 0));
+  if (o.k === 'channel') return channelSpr(o.cm || 0, o.wet ? 1 : 0, o.clog ? 1 : 0);
   if (o.k === 'oven' || o.k === 'triphammer' || o.k === 'treadwheel') return PIX.get(o.k + '.' + (o.on ? (o.k === 'oven' ? 1 : f) : 0));
   if (o.k === 'smelter' || o.k === 'kiln') return PIX.get(o.k + '.' + (o.on ? 1 : 0));
   if (o.k === 'mill') return PIX.get('mill.' + (o.on ? f : 0));
@@ -266,13 +265,16 @@ function openHammer(o, m, x, y) {
    channels; soil next to a wet channel is watered each morning ---- */
 function waterChannels(m) {
   const W = m.w, wet = new Set(), q = [];
-  const isCh = (x, y) => inb(m, x, y) && m.o[y * W + x] && m.o[y * W + x].k === 'channel' && !m.o[y * W + x].clog;   // a piece choked with leaves stops the water (2026-11-03)
+  const isAny = (x, y) => inb(m, x, y) && m.o[y * W + x] && m.o[y * W + x].k === 'channel';
+  const isCh = (x, y) => isAny(x, y) && !m.o[y * W + x].clog;   // a piece choked with leaves stops the water (2026-11-03)
   for (let i = 0; i < m.o.length; i++) {
     const o = m.o[i]; if (!o || o.k !== 'channel') continue; o.wet = 0; if (o.clog) continue; const x = i % W, y = i / W | 0;
     if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => inb(m, x + dx, y + dy) && (TER[getT(m, x + dx, y + dy)].water || ['fwell', 'well'].includes((mainOf(m, x + dx, y + dy)[2] || {}).k)))) { wet.add(i); q.push([x, y]); }
   }
   while (q.length) { const [x, y] = q.pop(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, ni = ny * W + nx; if (isCh(nx, ny) && !wet.has(ni)) { wet.add(ni); q.push([nx, ny]); } } }
   for (const i of wet) m.o[i].wet = 1;
+  for (let i = 0; i < m.o.length; i++) { const o = m.o[i]; if (!o || o.k !== 'channel') continue; const x = i % W, y = i / W | 0;   // which sides join another channel (1 N, 2 E, 4 S, 8 W), for the sprite
+    o.cm = (isAny(x, y - 1) ? 1 : 0) | (isAny(x + 1, y) ? 2 : 0) | (isAny(x, y + 1) ? 4 : 0) | (isAny(x - 1, y) ? 8 : 0); }
   return wet;
 }
 function waterFromChannels() {
@@ -316,22 +318,35 @@ function unloadCart(o) { o.inv = o.inv || {}; let n = 0; for (const k in S.cart 
 const _hudTickA = hudTick;
 hudTick = function (dt) { _hudTickA(dt); if (S && !TITLE && $('#pL') && S.mounted && selKind() === 'cart') $('#pL').innerHTML = '<kbd>Cart</kbd>' + sum(S.cart) + ' / ' + CART_CAP + ' (interact with a storage crate to unload)'; };
 
-// a choked channel: the dry piece with a heap of leaves, twigs and muck drawn over it (made once per direction)
-const CLOGC = {};
-function cloggedChannel(v) {
-  const k = v ? 'v' : 'h'; if (CLOGC[k] && CLOGC[k].__style === SETTINGS.artStyle) return CLOGC[k];
-  const base = PIX.get('channel_' + k + '.0'); if (!base) return null;
-  const W = base.width, H = base.height, s = W / base.ww, R = rng(7);
-  const c = mk(W, H, x => {
-    x.drawImage(base, 0, 0);
-    const cols = ['#7a5a2a', '#a8742a', '#c8902a', '#6a7a2a', '#5a3a1a', '#8a6a3a'];
-    for (let i = 0; i < 46; i++) { const px = (3 + R() * 10) * s, py = (4 + R() * 9) * s, r = (.8 + R() * 1.6) * s;
-      x.fillStyle = cols[i % cols.length]; x.beginPath(); x.ellipse(px, py, r, r * .6, R() * 3, 0, 6.283); x.fill(); }
-    x.strokeStyle = '#4a2e14'; x.lineWidth = Math.max(1, s * .6);
-    for (let i = 0; i < 4; i++) { const px = (3 + R() * 9) * s, py = (5 + R() * 7) * s; x.beginPath(); x.moveTo(px, py); x.lineTo(px + (R() * 6 - 1) * s, py + (R() * 3 - 1.5) * s); x.stroke(); }
+/* Channels are drawn as full squares that join their neighbours (2026-11-03: the old straight pieces made odd corners
+   and needed turning): a dug bed edged with stone on every side that doesn't meet another channel, water in it
+   when wet, leaves and twigs when clogged. Made once per (mask, wet, clog); smoothed in a painted style. */
+const CHSPR = {};
+function channelSpr(cm, wet, clog) {
+  const key = cm + '|' + wet + '|' + clog + '|' + SETTINGS.artStyle; if (CHSPR[key]) return CHSPR[key];
+  const N = cm & 1, E = cm & 2, S_ = cm & 4, Wt = cm & 8, R = rng(cm * 7 + 3);
+  const c = mk(32, 32, x => {
+    const P = (X, Y, w, h, col) => { x.fillStyle = col; x.fillRect(X, Y, w, h); };
+    P(0, 0, 32, 32, '#6a4a2c');                                   // dug earth bed
+    for (let i = 0; i < 26; i++) P(R() * 30 | 0, R() * 30 | 0, 2, 1, R() < .5 ? '#5a3e24' : '#7a5834');
+    if (wet) { P(0, 0, 32, 32, '#3f7fb8'); for (let i = 0; i < 9; i++) { const yy = 3 + (R() * 26 | 0), xx = R() * 22 | 0; P(xx, yy, 5 + (R() * 6 | 0), 1, '#7fb8e0'); } if (!N) P(0, 4, 32, 2, 'rgba(20,40,70,.35)'); }   // the kerb's shadow on the water, only under a closed top
+    // stone kerb on the closed sides, corner stones where two closed sides meet or at an inner corner
+    const kerb = (X, Y, w, h) => { P(X, Y, w, h, '#8a8478'); for (let i = 0; i < Math.max(w, h); i += 6) { if (w > h) P(X + i, Y, 1, h, '#6a655c'); else P(X, Y + i, w, 1, '#6a655c'); } };
+    if (!N) { kerb(0, 0, 32, 4); P(0, 3, 32, 1, '#5a564e'); }
+    if (!S_) { kerb(0, 28, 32, 4); P(0, 28, 32, 1, '#a8a294'); }
+    if (!Wt) { kerb(0, 0, 4, 32); P(3, 0, 1, 32, '#5a564e'); }
+    if (!E) { kerb(28, 0, 4, 32); P(28, 0, 1, 32, '#a8a294'); }
+    for (const [cx, cy, a, b] of [[0, 0, N, Wt], [28, 0, N, E], [0, 28, S_, Wt], [28, 28, S_, E]]) if (a && b) P(cx, cy, 4, 4, '#8a8478');   // inner corner posts
+    if (clog) { const cols = ['#7a5a2a', '#a8742a', '#c8902a', '#6a7a2a', '#5a3a1a'];
+      for (let i = 0; i < 40; i++) { x.fillStyle = cols[i % cols.length]; x.beginPath(); x.ellipse(6 + R() * 20, 6 + R() * 20, 1 + R() * 2, .7 + R(), R() * 3, 0, 6.283); x.fill(); }
+      x.strokeStyle = '#4a2e14'; for (let i = 0; i < 4; i++) { const px = 6 + R() * 16, py = 8 + R() * 14; x.beginPath(); x.moveTo(px, py); x.lineTo(px + R() * 7, py + R() * 3 - 1.5); x.stroke(); } }
   });
-  c.ww = base.ww; c.wh = base.wh; c.hi = base.hi; c.__style = SETTINGS.artStyle; return CLOGC[k] = c;
+  c.ww = 16; c.wh = 16;
+  return CHSPR[key] = (SETTINGS.artStyle !== 'pixel' && typeof gpuUp === 'function') ? gpuUp(c, 4) : c;   // smooth only: the painted edge shading showed every square's seam
 }
+// masks and wetness kept fresh on the map you're on (a channel dug up or placed changes its neighbours)
+EVT.on('map', () => { if (cur && cur.o && cur.o.some(o => o && o.k === 'channel')) waterChannels(cur); });
+EVT.on('tick', n => { if (n % 3 === 0 && cur && (cur.farm || farmMaps().includes(cur)) && cur.o.some(o => o && o.k === 'channel')) waterChannels(cur); });
 // the morning report says when a channel on the farm clogged overnight
 if (typeof showDayReport === 'function') showDayReport = (f => function (lines) {
   if (CHANNEL_NEWS && Array.isArray(lines)) lines.push(['bad', CHANNEL_NEWS === 1 ? 'Leaves and debris choked one of your water channels. Clear it to get the water flowing.' : CHANNEL_NEWS + ' water channels are choked with leaves and debris. Clear them to get the water flowing.']);

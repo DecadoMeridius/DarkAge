@@ -14,7 +14,7 @@ const PIX = {
   },
   has(n) { return !!this.map[n]; },
   get(n) {
-    if (this.cache[n]) return this.cache[n];
+    if (this.cache[n] && !this.cache[n].__lost) return this.cache[n];
     const f = this.map[n]; if (!f) return null;
     const c = (/^(hb_|en_|an_|crop_)/.test(n) ? mkCPU : mk)(f.w, f.h, x => x.drawImage(this.img, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h));   // character layers and creature/crop templates are only read on the CPU (humanSpr, pixTemplate): kept in normal memory
     c.ww = f.w / 2; c.wh = f.h / 2; if (f.ax !== undefined) { c.ax = f.ax / 2; c.ay = f.ay / 2; }
@@ -295,7 +295,7 @@ function humanRamps(P) {
 const _humanSpr = humanSpr;
 const POSE_DY = { idle1: -1, wind: -1, strike: 1 }, POSE_DX = { wind: -1, strike: 1, thrust: 1, hurt: -2 }; // head and hat layers follow the body's lean
 humanSpr = function (key, P, dir, f) {
-  const k = key + '|' + dir + '|' + f; if (HC[k]) return HC[k];
+  const k = key + '|' + dir + '|' + f; if (HC[k] && !HC[k].__lost) return HC[k];
   if (!PIX.has('hb_body_0_0')) return _humanSpr(key, P, dir, f);
   const ride = f === 'ride', tuck = f === 'tuck', d = ride ? 2 : tuck ? 0 : dir === 1 ? 2 : dir, hs = P.hs || 'short';
   // f: 0-3 the old walk, 'w0'-'w7' the 8-frame walk, or a pose ('wind', 'strike'...; see human.py)

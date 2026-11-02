@@ -29,14 +29,14 @@ const STYLE_SKIP = /^en_(crab|yeti)(_atk)?\./;
 PIX.get = (f => function (n) {
   const st = STYLE_ATLAS[SETTINGS.artStyle];
   if (st && STYLE_SMOOTH.test(n)) {
-    if (this.cache[n]) return this.cache[n];
+    if (this.cache[n] && !this.cache[n].__lost) return this.cache[n];
     const p = f.call(this, n); if (!p || !p.width) return p;
     const sm = smoothUp(p);
     return this.cache[n] = sm;
   }
   const sf = st && !STYLE_SKIP.test(n) && st.map[STYLE_ALIAS[n] || n];
   if (!sf) return f.call(this, n);
-  if (this.cache[n]) return this.cache[n];
+  if (this.cache[n] && !this.cache[n].__lost) return this.cache[n];
   const base = this.map[n] || this.map[n.replace(/_glow$/, '')] || { w: sf.w / sf.k, h: sf.h / sf.k };   // a building's night glow shares its box
   const c = mk(sf.w, sf.h, x => x.drawImage(st.imgs[sf.p || 0], sf.x, sf.y, sf.w, sf.h, 0, 0, sf.w, sf.h));
   c.ww = base.w / 2; c.wh = base.h / 2; if (base.ax !== undefined) { c.ax = base.ax / 2; c.ay = base.ay / 2; }
@@ -117,7 +117,7 @@ const SMOOTH = new WeakMap(), WARMQ = [], WARMED = new Set();
 humanSpr = (f => function (key, P, dir, fr) {
   const c = f.apply(this, arguments);
   if (!c || SETTINGS.artStyle === 'pixel' || c.width >= c.ww * 4) return c;
-  let s = SMOOTH.get(c); if (!s) { s = smoothUp(c); SMOOTH.set(c, s); }
+  let s = SMOOTH.get(c); if (!s || s.__lost) { s = smoothUp(c); SMOOTH.set(c, s); }
   // its other walk frames are built in spare time, ready before the next step
   if (typeof fr === 'string' && /^w\d$/.test(fr)) { const wk = key + '|' + dir; if (!WARMED.has(wk)) { WARMED.add(wk); for (let i = 0; i < 8; i++) WARMQ.push([key, P, dir, 'w' + i]); } }
   return s;
