@@ -249,7 +249,7 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - Small fixes: flame overlay, toasts, creator, saving only after the creator closes.
 - **x_ui.js:**
   - Recipe search and category chips (RC swapped during `renderCraft`).
-  - Backpack search, Sort and "Recipes & uses"; bank search.
+  - Backpack search, Sort and "Recipes & uses"; bank search, category chips with counts (`BANK_CATS`, `MODAL.opts.kc`), headings per category and a Sort button cycling type, name, amount and value (`BANK_SORTS`, `MODAL.opts.ks`).
   - Getting-started checklist; a shorter milestone list.
   - Door name plates; closed-shop notice; buy confirmation.
   - Combat bar only when fighting; watering-can level.

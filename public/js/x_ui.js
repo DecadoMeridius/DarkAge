@@ -169,3 +169,55 @@ const _newStateU = newState;
 newState = function (seed) { const o = _newStateU(seed); if (o.inv) o.inv.bread = (o.inv.bread || 0) + 5; return o; };
 const _genFarmU = genFarm;
 genFarm = function () { const m = _genFarmU(); for (const o of m.o) if (o && o.k === 'tree' && o.kind === 'maple') o.kind = Math.random() < .5 ? 'oak' : 'birch'; return m; };
+
+/* ---------- bank: categories, group headings and a Sort button (asked 2026-11-03: "so it's clear what we have") ----------
+   Category chips filter the list (MODAL.opts.kc); Sort cycles type → name → amount → value (MODAL.opts.ks); in
+   type order each category gets a heading. */
+const BANK_CATS = [
+  ['all', 'All', () => true],
+  ['gear', 'Gear', t => ['weapon', 'armor', 'ring', 'ammo', 'boat', 'fishtool', 'buildtool', 'tool'].includes(t)],
+  ['food', 'Food', t => ['food', 'artisan'].includes(t)],
+  ['farm', 'Farm', t => ['seed', 'sapling', 'fert', 'crop', 'fruit', 'animal', 'feed'].includes(t)],
+  ['fish', 'Fish & forage', t => ['fish', 'forage'].includes(t)],
+  ['mats', 'Materials', t => ['mat', 'ore', 'bar', 'gem'].includes(t)],
+  ['build', 'Building', t => ['place', 'path', 'implement', 'blueprint'].includes(t)],
+  ['misc', 'Treasure & other', t => ['loot', 'artifact', 'special'].includes(t) || typeof t === 'number'],
+];
+const bankCat = id => { const t = IT[id] && IT[id].t; return (BANK_CATS.find(([k, , f]) => k !== 'all' && f(t)) || BANK_CATS[BANK_CATS.length - 1])[0]; };
+const BANK_SORTS = [['type', 'Sort: type'], ['name', 'Sort: name'], ['amount', 'Sort: amount'], ['value', 'Sort: value']];
+const _bankSortedC = bankSorted;
+bankSorted = function () {
+  let L = _bankSortedC(); const c = MODAL && MODAL.opts.kc || 'all', s = MODAL && MODAL.opts.ks || 'type';
+  if (c !== 'all') L = L.filter(k => bankCat(parseK(k)[0]) === c);
+  const nm = k => IT[parseK(k)[0]].n, val = k => (IT[parseK(k)[0]].p || 0) * S.bank[k];
+  if (s === 'type') { const ci = k => BANK_CATS.findIndex(([x]) => x === bankCat(parseK(k)[0])); L = L.slice().sort((a, b) => ci(a) - ci(b)); }   // stable: keeps type then name within a category
+  else if (s === 'name') L = L.slice().sort((a, b) => nm(a).localeCompare(nm(b)));
+  else if (s === 'amount') L = L.slice().sort((a, b) => S.bank[b] - S.bank[a]);
+  else if (s === 'value') L = L.slice().sort((a, b) => val(b) - val(a));
+  return L;
+};
+openModal = (f => function (title, tabs, start, opts) {
+  const r = f.apply(this, arguments);
+  if (MODAL && title === 'Storage' && MODAL.tabs[0] && MODAL.tabs[0].id === 'bank') {
+    const t = MODAL.tabs[0], render = t.render;
+    t.render = b => {
+      render(b);
+      const grid = b.querySelector('.bankcol.wide .grid'); if (!grid) return;
+      const cur = MODAL.opts.kc || 'all', srt = MODAL.opts.ks || 'type', counts = {};
+      for (const k of Object.keys(S.bank)) if (S.bank[k] > 0 && IT[parseK(k)[0]]) { const c = bankCat(parseK(k)[0]); counts[c] = (counts[c] || 0) + 1; counts.all = (counts.all || 0) + 1; }
+      const bar = el('div', { class: 'acts wrap', style: 'margin:2px 0 6px' });
+      for (const [k, n] of BANK_CATS) if (k === 'all' || counts[k]) bar.append(el('button', { class: 'chip' + (cur === k ? ' on' : ''), on: () => { MODAL.opts.kc = k; refresh(); } }, n + ' ' + (counts[k] || 0)));
+      const si = BANK_SORTS.findIndex(([k]) => k === srt);
+      bar.append(el('button', { class: 'btn ghost', style: 'margin-left:auto', on: () => { MODAL.opts.ks = BANK_SORTS[(si + 1) % BANK_SORTS.length][0]; refresh(); } }, BANK_SORTS[si][1]));
+      grid.before(bar);
+      // headings between categories (type order, all categories shown)
+      if (srt === 'type' && cur === 'all') {
+        const keys = bankSorted(); let last = null;
+        [...grid.children].forEach((cell, i) => { const k = keys[i]; if (!k) return; const c = bankCat(parseK(k)[0]); if (c !== last) { last = c; const h = el('div', { class: 'bankhead' }, BANK_CATS.find(([x]) => x === c)[1]); cell.before(h); } });
+      }
+    };
+    if (typeof drawModal === 'function') drawModal();
+  }
+  return r;
+})(openModal);
+document.head.append(el('style', null, '.bankhead { grid-column: 1 / -1; font: 700 13px Fredoka, sans-serif; color: #6a4a2a; margin: 6px 0 2px; border-bottom: 1px solid rgba(106,74,42,.35); }'));
