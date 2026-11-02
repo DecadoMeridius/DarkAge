@@ -25,8 +25,8 @@ function sunNow(m) {
   const t = ((S.time % 1440) + 1440) % 1440, [rise, set] = typeof SUN !== 'undefined' ? SUN[S.season || 0] : [360, 1170];
   const p = Math.max(0, Math.min(1, (t - rise) / (set - rise))), elev = Math.sin(Math.PI * p), dir = (p - .5) * 2;
   SUNP.dir = m.indoor ? .4 : dir;
-  SUNP.sx = m.indoor ? .5 : dir * (.45 + (1 - elev) * 1.1);   // horizontal lean per unit of height
-  SUNP.sy = m.indoor ? .35 : .22 + (1 - elev) * .75;           // length per unit of height
+  SUNP.sx = m.indoor ? .4 : dir * (.3 + (1 - elev) * .55);   // horizontal lean per unit of height (playtest: morning and evening shadows were huge slabs)
+  SUNP.sy = m.indoor ? .3 : .2 + (1 - elev) * .38;           // length per unit of height
   SUNP.k = m.indoor || m.dark ? 1 : S.weather === 'rain' ? .3 : S.weather === 'snow' ? .45 : 1;
 }
 
@@ -42,12 +42,12 @@ function castMake(c) {
   const small = mk(w, h, x => { x.imageSmoothingEnabled = true; x.drawImage(c, 0, 0, w, h); });
   const a = small.getContext('2d').getImageData(0, 0, w, h).data; let base = h - 1, most = 0; const cnt = new Array(h).fill(0);
   for (let y = 0; y < h; y++) { let n = 0; for (let x = 0; x < w; x++) if (a[(y * w + x) * 4 + 3] > 160) n++; cnt[y] = n; most = Math.max(most, n); }
-  while (base > 0 && cnt[base] < most * .3) base--;
+  while (base > 0 && cnt[base] < Math.max(2, most * .08)) base--;   // the real foot (a trunk is narrow: at 30% a tree's shadow started under its canopy, a gap below the trunk)
   const H = base + 1, sil = mk(w + 2 * B, H + 2 * B, x => {
     x.setTransform(1, 0, 0, -1, B, H + B); x.drawImage(small, 0, 0, w, H, 0, 0, w, H);
     x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = 'rgb(46,44,86)'; x.fillRect(0, 0, w + 2 * B, H + 2 * B);   // a cool shade, not black
   });
-  const s = mk(sil.width, sil.height, x => { x.filter = 'blur(1.5px)'; x.drawImage(sil, 0, 0); });
+  const s = mk(sil.width, sil.height, x => { x.filter = 'blur(2.5px)'; x.drawImage(sil, 0, 0); });
   s.B = B * q; s.base = (base + 1) * q - 1; s.q = q; CASTC.set(c, s); return s;
 }
 function castOf(c) {
@@ -78,14 +78,15 @@ g.drawImage = (f => function (img, a1, a2, a3, a4) {
 // not a silhouette, since they're drawn mirrored when they face left)
 shadow = (f => function (x, y, r, a = .22) {
   if (!STYLED()) return f.apply(this, arguments);
-  const blob = (dx, dy, rot, sx, sy, al) => {
+  const blob = (dx, dy, rot, sx, sy, al, rr = r) => {
     g.save(); g.translate(x + dx, y + dy); g.rotate(rot); g.scale(sx, sy);
-    const gr = g.createRadialGradient(0, 0, 0, 0, 0, r * 1.25);
+    const gr = g.createRadialGradient(0, 0, 0, 0, 0, rr * 1.25);
     gr.addColorStop(0, `rgba(46,44,86,${al})`); gr.addColorStop(.55, `rgba(46,44,86,${al * .6})`); gr.addColorStop(1, 'rgba(46,44,86,0)');
-    g.fillStyle = gr; g.beginPath(); g.arc(0, 0, r * 1.25, 0, 6.283); g.fill(); g.restore();
+    g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rr * 1.25, 0, 6.283); g.fill(); g.restore();
   };
   const L = Math.hypot(SUNP.sx, SUNP.sy);   // along the sun's shadow direction, as long as the sun makes it
-  if (LIGHT_K > .02) blob(SUNP.sx * r * 1.4, SUNP.sy * r * 1.4, Math.atan2(SUNP.sy, SUNP.sx), 1 + L * 1.9, .4, Math.min(.4, a * 2) * LIGHT_K * SUNP.k);
+  const R = Math.max(r, 8);   // people and creatures: a sun shadow as long as a ~30 px figure makes (it was too small to see)
+  if (LIGHT_K > .02) blob(SUNP.sx * R * 1.6, SUNP.sy * R * 1.6, Math.atan2(SUNP.sy, SUNP.sx), 1 + L * 2.4, .45, Math.min(.42, a * 2.2) * LIGHT_K * SUNP.k, R);
   blob(0, 0, 0, 1, .42, a * 1.1);
 })(shadow);
 
@@ -110,10 +111,11 @@ let NL_ON = 0;
 if (typeof nightLights === 'function') nightLights = (f => function () { NL_ON = STYLED(); try { return f.apply(this, arguments); } finally { NL_ON = 0; } })(nightLights);
 g.fillRect = (f => function (x, y, w, h) {
   f.apply(this, arguments);
-  if (!NL_ON || this.globalAlpha < .05 || w > 400) return;
-  const cx = x + w / 2, cy = y + h / 2, r = Math.max(w, h) * 4 + 14, ga = this.globalAlpha, op = this.globalCompositeOperation;
-  const gr = this.createRadialGradient(cx, cy, 0, cx, cy, r); gr.addColorStop(0, 'rgba(255,190,110,.75)'); gr.addColorStop(.35, 'rgba(255,160,80,.28)'); gr.addColorStop(1, 'rgba(255,150,70,0)');
-  this.globalCompositeOperation = 'lighter'; this.globalAlpha = Math.min(1, ga * .9); this.fillStyle = gr; f.call(this, cx - r, cy - r, 2 * r, 2 * r);
+  // one glow per flame: only its outer square (#ffb040) gets one; the three stacked squares each glowing made hard red discs
+  if (!NL_ON || this.globalAlpha < .05 || w > 400 || String(this.fillStyle).toLowerCase() !== '#ffb040') return;
+  const cx = x + w / 2, cy = y + h / 2, r = Math.max(w, h) * 6 + 18, ga = this.globalAlpha / .22, op = this.globalCompositeOperation;
+  const gr = this.createRadialGradient(cx, cy, 0, cx, cy, r); gr.addColorStop(0, 'rgba(255,200,130,.42)'); gr.addColorStop(.3, 'rgba(255,180,110,.18)'); gr.addColorStop(.65, 'rgba(255,170,100,.06)'); gr.addColorStop(1, 'rgba(255,170,100,0)');
+  this.globalCompositeOperation = 'lighter'; this.globalAlpha = Math.min(1, ga * .8); this.fillStyle = gr; f.call(this, cx - r, cy - r, 2 * r, 2 * r);
   this.globalCompositeOperation = op; this.globalAlpha = ga;
 })(g.fillRect);
 
@@ -169,3 +171,10 @@ if (typeof nightLights === 'function') nightLights = (f => function (m, Z, cxp, 
 // a little more contrast and colour in a painted style (a CSS filter on the canvas: done by the GPU compositor)
 const gradeCss = () => { const c = document.getElementById('cv'); if (c) c.style.filter = STYLED() ? 'contrast(1.1) saturate(1.18)' : ''; };
 gradeCss(); applyGraphics = (f => function () { const r = f.apply(this, arguments); gradeCss(); return r; })(applyGraphics);
+
+// boss hazards and telegraphs are flat pixel shapes: softened in a painted style (they looked unfinished there)
+if (typeof drawHazards === 'function') drawHazards = (f => function () {
+  if (!STYLED()) return f.apply(this, arguments);
+  g.save(); g.filter = 'blur(1.2px)'; g.globalAlpha *= .85;
+  try { return f.apply(this, arguments); } finally { g.restore(); }
+})(drawHazards);

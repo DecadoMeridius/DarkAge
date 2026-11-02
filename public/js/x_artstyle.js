@@ -15,8 +15,11 @@ function loadStyle(s) {
     .catch(err => { console.warn('Art style failed to load', s, err); return null; });
 }
 PIX.load = (f => function () { return f.apply(this, arguments).then(() => loadStyle(SETTINGS.artStyle)); })(PIX.load);
+// a painted sprite that must use another's painting: the lit lamp's painted glow kept a pink disc of the magenta card
+// (the game draws lamp light itself at night)
+const STYLE_ALIAS = { lantern: 'lantern_off' };
 PIX.get = (f => function (n) {
-  const st = STYLE_ATLAS[SETTINGS.artStyle], sf = st && st.map[n];
+  const st = STYLE_ATLAS[SETTINGS.artStyle], sf = st && st.map[STYLE_ALIAS[n] || n];
   if (!sf) return f.call(this, n);
   if (this.cache[n]) return this.cache[n];
   const base = this.map[n] || this.map[n.replace(/_glow$/, '')] || { w: sf.w / sf.k, h: sf.h / sf.k };   // a building's night glow shares its box
@@ -98,11 +101,35 @@ humanSpr = (f => function () {
   return s;
 })(humanSpr);
 // the painted night glow of a building's windows (art/style_free.py), or null
-const styleGlow = n => { const st = STYLE_ATLAS[SETTINGS.artStyle]; return n && st && st.map[n + '_glow'] ? PIX.get(n + '_glow') : null; };
+// Worked out here from the painted building (made once per building): the painting's glass (bluish or dark pixels)
+// near where each window sits, mapped by proportion from the pixel sprite's meta.win (the painting may be a little
+// bigger or shifted), lit with an even warm light, brighter in the middle. The baked <name>_glow frames from the
+// build put the light under the windows (playtest 2026-11-02), so they're no longer used.
+const GLOWC = new Map();
+function styleGlow(n) {
+  const st = STYLE_ATLAS[SETTINGS.artStyle]; if (!n || !st || !st.map[n]) return null;
+  if (GLOWC.has(n)) return GLOWC.get(n);
+  const c = PIX.get(n), f = PIX.map[n], wins = f && f.meta && f.meta.win; if (!c || !wins || !c.width) { GLOWC.set(n, null); return null; }
+  const W = c.width, H = c.height, a = mk(W, H, x => x.drawImage(c, 0, 0)).getContext('2d').getImageData(0, 0, W, H).data;
+  const sx = W / f.w, sy = H / f.h, m = Math.max(2, Math.round(Math.min(sx, sy) * 2));   // painting px per pixel-art px, margin 2 art px
+  const mask = mk(W, H), mx = mask.getContext('2d'), id = mx.createImageData(W, H), d = id.data;
+  for (const [wx, wy, ww, wh] of wins) {
+    const x0 = Math.max(0, Math.floor(wx * sx) - m), x1 = Math.min(W, Math.ceil((wx + ww) * sx) + m), y0 = Math.max(0, Math.floor(wy * sy) - m), y1 = Math.min(H, Math.ceil((wy + wh) * sy) + m);
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+      const i = (y * W + x) * 4; if (a[i + 3] < 200) continue;
+      const r = a[i], g_ = a[i + 1], b = a[i + 2], lum = (r * 3 + g_ * 6 + b) / 10;
+      if (b > r + 12 || lum < 70) { d[i] = 255; d[i + 1] = 214; d[i + 2] = 130; d[i + 3] = 255; }
+    }
+  }
+  mx.putImageData(id, 0, 0);
+  const out = mk(W, H, x => { x.filter = `blur(${Math.max(1, sx * .6)}px)`; x.drawImage(mask, 0, 0); x.filter = 'none'; x.globalAlpha = .7; x.drawImage(mask, 0, 0); });
+  out.ww = c.ww; out.wh = c.wh; out.off = c.off; out.hi = c.hi;
+  GLOWC.set(n, out); return out;
+}
 // switching: drop every cached sprite and painted chunk so they're made again from the new atlas
 function applyArtStyle() {
   return loadStyle(SETTINGS.artStyle).then(() => {
-    PIX.cache = {}; PXG.tex = {}; if (typeof CHUNK !== 'undefined') { CHUNK.clear(); CHUNK_LAST.clear(); }
+    PIX.cache = {}; PXG.tex = {}; GLOWC.clear(); if (typeof CHUNK !== 'undefined') { CHUNK.clear(); CHUNK_LAST.clear(); }
     for (const C of [HC, ACACHE, ECACHE, CROPSPR, ICACHE, GICACHE, IURL]) for (const k in C) delete C[k];
     if (typeof buildObjects === 'function') buildObjects();
     for (const id in MAPS) { const m = MAPS[id]; if (m && m.bld) for (const b of m.bld) b.sprName = null; }

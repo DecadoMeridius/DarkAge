@@ -60,6 +60,7 @@ function groundPixels(k, s, theme) {
 const _paintChunk = paintChunk;
 paintChunk = function (m, cx, cy) {
   if (!PIX.has('ground_g_0')) return _paintChunk(m, cx, cy);
+  if (GROUND_SLICED && !m.indoor && ((PIX.get('ground_g_0') || {}).hi || 1) > 1) return { job: paintChunkHiGen(m, cx, cy) };
   const M = PXG.M, SP = CH * 32, N = SP + 2 * M, G2 = CH + 2;
   const s = m.indoor || m.dark ? 0 : S.season, th = m.theme;
   const keys = [], present = new Set();
@@ -81,7 +82,7 @@ paintChunk = function (m, cx, cy) {
     lay[py * N + px_] = L;
   }
   const GK = (PIX.get('ground_g_0') || {}).hi || 1;   // an art style with hi-res ground (x_artstyle.js)
-  if (GK > 1) return pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK);
+  if (GK > 1) return pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GROUND_K, GK);   // painted at GROUND_K px per art px (2 = the screen at the usual zoom); the textures are GK
   const c = mk(N, N), x = c.getContext('2d'), img = x.createImageData(N, N), d = img.data;
   const texs = layers.map(L => groundPixels(L, s, th));
   const wet = layers.map(L => L === 'w' || L === 'l');
@@ -115,17 +116,46 @@ paintChunk = function (m, cx, cy) {
   return c;
 };
 
+/* the same chunk for a painted style, as slices (see pixGroundHiGen): the terrain layout too yields as it goes */
+function* paintChunkHiGen(m, cx, cy) {
+  const M = PXG.M, SP = CH * 32, N = SP + 2 * M, G2 = CH + 2;
+  const s = m.indoor || m.dark ? 0 : S.season, th = m.theme;
+  const keys = [], present = new Set();
+  for (let j = 0; j < G2; j++) for (let i = 0; i < G2; i++) { const k = paintKey(m, cx * CH + i - 1, cy * CH + j - 1); keys.push(k); present.add(k); }
+  const layers = [...present].sort((a, b) => PPRI[a] - PPRI[b]);
+  const fields = layers.map(L => { const P = PPRI[L], f = new Float32Array(G2 * G2); for (let i = 0; i < f.length; i++) f[i] = PPRI[keys[i]] >= P ? 1 : 0; return f; });
+  const lay = new Uint8Array(N * N), ox = cx * SP - M, oy = cy * SP - M, exact = m.theme === 'indoor'; // rooms keep hard tile edges
+  for (let py = 0; py < N; py++) { if ((py & 15) === 15) yield; for (let px_ = 0; px_ < N; px_++) {
+    const ax = ox + px_, ay = oy + py; // absolute art-pixel coords
+    const gx = (px_ - M) / 32 + .5, gy = (py - M) / 32 + .5, x0 = Math.floor(gx), y0 = Math.floor(gy), fx = gx - x0, fy = gy - y0;
+    const jit = (fbm(ax * .045, ay * .045, 17, 2) - .5) * .5 + (hsh(ax >> 1, ay >> 1, 9) - .5) * .12;
+    let L = 0;
+    if (exact) { const ti = Math.floor((px_ - M) / 32), tj = Math.floor((py - M) / 32); lay[py * N + px_] = inb(m, cx * CH + ti, cy * CH + tj) ? Math.max(0, layers.indexOf(keys[(tj + 1) * G2 + ti + 1])) : 255; continue; }
+    for (let li = layers.length - 1; li > 0; li--) {
+      const f = fields[li], r0 = y0 * G2 + x0, r1 = r0 + G2;
+      const v = (f[r0] + (f[r0 + 1] - f[r0]) * fx) * (1 - fy) + (f[r1] + (f[r1 + 1] - f[r1]) * fx) * fy;
+      if (v + jit > .5) { L = li; break; }
+    }
+    lay[py * N + px_] = L;
+  } }
+  const GK = (PIX.get('ground_g_0') || {}).hi || 1;
+  return yield* pixGroundHiGen(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GROUND_K, GK);
+}
+
 /* the same ground at GK px per art pixel, for art styles whose ground textures are hi-res: terrain shapes, foam,
    lips and rims are worked out per art pixel exactly as above, the texture is sampled at full resolution.
    The canvas keeps a GK scale, so the cliffs, bridges and room walls drawn on it afterwards stay in art px. */
-function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
+let GROUND_SLICED = false;   // set by f_render's getChunk while it asks for a chunk it can wait for
+const GROUND_K = 2;   // at 4 (the texture's own resolution) a chunk took 150-300 ms and stuttered as it scrolled in
+function* pixGroundHiGen(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK, TK = GK) {
+  const TS_ = TK / GK;   // texture px per output px
   const texs = layers.map(L => groundPixels(L, s, th)), tws = texs.map(T => T ? Math.round(Math.sqrt(T.length / 4)) : 64);
   const tmean = texs.map(T => { if (!T) return [128, 128, 128]; const a = [0, 0, 0]; for (let i = 0; i < T.length; i += 64) { a[0] += T[i]; a[1] += T[i + 1]; a[2] += T[i + 2]; } const n = T.length / 64; return a.map(v => v / n); });
   const TC = .7;   // a painted ground is calmer than its texture (the example scenes: shadows read on it)
   const SOFT = { s: 1, a: 1, st: 1, d: 1, sn: 1, g: 1, i: 1, p: 2 }, soft = layers.map(L => SOFT[L] || 0);   // 2: paving switches copies sharply (a soft blend showed doubled stones)   // natural grounds take the mirrored copy; paving and floors would show doubled stones
   const wet = layers.map(L => L === 'w' || L === 'l'), mode = new Uint8Array(N * N);   // 1 foam, 2 lava foam, 3/4 lip, 5 rim, 6 outside a room
   const vary = new Float32Array(N * N), warmv = new Float32Array(N * N), mixw = new Float32Array(N * N), mixs = new Uint8Array(N * N);   // broad light and colour drift, and patches where a mirrored, shifted copy of the texture takes over, so it doesn't read as repeating tiles
-  for (let py = 0; py < N; py++) for (let px_ = 0; px_ < N; px_++) { const ax = ox + px_, ay = oy + py, i = py * N + px_; vary[i] = .86 + fbm(ax * .011, ay * .011, 31, 3) * .28; warmv[i] = (fbm(ax * .007 + 40, ay * .007, 37, 2) - .5) * 26; const fb = fbm(ax * .021 + 9, ay * .021, 43, 2), t = Math.min(1, Math.max(0, (fb - .4) * 5)); mixw[i] = t * t * (3 - 2 * t); const f2 = fbm(ax * .017 + 71, ay * .017 + 13, 47, 2); mixs[i] = f2 > .56 ? 2 : fb > .48 ? 1 : 0; }
+  for (let py = 0; py < N; py++) { if ((py & 31) === 31) yield; for (let px_ = 0; px_ < N; px_++) { const ax = ox + px_, ay = oy + py, i = py * N + px_; vary[i] = .86 + fbm(ax * .011, ay * .011, 31, 3) * .28; warmv[i] = (fbm(ax * .007 + 40, ay * .007, 37, 2) - .5) * 26; const fb = fbm(ax * .021 + 9, ay * .021, 43, 2), t = Math.min(1, Math.max(0, (fb - .4) * 5)); mixw[i] = t * t * (3 - 2 * t); const f2 = fbm(ax * .017 + 71, ay * .017 + 13, 47, 2); mixs[i] = f2 > .56 ? 2 : fb > .48 ? 1 : 0; } }
   for (let py = 0; py < N; py++) for (let px_ = 0; px_ < N; px_++) {
     const i = py * N + px_, L = lay[i]; if (L === 255) { mode[i] = 6; continue; }
     const up = py > 0 ? lay[i - N] : L, up2 = py > 1 ? lay[i - 2 * N] : L, dn = py < N - 1 ? lay[i + N] : L;
@@ -139,6 +169,7 @@ function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
   }
   const NH = N * GK, P64 = 64 * GK, c = mk(NH, NH), x = c.getContext('2d'), img = x.createImageData(NH, NH), d = img.data;
   for (let Y = 0; Y < NH; Y++) {
+    if ((Y & 15) === 15) yield;
     const py = (Y / GK) | 0, hy = (((oy * GK + Y) % P64) + P64) % P64;
     const gy = (Y + .5) / GK - .5, y0 = Math.max(0, Math.min(N - 2, Math.floor(gy))), fy = Math.min(1, Math.max(0, gy - y0));
     for (let X = 0; X < NH; X++) {
@@ -152,9 +183,7 @@ function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
       }
       const md = mode[i], o = (Y * NH + X) * 4;
       if (md === 6) { d[o] = 12; d[o + 1] = 8; d[o + 2] = 10; d[o + 3] = 255; continue; }
-      if (md === 1) { d[o] = 230; d[o + 1] = 246; d[o + 2] = 255; d[o + 3] = 255; continue; }
-      if (md === 2) { d[o] = 255; d[o + 1] = 207; d[o + 2] = 122; d[o + 3] = 255; continue; }
-      const T = texs[L], tw = tws[L], P = tw > 64 ? tw : P64, hx = (((ox * GK + X) % P) + P) % P, hyy = (((oy * GK + Y) % P) + P) % P;  // a styled texture repeats every tw px (128 art px), a plain one every 64 art px
+      const T = texs[L], tw = tws[L], P = tw > 64 ? tw : P64, hx = tw > 64 ? (((Math.floor((ox * GK + X) * TS_)) % P) + P) % P : (((ox * GK + X) % P) + P) % P, hyy = tw > 64 ? (((Math.floor((oy * GK + Y) * TS_)) % P) + P) % P : (((oy * GK + Y) % P) + P) % P;  // a styled texture repeats every tw px (128 art px), a plain one every 64 art px
       const to = (((hyy * tw / P) | 0) * tw + ((hx * tw / P) | 0)) * 4;
       let r = T ? T[to] : 128, gg = T ? T[to + 1] : 128, b = T ? T[to + 2] : 128;
       const mw = soft[L] === 2 ? (mixs[i] ? 1 : 0) : soft[L] ? mixw[i] : 0;
@@ -167,7 +196,8 @@ function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
       }
       if (!wet[L]) { const M = tmean[L]; r = M[0] + (r - M[0]) * TC; gg = M[1] + (gg - M[1]) * TC; b = M[2] + (b - M[2]) * TC; }
       if (!wet[L]) { const v = vary[i], wv = warmv[i]; r = r * v + wv; gg = gg * v + wv * .4; b = b * v - wv * .3; }
-      if (md === 3 || md === 4) { const k = md === 3 ? .62 : .78; r *= k; gg *= k; b *= k * 1.06; }
+      if (md === 1 || md === 2) { const F = md === 1 ? [230, 246, 255] : [255, 207, 122]; r += (F[0] - r) * .38; gg += (F[1] - gg) * .38; b += (F[2] - b) * .38; }   // foam: a soft wash over the water, not a solid 1 px line (it stair-stepped in a painted style)
+      else if (md === 3 || md === 4) { const k = md === 3 ? .62 : .78; r *= k; gg *= k; b *= k * 1.06; }
       else if (md === 5) { r += (255 - r) * .14; gg += (255 - gg) * .14; b += (255 - b) * .08; }
       d[o] = r; d[o + 1] = gg; d[o + 2] = b; d[o + 3] = 255;
     }
@@ -180,6 +210,9 @@ function pixGroundHi(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK) {
   c.m = M * GK; c.span = SP * GK; c.hi = GK;
   return c;
 }
+/* painted in slices: f_render advances it a few ms a frame (a whole chunk took 60-300 ms and stuttered as it scrolled
+   in); pixGroundHi runs it to the end at once (rooms, map changes) */
+function pixGroundHi() { const it = pixGroundHiGen.apply(this, arguments); let r; do r = it.next(); while (!r.done); return r.value; }
 
 /* raised cliff ground: every r / x tile is solid, so mark the whole block, not only its
    bottom face. Darker top, rock side walls where it meets open ground, a lit far edge and

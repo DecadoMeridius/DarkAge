@@ -25,20 +25,35 @@ for (const k of ['gshack', 'gtotem', 'gspit']) OBJ['furn_' + k] = { solid: 1, fi
 if (typeof FLAMES !== 'undefined') FLAMES.furn_gspit = 'furn_gspit';
 
 // camps are laid out when the Wilds are generated (part of the map's base, so saves only store changes)
+const CAMP_BIO = () => new Set(['forest', 'meadow', 'highlands'].map(b => BIOMES.indexOf(b)));
+function campOk(m, x, y) {
+  const W = m.w; for (let j = -4; j <= 4; j++) for (let i = -5; i <= 5; i++) { const X = x + i, Y = y + j; if (!inb(m, X, Y)) return false; const t = TER[getT(m, X, Y)]; if (t.solid || t.water || m.solidB[Y * W + X] || (m.roadT && m.roadT.has(Y * W + X))) return false; }
+  if ((m.towns || []).some(T => x > T.x - 20 && x < T.x + T.w + 20 && y > T.y - 20 && y < T.y + T.h + 20)) return false;
+  if ((m.gcamps || []).some(c => Math.hypot(c.x - x, c.y - y) < 45) || (m.poi || []).some(p => Math.hypot(p.x - x, p.y - y) < 14)) return false;
+  return CAMP_BIO().has(m.bio[y * W + x]);
+}
+function buildCamp(m, x, y, n) {
+  for (let j = -4; j <= 4; j++) for (let i = -5; i <= 5; i++) { const X = x + i, Y = y + j; if (getO(m, X, Y)) delObj(m, X, Y); if (Math.abs(i) + Math.abs(j) < 6) setT(m, X, Y, 'd'); }
+  const spots = [[x - 4, y - 2], [x + 2, y - 3], [x - 1, y + 3]];
+  for (let s = 0; s < n; s++) putObj(m, spots[s][0], spots[s][1], { k: 'furn_gshack', fixed: 1 });
+  putObj(m, x, y, { k: 'furn_gspit', fixed: 1 }); putObj(m, x + 3, y + 1, { k: 'furn_gtotem', fixed: 1 });
+  setO(m, x - 3, y + 2, { k: 'chest', tier: 2, gcamp: 1 });
+}
+// a cleared camp, left alone two days, is struck: its huts, spit, totem and chest go and the ground grows back
+function strikeCamp(m, C) {
+  for (let j = -5; j <= 5; j++) for (let i = -6; i <= 6; i++) {
+    const X = C.x + i, Y = C.y + j; if (!inb(m, X, Y)) continue;
+    const [mx, my, o] = typeof mainOf === 'function' ? mainOf(m, X, Y) : [X, Y, getO(m, X, Y)];
+    if (o && (/^furn_g(shack|spit|totem)$/.test(o.k) || (o.k === 'chest' && o.gcamp))) delObj(m, mx, my);
+    if (Math.abs(i) + Math.abs(j) < 6 && getT(m, X, Y) === 'd') setT(m, X, Y, typeof baseFor === 'function' ? baseFor(m, X, Y) : 'g');
+  }
+}
 function placeCamps(m) {
   m.gcamps = [];
-  const W = m.w, want = new Set(['forest', 'meadow', 'highlands'].map(b => BIOMES.indexOf(b)));
-  const ok = (x, y) => { for (let j = -4; j <= 4; j++) for (let i = -5; i <= 5; i++) { const X = x + i, Y = y + j; if (!inb(m, X, Y)) return false; const t = TER[getT(m, X, Y)]; if (t.solid || t.water || m.solidB[Y * W + X] || (m.roadT && m.roadT.has(Y * W + X))) return false; } return true; };
   for (let k = 0; k < 4000 && m.gcamps.length < 6; k++) {
-    const x = 8 + Math.floor(R() * (W - 16)), y = 10 + Math.floor(R() * (m.h - 60));
-    if (!want.has(m.bio[y * W + x]) || !ok(x, y)) continue;
-    if ((m.towns || []).some(T => x > T.x - 20 && x < T.x + T.w + 20 && y > T.y - 20 && y < T.y + T.h + 20)) continue;
-    if (m.gcamps.some(c => Math.hypot(c.x - x, c.y - y) < 45) || (m.poi || []).some(p => Math.hypot(p.x - x, p.y - y) < 14)) continue;
-    for (let j = -4; j <= 4; j++) for (let i = -5; i <= 5; i++) { const X = x + i, Y = y + j; if (getO(m, X, Y)) delObj(m, X, Y); if (Math.abs(i) + Math.abs(j) < 6) setT(m, X, Y, 'd'); }
-    const n = 1 + Math.floor(R() * 3), spots = [[x - 4, y - 2], [x + 2, y - 3], [x - 1, y + 3]];
-    for (let s = 0; s < n; s++) putObj(m, spots[s][0], spots[s][1], { k: 'furn_gshack', fixed: 1 });
-    putObj(m, x, y, { k: 'furn_gspit', fixed: 1 }); putObj(m, x + 3, y + 1, { k: 'furn_gtotem', fixed: 1 });
-    setO(m, x - 3, y + 2, { k: 'chest', tier: 2, gcamp: 1 });
+    const x = 8 + Math.floor(R() * (m.w - 16)), y = 10 + Math.floor(R() * (m.h - 60));
+    if (!campOk(m, x, y)) continue;
+    const n = 1 + Math.floor(R() * 3); buildCamp(m, x, y, n);
     m.gcamps.push({ x, y, i: m.gcamps.length, size: n });
   }
   return m;
@@ -50,7 +65,15 @@ function campTick() {
   const m = cur; if (!m || m.id !== 'wilds' || !m.gcamps) return;
   S.gcamp = S.gcamp || {};
   for (const C of m.gcamps) {
-    const d = dist(S.p.x / 16, S.p.y / 16, C.x, C.y), st = S.gcamp[C.i] || (S.gcamp[C.i] = {});
+    const st = S.gcamp[C.i] || (S.gcamp[C.i] = {});
+    if (st.pos && (C.x !== st.pos[0] || C.y !== st.pos[1])) { C.x = st.pos[0]; C.y = st.pos[1]; C.size = st.pos[2]; }   // moved camps (the map itself comes back from the save's changes)
+    let d = dist(S.p.x / 16, S.p.y / 16, C.x, C.y);
+    // cleared two days ago and out of sight: the tribe moves on and sets up somewhere new (playtest: camps should come and go)
+    if (st.cleared && !st.here && dayIndex() - st.cleared >= 2 && d > 60) {
+      let spot = null;
+      for (let k = 0; k < 600 && !spot; k++) { const x = 8 + Math.floor(Math.random() * (m.w - 16)), y = 10 + Math.floor(Math.random() * (m.h - 60)); if (dist(S.p.x / 16, S.p.y / 16, x, y) > 60 && campOk(m, x, y)) spot = [x, y]; }
+      if (spot) { strikeCamp(m, C); const n = 1 + Math.floor(Math.random() * 3); buildCamp(m, spot[0], spot[1], n); C.x = spot[0]; C.y = spot[1]; C.size = n; st.pos = [C.x, C.y, n]; st.cleared = 0; st.seen = 0; if (typeof CHUNK !== 'undefined') CHUNK.clear(); d = dist(S.p.x / 16, S.p.y / 16, C.x, C.y); }
+    }
     const live = m.ents.filter(e => e.camp === C.i && !e.dead);
     if (d < 34 && !live.length && !st.here && (!st.cleared || dayIndex() - st.cleared >= 2)) {
       const kinds = ['goblin', 'goblin', 'goblin_slinger'], extra = Math.floor(Math.random() * (C.size + 1)); /* small tribes: 3-6 */

@@ -421,7 +421,7 @@ genWilds = (f => function () {
 const townAt = (m, tx, ty, pad = 0) => (m && m.towns || []).find(T => tx >= T.x - pad && tx < T.x + T.w + pad && ty >= T.y - pad && ty < T.y + T.h + pad);
 /* no monsters spawn in or next to a town */
 spawnEnemy = (f => function (m, k, x, y, lvl) {
-  if (m && m.id === 'wilds' && m.towns && EN[k] && !EN[k].boss && !window.SPAWN_RAW && !(typeof SANDBOX !== 'undefined' && SANDBOX) && townAt(m, x / 16, y / 16, 10)) return { type: 'enemy', k, x, y, dead: true, hp: 0, mhp: 1, st: {}, ai: { cd: {} } };
+  if (m && m.id === 'wilds' && m.towns && EN[k] && !EN[k].boss && !window.SPAWN_RAW && !window.COMBAT_TEST && townAt(m, x / 16, y / 16, 10)) return { type: 'enemy', k, x, y, dead: true, hp: 0, mhp: 1, st: {}, ai: { cd: {} } };
   return f(m, k, x, y, lvl);
 })(spawnEnemy);
 /* town trees are part of the town */
@@ -736,7 +736,7 @@ storyWhere = (f => function (role) {
 spawnEnemy = (f => function (m, k, x, y, lvl) {
   // (2026-11-02: it used to swap everything for slimes within 28 tiles of a town and 45 rows of the south edge, so wolves,
   // boars and goblins hardly ever showed. Now the real creatures come, only weak; crows still become slimes there.)
-  if (m && m.id === 'wilds' && EN[k] && !EN[k].boss && !window.SPAWN_RAW && !(typeof SANDBOX !== 'undefined' && SANDBOX) && typeof BIOME_EN !== 'undefined') { // SPAWN_RAW: bandit patrols spawn as themselves
+  if (m && m.id === 'wilds' && EN[k] && !EN[k].boss && !window.SPAWN_RAW && !window.COMBAT_TEST && typeof BIOME_EN !== 'undefined') { // SPAWN_RAW: bandit patrols spawn as themselves
     const tx = x / 16, ty = y / 16, near = townAt(m, tx, ty, 18) || ty > m.h - 22;
     if (near && /crow|bird|bat/.test(k)) { k = 'slime'; lvl = 0; }   // flyers circled out of reach and over the walls (round 3)
     else if (near) lvl = Math.min(lvl || 0, 1);

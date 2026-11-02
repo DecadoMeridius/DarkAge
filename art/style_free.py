@@ -355,6 +355,7 @@ def window_glow(part, wins, ox, oy, gen):
 
 
 def build():
+    global PAD
     names = [n for n in sb.atlas if not n.startswith(('hb_', 'ic_', 'ground_')) and not sb.is_template(n)]
     hybrid = {n for n in names if re.search(r'\.\d+$', n) or sb.family(n) in HYBRID_FAM or n.startswith('gi_') or n in FAITHFUL}   # item icons stay true to their design (a free hoe became a battleaxe)
     free = [n for n in names if n not in hybrid]
@@ -420,7 +421,6 @@ def build():
     for skey, wanted in ROOMY_SHEETS:
         ns_ = [n for n in wanted if n in bases]
         if not ns_ or (ONLY and not any(n.startswith(tuple(ONLY)) for n in ns_)): continue
-        global PAD
         P0, PAD = PAD, 1.0
         try:
             sheet, pos, pad = sheet_for(ns_, 8, soft=True)
@@ -434,6 +434,28 @@ def build():
             if got: got = (got[0], place(n, got[0], 8))
             fr = frame_of(n, got, 8) if got else None
             if fr: frames[n] = fr
+    # Machines with a fire: the idle frame (.0) painted unlit, then the same sheet edited to light the fire for the
+    # lit frame (.1), so both are the same machine (painted to the outline, the idle frames came out burning)
+    lp = [n for n in LITPAIRS if n + '.0' in sb.atlas and n + '.1' in sb.atlas] if '--litpairs' in sys.argv else []   # experimental (2026-11-02: several 'unlit' ones still burned)
+    if lp and not (ONLY and not any(n.startswith(tuple(ONLY)) for n in lp)):
+        idle = [n + '.0' for n in lp]
+        P0, PAD = PAD, 1.0
+        try:
+            sheet, pos, pad = sheet_for(idle, 4, soft=True)
+            order = sorted(pos, key=lambda n: (pos[n][1], pos[n][0]))
+            prompt = FREE.format('') + ' The objects are, row by row from the top left: ' + '; '.join(LITPAIRS[n[:-2]] + ', cold and unlit, no fire, no glow' for n in order) + '.'
+            base = sb.restyle_sheet('F_4_litpairs', sheet, prompt)
+            lit = realign(sb.restyle_sheet('F_4_litpairs_lit', base, VAR.format('light every one of them: a warm fire burning inside each furnace, kiln and oven, glowing orange in its opening; change nothing else')), base)
+        finally: PAD = P0
+        CELLS[:] = [(px * 4, py * 4, (px + sb.atlas[m]['w']) * 4, (py + sb.atlas[m]['h']) * 4) for m, (px, py) in pos.items()]
+        for n, (x, y) in pos.items():
+            got = cut(base, n, x, y, pad, 4, None)
+            if not got: continue
+            pl = place(n, got[0], 4); fr = frame_of(n, (got[0], pl), 4)
+            if not fr: continue
+            frames[n] = fr
+            g2 = cut(lit, n, x, y, pad, 4, None)   # the lit one stands where the idle one does
+            if g2: fr2 = frame_of(n[:-2] + '.1', (g2[0], (pl[0] + g2[1][0] - got[1][0], pl[1] + g2[1][1] - got[1][1])), 4); frames[n[:-2] + '.1'] = fr2 if fr2 else fr
     # the rest the old way: tiling pieces, animation frames, and whatever failed above
     rest = sorted(hybrid | set(failed))
     if ONLY: rest = [n for n in rest if n.startswith(tuple(ONLY))]
@@ -465,6 +487,8 @@ PLACE, BASEOFF = {}, {}
 ROOMY_SHEETS = [
                 ('F_8_roomy_rocks', ['stone', 'rock', 'rockS', 'rockA', 'rockC', 'clay_mound', 'salt_crust']),
                 ('F_8_roomy_ores', sorted(n for n in sb.atlas if n.startswith('ore_')))]
+LITPAIRS = {'stonefurnace': 'a small stone furnace', 'smelter': 'an iron-banded brick smelter', 'blastfurnace': 'a tall brick blast furnace',
+            'emberforge': 'a magical ember forge with a pointed top', 'kiln': 'a domed clay charcoal kiln', 'oven': 'a stone bread oven'}
 PIXEL_ONLY = set()   # sprites kept as pixel art in the painted style
 FAITHFUL = set()   # painted over their own outline (the fountain was, but alone on a sheet the model zoomed in and its top and base were cut off)
 CELLS = []   # the cells of the sheet being cut (GEN px boxes)

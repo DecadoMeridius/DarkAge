@@ -2,16 +2,35 @@
 let camX = 0, camY = 0, HC_P = null, UIDN = 0, lastMap = null, chunkBudget = 16;
 const lightC = document.createElement('canvas'), lg = lightC.getContext('2d');
 const WEATHER = [], AMB = [], SMOKE = [];
-const CHUNK = new Map(), CHUNK_LAST = new Map();
-function getChunk(m, cx, cy) {
+const CHUNK = new Map(), CHUNK_LAST = new Map(), CHUNK_JOBS = new Map();
+CHUNK.clear = (f => function () { CHUNK_JOBS.clear(); return f.call(this); })(CHUNK.clear);   // a cleared cache drops half-painted chunks too
+let CHUNK_DEADLINE = 0, CHUNK_SYNC = 0;   // this frame's time for ground painting; until CHUNK_SYNC, visible chunks are finished at once
+function getChunk(m, cx, cy, prefetch) {
   if (!m.uid) m.uid = ++UIDN;
   const pos = m.uid + '|' + cx + ',' + cy, key = pos + '|' + (m.cv || 0) + '.' + (m.cvc && m.cvc[cx + ',' + cy] || 0) + '|' + (m.indoor || m.dark ? 0 : S.season);
   const e = CHUNK.get(key); if (e) { e.t = gameT; return e.c; }
-  if (chunkBudget <= 0) { const old = CHUNK_LAST.get(pos); return old || null; } chunkBudget--;   // until it's repainted, the old picture of that chunk stays (no blank flash)
-  const c = paintChunk(m, cx, cy); CHUNK.set(key, { c, t: gameT }); CHUNK_LAST.set(pos, c);
-  if (CHUNK.size > 56) { let ok = null, ot = 1e9; for (const [k2, v] of CHUNK) if (v.t < ot) { ot = v.t; ok = k2; } CHUNK.delete(ok); }
+  // painted-style ground is painted in slices (CHUNK_JOBS), a few ms a frame, the old picture shown meanwhile; a chunk
+  // with nothing to show yet on a fresh map, or after a jump, is finished at once
+  const job = CHUNK_JOBS.get(key);
+  if (job) {
+    const urgent = !prefetch && !CHUNK_LAST.get(pos) && performance.now() < CHUNK_SYNC;
+    if (!urgent && performance.now() >= CHUNK_DEADLINE) return CHUNK_LAST.get(pos) || null;   // out of time this frame
+    let r; const v = PAINT_MAP_SET(m);
+    try { do r = job.next(); while (!r.done && (urgent || performance.now() < CHUNK_DEADLINE)); } finally { PAINT_MAP_SET(v); }
+    if (!r.done) return CHUNK_LAST.get(pos) || null;
+    CHUNK_JOBS.delete(key); let c = r.value; if (typeof gpuCopy === 'function' && c.hi) c = gpuCopy(c);
+    CHUNK.set(key, { c, t: gameT }); CHUNK_LAST.set(pos, c); trimChunks(); return c;
+  }
+  if (chunkBudget <= 0 || (performance.now() > CHUNK_DEADLINE && !(!prefetch && !CHUNK_LAST.get(pos) && performance.now() < CHUNK_SYNC))) { const old = CHUNK_LAST.get(pos); return old || null; } chunkBudget--;   // until it's repainted, the old picture of that chunk stays (no blank flash)
+  if (typeof GROUND_SLICED !== 'undefined') GROUND_SLICED = true;
+  let c; try { c = paintChunk(m, cx, cy); } finally { if (typeof GROUND_SLICED !== 'undefined') GROUND_SLICED = false; }
+  if (c && c.job) { CHUNK_JOBS.set(key, c.job); return getChunk(m, cx, cy, prefetch); }
+  CHUNK.set(key, { c, t: gameT }); CHUNK_LAST.set(pos, c);
+  trimChunks();
   return c;
 }
+function trimChunks() { while (CHUNK.size > 72) { let ok = null, ot = 1e9; for (const [k2, v] of CHUNK) if (v.t < ot) { ot = v.t; ok = k2; } CHUNK.delete(ok); } }
+const PAINT_MAP_SET = m => { if (typeof PAINT_MAP === 'undefined') return null; const v = PAINT_MAP; PAINT_MAP = m; return v; };
 function playerPal() {
   const b = S.eq.body ? IT[S.eq.body] : null, h = S.eq.helm ? IT[S.eq.helm] : null, bt = S.eq.boots ? IT[S.eq.boots] : null;
   return { skin: '#f6d0ac', hair: '#7a4426', hs: 'short', shirt: b ? b.c : '#4a7cc0', pants: b ? sh(b.c, -1.2) : '#5a4e70', shoe: bt ? bt.c : '#6a4428', acc: '#e8742a', helm: h ? h.c : null, plume: h && h.ti > 8 ? '#e8342a' : null, cape: b && b.ti >= 9 ? '#9a2a2a' : null };
@@ -39,11 +58,12 @@ function D(img, x, y, w, h) { g.drawImage(img, x, y, w || img.ww, h || img.wh); 
 function shadow(x, y, r, a = .22) { g.fillStyle = 'rgba(30,20,10,' + a + ')'; const ry = Math.max(1, r * .4); for (let j = -ry; j <= ry; j += .5) { const w = Math.round(r * Math.sqrt(Math.max(0, 1 - (j * j) / (ry * ry))) * 2) / 2; if (w > 0) g.fillRect(Math.round((x - w) * 2) / 2, Math.round((y + j) * 2) / 2, w * 2, .5); } } // hard-edged pixel shadow
 function render(dt) {
   const m = cur; if (!m) return;
-  if (m !== lastMap) { lastMap = m; chunkBudget = 24; } else chunkBudget = Math.max(chunkBudget, 2);
+  if (m !== lastMap) { lastMap = m; chunkBudget = 24; CHUNK_JOBS.clear(); CHUNK_SYNC = performance.now() + 400; } else chunkBudget = Math.max(chunkBudget, 2);
+  CHUNK_DEADLINE = performance.now() + 4;
   const W = cv.width, H = cv.height, Z = pixZoom(H), vw = W / Z, vh = H / Z, sea = S.season;
   let tx = S.p.x - vw / 2, ty = S.p.y - 12 - vh / 2;
   tx = m.w * 16 < vw ? (m.w * 16 - vw) / 2 : clamp(tx, 0, m.w * 16 - vw); ty = m.h * 16 < vh ? (m.h * 16 - vh) / 2 : clamp(ty, -Math.max(vh * .05, 40), m.h * 16 - vh + Math.max(vh * .11, 40)); // a little past the edges, so the hotbar and HUD never cover you
-  camX += (tx - camX) * Math.min(1, dt * 8); camY += (ty - camY) * Math.min(1, dt * 8); if (Math.abs(camX - tx) > 160 || Math.abs(camY - ty) > 160) { camX = tx; camY = ty; }
+  camX += (tx - camX) * Math.min(1, dt * 8); camY += (ty - camY) * Math.min(1, dt * 8); if (Math.abs(camX - tx) > 160 || Math.abs(camY - ty) > 160) { camX = tx; camY = ty; CHUNK_SYNC = performance.now() + 400; }
   let sx = 0, sy = 0; if (SHAKE > 0) { sx = (Math.random() - .5) * 3; sy = (Math.random() - .5) * 3; }
   const cxp = Math.round((camX + sx) * Z / 2) * 2 / Z, cyp = Math.round((camY + sy) * Z / 2) * 2 / Z; // snap to the art-pixel grid
   g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = m.dark ? '#140e0a' : m.indoor ? '#0c080a' : '#2a3a22'; g.fillRect(0, 0, W, H);
@@ -56,6 +76,11 @@ function render(dt) {
     if (c) { const X0 = Math.round((cx * P - cxp) * Z), X1 = Math.round(((cx + 1) * P - cxp) * Z), Y0 = Math.round((cy * P - cyp) * Z), Y1 = Math.round(((cy + 1) * P - cyp) * Z); g.setTransform(1, 0, 0, 1, 0, 0); if (c.hi) g.imageSmoothingEnabled = true; g.drawImage(c, c.m, c.m, c.span, c.span, X0, Y0, X1 - X0, Y1 - Y0); g.imageSmoothingEnabled = false; g.setTransform(Z, 0, 0, Z, -cxp * Z, -cyp * Z); }
     else for (let y = cy * CH; y < Math.min(m.h, cy * CH + CH); y++) for (let x = cx * CH; x < Math.min(m.w, cx * CH + CH); x++) { g.fillStyle = groundStyle(paintKey(m, x, y), m.dark || m.indoor ? 0 : sea, m.theme).base; g.fillRect(x * 16, y * 16, 16.1, 16.1); }
   }
+  // paint the ring of chunks just outside the view ahead of time, in what's left of this frame's ground time
+  { const ca = Math.floor(x0 / CH) - 1, cb = Math.floor((x1 - 1) / CH) + 1, ra = Math.floor(y0 / CH) - 1, rb = Math.floor((y1 - 1) / CH) + 1;
+    for (let cy = ra; cy <= rb && performance.now() < CHUNK_DEADLINE; cy++) for (let cx = ca; cx <= cb; cx++) {
+      if (cy > ra && cy < rb && cx > ca && cx < cb) continue; if (cx < 0 || cy < 0 || cx * CH >= m.w || cy * CH >= m.h) continue;
+      getChunk(m, cx, cy, true); if (performance.now() >= CHUNK_DEADLINE) break; } }
   // ---- animated water & soil ----
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
     const i = y * m.w + x, t = m.t[i];
@@ -85,7 +110,7 @@ function render(dt) {
       if (isTree || o.k === 'tgrass' || o.k === 'bush') {
         const amp = o.k === 'tgrass' ? .14 : isTree ? .03 : .04, sw = Math.sin(gameT * (o.k === 'tgrass' ? 2.2 : 1.1) + x * .7 + y * .3) * amp;
         const under = q => q.x > dx + 4 && q.x < dx + spr.ww - 4 && q.y < (y + 1) * 16 - 3 && q.y > dy + 8, behind = isTree && (under(S.p) || m.ents.some(e => e.type === 'enemy' && !e.dead && under(e)));
-        if (behind) g.globalAlpha = .25;
+        if (behind) g.globalAlpha = typeof STYLED === 'function' && STYLED() ? .12 : .25;   // painted canopies at .25 smeared over bosses
         g.save(); g.translate(x * 16 + w / 2, (y + 1) * 16); g.transform(1, 0, sw, 1, 0, 0); D(spr, dx - x * 16 - w / 2, dy - (y + 1) * 16); g.restore(); g.globalAlpha = 1;
       } else D(spr, dx, dy);
       if (DD.mach && o.out && o.left <= 0) { const b = Math.sin(gameT * 4) * 1.5; g.fillStyle = 'rgba(255,250,235,.92)'; g.beginPath(); g.arc(x * 16 + 8, dy - 6 + b, 7, 0, 6.283); g.fill(); g.strokeStyle = INK; g.lineWidth = .5; g.stroke(); D(itemIcon(o.out), x * 16 + 2.5, dy - 11.5 + b, 11, 11); }
