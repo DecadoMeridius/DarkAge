@@ -882,3 +882,19 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - `HELP` holds the texts (title + paragraphs). `helpKey()` picks one by the window title, the Satchel tab, the station (`MODAL.opts.station`), the Markets tab, the town building (`TOWN_ACTS` + `actType`, guilds by `GUILDS`), the region market/inn/forge, or a machine's item name (artisan machines vs other machines).
 - Covered: stall, bin, notice boards, markets, village shops (Mara, Brann, Hale, Pip, Corwin, Odile), manor, museum, altar, waystones, merchant, request board, elevator, silo, crates, build sites, machines, crafting stations, town shops, forges, inns, halls, banks, temples, barracks, guilds, and every Satchel tab. New windows need an entry in `HELP` (and in `helpKey` if their title isn't fixed); keep the texts in step when a system changes.
 
+## Round 3 fixes (findings in `docs/playtest/round3/SUMMARY.md`)
+- **Economy:** the cottage needs 40 stone, not 80 (stone held it up to week three).
+- **Fields:** water channels count as a barrier in `enclosedTiles` (x_gate.js) like fences, so a channel led through a fence line leaves no gap for the meadow.
+- **Double harvests:** a crop gives one extra with a chance of Farming level × 0.2% + Abundance (10%) + Bountiful picked in Farming (+6% each, which only worked for gathering before; `harvest` in t_balance.js), plus the Life tree's Green Thumb (12% for one more).
+- **Wild flowers are items (asked 2026-11-03):** picking a flower gives that species (`WILDFLOWERS` in x_world.js, in sprite order `flower.0-4`): Buttercup 5g, Foxglove 8g, Bluebell 6g, Daisy 4g, Marigold 7g, forage items with the recoloured flower icon. The season's forage flower (dandelion, sweet pea, ice bloom, cinderbloom) turns up instead 12% of the time, up to 50% with Foraging. No more fibre from flowers.
+- **Code:** `h_pixel.js` `humanSpr`'s `if (K > 1) out.hi = K` had been hidden behind a `//` comment; it's on its own now.
+- **Painterly, code only (no atlas rebuild):**
+  - `STYLE_SMOOTH` adds `furn_sbench` (the painted bench was see-through) and the repaired greenhouse `bld_greenhouse_(6x5|8x6)(_w)?` (a blank glass box); `STYLE_SKIP` adds `en_troll` (a strip down its edge, washed out).
+  - Birches `tree_birch_<s>_0` (s 0-2) use the `_1` painting (`STYLE_ALIAS`): the `_0` ones were painted to their blocky outline. A proper fix needs the birches repainted.
+  - Fence gate halves have an open, braced gate leaf beside each post (`gateSpr`); posts and a lintel read as an empty frame.
+  - The character creator preview uses `smoothUp` like characters in the world.
+  - Painted ground: natural layers plus dirt roads and paths (`d`, `p`) are smoothed with diagonal neighbours at half weight, and the per-pixel hash noise is gone from the border wobble (`paintChunkHiGen`), so borders curve without art-pixel ragging.
+  - The sea's depth is a one-pixel-per-tile canvas drawn smoothly (`DEPTHC`), and swells sit at their own place and length in a tile (`waterDepthDraw`).
+  - Winter caps of snow on the well, altar, notice boards, bin, signposts, lamp posts, workbench and crates (`snowCap` in an `objSprite` wrapper, x_fix6.js; not indoors or in the Emberwaste).
+- **Region towns (`x_regionfolk.js`):** five townsfolk dressed for the region walk the town by day (two stay by the inn at night) and a stallholder stands at the market stall, opening the market when you talk to them. Runtime only (`rf_<region>_<i>`, `k_rfolk`).
+

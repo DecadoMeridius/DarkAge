@@ -126,15 +126,18 @@ function* paintChunkHiGen(m, cx, cy) {
   const fields = layers.map(L => { const P = PPRI[L], f = new Float32Array(G2 * G2); for (let i = 0; i < f.length; i++) f[i] = PPRI[keys[i]] >= P ? 1 : 0; return f; });
   // natural ground (grass, snow, ash, ice, sand) is smoothed a little before its edge is found, so a border between biomes
   // curves instead of stepping tile by tile (art playtest: stair-stepped biome borders); roads, paving and water keep their shape
-  const SMOOTHK = { g: 1, sn: 1, a: 1, i: 1, s: 1 };
+  // round 3: the diagonal neighbours count too (half weight), so a road or shore running diagonally rounds its tile steps
+  // off; a one-tile path still keeps its width. Dirt roads and paths are smoothed as well.
+  const SMOOTHK = { g: 1, sn: 1, a: 1, i: 1, s: 1, d: 1, p: 1 };
   fields.forEach((f, li) => { if (!SMOOTHK[layers[li]]) return; const o = f.slice();
     for (let j = 0; j < G2; j++) for (let i = 0; i < G2; i++) { const at = (I, J) => o[Math.max(0, Math.min(G2 - 1, J)) * G2 + Math.max(0, Math.min(G2 - 1, I))];
-      f[j * G2 + i] = (4 * at(i, j) + at(i - 1, j) + at(i + 1, j) + at(i, j - 1) + at(i, j + 1)) / 8; } });
+      f[j * G2 + i] = (4 * at(i, j) + at(i - 1, j) + at(i + 1, j) + at(i, j - 1) + at(i, j + 1) + .5 * (at(i - 1, j - 1) + at(i + 1, j - 1) + at(i - 1, j + 1) + at(i + 1, j + 1))) / 10; } });
   const lay = new Uint8Array(N * N), ox = cx * SP - M, oy = cy * SP - M, exact = m.theme === 'indoor'; // rooms keep hard tile edges
   for (let py = 0; py < N; py++) { if ((py & 15) === 15) yield; for (let px_ = 0; px_ < N; px_++) {
     const ax = ox + px_, ay = oy + py; // absolute art-pixel coords
     const gx = (px_ - M) / 32 + .5, gy = (py - M) / 32 + .5, x0 = Math.floor(gx), y0 = Math.floor(gy), fx = gx - x0, fy = gy - y0;
-    const jit = (fbm(ax * .045, ay * .045, 17, 2) - .5) * .5 + (hsh(ax >> 1, ay >> 1, 9) - .5) * .12;
+    // only the broad wobble: the per-pixel hash noise made painted borders ragged in art-pixel steps (round 3)
+    const jit = (fbm(ax * .045, ay * .045, 17, 2) - .5) * .5;
     let L = 0;
     if (exact) { const ti = Math.floor((px_ - M) / 32), tj = Math.floor((py - M) / 32); lay[py * N + px_] = inb(m, cx * CH + ti, cy * CH + tj) ? Math.max(0, layers.indexOf(keys[(tj + 1) * G2 + ti + 1])) : 255; continue; }
     for (let li = layers.length - 1; li > 0; li--) {
@@ -336,7 +339,7 @@ humanSpr = function (key, P, dir, f) {
   if (K > 1 && typeof styledSwap === 'function') styledSwap(c, humanRamps(P));
   pixSwap(c, humanRamps(P), P.eye || P.glow ? [[0x2b, 0x1d, 0x18], h2r(P.glow || P.eye)] : null);
   if (K === 1) pixOutline(c, null); // selective: each edge is a darker shade of what it touches (painted layers have their own edges)
-  const out = dir === 1 ? flipC(c) : mk(c.width, c.height, x => x.drawImage(c, 0, 0)); out.ww = 16; out.wh = 32;   // the finished frame on the GPU (c stays in normal memory) if (K > 1) out.hi = K;
+  const out = dir === 1 ? flipC(c) : mk(c.width, c.height, x => x.drawImage(c, 0, 0)); out.ww = 16; out.wh = 32; if (K > 1) out.hi = K;   // the finished frame on the GPU (c stays in normal memory)
   return HC[k] = out;
 };
 /* body armour is one picture per facing, drawn for the standing arms: per body frame, its sleeves are taken away

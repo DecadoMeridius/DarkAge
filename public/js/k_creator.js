@@ -35,7 +35,10 @@ function openCreator(onDone) {
     const painted = SETTINGS.artStyle !== 'pixel'; cvs.style.imageRendering = painted ? 'auto' : 'pixelated';
     x.imageSmoothingEnabled = painted; x.imageSmoothingQuality = 'high'; x.clearRect(0, 0, cvs.width, cvs.height);
     x.fillStyle = '#8ab05a'; x.fillRect(0, cvs.height - 80, cvs.width, 80);
-    x.drawImage(spr, (cvs.width - 32 * 10) / 2, cvs.height - 64 * 10 - 28, 32 * 10, 64 * 10);
+    // in a painted style the preview gets the same smoothing and shading the characters get in the world (round 3: it was
+    // the raw pixel composite, merely enlarged smoothly)
+    const src = painted && typeof smoothUp === 'function' ? smoothUp(spr) : spr;
+    x.drawImage(src, (cvs.width - 32 * 10) / 2, cvs.height - 64 * 10 - 28, 32 * 10, 64 * 10);
   };
   openModal('Who are you?', [{ id: 'c', label: 'Appearance', render: b => {
     const wrap = el('div', { class: 'creator' }), cvs = el('canvas', { width: 440, height: 720, class: 'ccprev' });

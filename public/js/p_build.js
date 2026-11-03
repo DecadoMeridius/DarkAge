@@ -16,7 +16,7 @@ SKN.construction = 'Construction'; if (!SK.includes('construction')) SK.push('co
 for (const k in BUILD) BUILD[k].lv[-1] = [0, {}, 0]; // capFor() reads lv[level - 1]; an unbuilt building (level 0) holds nothing
 
 const BP = {
-  cottage: { n: 'Cottage', kind: 'house', act: 'house', w: 7, h: 5, gold: 1000, cost: { wood: 150, stone: 80 }, work: 60, lot: [6, 4], desc: 'Your farmhouse, placed wherever you like. Once it is finished the tent is packed away; it has a bed, kitchen and storage.' },
+  cottage: { n: 'Cottage', kind: 'house', act: 'house', w: 7, h: 5, gold: 1000, cost: { wood: 150, stone: 40 }, work: 60, lot: [6, 4], desc: 'Your farmhouse, placed wherever you like. Once it is finished the tent is packed away; it has a bed, kitchen and storage.' },
   coop: { n: 'Coop', kind: 'coop', act: 'coop', w: 6, h: 5, gold: 1500, cost: { wood: 100, stone: 50 }, work: 40, build: 'coop', desc: 'Houses chickens, ducks and rabbits.' },
   barn: { n: 'Barn', kind: 'barn', act: 'barn', w: 7, h: 6, gold: 3000, cost: { wood: 200, stone: 100 }, work: 60, build: 'barn', desc: 'Houses cows, goats, sheep and pigs.' },
   stable: { n: 'Stable', kind: 'stable', act: 'stable', w: 6, h: 5, gold: 4000, cost: { wood: 150, hardwood: 20 }, work: 50, build: 'stable', desc: 'Houses horses.' },

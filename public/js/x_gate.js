@@ -29,8 +29,12 @@ function gateSpr(gs) {
     const P = (X, Y, w, h, col) => { x.fillStyle = col; x.fillRect(X, Y, w, h); };
     const post = (X, Y, h) => { P(X, Y, 6, h, '#6a4228'); P(X, Y, 2, h, '#8a5a36'); P(X + 5, Y, 1, h, '#4a2c18'); P(X - 1, Y - 3, 8, 4, '#7a4c2c'); P(X - 1, Y - 3, 8, 1, '#9a6a42'); };
     const lintel = (X0, X1) => { P(X0, 24, X1 - X0, 5, '#7a4c2c'); P(X0, 24, X1 - X0, 1, '#a07048'); P(X0, 28, X1 - X0, 1, '#4a2c18'); };
-    if (gs === 'L') { post(0, 30, 32); lintel(0, 32); P(4, 29, 2, 3, '#4a2c18'); }          // left half: its post on the left, the lintel runs on into the right half
-    else if (gs === 'R') { post(26, 30, 32); lintel(0, 32); P(26, 29, 2, 3, '#4a2c18'); }   // right half
+    // an open gate leaf swung back beside its post: a framed slatted panel with a brace (round 3: posts and a lintel alone
+    // read as an empty frame)
+    const leaf = X => { for (let i = 0; i < 4; i++) P(X + 1 + i * 2, 41, 1, 18, i % 2 ? '#7a4c2c' : '#8a5a36'); P(X, 40, 9, 2, '#6a4228'); P(X, 40, 9, 1, '#a07048'); P(X, 57, 9, 2, '#5a3820');
+      P(X, 40, 2, 19, '#6a4228'); P(X + 7, 40, 2, 19, '#5a3820'); for (let i = 0; i < 7; i++) P(X + 1 + i, 55 - i * 2, 2, 2, '#9a6a42'); P(X + 9, 44, 1, 2, '#3a2a20'); P(X + 9, 53, 1, 2, '#3a2a20'); };
+    if (gs === 'L') { post(0, 30, 32); lintel(0, 32); P(4, 29, 2, 3, '#4a2c18'); leaf(7); }          // left half: its post on the left, the lintel runs on into the right half
+    else if (gs === 'R') { post(26, 30, 32); lintel(0, 32); P(26, 29, 2, 3, '#4a2c18'); leaf(16); }   // right half
     else if (gs === 'T') { post(13, 14, 22); P(12, 10, 8, 4, '#7a4c2c'); P(12, 10, 8, 1, '#a07048'); }   // along a north-south run: a post at the far ends only
     else if (gs === 'B') { post(13, 50, 14); }
     else { post(0, 30, 32); post(26, 30, 32); lintel(0, 32); }   // a lone half
@@ -73,7 +77,8 @@ let OVERGROWN_NEWS = 0;
 function enclosedTiles(m) {
   // flood the open ground from the map edge; everything it can't reach is shut in
   const W = m.w, H = m.h, out = new Uint8Array(W * H), q = [];
-  const wall = i => { const o = m.o[i], t = TER[m.t[i]]; return (o && (o.k === 'fence' || o.k === 'fgate')) || m.solidB[i] || (t && (t.solid || t.water)); };
+  // water channels count as a barrier too, so a channel led through a fence line doesn't leave a gap for the meadow
+  const wall = i => { const o = m.o[i], t = TER[m.t[i]]; return (o && (o.k === 'fence' || o.k === 'fgate' || o.k === 'channel')) || m.solidB[i] || (t && (t.solid || t.water)); };
   for (let x = 0; x < W; x++) for (const y of [0, H - 1]) { const i = y * W + x; if (!wall(i) && !out[i]) { out[i] = 1; q.push(i); } }
   for (let y = 0; y < H; y++) for (const x of [0, W - 1]) { const i = y * W + x; if (!wall(i) && !out[i]) { out[i] = 1; q.push(i); } }
   while (q.length) { const i = q.pop(), x = i % W, y = i / W | 0;

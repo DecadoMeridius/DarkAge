@@ -733,16 +733,25 @@ function waterDepth(m) {
   for (let h = 0; h < q.length; h++) { const i = q[h], x = i % W, y = i / W | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= W || Y >= H) continue; const n = Y * W + X; if (D[n] === 255) { D[n] = Math.min(254, D[i] + 1); q.push(n); } } }
   m._depth = D; m._depthCv = m.cv; return D;
 }
+// round 3: the depth is one pixel per tile on a small canvas drawn smoothly over the view (square tiles of darker water
+// showed as seams), and each swell sits at its own place and length in its tile (they lined up on a grid)
+const DEPTHC = new WeakMap();
 function waterDepthDraw(m, x0, y0, x1, y1) {
   if (SETTINGS.artStyle === 'pixel' || !m || m.indoor || m.dark) return;
   const D = waterDepth(m);
+  let dc = DEPTHC.get(m);
+  if (!dc || dc.src !== D) {
+    dc = mk(m.w, m.h, x => { const im = x.createImageData(m.w, m.h); for (let i = 0; i < D.length; i++) { const d = D[i]; if (!d || d === 255 || d < 2) continue; im.data[i * 4] = 8; im.data[i * 4 + 1] = 34; im.data[i * 4 + 2] = 70; im.data[i * 4 + 3] = Math.round(Math.min(.42, (d - 1) * .055) * 255); } x.putImageData(im, 0, 0); });
+    dc.src = D; DEPTHC.set(m, dc);
+  }
+  const sx = Math.max(0, x0 - 1), sy = Math.max(0, y0 - 1), ex = Math.min(m.w, x1 + 1), ey = Math.min(m.h, y1 + 1);
+  g.save(); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+  g.drawImage(dc, sx, sy, ex - sx, ey - sy, sx * 16 + 8 - 8, sy * 16, (ex - sx) * 16, (ey - sy) * 16); g.restore();
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
-    const d = D[y * m.w + x]; if (!d || d === 255 || d < 2) continue;
-    g.fillStyle = 'rgba(8,34,70,' + Math.min(.42, (d - 1) * .055).toFixed(3) + ')'; g.fillRect(x * 16, y * 16, 16, 16);
-    if (d >= 5 && hsh(x, y, 61) < .22) {   // a swell: a long soft highlight drifting with the waves
-      const ph = (gameT * .12 + hsh(x, y, 62)) % 1, X = x * 16 + 2, Y = y * 16 + 4 + ph * 8;
-      g.globalAlpha = Math.sin(ph * Math.PI) * .22; g.strokeStyle = '#d8f0ff'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(X, Y); g.quadraticCurveTo(X + 7, Y - 2, X + 14, Y); g.stroke(); g.globalAlpha = 1;
-    }
+    const d = D[y * m.w + x]; if (!d || d === 255 || d < 5 || hsh(x, y, 61) >= .22) continue;
+    // a swell: a long soft highlight drifting with the waves, somewhere in its tile
+    const ph = (gameT * .12 + hsh(x, y, 62)) % 1, len = 9 + hsh(x, y, 63) * 12, X = x * 16 + hsh(x, y, 64) * 10 - 3, Y = y * 16 + 2 + hsh(x, y, 65) * 8 + ph * 8;
+    g.globalAlpha = Math.sin(ph * Math.PI) * .22; g.strokeStyle = '#d8f0ff'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(X, Y); g.quadraticCurveTo(X + len / 2, Y - 2, X + len, Y); g.stroke(); g.globalAlpha = 1;
   }
 }
 
@@ -877,3 +886,37 @@ EVT.on('map', () => {
   if (!S || !cur || !S.p || S.flying || boxFree(cur, S.p.x, S.p.y, 5)) return;
   if (!freeSpot(cur, S.p, 5)) { const t = openTileNear(cur, Math.floor(S.p.x / 16), Math.floor(S.p.y / 16)); if (t) { S.p.x = (t[0] + .5) * 16; S.p.y = (t[1] + .8) * 16; } }
 });
+
+/* ---- winter snow on props that had no winter look (round 3: the well, altar, notice boards, shipping bin and signposts
+   stayed bare in the snow): a cap of snow along every top edge, made once per sprite and cached ---- */
+{
+  const SNOWY = new Set(['well', 'fwell', 'altar', 'board', 'bin', 'sign', 'lamppost', 'workbench', 'storage', 'furn_crate']);
+  const CAP = new WeakMap();
+  const snowCap = c => {
+    if (!c || !c.width) return c; let s = CAP.get(c); if (s && !s.__lost) return s;
+    const W = c.width, H = c.height, k = c.ww ? W / c.ww : 2, t = Math.max(2, Math.round(k * 2.4));
+    const w = mkCPU(W, H, x => x.drawImage(c, 0, 0)), x = w.getContext('2d'), im = x.getImageData(0, 0, W, H), d = im.data;
+    for (let X = 0; X < W; X++) {
+      let top = -1, outside = true;
+      for (let Y = 0; Y < H; Y++) {
+        // a top edge = the first solid pixel after open air (painted edges fade in over a few pixels)
+        const a = d[(Y * W + X) * 4 + 3];
+        if (a < 90) { outside = true; continue; }
+        if (!outside || a <= 140) continue;
+        outside = false; top = Y;
+        // a top edge: whiten a few pixels down, brightest at the top, a little cooler underneath
+        for (let i = 0; i < t && top + i < H; i++) { const o = ((top + i) * W + X) * 4; if (d[o + 3] < 100) break; const f = i < t - 1 ? 1 : .55;
+          d[o] += (238 - d[o]) * f; d[o + 1] += (244 - d[o + 1]) * f; d[o + 2] += (252 - d[o + 2]) * f; }
+      }
+    }
+    x.putImageData(im, 0, 0);
+    s = mk(W, H, q => q.drawImage(w, 0, 0)); for (const p in c) if (Object.prototype.hasOwnProperty.call(c, p) && !(p in s)) s[p] = c[p];
+    ['ww', 'wh', 'off', 'hi', 'k', 'ax', 'ay', 'cast', 'meta'].forEach(p => { if (c[p] !== undefined) s[p] = c[p]; });
+    CAP.set(c, s); return s;
+  };
+  objSprite = (f => function (o, season) {
+    const spr = f.apply(this, arguments);
+    if (season !== 3 || !spr || !SNOWY.has(o.k) || !cur || cur.indoor || cur.theme === 'indoor' || cur.region === 'emberwaste') return spr;
+    try { return snowCap(spr); } catch (e) { return spr; }
+  })(objSprite);
+}

@@ -40,7 +40,8 @@ harvest = function (m, tx, ty) {
   const s = m.soil[ty * m.w + tx], C = CROPS[s.crop.k], L = lv('farming');
   const bonus = (s.fert === 'rich_compost' ? .3 : s.fert === 'compost' ? .12 : 0) + (hasPerk('agronomist') ? .1 : 0);
   const q = qualityRoll(L, bonus);
-  let n = C.y > 1 ? ri(1, C.y) : 1; if (Math.random() < L * .002 + (hasPerk('abundance') ? .1 : 0)) n++;
+  // Bountiful picked in Farming counts here too (+6% each; it only worked for gathering)
+  let n = C.y > 1 ? ri(1, C.y) : 1; if (Math.random() < L * .002 + (hasPerk('abundance') ? .1 : 0) + perkCount('farming', 'bounty') * .06) n++;
   give(s.crop.k, n, q); S.stats.harvest += n; addXP('farming', Math.max(3, Math.round(C.p / 10))); SFX.pick();
   if (C.re) s.crop.age = C.d - C.re; else { s.crop = null; s.fert = null; }
   sparkle(tx, ty, '#f5e08a');

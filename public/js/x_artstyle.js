@@ -18,14 +18,16 @@ PIX.load = (f => function () { return f.apply(this, arguments).then(() => loadSt
 // a painted sprite that must use another's painting: the lit lamp's painted glow kept a pink disc of the magenta card
 // (the game draws lamp light itself at night)
 const STYLE_ALIAS = { lantern: 'lantern_off' };
+// the birch's first variant was painted to its blocky pixel outline; its second variant is properly painted (round 3)
+for (let s = 0; s < 3; s++) STYLE_ALIAS['tree_birch_' + s + '_0'] = 'tree_birch_' + s + '_1';
 // pieces that must join their neighbours (fence runs, tilled soil beds) keep the pixel sprite, rounded and lit like the
 // characters (painted one by one they came out as a jumble of posts and separate squares)
-const STYLE_SMOOTH = /^(fence|soil_|waystone|pet_|furn_hole|dec_dais|dec_runner|furn_bpole|furn_stairup|furn_stairdown|sign$|stone$|furn_crate$)/;   // (the waystone's painted frames came out cut up and misaligned; the pets' differed frame to frame)
+const STYLE_SMOOTH = /^(fence|soil_|waystone|pet_|furn_hole|dec_dais|dec_runner|furn_bpole|furn_stairup|furn_stairdown|sign$|stone$|furn_crate$|furn_sbench$|bld_greenhouse_(6x5|8x6)(_w)?$)/;   // (the waystone's painted frames came out cut up and misaligned; the pets' differed frame to frame)
 // paintings that came out bigger than the object is: fitted back inside the pixel sprite's box (standing on its base)
 const STYLE_FIT = /^(well$|bld_barn_|bld_kb_market_)/;
 // creatures whose paintings didn't hold up (drawn 2-3x as Old Snapper and the Frost Giant): their pixel animation,
 // rounded and lit like the characters (pixTemplate wrapper)
-const STYLE_SKIP = /^(en_(crab|yeti)(_atk)?|an_(rabbit|chicken))\./;   // the rabbit's tail and the chicken's legs were redrawn in the pixel art (2026-11-03); their old paintings had the faults
+const STYLE_SKIP = /^(en_(crab|yeti|troll)(_atk)?|an_(rabbit|chicken))\./;   // the rabbit's tail and the chicken's legs were redrawn in the pixel art (2026-11-03); their old paintings had the faults
 PIX.get = (f => function (n) {
   const st = STYLE_ATLAS[SETTINGS.artStyle];
   if (st && STYLE_SMOOTH.test(n)) {
