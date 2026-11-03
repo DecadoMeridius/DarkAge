@@ -220,7 +220,7 @@ function useItem(id) {
   if (it.t === 'sapling') { if (!m.farm) { toast('Plant saplings on your farm.'); return; } if (!areaFree(m, tx, ty, 1, 1) || m.soil[i]) { toast('Needs a clear patch of ground.'); return; } setO(m, tx, ty, { k: 'ftree', tree: it.tree, age: 0, fruit: 0 }); take(id); SFX.till(); toast('Planted. It will bear fruit in about two weeks.'); return; }
   if (it.t === 'place') {
     if (!m.farm) { toast('Place that on your farm.'); return; }
-    const D = OBJ[it.place]; if (!areaFree(m, tx, ty, D.w || 1, D.h || 1) || (m.soil[i] && m.soil[i].crop)) { toast('Something is in the way.'); return; }
+    const D = OBJ[it.place]; if (!areaFree(m, tx, ty, D.w || 1, D.h || 1) || (m.soil[i] && m.soil[i].crop)) { toast(typeof dragBlockWhy === 'function' ? dragBlockWhy(tx, ty) : 'Something is in the way.'); return; }
     delete m.soil[i]; putObj(m, tx, ty, { k: it.place, cd: 3 }); take(id); SFX.till(); return;
   }
   if (id === 'staircase') { if (!m.mine) { toast('Use this in the mines.'); return; } take(id); S.mineFloor = m.mine + 1; goMap('mine'); return; }

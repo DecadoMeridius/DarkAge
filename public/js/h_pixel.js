@@ -124,6 +124,12 @@ function* paintChunkHiGen(m, cx, cy) {
   for (let j = 0; j < G2; j++) for (let i = 0; i < G2; i++) { const k = paintKey(m, cx * CH + i - 1, cy * CH + j - 1); keys.push(k); present.add(k); }
   const layers = [...present].sort((a, b) => PPRI[a] - PPRI[b]);
   const fields = layers.map(L => { const P = PPRI[L], f = new Float32Array(G2 * G2); for (let i = 0; i < f.length; i++) f[i] = PPRI[keys[i]] >= P ? 1 : 0; return f; });
+  // natural ground (grass, snow, ash, ice, sand) is smoothed a little before its edge is found, so a border between biomes
+  // curves instead of stepping tile by tile (art playtest: stair-stepped biome borders); roads, paving and water keep their shape
+  const SMOOTHK = { g: 1, sn: 1, a: 1, i: 1, s: 1 };
+  fields.forEach((f, li) => { if (!SMOOTHK[layers[li]]) return; const o = f.slice();
+    for (let j = 0; j < G2; j++) for (let i = 0; i < G2; i++) { const at = (I, J) => o[Math.max(0, Math.min(G2 - 1, J)) * G2 + Math.max(0, Math.min(G2 - 1, I))];
+      f[j * G2 + i] = (4 * at(i, j) + at(i - 1, j) + at(i + 1, j) + at(i, j - 1) + at(i, j + 1)) / 8; } });
   const lay = new Uint8Array(N * N), ox = cx * SP - M, oy = cy * SP - M, exact = m.theme === 'indoor'; // rooms keep hard tile edges
   for (let py = 0; py < N; py++) { if ((py & 15) === 15) yield; for (let px_ = 0; px_ < N; px_++) {
     const ax = ox + px_, ay = oy + py; // absolute art-pixel coords
@@ -152,7 +158,7 @@ function* pixGroundHiGen(m, cx, cy, lay, layers, N, M, SP, ox, oy, s, th, GK, TK
   const texs = layers.map(L => groundPixels(L, s, th)), tws = texs.map(T => T ? Math.round(Math.sqrt(T.length / 4)) : 64);
   const tmean = texs.map(T => { if (!T) return [128, 128, 128]; const a = [0, 0, 0]; for (let i = 0; i < T.length; i += 64) { a[0] += T[i]; a[1] += T[i + 1]; a[2] += T[i + 2]; } const n = T.length / 64; return a.map(v => v / n); });
   const TC = .7;   // a painted ground is calmer than its texture (the example scenes: shadows read on it)
-  const SOFT = { s: 1, a: 1, st: 1, d: 1, sn: 1, g: 1, i: 1, p: 2 }, soft = layers.map(L => SOFT[L] || 0);   // 2: paving switches copies sharply (a soft blend showed doubled stones)   // natural grounds take the mirrored copy; paving and floors would show doubled stones
+  const SOFT = { s: 1, a: 1, st: 1, d: 1, sn: 1, g: 1, i: 1, p: 2, l: 1 }, soft = layers.map(L => SOFT[L] || 0);   // 2: paving switches copies sharply (a soft blend showed doubled stones)   // natural grounds take the mirrored copy; paving and floors would show doubled stones
   const wet = layers.map(L => L === 'w' || L === 'l'), mode = new Uint8Array(N * N);   // 1 foam, 2 lava foam, 3/4 lip, 5 rim, 6 outside a room
   const vary = new Float32Array(N * N), warmv = new Float32Array(N * N), mixw = new Float32Array(N * N), mixs = new Uint8Array(N * N);   // broad light and colour drift, and patches where a mirrored, shifted copy of the texture takes over, so it doesn't read as repeating tiles
   for (let py = 0; py < N; py++) { if ((py & 31) === 31) yield; for (let px_ = 0; px_ < N; px_++) { const ax = ox + px_, ay = oy + py, i = py * N + px_; vary[i] = .86 + fbm(ax * .011, ay * .011, 31, 3) * .28; warmv[i] = (fbm(ax * .007 + 40, ay * .007, 37, 2) - .5) * 26; const fb = fbm(ax * .021 + 9, ay * .021, 43, 2), t = Math.min(1, Math.max(0, (fb - .4) * 5)); mixw[i] = t * t * (3 - 2 * t); const f2 = fbm(ax * .017 + 71, ay * .017 + 13, 47, 2); mixs[i] = f2 > .56 ? 2 : fb > .48 ? 1 : 0; } }

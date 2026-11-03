@@ -147,7 +147,7 @@ function styleGlow(n) {
   for (let y = Math.floor(band[0]); y < Math.ceil(band[1]); y++) for (let x = 0; x < W; x++) {
     const i = (y * W + x) * 4; if (a[i + 3] < 200) continue;
     const r = a[i], g_ = a[i + 1], b = a[i + 2], lum = (r * 3 + g_ * 6 + b) / 10;
-    if ((b > r + 14 && b >= g_ - 4 && lum < 160) || (lum < 45 && b >= r - 4)) glass[y * W + x] = 1;
+    if (b > r + 14 && b >= g_ - 4 && lum < 160 && lum > 30) glass[y * W + x] = 1;   // clearly blue glass only (dark patches were shutters, ivy and eaves)
   }
   const mask = mk(W, H), mx = mask.getContext('2d'), id = mx.createImageData(W, H), d = id.data, seen = new Uint8Array(W * H);
   const minA = (2.5 * ppa) ** 2, maxA = (26 * ppa) ** 2;   // a window is between about 2.5 and 26 art px across
@@ -158,6 +158,9 @@ function styleGlow(n) {
       for (const n of [k - 1, k + 1, k - W, k + W]) if (n >= 0 && n < W * H && glass[n] && !seen[n] && Math.abs((n % W) - x) <= 1) { seen[n] = 1; q.push(n); } }
     const bw = x1 - x0 + 1, bh = y1 - y0 + 1, fill = comp.length / (bw * bh);
     if (comp.length < minA || bw * bh > maxA || bw > bh * 3.5 || bh > bw * 4 || fill < .35) continue;
+    // and near where the pixel art had a window (by proportion of the painting), not anywhere in the wall band
+    const ccx = (x0 + x1) / 2 / W, ccy = (y0 + y1) / 2 / H;
+    if (!wins.some(w => Math.abs((w[0] + w[2] / 2) / f.w - ccx) < .14 && Math.abs((w[1] + w[3] / 2) / f.h - ccy) < .14)) continue;
     for (const k of comp) { const i = k * 4; d[i] = 255; d[i + 1] = 214; d[i + 2] = 130; d[i + 3] = 255; }
   }
   mx.putImageData(id, 0, 0);

@@ -805,3 +805,19 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - **Zombie and Drowned Pirate:** the zombie has green skin, glowing eyes and bare ribs; the pirate drowned-blue skin, a red bandana and ribs.
   - **Ribs:** `hb_ribs_<d>` was never drawn: a `//` comment in `humanSpr` hid `if (P.ribs) add(...)`. It's fixed, so skeletons show their ribs too.
 - **Little stones (asked 2026-11-03: they looked like urns):** `stone_small` in props.py is now a cluster of rough, angular stones with cracks and lichen (the single smooth oval read as an egg, and its painting as a banded urn). In painted styles it uses the smoothed pixel drawing (`stone$` in `STYLE_SMOOTH`). It isn't repainted, because it shares the rocks' paint sheet.
+- **After 0.9.9 (the user's pick from the open list):**
+  - **Drag to place:** with fences, channels or belts in hand, hold LMB and move. A 4-connected line is laid along the mouse path (`DRAGP`), belts facing the drag direction, with no walking. A placement that fails names what's in the way (`dragBlockWhy`), here and in `useItem`.
+  - **Why it's stuck:**
+    - Station windows say why they're idle (`idleWhy` in s_auto.js: no power, missing inputs, output full, no fuel).
+    - Clogged channels get the red "!" like stuck belts, and the morning report points to it.
+  - **Station windows:** they open on "Can make" (`MODAL.opts.rcan`; off in the sandbox). The shipping bin lists its contents with Take 1 / Take all (`openBin`).
+  - **Loot that doesn't fit** lands in a ring round you (`DROP_RING` in l_pack.js).
+  - **Locked-node hover:** it names the tool tier needed too.
+  - **Painted sea:** water darkens with distance from shore and gets drifting swells (`waterDepth`/`waterDepthDraw`, from `f_render`).
+  - **Winter:** the fountain's water freezes (blue pixels to ice), and green at the foot of winter trees turns to snow (painted styles).
+  - **Festivals:** each has its own decorations: Blossom flower ring; Lantern Night extra lanterns and `SKYLANTERNS` that rise for ~30 s; Harvest Fair bales, crates, barrels and sacks; Ember Feast banquet tables, benches and fires.
+  - **Bosses at 2-3x:** in painted styles they're enlarged with `smoothUp` at twice the resolution, then drawn down at high quality (sharper, still pixel-based).
+  - **Ground and lighting:**
+    - Natural ground layers (g, sn, a, i, s) are smoothed before their edges are found in the painted ground, so biome borders curve.
+    - Lava blends a mirrored copy (`SOFT.l`).
+    - Night window glow only takes clearly blue glass near a pixel-art window position (`styleGlow`).

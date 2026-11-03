@@ -109,6 +109,15 @@ const RIGHT = [1, 3, 0, 2]; // turning right from facing down/left/right/up (DIR
 function pushMach(m, o, x, y) {
   for (let d = 0; d < 4; d++) { const b = getO(m, x + DIRV[d][0], y + DIRV[d][1]); if (isBelt(b) && b.d === d && !b.item) { b.item = o.out; o.out = null; o.item = null; o.left = 0; return; } }
 }
+// why a station isn't working, in the words of its window (it only said "Idle", 2026-11-03 playtest)
+function idleWhy(o, st, m, x, y) {
+  if (st.power && !powered(m, x, y)) return 'no power. Build a windmill, waterwheel or treadwheel nearby.';
+  const rs = recipesOf(o), have = r => Object.entries(r.in).every(([k, n]) => ((o.in || {})[k] || 0) >= n);
+  if (!rs.some(have)) { const r = rs[0]; return r ? 'not enough to work with (needs ' + Object.entries(r.in).map(([k, n]) => n + ' ' + IT[k].n.toLowerCase()).join(' + ') + ').' : 'nothing to make.'; }
+  if (!rs.some(r => have(r) && ((o.out || {})[r.out[0]] || 0) + r.out[1] <= CAP)) return 'the output is full. Take the goods out (or add a belt from it).';
+  if (st.fuel && !(o.burn > 0) && !Object.keys(o.fuel || {}).some(k => o.fuel[k] > 0)) return 'out of fuel. Add wood, hardwood, charcoal or coal.';
+  return 'waiting for the next tick.';
+}
 function stationTick(m, o, x, y) {
   const st = STATIONS[o.k];
   if (st.power && !powered(m, x, y)) { o.on = 0; return; }
@@ -143,7 +152,7 @@ useItem = function (id) {
   if (it && it.t === 'place' && DIRPLACE.has(it.place) && has(id)) {
     const m = cur, [tx, ty] = faceTile();
     if (!m.farm) { toast('Place that on your farm.'); return; }
-    if (getO(m, tx, ty) || m.solidB[ty * m.w + tx] || TER[getT(m, tx, ty)].solid || TER[getT(m, tx, ty)].water) { toast('Something is in the way.'); return; }
+    if (getO(m, tx, ty) || m.solidB[ty * m.w + tx] || TER[getT(m, tx, ty)].solid || TER[getT(m, tx, ty)].water) { toast(typeof dragBlockWhy === 'function' ? dragBlockWhy(tx, ty) : 'Something is in the way.'); return; }
     setO(m, tx, ty, it.place === 'channel' ? { k: 'channel', v: S.p.dir === 0 || S.p.dir === 3 ? 1 : 0 } : { k: it.place, d: S.p.dir }); take(id); SFX.ok(); if (it.place === 'channel') waterChannels(m); return;
   }
   return _useItemA(id);
@@ -185,7 +194,7 @@ function openStation(o, m, x, y) {
   const st = STATIONS[o.k];
   openModal(IT[o.k].n, [{ id: 's', label: 'Station', render: b => {
     const need = st.recipes.map(r => Object.entries(r.in).map(([k, n]) => n + ' ' + IT[k].n.toLowerCase()).join(' + ') + ' → ' + r.out[1] + ' ' + IT[r.out[0]].n.toLowerCase()).join(' · ');
-    b.append(el('p', { class: 'note' }, need + '.' + (st.fuel ? ' Burns wood, hardwood, charcoal or coal.' : '') + (st.power ? (powered(m, x, y) ? ' Powered.' : ' Needs a windmill or waterwheel within 7 tiles.') : '') + ' ' + (o.on ? 'Working…' : 'Idle.')));
+    b.append(el('p', { class: 'note' }, need + '.' + (st.fuel ? ' Burns wood, hardwood, charcoal or coal.' : '') + (st.power ? (powered(m, x, y) ? ' Powered.' : ' Needs a windmill or waterwheel within 7 tiles.') : '') + ' ' + (o.on ? 'Working…' : 'Idle: ' + idleWhy(o, st, m, x, y))));
     const row = el('div', { class: 'stationrow' });
     row.append(slotList('Input', o.in, k => { const [id, q] = parseK(k); GIVE_NO_DROP = true; const left = give(id, o.in[k], q, true); GIVE_NO_DROP = false; if (left) o.in[k] = left; else delete o.in[k]; refresh(); }, 'Empty'));
     if (st.fuel) row.append(slotList('Fuel' + (o.burn > 0 ? ' (burning)' : ''), o.fuel, k => { GIVE_NO_DROP = true; const left = give(k, o.fuel[k], 0, true); GIVE_NO_DROP = false; if (left) o.fuel[k] = left; else delete o.fuel[k]; refresh(); }, 'No fuel'));
@@ -354,6 +363,6 @@ EVT.on('map', () => { if (cur && cur.o && cur.o.some(o => o && o.k === 'channel'
 EVT.on('tick', n => { if (n % 3 === 0 && cur && (cur.farm || farmMaps().includes(cur)) && cur.o.some(o => o && o.k === 'channel')) waterChannels(cur); });
 // the morning report says when a channel on the farm clogged overnight
 if (typeof showDayReport === 'function') showDayReport = (f => function (lines) {
-  if (CHANNEL_NEWS && Array.isArray(lines)) lines.push(['bad', CHANNEL_NEWS === 1 ? 'Leaves and debris choked one of your water channels. Clear it to get the water flowing.' : CHANNEL_NEWS + ' water channels are choked with leaves and debris. Clear them to get the water flowing.']);
+  if (CHANNEL_NEWS && Array.isArray(lines)) lines.push(['bad', CHANNEL_NEWS === 1 ? 'Leaves and debris choked one of your water channels (marked with a red !). Clear it to get the water flowing.' : CHANNEL_NEWS + ' water channels are choked with leaves and debris (marked with a red !). Clear them to get the water flowing.']);
   CHANNEL_NEWS = 0; return f.apply(this, arguments);
 })(showDayReport);

@@ -79,10 +79,11 @@ give = function (id, n = 1, q = 0, quiet) {
   }
   if (left > 0) {
     if (gameT - fullWarnT > 2) { toast('Your backpack is full' + (GIVE_NO_DROP ? '.' : ': ' + left + ' ' + IT[id].n + ' left on the ground.'), 'bad'); fullWarnT = gameT; }
-    if (cur && !GIVE_NO_DROP) { for (let i = 0; i < left; i += stacks(id) ? left : 1) { dropItem(cur, S.p.x, S.p.y, id, stacks(id) ? left : 1); cur.ents[cur.ents.length - 1].q = q; cur.ents[cur.ents.length - 1].t = -1.2; } }
+    if (cur && !GIVE_NO_DROP) { for (let i = 0; i < left; i += stacks(id) ? left : 1) { { const a = (DROP_RING = (DROP_RING + 1) % 12) / 12 * 6.283, rr = 12 + (DROP_RING % 3) * 6; dropItem(cur, S.p.x + Math.cos(a) * rr, S.p.y + Math.sin(a) * rr * .7, id, stacks(id) ? left : 1); } cur.ents[cur.ents.length - 1].q = q; cur.ents[cur.ents.length - 1].t = -1.2; } }
   }
   return left;
 };
+let DROP_RING = 0;   // what doesn't fit lands in a ring round you, not one heap (chest loot was unreadable)
 let GIVE_NO_DROP = false; // pickups from the ground set this so a full pack leaves the item where it lies
 
 /* ---- equipment: level requirements, space checks ---- */

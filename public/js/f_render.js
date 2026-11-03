@@ -99,6 +99,7 @@ function render(dt) {
       if (cy > ra && cy < rb && cx > ca && cx < cb) continue; if (cx < 0 || cy < 0 || cx * CH >= m.w || cy * CH >= m.h) continue;
       getChunk(m, cx, cy, true); if (performance.now() >= CHUNK_DEADLINE) break; } }
   // ---- animated water & soil ----
+  if (typeof waterDepthDraw === 'function') waterDepthDraw(m, x0, y0, x1, y1);   // painted styles: deeper water further from shore (x_fix6.js)
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
     const i = y * m.w + x, t = m.t[i];
     if (t === 'w' && hsh(x, y, 7) < .5) { const ph = (gameT * .35 + hsh(x, y, 2)) % 1, X = x * 16 + 2 + hsh(x, y, 4) * 10, Y = y * 16 + 3 + hsh(x, y, 5) * 10; g.globalAlpha = Math.sin(ph * Math.PI) * .55; g.strokeStyle = '#e6f6ff'; g.lineWidth = .6; g.beginPath(); g.moveTo(X - 2 - ph * 3, Y); g.quadraticCurveTo(X, Y - .9, X + 2 + ph * 3, Y); g.stroke(); g.globalAlpha = 1; }

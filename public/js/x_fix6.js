@@ -134,7 +134,7 @@ pcCursorDraw = (f => function (m) {
   if (!m || !m.farm || !S || TITLE) return r;
   const x0 = Math.max(0, Math.floor(camX / 16) - 2), x1 = Math.min(m.w, x0 + 64), y0 = Math.max(0, Math.floor(camY / 16) - 2), y1 = Math.min(m.h, y0 + 44);
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
-    const o = m.o[y * m.w + x]; if (!beltJammed(o)) continue;
+    const o = m.o[y * m.w + x]; if (!beltJammed(o) && !(o && o.k === 'channel' && o.clog)) continue;   // stuck belts and clogged channels
     const X = x * 16 + 8, Y = y * 16 - 3 + Math.sin(gameT * 5) * 1.5;
     g.fillStyle = '#7a1a10'; g.fillRect(X - 3, Y - 7, 6, 9); g.fillStyle = '#ff5a3a'; g.fillRect(X - 2, Y - 6, 4, 7); g.fillStyle = '#fff4e0'; g.fillRect(X - .5, Y - 5, 1, 3.5); g.fillRect(X - .5, Y - .5, 1, 1);
   }
@@ -532,3 +532,197 @@ floatText = (f => function (x, y, txt, c) {
    eyes; the pirate drowned-blue skin, a red bandana and bare ribs (art detail pass) ---- */
 if (EN.zombie && EN.zombie.P) Object.assign(EN.zombie.P, { skin: '#7aa858', hair: '#2a3020', shirt: '#5a5040', pants: '#3a3a2a', eye: '#e8ff60', ribs: 1 });
 if (EN.pirate && EN.pirate.P) Object.assign(EN.pirate.P, { skin: '#8ab0a8', hair: '#4a5a58', eye: '#5affe0', mask: '#b02020', ribs: 1 });
+
+/* ---- drag to place (asked 2026-11-03): with fences, water channels or belts in hand, hold the left button and move:
+   a connected line is laid along the mouse's path (4-connected, so fences and channels join), belts facing the way you
+   drag. Nothing walks you anywhere, so the camera doesn't drift. A short click still places one piece the usual way. ---- */
+let DRAGP = null;
+const dragKind = id => { const it = IT[id]; if (!it || it.t !== 'place') return null; const k = it.place; return k === 'fence' || k === 'channel' || BELTS.has(k) ? k : null; };
+function dragPlaceOne(x, y, dirI) {
+  const m = cur, id = selKind(), k = dragKind(id); if (!m || !k || !has(id)) return false;
+  if (!m.farm) { toast('Place that on your farm.'); return false; }
+  const why = !inb(m, x, y) ? 'off the map' : getO(m, x, y) ? (OBJ_NAME(getO(m, x, y)) + ' is there') : m.solidB[y * m.w + x] ? 'a building is there' : TER[getT(m, x, y)].solid ? 'the ground is rock' : TER[getT(m, x, y)].water ? 'that\'s water' : (m.soil[y * m.w + x] && m.soil[y * m.w + x].crop) ? 'a crop grows there' : null;
+  if (why) return 'skip';
+  if (k === 'fence') { delete m.soil[y * m.w + x]; putObj(m, x, y, { k: 'fence' }); if (typeof fenceMasks === 'function') fenceMasks(m); }
+  else if (k === 'channel') { setO(m, x, y, { k: 'channel', v: dirI === 0 || dirI === 3 ? 1 : 0 }); waterChannels(m); }
+  else setO(m, x, y, { k, d: dirI });
+  take(id); return true;
+}
+const OBJ_NAME = o => { const n = (IT[o.k] && IT[o.k].n) || (o.k === 'tgrass' ? 'tall grass' : o.k); return n.charAt(0).toUpperCase() + n.slice(1); };
+primaryUse = (f => function () {
+  if (!PAUSED && !TITLE && !fishing && S && cur && MOUSE.down && dragKind(selKind())) {
+    if (DRAGP) return;   // held: the drag handles it
+    const [x, y] = clickTarget(); DRAGP = { x, y, n: 0 };
+    const r = dragPlaceOne(x, y, S.p.dir | 0); if (r === true) { DRAGP.n++; SFX.ok(); } else if (r === 'skip') toast(dragBlockWhy(x, y));
+    return;
+  }
+  return f.apply(this, arguments);
+})(primaryUse);
+function dragBlockWhy(x, y) { const m = cur, o = inb(m, x, y) && getO(m, x, y); return 'Can\'t place there: ' + (o ? OBJ_NAME(o) + ' is in the way.' : m.solidB[y * m.w + x] ? 'a building is in the way.' : TER[getT(m, x, y)].water ? 'that\'s water.' : TER[getT(m, x, y)].solid ? 'the ground is rock.' : 'a crop grows there.'); }
+addEventListener('mousemove', () => {
+  if (!DRAGP || !MOUSE.down || !cur) return;
+  const [wx, wy] = mouseWorld(), tx = Math.floor(wx / 16), ty = Math.floor(wy / 16);
+  let { x, y } = DRAGP;
+  while ((x !== tx || y !== ty) && has(selKind())) {
+    const dx = tx - x, dy = ty - y, horiz = Math.abs(dx) >= Math.abs(dy), d = horiz ? (dx > 0 ? 2 : 1) : (dy > 0 ? 0 : 3);
+    // the belt just laid turns to point at the next one, so a drawn line carries items along it
+    const prev = getO(cur, x, y); if (prev && BELTS.has(prev.k) && DRAGP.n) prev.d = d;
+    x += horiz ? Math.sign(dx) : 0; y += horiz ? 0 : Math.sign(dy);
+    if (dragPlaceOne(x, y, d) === true) { DRAGP.n++; SFX.pop && SFX.pop(); }
+  }
+  DRAGP.x = x; DRAGP.y = y;
+});
+addEventListener('mouseup', e => { if (e.button === 0 && DRAGP) { if (DRAGP.n > 1) toast('Placed ' + DRAGP.n + '.'); DRAGP = null; } });
+
+/* ---- station windows open on "Can make": only the recipes your materials cover (the anvil listed every tier, all
+   "(have 0)"). One click shows all of them; the recipe book (B) shows everything as before. ---- */
+renderCraft = (f => function (b) {
+  const atStation = !!(MODAL && MODAL.opts && MODAL.opts.station);
+  if (!atStation) return f.apply(this, arguments);
+  if (MODAL.opts.rcan === undefined) MODAL.opts.rcan = !(typeof SANDBOX !== 'undefined' && SANDBOX);   // the sandbox's Get buttons need every recipe shown
+  const can = MODAL.opts.rcan, enough = r => Object.entries(r[2] || {}).every(([k, n]) => (k[0] === '$' ? (typeof catCount === 'function' ? catCount(k) : 0) : cnt(k)) >= n);
+  const all = RC.slice(); let shown = 0;
+  if (can) { RC.length = 0; for (const r of all) if (enough(r)) RC.push(r); shown = RC.length; }
+  try { f.apply(this, arguments); } finally { if (can) { RC.length = 0; RC.push(...all); } }
+  const chips = b.querySelector('.chips'), btn = el('button', { class: 'chip' + (can ? ' on' : ''), on: () => { MODAL.opts.rcan = !can; refresh(); } }, can ? 'Can make ✓' : 'Can make');
+  if (chips) chips.insertBefore(btn, chips.children[1] || null); else b.prepend(btn);
+  if (can && !shown) b.append(el('p', { class: 'note' }, 'You don\'t have the materials for anything here yet. Click "Can make" to see every recipe.'));
+})(renderCraft);
+
+/* ---- the shipping bin lists what's in it and gives things back (asked 2026-11-03) ---- */
+openBin = function () {
+  openModal('Shipping bin', [{ id: 'b', label: 'Ship', render: b => {
+    const keys = Object.keys(S.bin || {}).filter(k => S.bin[k] > 0);
+    if (keys.length) {
+      b.append(el('h3', null, 'In the bin'));
+      const L = el('div', { class: 'list' });
+      for (const k of keys) {
+        const [id, q] = parseK(k);
+        const back = n => { n = Math.min(n, S.bin[k] || 0); GIVE_NO_DROP = true; const left = give(id, n, q, true); GIVE_NO_DROP = false; S.bin[k] -= n - left; if (S.bin[k] <= 0) delete S.bin[k]; if (left) toast('No room in your backpack.'); refresh(); };
+        L.append(el('div', { class: 'rrow' }, icon(id, 32, q), el('div', { class: 'rtxt' }, el('b', null, (q ? QNAME[q] + ' ' : '') + IT[id].n + ' ×' + S.bin[k]), el('small', null, valK(k) + 'g each')),
+          el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => back(1) }, 'Take 1'), el('button', { class: 'btn ghost', on: () => back(S.bin[k]) }, 'Take all'))));
+      }
+      b.append(L, el('h3', null, 'Ship more'));
+    }
+    sellList(b, 'bin');
+  } }]);
+};
+
+/* ---- each festival has its own look (they all had the same lanterns and flowers, overnight playtest) ----
+   Blossom Day: a ring of flowers round the plaza; Lantern Night: twice the lanterns, and the released lanterns are
+   real paper lanterns that rise and glow for half a minute; Harvest Fair: hay bales, crates, barrels and sacks of the
+   harvest; Ember Feast: banquet tables with benches and fires. All flagged fest, so the next morning clears them. */
+festSetup = (f => function () {
+  f.apply(this, arguments);
+  const F = typeof festToday === 'function' && festToday(), v = MAPS.village; if (!F || !v) return;
+  const put = (x, y, o) => { if (inb(v, x, y) && !getO(v, x, y) && !TER[getT(v, x, y)].solid && !TER[getT(v, x, y)].water && !v.solidB[y * v.w + x]) { setO(v, x, y, Object.assign({ fest: 1, fixed: 1 }, o)); (v.festDeco = v.festDeco || []).push([x, y]); return true; } return false; };
+  const has = k => !!OBJ[k];
+  if (F.act === 'eggs') for (let a = 0; a < 28; a++) { const t = a / 28 * 6.283; put(Math.round(25 + Math.cos(t) * 10), Math.round(20 + Math.sin(t) * 7), { k: 'flower', v: a % 5 }); }
+  if (F.act === 'lantern') for (const [x, y] of [[19, 13], [31, 13], [19, 27], [31, 27], [15, 20], [35, 20], [25, 12], [25, 28]]) put(x, y, { k: 'lantern' });
+  if (F.act === 'fair') { const P = [['furn_haybale', 19, 17], ['furn_haybale', 20, 17], ['furn_crate', 30, 17], ['furn_crate', 31, 17], ['furn_barrel', 19, 23], ['furn_sack', 20, 23], ['furn_barrel', 31, 23], ['furn_sack', 30, 23], ['furn_haybale', 24, 26], ['furn_crate', 26, 26]]; for (const [k, x, y] of P) if (has(k)) put(x, y, { k }); }
+  if (F.act === 'feast') { for (const [x, y] of [[20, 17], [27, 17], [20, 23], [27, 23]]) { if (has('furn_banquet')) put(x, y, { k: 'furn_banquet' }); if (has('furn_bench')) { put(x, y + 1, { k: 'furn_bench' }); put(x + 2, y + 1, { k: 'furn_bench' }); } } for (const [x, y] of [[17, 20], [34, 20]]) if (has('campfire')) put(x, y, { k: 'campfire' }); }
+})(festSetup);
+if (FEST && FEST[1]) FEST[1].desc = 'At dusk the village releases paper lanterns over the fountain. Talk to any villager after 6 pm to release one together.';
+// Lantern Night: real lanterns rising over the plaza (they were a few specks for three seconds)
+const SKYLANTERNS = [];
+festPrize = (f => function (F) {
+  const st = typeof festState === 'function' ? festState() : {}, was = st.done, r = f.apply(this, arguments);
+  if (F && F.act === 'lantern' && !was && st.done) for (let i = 0; i < 26; i++) SKYLANTERNS.push({ x: S.p.x + (Math.random() - .5) * 220, y: S.p.y - 10 + Math.random() * 40, vx: (Math.random() - .5) * 6, t: -Math.random() * 6, T: 26 + Math.random() * 8, s: .8 + Math.random() * .5 });
+  return r;
+})(festPrize);
+pcCursorDraw = (f => function (m) {
+  const r = f.apply(this, arguments);
+  if (!SKYLANTERNS.length || !m || m.id !== 'village') return r;
+  const dt = 1 / 60;
+  for (let i = SKYLANTERNS.length - 1; i >= 0; i--) {
+    const L = SKYLANTERNS[i]; L.t += dt; if (L.t < 0) continue; if (L.t > L.T) { SKYLANTERNS.splice(i, 1); continue; }
+    L.y -= 7 * dt * L.s; L.x += (L.vx + Math.sin(L.t * .8 + i) * 3) * dt;
+    const a = Math.min(1, L.t, (L.T - L.t) / 4), w = 4 * L.s, h = 5 * L.s;
+    g.save(); g.globalAlpha = a * .35; g.fillStyle = '#ffb040'; g.beginPath(); g.arc(L.x, L.y, 9 * L.s, 0, 6.283); g.fill();
+    g.globalAlpha = a; g.fillStyle = '#f08a2a'; g.fillRect(L.x - w / 2, L.y - h / 2, w, h); g.fillStyle = '#ffe2a0'; g.fillRect(L.x - w / 2 + 1, L.y - h / 2 + 1, w - 2, h - 2); g.fillStyle = '#7a3a1a'; g.fillRect(L.x - w / 2, L.y + h / 2 - 1, w, 1); g.restore();
+  }
+  return r;
+})(pcCursorDraw);
+
+/* ---- the fountain freezes in winter: its blue water turns to pale ice with a frosted sheen (made once per sprite) ---- */
+{
+  const ICED = new WeakMap();
+  const freeze = c => {
+    const hit = ICED.get(c); if (hit && !hit.__lost) return hit;
+    const w = mkCPU(c.width, c.height, x => x.drawImage(c, 0, 0)), x = w.getContext('2d'), im = x.getImageData(0, 0, c.width, c.height), d = im.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g_ = d[i + 1], b = d[i + 2]; if (d[i + 3] < 20 || !(b > r + 22 && b >= g_ - 4)) continue;   // water: clearly blue
+      const lum = (r + g_ + b) / 3, n = ((i >> 2) * 2654435761 >>> 0) % 100;
+      d[i] = Math.min(255, 196 + lum * .22); d[i + 1] = Math.min(255, 214 + lum * .18); d[i + 2] = Math.min(255, 236 + lum * .08);
+      if (n < 3) { d[i] = d[i + 1] = d[i + 2] = 255; }   // frost glints
+    }
+    x.putImageData(im, 0, 0);
+    const out = mk(c.width, c.height, y => y.drawImage(w, 0, 0)); for (const k of ['ww', 'wh', 'ax', 'ay', 'hi', 'lum', 'off', 'cast']) if (c[k] !== undefined) out[k] = c[k];
+    ICED.set(c, out); return out;
+  };
+  objSprite = (f => function (o, season) {
+    const c = f.apply(this, arguments);
+    if (o && o.k === 'fountain' && c && c.width && S && S.season === 3 && cur && !cur.indoor) return freeze(c);
+    return c;
+  })(objSprite);
+}
+
+/* ---- winter trees lose their green grass skirt: in a painted style, green at the foot of a winter tree (the lowest
+   fifth of the painting) turns to snow; the paintings kept summer grass round bare trunks (year playtest) ---- */
+{
+  const SNOWFOOT = new WeakMap();
+  treeImg = (f => function (kind, s) {
+    const c = f.apply(this, arguments);
+    if (s !== 3 || !c || !c.width || SETTINGS.artStyle === 'pixel') return c;
+    const hit = SNOWFOOT.get(c); if (hit && !hit.__lost) return hit;
+    const W = c.width, H = c.height, w = mkCPU(W, H, x => x.drawImage(c, 0, 0)), x = w.getContext('2d'), y0 = Math.floor(H * .8), im = x.getImageData(0, y0, W, H - y0), d = im.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g_ = d[i + 1], b = d[i + 2]; if (d[i + 3] < 20 || !(g_ > r + 14 && g_ > b + 8)) continue;   // grass green
+      const k = .8, lum = (r + g_ + b) / 3; d[i] = r + (226 + lum * .1 - r) * k; d[i + 1] = g_ + (234 + lum * .08 - g_) * k; d[i + 2] = b + (244 - b) * k;
+    }
+    x.putImageData(im, 0, y0);
+    const out = mk(W, H, y => y.drawImage(w, 0, 0)); for (const q of ['ww', 'wh', 'ax', 'ay', 'hi', 'lum', 'off', 'cast']) if (c[q] !== undefined) out[q] = c[q];
+    SNOWFOOT.set(c, out); return out;
+  })(treeImg);
+}
+
+/* ---- the sea has depth (it was one flat colour): in a painted style, water darkens toward a deep blue the further it
+   lies from the shore, and long soft swells drift across the deep parts. Distances are worked out once per map (and
+   again when its tiles change). ---- */
+function waterDepth(m) {
+  if (m._depth && m._depthCv === m.cv) return m._depth;
+  const W = m.w, H = m.h, D = new Uint8Array(W * H), q = [];
+  for (let i = 0; i < W * H; i++) { if (TER[m.t[i]] && TER[m.t[i]].water && m.t[i] !== 'l') D[i] = 255; else { D[i] = 0; q.push(i); } }
+  for (let h = 0; h < q.length; h++) { const i = q[h], x = i % W, y = i / W | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= W || Y >= H) continue; const n = Y * W + X; if (D[n] === 255) { D[n] = Math.min(254, D[i] + 1); q.push(n); } } }
+  m._depth = D; m._depthCv = m.cv; return D;
+}
+function waterDepthDraw(m, x0, y0, x1, y1) {
+  if (SETTINGS.artStyle === 'pixel' || !m || m.indoor || m.dark) return;
+  const D = waterDepth(m);
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const d = D[y * m.w + x]; if (!d || d === 255 || d < 2) continue;
+    g.fillStyle = 'rgba(8,34,70,' + Math.min(.42, (d - 1) * .055).toFixed(3) + ')'; g.fillRect(x * 16, y * 16, 16, 16);
+    if (d >= 5 && hsh(x, y, 61) < .22) {   // a swell: a long soft highlight drifting with the waves
+      const ph = (gameT * .12 + hsh(x, y, 62)) % 1, X = x * 16 + 2, Y = y * 16 + 4 + ph * 8;
+      g.globalAlpha = Math.sin(ph * Math.PI) * .22; g.strokeStyle = '#d8f0ff'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(X, Y); g.quadraticCurveTo(X + 7, Y - 2, X + 14, Y); g.stroke(); g.globalAlpha = 1;
+    }
+  }
+}
+
+/* ---- big creatures (bosses at 2-3x) are made sharper in painted styles: the template is enlarged 4x with the painted
+   look first (gpuUp + paintedLook), then drawn down to its size at high quality, instead of being stretched straight
+   from its small sprite (Old Snapper, Frost Giant, Ember Wyrm, Hollow King, the Warlord looked like blurry pixels) ---- */
+{
+  const BIG = {};
+  enemySpr = (f => function (k, fr) {
+    const E2 = EN[k], sc = E2 && E2.scale || 1;
+    if (!E2 || sc <= 1.2 || SETTINGS.artStyle === 'pixel' || typeof smoothUp !== 'function') return f.apply(this, arguments);
+    const key = k + '|' + fr + '|' + SETTINGS.artStyle; if (BIG[key] && !BIG[key].__lost) return BIG[key];
+    E2.scale = 1; let c; try { c = f.apply(this, arguments); } finally { E2.scale = sc; }
+    if (!c || !c.width) return c;
+    const res = c.hi ? 1 : 2, src = c.hi ? c : smoothUp(c), W = Math.round(c.width * sc * res), H = Math.round(c.height * sc * res);   // twice the pixels, so it stays sharp at the game's zoom
+    const out = mk(W, H, x => { x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(src, 0, 0, W, H); });
+    out.ww = c.ww * sc; out.wh = c.wh * sc; if (c.hi) out.hi = c.hi;
+    return BIG[key] = out;
+  })(enemySpr);
+}
