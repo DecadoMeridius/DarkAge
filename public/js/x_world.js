@@ -91,18 +91,46 @@ function ensurePetEnt() {
 const _drawEntW = drawEnt;
 drawEnt = function (e) {
   if (e.type !== 'pet') return _drawEntW(e);
-  const fr = e.sit > 1.2 ? 2 : (e.moving ? Math.floor(e.t * 8) % 2 : 0), spr = PIX.get('pet_' + S.pet.kind + '_' + fr); if (!spr) return;
+  // walking: the two frames at trot speed, a little bounce and a stretch on each step (two near-identical frames read stiff)
+  const fr = e.sit > 1.2 ? 2 : (e.moving ? Math.floor(e.t * 7) % 2 : 0), spr = PIX.get('pet_' + S.pet.kind + '_' + fr); if (!spr) return;
+  const ph = e.t * 14, bob = e.moving ? Math.abs(Math.sin(ph)) * 1.4 : (e.sit > 1.2 ? 0 : Math.sin(e.t * 2) * .3), sx = e.moving ? 1 + Math.sin(ph) * .04 : 1, sy = e.moving ? 1 - Math.sin(ph) * .04 : 1;
   shadow(e.x, e.y, 5);
-  if (e.flip) { g.save(); g.translate(e.x, 0); g.scale(-1, 1); D(spr, -8, e.y - 15, 16, 16); g.restore(); } else D(spr, e.x - 8, e.y - 15, 16, 16);
+  g.save(); g.translate(e.x, e.y + 1); if (e.flip) g.scale(-1, 1); g.scale(sx, sy); D(spr, -8, -16 - bob, 16, 16); g.restore();
   if (e.heart > 0) { e.heart -= 1 / 60; g.fillStyle = '#e84a6a'; g.fillRect(e.x - 1, e.y - 20 - (1 - e.heart) * 6, 3, 2); g.fillRect(e.x - 2, e.y - 21 - (1 - e.heart) * 6, 2, 1); g.fillRect(e.x + 1, e.y - 21 - (1 - e.heart) * 6, 2, 1); }
 };
+/* The pet lives on the farm (2026-11-03: it used to follow you everywhere): it wanders to spots nearby, sits, naps,
+   sniffs around; now and then it trots over to you and stays close a while, and it comes when you're near and it
+   hasn't seen you for a bit. A cat sits more, walks slower and comes over less often. */
+function petBrain(e, dt) {
+  const m = MAPS.farm, cat = S.pet.kind === 'cat', here = cur && cur.id === 'farm';
+  const go = (tx, ty, sp) => { const d = Math.hypot(tx - e.x, ty - e.y); if (d < 3) return true;
+    const bx = e.x, by = e.y; moveEnt(m, e, (tx - e.x) / d * sp * dt, (ty - e.y) / d * sp * dt, 4); e.moving = true; if (Math.abs(tx - e.x) > 1) e.flip = tx < e.x ? 1 : 0;
+    if (Math.hypot(e.x - bx, e.y - by) < sp * dt * .2) e.stuck = (e.stuck || 0) + dt; else e.stuck = 0; return e.stuck > .6; };
+  const free = (x, y) => { const tx = Math.floor(x / 16), ty = Math.floor(y / 16); return inb(m, tx, ty) && !TER[getT(m, tx, ty)].solid && !TER[getT(m, tx, ty)].water && !m.solidB[ty * m.w + tx] && !getO(m, tx, ty); };
+  e.st = e.st || { mode: 'idle', t: 2 }; const st = e.st; st.t -= dt; e.moving = false;
+  const dp = here ? Math.hypot(S.p.x - e.x, S.p.y - e.y) : 1e9;
+  if (here && st.mode !== 'friend' && dp < 70 && e.t - (e.seen || -60) > 90 && Math.random() < dt * (cat ? .1 : .4)) { st.mode = 'friend'; st.t = cat ? 5 : 6 + Math.random() * 5; e.seen = e.t; }   // says hello, at most every 1.5 minutes (e.t: the pet's own clock)
+  if (st.mode === 'friend') {
+    if (!here || st.t <= 0) { st.mode = 'idle'; st.t = 1 + Math.random() * 2; }
+    else if (dp > 26) { if (dp > 300) { e.x = S.p.x - 14; e.y = S.p.y + 4; } else go(S.p.x - 14, S.p.y + 4, dp > 90 ? (cat ? 70 : 95) : (cat ? 42 : 58)); e.sit = 0; }
+    else { e.sit += dt; if (Math.abs(S.p.x - e.x) > 2) e.flip = S.p.x < e.x ? 1 : 0; }
+  } else if (st.mode === 'walk') {
+    if (go(st.x, st.y, cat ? 26 : 34) || st.t <= 0) { st.mode = 'idle'; st.t = (cat ? 4 : 2) + Math.random() * (cat ? 9 : 5); }
+    e.sit = 0;
+  } else {   // idle: sits (and eventually naps), then picks somewhere to go; sometimes trots over to you
+    e.sit += dt;
+    if (st.t <= 0) {
+      if (here && e.t - (e.seen || -60) > 45 && Math.random() < (cat ? .08 : .18)) { st.mode = 'friend'; st.t = cat ? 5 : 6 + Math.random() * 5; e.seen = e.t; }
+      else for (let k = 0; k < 12; k++) { const a = Math.random() * 6.283, r = 24 + Math.random() * 90, x = e.x + Math.cos(a) * r, y = e.y + Math.sin(a) * r; if (free(x, y)) { st.mode = 'walk'; st.x = x; st.y = y; st.t = 8; break; } }
+      if (st.mode === 'idle') st.t = 1.5;
+    }
+  }
+}
 const _updateW = update;
 update = function (dt) {
   _updateW(dt);
   if (!S || !S.pet || TITLE) return; const e = ensurePetEnt(); if (!e) return;
-  e.t += dt; const onFarm = cur && cur.id === 'farm', tx = onFarm ? S.p.x - 14 : e.x, ty = onFarm ? S.p.y + 4 : e.y, d = Math.hypot(tx - e.x, ty - e.y);
-  if (onFarm && d > 22) { const sp = d > 90 ? 95 : 60; e.moving = moveEnt(MAPS.farm, e, (tx - e.x) / d * sp * dt, (ty - e.y) / d * sp * dt, 4); if (Math.abs(tx - e.x) > 2) e.flip = tx < e.x ? 1 : 0; e.sit = 0; if (d > 260) { e.x = tx; e.y = ty; } }
-  else { e.moving = false; e.sit += dt; }
+  e.t += dt; petBrain(e, dt);
   S.pet.x = e.x; S.pet.y = e.y;
 };
 const _findInteractW = findInteract;

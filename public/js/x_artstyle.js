@@ -20,7 +20,7 @@ PIX.load = (f => function () { return f.apply(this, arguments).then(() => loadSt
 const STYLE_ALIAS = { lantern: 'lantern_off' };
 // pieces that must join their neighbours (fence runs, tilled soil beds) keep the pixel sprite, rounded and lit like the
 // characters (painted one by one they came out as a jumble of posts and separate squares)
-const STYLE_SMOOTH = /^(fence|soil_|waystone)/;   // (the waystone's painted frames came out cut up and misaligned)
+const STYLE_SMOOTH = /^(fence|soil_|waystone|pet_)/;   // (the waystone's painted frames came out cut up and misaligned; the pets' differed frame to frame)
 // paintings that came out bigger than the object is: fitted back inside the pixel sprite's box (standing on its base)
 const STYLE_FIT = /^(well$|bld_barn_|bld_kb_market_)/;
 // creatures whose paintings didn't hold up (drawn 2-3x as Old Snapper and the Frost Giant): their pixel animation,
@@ -69,7 +69,8 @@ function styledSwap(c, ramps) {
 }
 pixTemplate = (f => function (name, ramps, swap) {
   const t = PIX.get(name); if (!t || !t.lum) return f.apply(this, arguments);
-  const c = mkCPU(t.width, t.height, x => x.drawImage(t, 0, 0)); styledSwap(c, ramps);   // read back in normal memory; gpuCopy below puts the result on the GPU c.ww = t.ww; c.wh = t.wh; c.hi = t.hi; return c;
+  // read back in normal memory; gpuCopy below puts the result on the GPU
+  const c = mkCPU(t.width, t.height, x => x.drawImage(t, 0, 0)); styledSwap(c, ramps); c.ww = t.ww; c.wh = t.wh; c.hi = t.hi; return c;
 })(pixTemplate);
 // characters stay layered pixel templates (painting every walk frame on its own would flicker); in a styled mode
 // they get two Scale2x passes, which round the pixel steps into smooth edges, and are drawn smoothly

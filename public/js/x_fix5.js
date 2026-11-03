@@ -654,6 +654,9 @@ EVT.on('map', id => {
   const dirWord = (dx, dy) => { const a = Math.atan2(-dy, dx) * 180 / Math.PI, k = Math.round(((a + 360) % 360) / 45) % 8; return ['east', 'north-east', 'north', 'north-west', 'west', 'south-west', 'south', 'south-east'][k]; };
   const placeSigns = () => {
     const m = MAPS.wilds; if (!m || m._guideSigns || !m.bio) return; m._guideSigns = 1;
+    // the signs are saved with the map but the flag isn't: if any are there already, don't add more (and drop doubles from older saves)
+    const guides = []; for (let i = 0; i < m.o.length; i++) if (m.o[i] && m.o[i].k === 'sign' && m.o[i].guide) guides.push(i);
+    if (guides.length) { const seen = []; for (const i of guides) { const x = i % m.w, y = i / m.w | 0, t = m.o[i].text; if (seen.some(([a, b, tt]) => tt === t && Math.abs(a - x) + Math.abs(b - y) < 14)) m.o[i] = null; else seen.push([x, y, t]); } return; }
     let cx = 0, cy = 0, n = 0; for (let y = 0; y < m.h; y += 3) for (let x = 0; x < m.w; x += 3) if (BIOMES[m.bio[y * m.w + x]] === 'coast') { cx += x; cy += y; n++; }
     const coast = n ? [cx / n, cy / n] : null, mine = m.mineDoor ? [m.mineDoor.x, m.mineDoor.y] : null;
     for (const [ex, ey] of [[WIN_F, WH - 4], [WIN_V, WH - 4]]) {
