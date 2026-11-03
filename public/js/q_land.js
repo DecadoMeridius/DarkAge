@@ -191,7 +191,7 @@ const _endDayL = endDay;
 endDay = function (f) { _endDayL(f); try { econDaily(); } catch (e) { console.error(e); } };
 
 /* ---- market stall ---- */
-BP.stall = { n: 'Market Stall', kind: 'stall', act: 'stall', w: 3, h: 2, gold: 1200, cost: { wood: 60, cloth: 2 }, work: 25, desc: 'Stock it with goods; passers-by pay 12% over the going price, while you work elsewhere.' };
+BP.stall = { n: 'Market Stall', kind: 'stall', act: 'stall', w: 3, h: 2, gold: 1200, cost: { wood: 60, stone: 30, clay: 15 }, work: 25, desc: 'Sell your goods at your own prices while you work elsewhere, and place buy orders for traders to fill' };
 const _buildingSprL = buildingSpr;
 buildingSpr = function (w, h, kind) { if (kind === 'stall') { const c = PIX.get('bld_stall_3x2'); if (c) return c; } return _buildingSprL(w, h, kind); };
 const _doorActionL2 = doorAction;
