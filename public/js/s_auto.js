@@ -38,7 +38,7 @@ const STATIONS = {
   oven: { fuel: 1, recipes: [{ in: { flour: 2 }, out: ['bread', 1], ticks: 8 }] },
   triphammer: { power: 1, recipes: [] }, // set per hammer: o.recipe = index into RC
 };
-const CAP = 40; // per input stack, per output stack, per fuel stack
+const CAP = 200; // per input stack, per output stack, per fuel stack (was 40; asked 2026-11-04 to load more at once)
 const isAuto = o => o && OBJ[o.k] && OBJ[o.k].auto;
 const BELTS = new Set(['conveyor', 'sorter', 'splitter']), BELT_SPEED = {}, BELT_FREE = new Set(), STORE = new Set(['storage']), ACCEPT = {}, DIRPLACE = new Set(['conveyor', 'sorter', 'splitter', 'channel']); // extended by v_tiers.js
 const isBelt = o => o && BELTS.has(o.k);
@@ -113,7 +113,7 @@ function pushMach(m, o, x, y) {
 function idleWhy(o, st, m, x, y) {
   if (st.power && !powered(m, x, y)) return 'no power. Build a windmill, waterwheel or treadwheel nearby.';
   const rs = recipesOf(o), have = r => Object.entries(r.in).every(([k, n]) => ((o.in || {})[k] || 0) >= n);
-  if (!rs.some(have)) { const r = rs[0]; return r ? 'not enough to work with (needs ' + Object.entries(r.in).map(([k, n]) => n + ' ' + IT[k].n.toLowerCase()).join(' + ') + ').' : 'nothing to make.'; }
+  if (!rs.some(have)) { if (STATIONS[o.k] && STATIONS[o.k].desc) return 'not enough of any one input yet.'; const r = rs[0]; return r ? 'not enough to work with (needs ' + Object.entries(r.in).map(([k, n]) => n + ' ' + IT[k].n.toLowerCase()).join(' + ') + ').' : 'nothing to make.'; }
   if (!rs.some(r => have(r) && ((o.out || {})[r.out[0]] || 0) + r.out[1] <= CAP)) return 'the output is full. Take the goods out (or add a belt from it).';
   if (st.fuel && !(o.burn > 0) && !Object.keys(o.fuel || {}).some(k => o.fuel[k] > 0)) return 'out of fuel. Add wood, hardwood, charcoal or coal.';
   return 'waiting for the next tick.';
@@ -193,13 +193,13 @@ function packPicker(filter, onPick) {
 function openStation(o, m, x, y) {
   const st = STATIONS[o.k];
   openModal(IT[o.k].n, [{ id: 's', label: 'Station', render: b => {
-    const need = st.recipes.map(r => Object.entries(r.in).map(([k, n]) => n + ' ' + IT[k].n.toLowerCase()).join(' + ') + ' → ' + r.out[1] + ' ' + IT[r.out[0]].n.toLowerCase()).join(' · ');
+    const need = st.desc || st.recipes.map(r => Object.entries(r.in).map(([k, n]) => n + ' ' + IT[k].n.toLowerCase()).join(' + ') + ' → ' + r.out[1] + ' ' + IT[r.out[0]].n.toLowerCase()).join(' · ');
     b.append(el('p', { class: 'note' }, need + '.' + (st.fuel ? ' Burns wood, hardwood, charcoal or coal.' : '') + (st.power ? (powered(m, x, y) ? ' Powered.' : ' Needs a windmill or waterwheel within 7 tiles.') : '') + ' ' + (o.on ? 'Working…' : 'Idle: ' + idleWhy(o, st, m, x, y))));
     const row = el('div', { class: 'stationrow' });
     row.append(slotList('Input', o.in, k => { const [id, q] = parseK(k); GIVE_NO_DROP = true; const left = give(id, o.in[k], q, true); GIVE_NO_DROP = false; if (left) o.in[k] = left; else delete o.in[k]; refresh(); }, 'Empty'));
     if (st.fuel) row.append(slotList('Fuel' + (o.burn > 0 ? ' (burning)' : ''), o.fuel, k => { GIVE_NO_DROP = true; const left = give(k, o.fuel[k], 0, true); GIVE_NO_DROP = false; if (left) o.fuel[k] = left; else delete o.fuel[k]; refresh(); }, 'No fuel'));
     row.append(slotList('Output', o.out, k => { const [id, q] = parseK(k); GIVE_NO_DROP = true; const left = give(id, o.out[k], q, true); GIVE_NO_DROP = false; if (left) o.out[k] = left; else delete o.out[k]; refresh(); }, 'Nothing made yet'));
-    b.append(row, el('h3', null, 'Put in from your backpack'), packPicker(id => usesInput(o, id) || (st.fuel && FUEL[id]), (i, s) => { const [id] = parseK(s.k); let n = 0; while (S.pack[i] && accept(o, id, 1, true)) { accept(o, id, 1); packRemove(s.k, 1); n++; if (n > 99) break; } if (!n) toast('That slot is full.', 'bad'); refresh(); }));
+    b.append(row, el('h3', null, 'Put in from your backpack'), packPicker(id => usesInput(o, id) || (st.fuel && FUEL[id]), (i, s) => { const [id] = parseK(s.k); let n = 0; while (S.pack[i] && accept(o, id, 1, true)) { accept(o, id, 1); packRemove(s.k, 1); n++; if (n > 999) break; } if (!n) toast('That slot is full.', 'bad'); refresh(); }));
   } }]);
 }
 function openCrate(o) {

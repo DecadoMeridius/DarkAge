@@ -926,3 +926,14 @@ EVT.on('map', () => {
     try { return snowCap(spr); } catch (e) { return spr; }
   })(objSprite);
 }
+
+/* ---- the compost bin takes more than fibre (asked 2026-11-03): hay, kelp, wild flowers, and any crop or fruit (surplus or
+   poor harvests become fertiliser). Each is its own station recipe, so belts and hands can load them all ---- */
+{
+  const C = STATIONS.compostbin, add = (id, n) => { if (IT[id] && !C.recipes.some(r => r.in[id])) C.recipes.push({ in: { [id]: n }, out: ['compost', 1], ticks: 30 }); };
+  add('hay', 4); add('kelp', 3);
+  for (const f of ['buttercup', 'foxglove', 'bluebell', 'daisy', 'marigold', 'dandelion']) add(f, 4);
+  for (const k of Object.getOwnPropertyNames(CROPS)) add(k, 2);
+  for (const k in FTREES) add(k, 2);
+  C.desc = 'Turns 5 fibre, 4 hay, 3 kelp, 4 wild flowers, or 2 of any crop or fruit into 1 compost';
+}

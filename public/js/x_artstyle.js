@@ -20,6 +20,12 @@ PIX.load = (f => function () { return f.apply(this, arguments).then(() => loadSt
 const STYLE_ALIAS = { lantern: 'lantern_off' };
 // the birch's first variant was painted to its blocky pixel outline; its second variant is properly painted (round 3)
 for (let s = 0; s < 3; s++) STYLE_ALIAS['tree_birch_' + s + '_0'] = 'tree_birch_' + s + '_1';
+// dead trees (the Ashen Wastes) and charwood (the Emberwaste) were repainted on their own and pinned (art/pinned, 2026-11-03):
+// leafless and charred all year, so every season uses the summer painting (one dead tree for both variants)
+for (let s = 0; s < 4; s++) for (const v of [0, 1]) {
+  if (s !== 1 || v) STYLE_ALIAS['tree_dead_' + s + '_' + v] = 'tree_dead_1_0';
+  if (s !== 1) STYLE_ALIAS['tree_charwood_' + s + '_' + v] = 'tree_charwood_1_' + v;
+}
 // pieces that must join their neighbours (fence runs, tilled soil beds) keep the pixel sprite, rounded and lit like the
 // characters (painted one by one they came out as a jumble of posts and separate squares)
 const STYLE_SMOOTH = /^(fence|soil_|waystone|pet_|furn_hole|dec_dais|dec_runner|furn_bpole|furn_stairup|furn_stairdown|sign$|stone$|furn_crate$|furn_sbench$|bld_greenhouse_(6x5|8x6)(_w)?$)/;   // (the waystone's painted frames came out cut up and misaligned; the pets' differed frame to frame)
