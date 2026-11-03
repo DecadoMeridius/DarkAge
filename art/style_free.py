@@ -357,7 +357,7 @@ def window_glow(part, wins, ox, oy, gen):
 def build():
     global PAD
     names = [n for n in sb.atlas if not n.startswith(('hb_', 'ic_', 'ground_')) and not sb.is_template(n)]
-    hybrid = {n for n in names if re.search(r'\.\d+$', n) or sb.family(n) in HYBRID_FAM or n.startswith('gi_') or n in FAITHFUL}   # item icons stay true to their design (a free hoe became a battleaxe)
+    hybrid = {n for n in names if re.search(r'\.\d+$', n) or sb.family(n) in HYBRID_FAM or n.startswith('gi_') or n in FAITHFUL or n in OWN_CROPS}   # item icons stay true to their design (a free hoe became a battleaxe)
     free = [n for n in names if n not in hybrid]
     par = plan(free)
     bases = [n for n in free if n not in par]
@@ -492,6 +492,10 @@ ROOMY_SHEETS = [
 LITPAIRS = {'stonefurnace': 'a small stone furnace', 'smelter': 'an iron-banded brick smelter', 'blastfurnace': 'a tall brick blast furnace',
             'emberforge': 'a magical ember forge with a pointed top', 'kiln': 'a domed clay charcoal kiln', 'oven': 'a stone bread oven'}
 PIXEL_ONLY = set()   # sprites kept as pixel art in the painted style
+# the ripe crops drawn one by one (sprites/crops2.py): painted to their own outline, on sheets of their own, so the
+# free sheets (grouped by size) keep exactly what they had and nothing approved is repainted (2026-11-03)
+from sprites.crops2 import CROP_ART
+OWN_CROPS = {f'crop_{k}_3' for k in CROP_ART}
 FAITHFUL = set()   # painted over their own outline (the fountain was, but alone on a sheet the model zoomed in and its top and base were cut off)
 CELLS = []   # the cells of the sheet being cut (GEN px boxes)
 CASTLE_WITH = ['bld_tavern_7x6', 'bld_manor_7x5']   # painted again with the keep only as style company (their own frames come from their own sheets)

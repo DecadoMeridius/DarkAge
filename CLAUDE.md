@@ -778,3 +778,22 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - **Still to do, needs new art and an atlas build:**
     - recognisable ripe crops (strawberries and others);
     - distinct flower shapes: the five wild flowers and the flower items share one shape in different colours.
+- **Recognisable crops and flowers (asked 2026-11-03):**
+  - **Crops:** `art/sprites/crops2.py` draws every ripe crop on its own as `crop_<key>_3`, in real colours: strawberries with seeds and white flowers, corn with cobs and tassels, sunflowers, staked tomatoes, hanging peppers, purple-topped turnips, striped melons, ribbed pumpkins, and more. `cropSpr` (x_fix6.js) uses the crop's own drawing when it exists, else the shape templates of `crops.py`.
+  - **Wild flowers:** `art/sprites/wildflowers.py` redraws `flower.0-4` as five species: buttercups, foxgloves, bluebells, daisies and marigolds, with the same colours as before.
+  - **Painterly:** the crops are painted to their own outline on sheets of their own (`OWN_CROPS` in `style_free.py`), so the size-grouped free sheets keep exactly what they had.
+- **Art pass 2 (code):**
+  - **Soil fields:** tilled soil joins into fields (`soilSpr` in x_fix6.js). A side that meets more soil takes the tile's inner rows instead of its rim, and corners fill in. In a painted style each tile is smoothed with a 2 px border of its own edge, then cut back, so no seams show.
+  - **Lava bridges:** a bridge over lava has lava under it (`paintKey`), not blue water foam.
+  - **Mines:** rocks match the floor's theme (snow rock on ice; ash rock on magma and void; cave rock on earth). Mine, cave, warren and seam walls have the natural rock face; built dungeons keep stone courses (`natural` in `pixCliffsAndBridges`).
+  - **Inn patrons:** a seat that lands on furniture moves to the nearest free floor.
+  - **Keep pieces:** the throne dais, runners, banner poles and the keep stairs use their smoothed pixel sprites in painted styles (`STYLE_SMOOTH`). Their paintings were 3D, slanted or magenta-fringed.
+- **Pass 7:**
+  - **Signposts:** the `sign` sprite uses its smoothed pixel art in painted styles (the painting read as a chest on a pole).
+  - **Flyers:** fly and swoop enemies are hit where they're drawn, 6 px up with 6 px more reach (`x_action.js`). Frost bats were hard to hit.
+  - **E:** a story object, page, shard or chest at or beside you beats a wild flower in front of you.
+  - **Camera:** it may go a little past a map's side edges (more on the right, where the dock is).
+  - **Tracker:**
+    - A boss step without a place points to its arena in the Wilds or a region.
+    - A kill step points to the nearest ground of the biome where that enemy lives (`BIOME_EN`, or `*bio:` steps). The search is cached and skipped while you're in that biome.
+- **Map dragging (asked 2026-11-03):** press and hold on the map (M) and move to pan it (a `renderMap` wrapper scrolls `.mapbox`). A press that moves under 4 px is still a click, and the click right after a drag is swallowed.

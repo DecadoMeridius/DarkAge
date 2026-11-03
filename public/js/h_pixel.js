@@ -252,7 +252,8 @@ function pixCliffsAndBridges(x, m, cx, cy, M, s) {
       P(x0 + 2, bot, x1 - x0, 4, 'rgba(20,10,5,.32)'); // contact shadow
       P(x0, top, x1 - x0, bot - top, C[0]);
       const r = rng(X * 31 + Y * 7);
-      if (t !== 'r') for (let yy = top + 1; yy < bot - 1; yy++) { // mine walls: stacked stone courses, lit top row, dark seams
+      const natural = t === 'r' || m.mine || /^(cave_|warren_|gseam)/.test(m.id || '');   // caves are natural rock; built dungeons keep their courses (art pass 2: brick in every mine)
+      if (!natural) for (let yy = top + 1; yy < bot - 1; yy++) { // built walls: stacked stone courses, lit top row, dark seams
         const row = Math.floor((yy - top - 1) / 6), ry = (yy - top - 1) % 6;
         for (let xx = x0 + 1; xx < x1 - 1; xx++) {
           const seam = ry === 5 || (xx - bx + row * 5 + (hsh(X, row, 3) * 6 | 0)) % 11 === 0;

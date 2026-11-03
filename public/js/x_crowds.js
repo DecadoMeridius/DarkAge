@@ -65,7 +65,9 @@ function crowdSync() {
   }
   for (const C of want) {
     if (m.npcs.some(n => n.id === C.id)) continue;
-    const at = C.post || villageSpot(m); if (!at) continue;
+    let at = C.post || villageSpot(m); if (!at) continue;
+    // each inn has its own furniture (INN_LOOK): a seat that landed on a table or bench moves to the nearest free floor
+    if (C.post && typeof passable === 'function' && !passable(m, at[0], at[1]) && typeof openTileNear === 'function') { const o = openTileNear(m, at[0], at[1]); if (o) at = o; }
     const x = (at[0] + .5) * 16, y = (at[1] + .8) * 16;
     m.npcs.push({ id: C.id, crowd: 1, x, y, hx: x, hy: y, dir: C.dir || 0, walk: false, t: 1e9, vx: 0 });
     CRST[C.id] = { wait: Math.random() * 6 };

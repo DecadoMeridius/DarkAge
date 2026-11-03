@@ -66,7 +66,8 @@ function render(dt) {
   CHUNK_DEADLINE = performance.now() + 4;
   const W = cv.width, H = cv.height, Z = pixZoom(H), vw = W / Z, vh = H / Z, sea = S.season;
   let tx = S.p.x - vw / 2, ty = S.p.y - 12 - vh / 2;
-  tx = m.w * 16 < vw ? (m.w * 16 - vw) / 2 : clamp(tx, 0, m.w * 16 - vw); ty = m.h * 16 < vh ? (m.h * 16 - vh) / 2 : clamp(ty, -Math.max(vh * .05, 40), m.h * 16 - vh + Math.max(vh * .11, 40)); // a little past the edges, so the hotbar and HUD never cover you
+  // the camera may go a little past the side edges too: at a map's right edge the dock covered you (and a boss)
+  tx = m.w * 16 < vw ? (m.w * 16 - vw) / 2 : clamp(tx, -Math.max(vw * .04, 24), m.w * 16 - vw + Math.max(vw * .16, 60)); ty = m.h * 16 < vh ? (m.h * 16 - vh) / 2 : clamp(ty, -Math.max(vh * .05, 40), m.h * 16 - vh + Math.max(vh * .11, 40)); // a little past the edges, so the hotbar and HUD never cover you
   camX += (tx - camX) * Math.min(1, dt * 8); camY += (ty - camY) * Math.min(1, dt * 8); if (Math.abs(camX - tx) > 160 || Math.abs(camY - ty) > 160) { camX = tx; camY = ty; CHUNK_SYNC = performance.now() + 400; }
   let sx = 0, sy = 0; if (SHAKE > 0) { sx = (Math.random() - .5) * 3; sy = (Math.random() - .5) * 3; }
   const cxp = Math.round((camX + sx) * Z / 2) * 2 / Z, cyp = Math.round((camY + sy) * Z / 2) * 2 / Z; // snap to the art-pixel grid
@@ -103,7 +104,7 @@ function render(dt) {
     if (t === 'w' && hsh(x, y, 7) < .5) { const ph = (gameT * .35 + hsh(x, y, 2)) % 1, X = x * 16 + 2 + hsh(x, y, 4) * 10, Y = y * 16 + 3 + hsh(x, y, 5) * 10; g.globalAlpha = Math.sin(ph * Math.PI) * .55; g.strokeStyle = '#e6f6ff'; g.lineWidth = .6; g.beginPath(); g.moveTo(X - 2 - ph * 3, Y); g.quadraticCurveTo(X, Y - .9, X + 2 + ph * 3, Y); g.stroke(); g.globalAlpha = 1; }
     if (t === 'l' && hsh(x, y, 3) < .35) { const ph = (gameT * .5 + hsh(x, y, 1)) % 1; g.globalAlpha = Math.sin(ph * Math.PI) * .8; g.fillStyle = '#fff2a0'; g.beginPath(); g.arc(x * 16 + 4 + hsh(x, y, 8) * 8, y * 16 + 4 + hsh(x, y, 9) * 8, .8 + ph * 1.6, 0, 6.283); g.fill(); g.globalAlpha = 1; }
     const s0 = m.soil[i];
-    if (s0) { const X = x * 16, Y = y * 16, ts = PIX.get(s0.wet ? 'soil_wet' : 'soil_dry'); if (ts) D(ts, X, Y); if (s0.fert) { g.fillStyle = s0.fert === 'growth_tonic' ? '#7ac0ff' : s0.fert === 'rich_compost' ? '#ffd040' : '#c8e08a'; [[3, 13], [12, 3], [11, 12]].forEach(([a, b]) => g.fillRect(X + a, Y + b, 1, 1)); } }
+    if (s0) { const X = x * 16, Y = y * 16, ts = typeof soilSpr === 'function' ? soilSpr(m, x, y, s0.wet) : PIX.get(s0.wet ? 'soil_wet' : 'soil_dry'); if (ts) D(ts, X, Y); if (s0.fert) { g.fillStyle = s0.fert === 'growth_tonic' ? '#7ac0ff' : s0.fert === 'rich_compost' ? '#ffd040' : '#c8e08a'; [[3, 13], [12, 3], [11, 12]].forEach(([a, b]) => g.fillRect(X + a, Y + b, 1, 1)); } }
   }
   // ---- sortables ----
   const L = [];

@@ -409,3 +409,115 @@ EVT.on('map', id => {
     ORS.set(c, out); return out;
   })(objSprite);
 }
+
+/* ---- ripe crops drawn one by one (art/sprites/crops2.py, `crop_<key>_3`): a ripe crop with its own drawing uses it
+   as it is (real colours); others keep the shape templates of crops.py ---- */
+cropSpr = (f => function (k, st, dead) {
+  if (st === 3 && !dead && PIX.map && PIX.map['crop_' + k + '_3']) { const key = k + st + 'own'; if (CROPSPR[key] && !CROPSPR[key].__lost) return CROPSPR[key]; const c = PIX.get('crop_' + k + '_3'); if (c) return CROPSPR[key] = c; }
+  return f.apply(this, arguments);
+})(cropSpr);
+
+/* ---- tilled soil joins into fields: each tile was drawn with its own ragged rim and cut corners, so a field read as
+   a grid of cushions (Painterly especially). A side that meets more soil takes the tile's inner rows instead of
+   the rim, and a corner fills in when its two sides and the diagonal are soil. 16 edge masks x wet/dry, made once. ---- */
+const SOILC = {};
+function soilSpr(m, x, y, wet) {
+  const has = (dx, dy) => inb(m, x + dx, y + dy) && !!m.soil[(y + dy) * m.w + x + dx];
+  const N = has(0, -1), E = has(1, 0), S_ = has(0, 1), W = has(-1, 0);
+  const mask = (N ? 1 : 0) | (E ? 2 : 0) | (S_ ? 4 : 0) | (W ? 8 : 0) | (N && E && has(1, -1) ? 16 : 0) | (S_ && E && has(1, 1) ? 32 : 0) | (S_ && W && has(-1, 1) ? 64 : 0) | (N && W && has(-1, -1) ? 128 : 0);
+  const name = wet ? 'soil_wet' : 'soil_dry', key = name + mask + SETTINGS.artStyle;
+  if (SOILC[key] && !SOILC[key].__lost) return SOILC[key];
+  const fr = PIX.map[name]; if (!fr || !PIX.img) return PIX.get(name);
+  const c = mkCPU(32, 32, g2 => g2.drawImage(PIX.img, fr.x, fr.y, 32, 32, 0, 0, 32, 32));
+  const g2 = c.getContext('2d');
+  // a joined side: the rim (2 px) is replaced by the rows or columns just inside it
+  if (N) g2.drawImage(c, 0, 2, 32, 2, 0, 0, 32, 2);
+  if (S_) g2.drawImage(c, 0, 28, 32, 2, 0, 30, 32, 2);
+  if (W) g2.drawImage(c, 2, 0, 2, 32, 0, 0, 2, 32);
+  if (E) g2.drawImage(c, 28, 0, 2, 32, 30, 0, 2, 32);
+  for (const [bit, cx, cy] of [[16, 30, 0], [32, 30, 30], [64, 0, 30], [128, 0, 0]]) if (mask & bit) g2.drawImage(c, 14, 14, 2, 2, cx, cy, 2, 2);
+  let out = mk(32, 32, x2 => x2.drawImage(c, 0, 0)); out.ww = 16; out.wh = 16;
+  if (SETTINGS.artStyle !== 'pixel' && typeof smoothUp === 'function') {
+    // smoothed with a 2 px border of its own edge pixels, then cut back to the tile, so the smoothing doesn't fade the
+    // tile's edges (that showed as seams between joined tiles)
+    const pad = mkCPU(36, 36, p2 => { p2.drawImage(c, 2, 2); p2.drawImage(c, 0, 0, 32, 1, 2, 0, 32, 2); p2.drawImage(c, 0, 31, 32, 1, 2, 34, 32, 2); p2.drawImage(c, 0, 0, 1, 32, 0, 2, 2, 32); p2.drawImage(c, 31, 0, 1, 32, 34, 2, 2, 32);
+      p2.drawImage(c, 0, 0, 1, 1, 0, 0, 2, 2); p2.drawImage(c, 31, 0, 1, 1, 34, 0, 2, 2); p2.drawImage(c, 0, 31, 1, 1, 0, 34, 2, 2); p2.drawImage(c, 31, 31, 1, 1, 34, 34, 2, 2); });
+    const big = typeof gpuUp === "function" ? gpuUp(pad, 4) : smoothUp(pad), k = big.width / 36;   // a plain smooth enlargement: paintedLook's edge shading washed the field out
+    const cut = mk(32 * k, 32 * k, x2 => x2.drawImage(big, 2 * k, 2 * k, 32 * k, 32 * k, 0, 0, 32 * k, 32 * k));
+    for (const q of ['hi', 'lum']) if (big[q] !== undefined) cut[q] = big[q];
+    out = cut; out.ww = 16; out.wh = 16;
+  }
+  return SOILC[key] = out;
+}
+EVT.on('map', () => { for (const k in SOILC) if (!k.endsWith(SETTINGS.artStyle)) delete SOILC[k]; });
+
+/* ---- a bridge over lava has lava under it, not water (blue foam ran along the bridge over the lava, art pass 2) ---- */
+paintKey = (f => function (m, x, y) {
+  const k = f.apply(this, arguments);
+  if (k === 'w' && m && m.t) { const X = Math.max(0, Math.min(m.w - 1, x)), Y = Math.max(0, Math.min(m.h - 1, y));
+    if (m.t[Y * m.w + X] === 'b' && [[1, 0], [-1, 0], [0, 1], [0, -1], [2, 0], [-2, 0], [0, 2], [0, -2]].some(([dx, dy]) => inb(m, X + dx, Y + dy) && m.t[(Y + dy) * m.w + X + dx] === 'l')) return 'l'; }
+  return k;
+})(paintKey);
+
+/* ---- rocks in themed mines match the floor: snowy rock on ice floors, ash rock on magma and void floors, cave rock
+   on earth floors (the mossy surface rock stood on every mine floor, art pass 2) ---- */
+objSprite = (f => function (o, season) {
+  if (o && o.k === 'rock' && !o.v && cur && cur.mine && cur.theme) { const v = { ice: 'S', magma: 'A', void: 'A' }[cur.theme]; if (v) return f.call(this, Object.assign({}, o, { v }), season); return f.call(this, Object.assign({}, o, { cave: 1 }), season); }
+  return f.apply(this, arguments);
+})(objSprite);
+
+/* ---- E prefers what matters: a story object, page or shard under your feet or beside you beats a wild flower or
+   mushroom in front of you (E picked a morel instead of the journal page you stood on) ---- */
+findInteract = (f => function () {
+  const r = f.apply(this, arguments); if (!r || r.label !== 'Pick' || !cur || !S) return r;
+  const px = Math.floor(S.p.x / 16), py = Math.floor((S.p.y - 2) / 16);
+  for (const [dx, dy] of [[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1]]) {
+    const [x, y, o] = mainOf(cur, px + dx, py + dy); if (!o || !/^(page|shard|storyobj|storynpc|chest)$/.test(o.k)) continue;
+    const it = objInteract(cur, x, y, o); if (it) return it;
+  }
+  return r;
+})(findInteract);
+
+/* ---- the tracker for boss and kill steps (they had no arrow): a boss step without a place points to its arena (the Wilds
+   or a region), a kill step to the nearest ground of the biome where that enemy lives ('*bio:<biome>' kill steps too) ---- */
+const KILLW = { k: null, v: null };
+stepWhere = (f => function (sid, st) {
+  const r = f.apply(this, arguments); if (r || !st) return r;
+  try {
+    if (st.t === 'boss' && st.boss) for (const id of ['wilds', ...Object.keys(typeof REGIONS !== 'undefined' ? REGIONS : {})]) {
+      const m = MAPS[id], a = m && (m.arenas || []).find(a => a.boss === st.boss); if (a) return { map: id, x: a.x, y: a.y + 4 };
+    }
+    if (st.t === 'kill' && st.enemy && MAPS.wilds && MAPS.wilds.bio) {
+      const m = MAPS.wilds, want = st.enemy.startsWith('*bio:') ? st.enemy.slice(5) : Object.keys(BIOME_EN).find(b => ['day', 'night'].some(t => (BIOME_EN[b][t] || []).some(([k]) => k === st.enemy)));
+      const bi = want ? BIOMES.indexOf(want) : -1; if (bi < 0) return r;
+      const px = cur === m ? S.p.x / 16 : m.w / 2, py = cur === m ? S.p.y / 16 : m.h - 20;
+      if (cur === m && m.bio[Math.floor(py) * m.w + Math.floor(px)] === bi) return r;   // already there: no arrow
+      const ck = sid + st.enemy + (Math.floor(px / 8) * 1000 + Math.floor(py / 8)); if (KILLW.k === ck) return KILLW.v;   // the scan runs again only after you've moved a few tiles
+      let best = null, bd = 1e9;
+      for (let y = 4; y < m.h - 4; y += 4) for (let x = 4; x < m.w - 4; x += 4) { if (m.bio[y * m.w + x] !== bi || !passable(m, x, y)) continue; const d = Math.hypot(x - px, y - py); if (d < bd && d > 12) { bd = d; best = { map: 'wilds', x, y }; } }
+      KILLW.k = ck; KILLW.v = best; if (best) return best;
+    }
+  } catch (e) { console.error(e); }
+  return r;
+})(stepWhere);
+
+/* ---- the map can be dragged: press and hold anywhere on it and move to pan (asked 2026-11-03). A press that moves less
+   than 4 px is still a click. ---- */
+renderMap = (f => function (b) {
+  const r = f.apply(this, arguments);
+  const box = b.querySelector('.mapbox'); if (!box || box.__drag) return r; box.__drag = 1;
+  box.style.cursor = 'grab';
+  let d = null;
+  box.addEventListener('pointerdown', e => { if (e.button !== 0) return; d = { x: e.clientX, y: e.clientY, sl: box.scrollLeft, st: box.scrollTop, moved: false, id: e.pointerId }; });
+  box.addEventListener('pointermove', e => {
+    if (!d) return; const dx = e.clientX - d.x, dy = e.clientY - d.y;
+    if (!d.moved && Math.hypot(dx, dy) < 4) return;
+    if (!d.moved) { d.moved = true; box.style.cursor = 'grabbing'; try { box.setPointerCapture(d.id); } catch (err) {} }
+    box.scrollLeft = d.sl - dx; box.scrollTop = d.st - dy; e.preventDefault();
+  });
+  const end = e => { if (!d) return; const moved = d.moved; d = null; box.style.cursor = 'grab'; if (moved) { const stop = ev => { ev.stopPropagation(); ev.preventDefault(); }; box.addEventListener('click', stop, { capture: true, once: true }); setTimeout(() => box.removeEventListener('click', stop, { capture: true }), 300); } };
+  box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
+  box.addEventListener('dragstart', e => e.preventDefault());   // the map image isn't dragged out as a picture
+  const hint = b.querySelector('.acts small'); if (hint && !/drag/i.test(hint.textContent)) hint.textContent += ' Drag to move the map.';
+  return r;
+})(renderMap);
