@@ -188,6 +188,10 @@ function buyRow(id, price, label, cb, sub) {
   row.append(acts); return row;
 }
 function sellList(b, mode, filter) {
+  if (mode === 'bin') { MKT_BIN = true; try { return sellListIn(b, mode, filter); } finally { MKT_BIN = false; } }
+  return sellListIn(b, mode, filter);
+}
+function sellListIn(b, mode, filter) {
   const ks = sortedInv().filter(k => valK(k) > 0 && (!filter || filter(parseK(k)[0])));
   if (mode === 'bin') { let tot = 0; for (const k in S.bin) tot += valK(k) * S.bin[k]; b.append(el('p', { class: 'note' }, 'Items in the bin sell overnight. Tonight so far: ' + tot.toLocaleString() + 'g.')); }
   if (!ks.length) b.append(el('p', { class: 'note' }, 'Nothing to sell here.'));

@@ -570,7 +570,7 @@ function updateTime(dt) {
 }
 function endDay(fainted) {
   const report = [];
-  let earn = 0; for (const k in S.bin) { const [id, q] = parseK(k); earn += bulkPay(id, Math.round(sellPrice(id) * QMULT[q]), S.bin[k]); S.stats.shipped[id] = (S.stats.shipped[id] || 0) + S.bin[k]; } if (earn) { S.gold += earn; report.push(['coin', 'Shipping paid ' + earn.toLocaleString() + 'g']); } S.bin = {};
+  let earn = 0; for (const k in S.bin) { const [id, q] = parseK(k); MKT_BIN = true; earn += bulkPay(id, Math.round(sellPrice(id) * QMULT[q]), S.bin[k]); MKT_BIN = false; S.stats.shipped[id] = (S.stats.shipped[id] || 0) + S.bin[k]; } if (earn) { S.gold += earn; report.push(['coin', 'Shipping paid ' + earn.toLocaleString() + 'g']); } S.bin = {};
   for (const id of ['farm', 'greenhouse', ...(typeof ownedPlots === 'function' ? ownedPlots() : [])]) { const m = MAPS[id]; for (const k in m.soil) { const s = m.soil[k]; if (s.crop && !s.crop.dead && s.wet) s.crop.age += (1 + (s.fert === 'growth_tonic' ? .34 : 0)) * (m.soilQ || 1); s.wet = false; } } // owned plots grow crops too, scaled by soil quality
   tickMachines(600);
   S.day++; let newSeason = false; if (S.day > 28) { S.day = 1; S.season = (S.season + 1) % 4; if (S.season === 0) S.year++; newSeason = true; }

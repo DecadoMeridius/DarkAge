@@ -147,17 +147,26 @@ EVT.on('tick', () => { if (!S || PAUSED || !cur || !cur.spring) return; const [s
 /* ---- economy: stock, restock, drifting and demand-driven prices ---- */
 // selling a stack at once: each unit drops the price like single sales do (round 2: "All" sold 300 at the first price)
 function bulkPay(id, each, n) {
+  // markets (x_market.js): trade goods move their market's stock unit by unit; the shipping bin pays a flat price
+  if (typeof MKT_BIN !== 'undefined' && MKT_BIN) return each * n;
+  if (typeof mktTracks === 'function' && S && mktTracks(id)) return mktBulk(id, each, n);
   const d0 = (S && S.stats) ? demandOf(id) : 0; let t = 0;
   for (let i = 0; i < n; i++) t += each * (1 - Math.min(.5, d0 + i * .006)) / (1 - d0);
   return Math.round(t);
 }
 const demandOf = id => { const D = S.demand || {}, shipped = (S.stats.shipped || {})[id] || 0, snap = (S.shipSnap || {})[id] || 0; return clamp((D[id] || 0) + (shipped - snap) * .006, 0, .5); };
 const _sellPriceL = sellPrice;
-sellPrice = function (id) { const p = _sellPriceL(id); return p ? Math.max(1, Math.round(p * (1 - demandOf(id)))) : p; };
+sellPrice = function (id) {
+  const p = _sellPriceL(id); if (!p || !S) return p;
+  if (typeof MKT_BIN !== 'undefined' && MKT_BIN) return p;
+  if (typeof mktTracks === 'function' && mktTracks(id)) return mktSellPrice(id, p);
+  return Math.max(1, Math.round(p * (1 - demandOf(id))));
+};
 const weekDrift = id => 0.9 + hsh(id.length * 31 + id.charCodeAt(0), Math.floor(dayIndex() / 7), 77) * 0.2; // 0.9-1.1, changes weekly
 const STOCK0 = id => { const t = IT[id] && IT[id].t; return t === 'seed' ? 40 : t === 'weapon' || t === 'armor' || t === 'ring' ? 2 : t === 'place' || t === 'sapling' ? 4 : 15; };
 const _buyRowL = buyRow;
 buyRow = function (id, price, label, cb, sub) {
+  if (typeof mktTracks === 'function' && S && mktTracks(id)) return mktBuyRow(_buyRowL, id, price, label, cb, sub);
   const shop = MODAL ? MODAL.title : 'shop', st = (S.stock = S.stock || {})[shop] = S.stock[shop] || {};
   if (st[id] === undefined) st[id] = STOCK0(id);
   const p = Math.max(1, Math.round(price * weekDrift(id))), left = st[id];
@@ -200,6 +209,7 @@ function openStall() {
 }
 let stallHour = -1;
 EVT.on('tick', () => {
+  if (typeof MKT_STALL !== 'undefined') return;   // x_market.js runs the stall now
   if (!S || PAUSED || !S.stall || !S.structures || !S.structures.some(s => s.k === 'stall' && s.stage >= 4)) return;
   const hr = Math.floor(S.time / 60); if (hr === stallHour) return; stallHour = hr;
   if (hr < 8 || hr >= 18) return;

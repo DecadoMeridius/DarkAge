@@ -83,8 +83,8 @@ There is no light map. `pixGrade` in `h_pixel.js` multiplies the frame by one fl
 ## Land and economy (`public/js/q_land.js`, design doc Phase 5)
 - **Plots:** West, South and South-west of the farm (`PLOTS`). `plotInfo(k)` derives everything from the world seed + grid position: type (meadow, woodland, rocky, lakeside, hillside, marsh; the West plot is always lakeside), soil quality (multiplies crop growth), resources, price and 0-2 features (ruin with a loot chest, hot spring that restores energy, fairy ring, ancient tree), some hidden until surveyed. Each plot is its own farm map `plot_<dir>` (in `PERSIST`, saved like the farm). Owning one opens a gap in the farm's tree line with a warp; plot-to-plot exits only open into land you own.
 - **Landowner:** Lord Ashcombe's manor in the village (`addB(..., 'manor', 'landowner')`). Deeds show a mini-map, soil, resources, known features and price. Buy outright, lease (25% down, 6% a week; missing a payment closes the plot again), survey (4%), or buy out a lease. Ownership is `S.land`.
-- **Shops:** every `buyRow` list has stock per shop (`S.stock`, refilled each morning) and a weekly price drift (±10%). Selling lowers that item's price ~0.6% per unit (to at most −50%), recovering 15% a day (`S.demand`, `S.shipSnap`, `econDaily` after `endDay`).
-- **Market stall:** a blueprint from Hale (60 wood, 2 cloth). Interact to put goods on display; from 8:00 to 18:00 it sells about three lots an hour at 112% of the going price, twice as many at weekends (`S.stall`; it was 130%, which resold shop goods at a profit).
+- **Shops:** trade goods follow the markets (see Markets below). Gear, seeds, saplings, placeables and tools keep stock per shop (`S.stock`, refilled each morning) and a weekly price drift (±10%); selling those lowers the price ~0.6% per unit (to at most −50%), recovering 15% a day (`S.demand`, `S.shipSnap`, `econDaily` after `endDay`).
+- **Market stall:** a blueprint from Hale (60 wood, 2 cloth). Interact to put goods on display and set their prices (see Markets below).
 - Tested: buy the lakeside plot → walk west through the opened fence line → fish a carp in its pond.
 
 ## Village life (`public/js/r_life.js`, design doc Phase 6)
@@ -857,4 +857,19 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - Placement refusals name objects in words (`objLabel` in x_fix5.js: "tall grass", not "tgrass").
   - Arriving on a map inside a tree or rock moves you to open ground.
   - Hammering a build site costs 0.3 energy a stroke and stops when you're spent.
+
+## Markets, traders and caravans (`public/js/x_market.js`, asked 2026-11-03)
+- **Markets (`MARKETS`):** the village, Kingsbridge, Greyhelm, Ashford, Saltmere and the four region towns. Each keeps a stock of every trade good (`MKT_TYPES`: crop, fruit, forage, mat, ore, bar, gem, loot, animal, fish, artisan, food). The normal level `mktT` depends on the town's size `R`, the item's price (more of cheap goods) and `hold` (the village and Kingsbridge hold a lot of produce). Only stocks away from their level are saved (`S.mkt.s`).
+- **Price:** `mktF` = what the town makes or lacks (`pf`, by `mktCat`; a region's own goods 0.8, lowland food there 1.25) × (normal / stock)^0.6, kept between half and double the base. `mktHere` picks the market: the region, the town whose shop or streets you're in, else the village.
+- **Shops and selling:** trade goods in a `buyRow` take their price from the market and their stock is the market's (`mktBuyRow`); buying takes from it. Selling adds to it unit by unit (`mktBulk`, through `bulkPay`), so a glut lowers the next unit's price. `sellPrice` uses the market for trade goods (q_land.js). Shop markups still apply on top.
+- **Each morning (`mktDaily`, after `econDaily`):**
+  - Production and consumption move every stock 20% of the way back to its level, so nothing runs out for good.
+  - 30% of days one market gets a shortage (x0.4) or a glut (x1.8) of one kind of everyday goods, in the news.
+  - Traders move goods along the roads (`LINKS`) from where the stock is high to where it's low, up to three loads per good.
+  - Loads worth 300g+ join that road's caravan of the day (`S.mkt.cv`), which arrives hours later (`mins` per link). From day 7, 4% are taken by bandits.
+- **Caravans you see:** in the Wilds, now and then one of the caravans on the road passes near you as a patrol cut to two guards with the supply wagon (`CARAVAN`, `caravanFrame`, drawn in `pcCursorDraw`). If bandits reach the wagon with both guards down, the load is lost.
+- **Shipping bin:** always pays the base price, with no market or demand (`MKT_BIN`, set while the bin pays and while its list is drawn).
+- **Your stall:** per item you set 70-160% of the village price (`S.stall.mul`, − and + in the stall window). From 8:00 to 18:00, three tries an hour (six at weekends); each sells 1-3 with a chance of (1.5 − price) / 0.6. Passers-by add to the village stock.
+- **Traders at the stall:** at 10:00 and 15:00 a trader looks for a good some market is short of (under 85% of its level). They buy it if your price leaves them 15% below what that market pays, as much as it's short of, and it goes there by caravan (`stallTraderDeal`). On the farm you see them walk up the road to the stall, buy and leave (`mkt_trader`, `traderFrame`); elsewhere the sale just happens.
+- **News:** the farm notice board has a Markets tab: trade news and, per market, what it's short of and what's plentiful (`renderMarkets`). Shop rows say "Scarce here" / "Plentiful here".
 
