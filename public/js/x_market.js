@@ -188,8 +188,69 @@ openStall = function () {
     const ks = sortedInv().filter(k => valK(k) > 0 && !IT[parseK(k)[0]].slot), add = el('div', { class: 'grid' });
     for (const k of ks) { const [id, q] = parseK(k); add.append(el('button', { class: 'cell f-slot', title: IT[id].n, on: () => { const n = S.inv[k]; takeK(k, n); S.stall.goods[k] = (S.stall.goods[k] || 0) + n; refresh(); } }, icon(id, 32, q), el('b', null, S.inv[k]))); }
     b.append(el('h3', null, 'Put out from your backpack'), add);
-  } }]);
+  } }, { id: 'orders', label: 'Buy orders', render: renderOrders }]);
 };
+/* ---- buy orders (asked 2026-11-04): you name an item, your top price and how many; the traders who call at 10:00 and
+   15:00 buy it in a town whose shop sells it under your price, take it from that town's stock and bring it (the town's shop
+   price, `ORDER_CUT` x the market price, so an order saves the walk but is never cheaper than buying there yourself). You pay your price when it arrives; deliveries wait in the stall (S.stall.orders, S.stall.bought). ---- */
+const ORDER_CUT = 1.45;   // as town shops charge (x_realm.js); 1.1 let an order buy Greyhelm ore that resold in the village at +25%
+const orderCost = (m, id) => Math.max(1, Math.round(valBase(id) * mktF(m, id) * ORDER_CUT));   // what a trader needs from you to bring one from m
+function orderBest(id) { let best = null; for (const m in MARKETS) { if (mktStock(m, id) < 1) continue; const c = orderCost(m, id); if (!best || c < best[1]) best = [m, c]; } return best; }
+function renderOrders(b) {
+  const st = S.stall; st.orders = st.orders || []; st.bought = st.bought || {};
+  b.append(el('p', { class: 'note' }, 'Ask the travelling traders to bring goods. At 10:00 and 15:00 they buy them in a town whose shop sells them under your price and bring them here; you pay your price when they arrive (you need the gold then, not now). It saves the trip, at the town’s own price.'));
+  const got = Object.keys(st.bought).filter(id => st.bought[id] > 0 && IT[id]);
+  if (got.length) {
+    const L = el('div', { class: 'list' });
+    for (const id of got) L.append(el('div', { class: 'rrow' }, icon(id, 32), el('div', { class: 'rtxt' }, el('b', null, IT[id].n + ' ×' + st.bought[id]), el('small', null, 'Delivered')),
+      el('div', { class: 'acts' }, el('button', { class: 'btn', on: () => { GIVE_NO_DROP = true; const left = give(id, st.bought[id], 0, true); GIVE_NO_DROP = false; if (left) { st.bought[id] = left; toast('No room for all of it.', 'bad'); } else delete st.bought[id]; refresh(); } }, 'Take'))));
+    b.append(el('h3', null, 'Delivered'), L);
+  }
+  const L = el('div', { class: 'list' });
+  st.orders.forEach((o, i) => {
+    const best = orderBest(o.id), now = best ? (best[1] <= o.price ? 'A trader can get it now from ' + mktName(best[0]) + ' (' + best[1] + 'g).' : 'Cheapest now: ' + mktName(best[0]) + ', ' + best[1] + 'g. Raise your price or wait for a glut.') : 'No town has any.';
+    L.append(el('div', { class: 'rrow' }, icon(o.id, 32), el('div', { class: 'rtxt' }, el('b', null, IT[o.id].n + ': ' + o.left + ' more at up to ' + o.price + 'g'), el('small', null, now)),
+      el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => { st.orders.splice(i, 1); refresh(); } }, 'Cancel'))));
+  });
+  b.append(el('h3', null, 'Your orders'), st.orders.length ? L : el('p', { class: 'note' }, 'No orders yet.'));
+  // a new order: find the item, then the price and how many
+  const ids = mktIds().slice().sort((a, b2) => IT[a].n.localeCompare(IT[b2].n)), q0 = MODAL.opts.oq || '';
+  const sel = el('select', { class: 'f-input' }), find = el('input', { class: 'f-input', placeholder: 'Find an item…', value: q0 });
+  const price = el('input', { class: 'f-input', type: 'number', min: 1, style: 'width:90px' }), qty = el('input', { class: 'f-input', type: 'number', min: 1, value: 10, style: 'width:70px' }), hint = el('small', null, '');
+  const setPrice = () => { const id = sel.value; if (!id) { hint.textContent = ''; return; } const best = orderBest(id); price.value = best ? best[1] : Math.round(valBase(id) * ORDER_CUT); hint.textContent = best ? 'Cheapest now: ' + mktName(best[0]) + ', ' + best[1] + 'g each (usual ' + valBase(id) + 'g).' : 'No town has any right now.'; };
+  const fill = () => { const q = find.value.toLowerCase(); sel.innerHTML = ''; for (const id of ids.filter(id => !q || IT[id].n.toLowerCase().includes(q)).slice(0, 150)) sel.append(el('option', { value: id }, IT[id].n)); setPrice(); };
+  find.oninput = () => { MODAL.opts.oq = find.value; fill(); }; sel.onchange = setPrice;
+  const place = el('button', { class: 'btn', on: () => {
+    const id = sel.value, p = Math.max(1, Math.round(+price.value || 0)), n = Math.max(1, Math.round(+qty.value || 0));
+    if (!id || !IT[id]) { toast('Pick an item first.', 'bad'); return; }
+    const o = st.orders.find(o => o.id === id); if (o) { o.price = p; o.left += n; } else st.orders.push({ id, price: p, left: n });
+    toast('Order placed: ' + n + ' ' + IT[id].n.toLowerCase() + ' at up to ' + p + 'g each.'); SFX.ok(); refresh();
+  } }, 'Place order');
+  b.append(el('h3', null, 'New order'), el('div', { class: 'acts wrap' }, find, sel), el('div', { class: 'acts wrap' }, el('span', null, 'Up to'), price, el('span', null, 'g each, how many'), qty, place), el('p', { class: 'note' }, hint));
+  fill();
+}
+// which orders a trader can fill on this visit: the cheapest town under your price, as much as you can pay for (40% of a
+// town's stock at most, so one order can't empty it)
+function stallOrderDeals() {
+  const out = []; let gold = S.gold;
+  for (const o of (S.stall.orders || [])) {
+    if (o.left < 1 || !IT[o.id]) continue;
+    const best = orderBest(o.id); if (!best || best[1] > o.price) continue;
+    const q = Math.min(o.left, Math.floor(mktStock(best[0], o.id) * .4), Math.floor(gold / o.price)); if (q < 1) continue;
+    gold -= q * o.price; out.push({ o, m: best[0], q });
+  }
+  return out;
+}
+function stallOrdersFill(list) {
+  const st = S.stall; st.bought = st.bought || {}; const said = [];
+  for (const { o, m, q: want } of list) {
+    const q = Math.min(want, o.left, Math.floor(S.gold / o.price), Math.floor(mktStock(m, o.id))); if (q < 1) continue;
+    S.gold -= q * o.price; mktSet(m, o.id, mktStock(m, o.id) - q); st.bought[o.id] = (st.bought[o.id] || 0) + q; o.left -= q;
+    said.push(q + ' ' + IT[o.id].n.toLowerCase() + ' from ' + mktName(m) + ' (' + (q * o.price).toLocaleString() + 'g)');
+  }
+  st.orders = (st.orders || []).filter(o => o.left > 0);
+  if (said.length) { toast('A trader brought your order: ' + said.join(', ') + '. It’s waiting at your stall.', 'lvl'); SFX.coin(); }
+}
 // what the traders would pay: the town that's short of it, and the most they'd give (its price less their 15%)
 function stallOffer(k) {
   const [id] = parseK(k); if (!mktTracks(id)) return '';
@@ -199,7 +260,7 @@ function stallOffer(k) {
   return mktName(best[0]) + ' is short: a trader pays up to ' + best[1] + 'g' + (stallEach(k) <= best[1] ? ' and would take it.' : ', under your price.');
 }
 // goods whose item no longer exists are dropped from the stall (an unknown key threw on every tick)
-const stallClean = () => { if (S && S.stall && S.stall.goods) for (const k in S.stall.goods) if (!IT[parseK(k)[0]]) delete S.stall.goods[k]; };
+const stallClean = () => { if (S && S.stall && S.stall.goods) for (const k in S.stall.goods) if (!IT[parseK(k)[0]]) delete S.stall.goods[k]; if (S && S.stall && S.stall.orders) S.stall.orders = S.stall.orders.filter(o => IT[o.id] && o.left > 0); };
 const stallBuilt = () => S && S.stall && S.structures && S.structures.some(s => s.k === 'stall' && s.stage >= 4) && (stallClean(), true);
 function stallSell(k, n, each, who) {
   const [id] = parseK(k); n = Math.min(n, S.stall.goods[k] || 0); if (!n) return 0;
@@ -212,8 +273,9 @@ let stallHr2 = -1;
 EVT.on('tick', () => {
   if (!stallBuilt() || PAUSED) return;
   const hr = Math.floor(S.time / 60); if (hr === stallHr2) return; stallHr2 = hr;
-  if (hr < 8 || hr >= 18 || !Object.keys(S.stall.goods).length) return;
+  if (hr < 8 || hr >= 18) return;
   if (hr === 10 || hr === 15) stallTrader();
+  if (!Object.keys(S.stall.goods).length) return;
   const weekend = (dayIndex() - 1) % 7 >= 5; let earned = 0; const sold = [];
   for (let i = 0; i < (weekend ? 6 : 3); i++) {
     const ks = Object.keys(S.stall.goods); if (!ks.length) break;
@@ -239,12 +301,14 @@ function stallTraderDeal() {
 }
 function stallTrader() {
   if (TRADER.n) return;   // one already on the way
-  const d = stallTraderDeal(); if (!d) return;
+  const sell = stallTraderDeal(), orders = stallOrderDeals(); if (!sell && !orders.length) return;
+  const d = { sell, orders };
   if (cur && cur.id === 'farm' && !TRADER.n) { traderWalk(d); return; }
   stallTraderBuy(d);
 }
-function stallTraderBuy(d) {
-  if (!S.stall.goods[d.k]) return;
+function stallTraderBuy(v) {
+  if (v.orders && v.orders.length) stallOrdersFill(v.orders);
+  const d = v.sell; if (!d || !S.stall.goods[d.k]) return;
   const g = stallSell(d.k, d.q, d.each, 'trader'), n = Math.round(g / d.each); if (!g) return;
   const L = LINKS.find(([a, b]) => (a === 'village' && b === d.m) || (b === 'village' && a === d.m));
   mktShip(d.id, n, 'village', d.m, L ? L[2] : 600);

@@ -8,7 +8,8 @@ const HELP = {
     'Set each price with − and +, against what the village pays today. 70% always sells, 100% about half the time, 130% now and then, 160% hardly ever.',
     'Passers-by are villagers, so they compare your price with the village price.',
     'At 10:00 and 15:00 a travelling trader may call. He buys goods some town is short of if your price leaves him a margin there; each row says which town and the most he would pay.',
-    'Take back returns unsold goods to your backpack.']],
+    'Take back returns unsold goods to your backpack.',
+    'Buy orders: name an item, your top price and how many. The same traders buy it in a town whose shop sells it under your price and bring it at 10:00 or 15:00; you pay when it arrives, and it waits in the stall until you take it.']],
   bin: ['Shipping bin', [
     'Anything in the bin is sold overnight, wherever you are.',
     'It always pays a fixed 80% of the base price: no markets, no gluts.',
