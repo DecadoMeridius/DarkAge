@@ -224,3 +224,74 @@ A new game played on the farm and in the village only. Gold went from 500 to 3,4
 - **Other:**
   - Hale's Greenhouse row reads "Next: 0g, .".
   - Right-clicking Hale or Brann behind the counter does nothing (seen before).
+
+## Still open after 0.9.9 (checked 2026-11-03)
+**Bugs**
+- Enemies can spawn inside dungeon wall tiles.
+- Field clicks:
+  - clicks are dropped while walking;
+  - the hoe tills the tiles you walk over;
+  - placing the last fence empties the hotbar slot;
+  - a gate placed on a 1-tile gap takes the fence beside it.
+- Chest loot that doesn't fit spills into one heap.
+- The locked-node hover warns about skill level, not tool tier.
+- The tracker:
+  - its arrow points into Corwin's hut instead of the ferry;
+  - shard steps get no arrow;
+  - it marks building doors while the person is elsewhere.
+- The story speaks at the manor door but not at the museum or smithy doors.
+- The recap leaves out choice replies (Quill).
+- The castle household is already there before you own Briarholt.
+- The Kingdom test runs with `SANDBOX`, so pattern gating can't be tested there.
+- Unverified: the Cinder Drake fight after the cliff fix; Aldren calling Margit his sister; dungeon boss size.
+
+**Balance**
+- The first mine is about 200 tiles from home with no signs.
+- Early seeds: turnips and garlic far ahead of cabbage, rhubarb and potato.
+- Watering 40 tiles costs about 80 energy.
+- The Cottage needs 150 wood and 80 stone, but Hale sells 15 of each a day.
+- All week-1 stories need the Wilds.
+- The Warlord is trivial next to the Frost Giant and Frostmere floor 1.
+- The Pale Lich fight is long; the Hollow King hits through Guard.
+- The Stone Warden reference needs re-measuring (classic mode is far harder).
+- Wounded wolves heal at home.
+- Romance is fast.
+- Blossom Day pays up to 1,680g.
+
+**Quality of life**
+- Drag-to-place for fences, channels and belts.
+- Say which channel is clogged, why a machine is idle, and what blocks a placement.
+- The anvil should default to "Can make".
+- Shipping bin:
+  - list its contents and give items back;
+  - stop offering seeds and food;
+  - its total ignores the demand drop.
+- Request board items get replaced early.
+- The tracker label sits over the screen centre.
+- No hint that the Drowned only appear at night.
+
+**Art (Painterly)**
+- Night window glows are misplaced (shutters, roofs, ivy; winter uses summer positions).
+- Bosses look blurry: Old Snapper, Frost Giant, Ember Wyrm, Hollow King, Warlord. Characters are smoothed pixel art by design.
+- Hale's and Ashford's gables look 3D.
+- Still pixel-looking: channels, belts, fence posts, implements, canoe, build sites, crypt, town walls, rails, lava, cliffs as boxes, stair-stepped biome borders.
+- Cyan under charwood. Village cobbles repeat. The sea is flat.
+- Rimehold's square is pink dust. The Molten Vault's walls and floor look alike. Dungeon ores look low-poly.
+- Frost Wraith looks like a map pin; helmet icons look like bottles; every dish is one plate; every fish is one silhouette; raw meat uses the dish icon; about 151 icons are still pixel art.
+- Slimes and goblins vanish in grass.
+- Saplings look like pixel conifers. Growing crops share one look until ripe.
+- Animals: rabbit tail, chicken legs, coats that don't match their names, blurry pets.
+- People: man and woman share one body; the creator preview is blurry; armour tiers are flat recolours; the horse looks small under its rider; the wagon horses are half-size.
+- Guard ring is faint. Autumn ground is flat mustard.
+- Festivals all look alike:
+  - Lantern Night is in daylight, and its text says "pond";
+  - the Harvest Fair picks your entry;
+  - the Ember Feast has no feast.
+- Winter:
+  - the fountain never freezes;
+  - bare trees keep green skirts;
+  - one roof has patchy snow;
+  - the pond shore stays yellow.
+- Story places don't match their text: the cairn, the burned lodge, the crates, the cold shrine, Aldren's ghost.
+- Rimehold copies Highmarch Hold's plan.
+- Weather is only sun, rain or snow. There's no new-year or birthday moment. `S.fam.me.name` stays "You".
