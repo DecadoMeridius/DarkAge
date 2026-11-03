@@ -94,7 +94,7 @@ shadow = (f => function (x, y, r, a = .22) {
   };
   const L = Math.hypot(SUNP.sx, SUNP.sy);   // along the sun's shadow direction, as long as the sun makes it
   const R = Math.max(r, 8);   // people and creatures: a sun shadow as long as a ~30 px figure makes (it was too small to see)
-  if (LIGHT_K > .02) blob(SUNP.sx * R * 1.6, SUNP.sy * R * 1.6, Math.atan2(SUNP.sy, SUNP.sx), 1 + L * 2.4, .45, Math.min(.42, a * 2.2) * LIGHT_K * SUNP.k, R);
+  if (LIGHT_K > .02 && a >= .18) blob(SUNP.sx * R * 1.6, SUNP.sy * R * 1.6, Math.atan2(SUNP.sy, SUNP.sx), 1 + L * 2.4, .45, Math.min(.42, a * 2.2) * LIGHT_K * SUNP.k, R);
   blob(0, 0, 0, 1, .42, a * 1.1);
 })(shadow);
 

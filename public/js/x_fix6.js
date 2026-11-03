@@ -521,3 +521,14 @@ renderMap = (f => function (b) {
   const hint = b.querySelector('.acts small'); if (hint && !/drag/i.test(hint.textContent)) hint.textContent += ' Drag to move the map.';
   return r;
 })(renderMap);
+
+/* ---- numbers and loot text that land on the same spot stack upward instead of piling on top of each other ---- */
+floatText = (f => function (x, y, txt, c) {
+  let k = 0; for (const o of FX) if (o.txt !== undefined && o.t > .75 && Math.abs(o.x - x) < 12 && Math.abs(o.y - (y - k * 8)) < 6) k++;
+  return f.call(this, x + (k % 2 ? 5 : 0), y - k * 8, txt, c);
+})(floatText);
+
+/* ---- the zombie and the drowned pirate read as villagers: the zombie gets sickly green skin, torn rags, bare ribs and glowing
+   eyes; the pirate drowned-blue skin, a red bandana and bare ribs (art detail pass) ---- */
+if (EN.zombie && EN.zombie.P) Object.assign(EN.zombie.P, { skin: '#7aa858', hair: '#2a3020', shirt: '#5a5040', pants: '#3a3a2a', eye: '#e8ff60', ribs: 1 });
+if (EN.pirate && EN.pirate.P) Object.assign(EN.pirate.P, { skin: '#8ab0a8', hair: '#4a5a58', eye: '#5affe0', mask: '#b02020', ribs: 1 });

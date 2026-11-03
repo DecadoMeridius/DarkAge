@@ -161,7 +161,7 @@ function render(dt) {
   if (m.outdoor && (S.weather === 'rain' || S.weather === 'snow') && !(m.bio && BIOMES[m.bio[Math.floor(S.p.y / 16) * m.w + Math.floor(S.p.x / 16)]] === 'ash')) {
     while (WEATHER.length < 130 * (typeof PARTICLE_K !== 'undefined' ? PARTICLE_K : 1)) WEATHER.push({ x: Math.random() * W, y: Math.random() * H, s: .6 + Math.random() * .6 });
     g.strokeStyle = S.weather === 'rain' ? 'rgba(190,215,240,.5)' : 'rgba(255,255,255,.9)'; g.fillStyle = '#fff'; g.lineWidth = DPR;
-    for (const p of WEATHER) { if (S.weather === 'rain') { p.y += 620 * p.s * dt * DPR; p.x -= 90 * dt * DPR; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - 3 * DPR, p.y + 12 * DPR); g.stroke(); } else { p.y += 40 * p.s * dt * DPR; p.x += Math.sin(gameT + p.s * 9) * 20 * dt * DPR; g.beginPath(); g.arc(p.x, p.y, 1.4 * DPR * p.s, 0, 6.283); g.fill(); } if (p.y > H) { p.y = -10; p.x = Math.random() * W * 1.2; } }
+    for (const p of WEATHER) { if (S.weather === 'rain') { p.y += 620 * p.s * dt * DPR; p.x -= 90 * dt * DPR; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - 3 * DPR, p.y + 12 * DPR); g.stroke(); } else { p.y += 40 * p.s * dt * DPR; p.x += Math.sin(gameT + p.s * 9) * 20 * dt * DPR; const rr = (1.6 + p.s * 1.6) * DPR * (H > 900 ? 1.4 : 1); g.fillStyle = 'rgba(90,110,140,.35)'; g.beginPath(); g.arc(p.x + DPR, p.y + DPR, rr, 0, 6.283); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(p.x, p.y, rr, 0, 6.283); g.fill(); } if (p.y > H) { p.y = -10; p.x = Math.random() * W * 1.2; } }
     
   }
   if (pl.inv > .6) { g.fillStyle = 'rgba(200,30,20,' + ((pl.inv - .6) * .45) + ')'; g.fillRect(0, 0, W, H); }
@@ -192,10 +192,10 @@ function drawEnt(e) {
   const E2 = EN[e.k], spr = enemySpr(e.k, typeof enemyFrame === 'function' ? enemyFrame(e) : Math.floor(e.t * 4) % 2);
   if (E2.ai === 'ambush' && !e.awake) { D(SPR.rock, e.x - 8, e.y - 14); return; }
   const air = E2.ai === 'fly' || E2.ai === 'swoop' ? 6 + Math.sin(e.t * 5) * 2 : E2.ai === 'ghost' ? 4 + Math.sin(e.t * 2) * 2 : (e.hopT > 0 ? Math.sin(e.hopT / .35 * Math.PI) * 6 : 0);
-  shadow(e.x, e.y, Math.max(5, spr.ww * .32));
+  shadow(e.x, e.y, Math.max(5, spr.ww * .32), air > 3 ? .15 : undefined);   // flyers: a contact shadow only (x_artlight skips the long sun shadow under .18)
   const AN = typeof enemyAnim === 'function' ? enemyAnim(e, E2) : { x: 0, y: 0, sx: 1, sy: 1 }; g.save(); g.translate(e.x + AN.x, e.y - air + AN.y); if (e.dir < 0 && E2.art !== 'human' && E2.art !== 'slime') g.scale(-1, 1); g.scale(AN.sx, AN.sy);
   const squash = E2.art === 'slime' && e.hopT > 0 ? 1 + Math.sin(e.hopT / .35 * Math.PI) * .12 : 1; g.scale(1 / squash, squash);
-  if (e.flash > 0) g.filter = 'brightness(2.6)'; else if (e.st.burn > 0) g.filter = 'sepia(.8) saturate(2.5) hue-rotate(-20deg)'; else if (e.st.slow > 0) g.filter = 'hue-rotate(160deg) saturate(.7) brightness(1.15)';
+  if (e.flash > 0) g.filter = 'brightness(1.6) saturate(1.2)'; else if (e.st.burn > 0) g.filter = 'sepia(.8) saturate(2.5) hue-rotate(-20deg)'; else if (e.st.slow > 0) g.filter = 'hue-rotate(160deg) saturate(.7) brightness(1.15)';
   if (e.tele2) g.translate((Math.random() - .5) * 2, 0);
   D(spr, -spr.ww / 2, -spr.wh); g.filter = 'none'; g.restore();
   if (!E2.boss && e.hp < e.mhp) { const bw = 16, bx = e.x - 8, by = e.y - spr.wh - 5 - air; g.fillStyle = 'rgba(59,42,32,.85)'; g.beginPath(); g.roundRect ? g.roundRect(bx - .8, by - .8, bw + 1.6, 3.6, 1.8) : g.rect(bx, by, bw, 2); g.fill(); g.fillStyle = '#e84a3a'; g.beginPath(); g.roundRect ? g.roundRect(bx, by, Math.max(.5, bw * e.hp / e.mhp), 2, 1) : g.rect(bx, by, bw * e.hp / e.mhp, 2); g.fill(); }

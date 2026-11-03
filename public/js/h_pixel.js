@@ -306,7 +306,7 @@ humanSpr = function (key, P, dir, f) {
   if (P.cape && d !== 3) add('hb_cape_' + d);
   if (P.quiver && d !== 3) add('hb_quiver_' + d);
   if (P.hood) add(`hb_hood_${d}_back`); else if (!P.helm) add(`hb_hair_${hs}_${d}_back`);
-  add(ride ? 'hb_ride_2' : `hb_body_${d}_${f}`, wf >= 0 ? bob : 0, 0); // 'ride' = seated pose, facing right if (P.ribs) add('hb_ribs_' + d);
+  add(ride ? 'hb_ride_2' : `hb_body_${d}_${f}`, wf >= 0 ? bob : 0, 0); if (P.ribs) add('hb_ribs_' + d);   // 'ride' = seated pose, facing right (the ribs were hidden behind this comment)
   if (P.robe) add('hb_robe_' + d); if (P.apron) add('hb_apron_' + d); if (P.belt) add('hb_belt_' + d); if (P.armS && !P.robe) { const a = armFit('hb_arm_' + P.armS + '_' + d, d, ride ? null : f); if (a) L.push([a, bob, lx]); } if (P.vest) add('hb_vest_' + d); if (P.quiver && d === 3) add('hb_quiver_3');
   if (P.cape && d === 3) add('hb_cape_3');
   if (P.beard) add('hb_beard_' + d); if (P.ears) add('hb_ears_' + d);

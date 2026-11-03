@@ -797,3 +797,10 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
     - A boss step without a place points to its arena in the Wilds or a region.
     - A kill step points to the nearest ground of the biome where that enemy lives (`BIOME_EN`, or `*bio:` steps). The search is cached and skipped while you're in that biome.
 - **Map dragging (asked 2026-11-03):** press and hold on the map (M) and move to pan it (a `renderMap` wrapper scrolls `.mapbox`). A press that moves under 4 px is still a click, and the click right after a drag is swallowed.
+- **Pass 8:**
+  - **Flyers:** fly and swoop enemies get only a contact shadow (`shadow(..., .15)`; the long sun shadow is skipped below .18), not a vertical streak at noon.
+  - **Hit flash:** `brightness(1.6) saturate(1.2)`, not flat white.
+  - **Floating numbers** that land on one spot stack upward (`floatText` wrapper).
+  - **Snow:** flakes are 1.6-3.2 px (x1.4 above 900 px tall) with a faint shadow, so they show on snowy ground.
+  - **Zombie and Drowned Pirate:** the zombie has green skin, glowing eyes and bare ribs; the pirate drowned-blue skin, a red bandana and ribs.
+  - **Ribs:** `hb_ribs_<d>` was never drawn: a `//` comment in `humanSpr` hid `if (P.ribs) add(...)`. It's fixed, so skeletons show their ribs too.
