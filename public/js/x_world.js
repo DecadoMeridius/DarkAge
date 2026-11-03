@@ -67,13 +67,16 @@ EVT.on('map', id => { const m = MAPS[id]; if (m && m.wild && S && !TITLE) spawnN
 function pickWild(m, x, y, o) {
   const bio = m.bio ? BIOMES[m.bio[y * m.w + x]] : 'meadow';
   let id;
-  if (o.k === 'mushroom') id = pickR(['red_cap', 'morel'].filter(k => IT[k]));
+  // round 2: picking paid ~900g an hour in week one, far over farming. Morels are rare finds, and a flower is only
+  // worth keeping now and then (more often as Foraging grows); the rest is a bit of fibre
+  const keep = .25 + Math.min(.35, ((S.sk.foraging && S.sk.foraging.L) || 1) * .005);
+  if (o.k === 'mushroom') id = IT.morel && Math.random() < .15 ? 'morel' : 'red_cap';
   else { const L = ((FORAGE[bio] || FORAGE.meadow || [])[S.season] || []).filter(k => IT[k]); id = L.find(k => IT[k].sh === 'flower') || pickR(L.length ? L : ['dandelion']); }
   if (!id || !IT[id]) return;
   if (S.p.st < 1) { toast('Too tired to pick anything. Eat or sleep.', 'bad'); SFX.bad(); return; }
   useStamina(1);   // picking costs 1 energy like other work (2026-11-02)
-  setO(m, x, y, null); give(id, 1, forageQ()); addXP('foraging', 3); SFX.pop(); sparkle(x, y, '#f5e08a');
-  (S.respawn = S.respawn || []).push({ map: m.id, x, y, o: { k: o.k, v: o.v }, at: worldMin() + 2 * 1440 });
+  setO(m, x, y, null); if (o.k === 'flower' && Math.random() > keep) give('fiber', 1); else give(id, 1, forageQ()); addXP('foraging', 3); SFX.pop(); sparkle(x, y, '#f5e08a');
+  (S.respawn = S.respawn || []).push({ map: m.id, x, y, o: { k: o.k, v: o.v }, at: worldMin() + 5 * 1440 });
 }
 const _objInteractWild = objInteract;
 objInteract = function (m, x, y, o) {

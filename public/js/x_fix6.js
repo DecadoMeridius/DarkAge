@@ -93,11 +93,12 @@ act = (f => function () {
 /* ---- the building hammer moves and removes wells too (a finished well is an object, not a building) ---- */
 findInteract = (f => function () {
   if (S && cur && cur.farm && typeof hammerIn === 'function' && hammerIn() && !PLACING) {
-    const [tx, ty] = faceTile(), [ax, ay, o] = mainOf(cur, tx, ty);
-    if (o && o.k === 'fwell') {
-      const s = (S.structures || []).find(s => s.k === 'well' && s.stage >= 4 && ax >= s.x && ax < s.x + BP.well.w && ay === s.y + BP.well.h - 1);
-      if (s) return { label: 'Move or remove', fn: () => hammerMenu({ x: s.x, y: s.y, w: BP.well.w, h: BP.well.h, struct: s }) };
-    }
+    // any tile of the well's footprint counts, so E works facing its top half too (round 2: only LMB found it)
+    const px = Math.floor(S.p.x / 16), py = Math.floor((S.p.y - 2) / 16), [tx, ty] = faceTile(), W = BP.well;
+    const inS = (s, x, y) => x >= s.x && x < s.x + W.w && y >= s.y && y < s.y + W.h;
+    const wells = (S.structures || []).filter(s => s.k === 'well' && s.stage >= 4);
+    const s = wells.find(s => inS(s, tx, ty)) || wells.find(s => [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => inS(s, px + dx, py + dy) && ((S.p.dir === 0 && dy > 0) || (S.p.dir === 3 && dy < 0) || (S.p.dir === 2 && dx > 0) || (S.p.dir === 1 && dx < 0))));
+    if (s) return { label: 'Move or remove', fn: () => hammerMenu({ x: s.x, y: s.y, w: W.w, h: W.h, struct: s }) };
   }
   return f();
 })(findInteract);
@@ -543,17 +544,34 @@ function dragPlaceOne(x, y, dirI) {
   if (!m.farm) { toast('Place that on your farm.'); return false; }
   const why = !inb(m, x, y) ? 'off the map' : getO(m, x, y) ? (OBJ_NAME(getO(m, x, y)) + ' is there') : m.solidB[y * m.w + x] ? 'a building is there' : TER[getT(m, x, y)].solid ? 'the ground is rock' : TER[getT(m, x, y)].water ? 'that\'s water' : (m.soil[y * m.w + x] && m.soil[y * m.w + x].crop) ? 'a crop grows there' : null;
   if (why) return 'skip';
+  if (dragUnsafe(m, x, y)) return 'unsafe';
   if (k === 'fence') { delete m.soil[y * m.w + x]; putObj(m, x, y, { k: 'fence' }); if (typeof fenceMasks === 'function') fenceMasks(m); }
   else if (k === 'channel') { setO(m, x, y, { k: 'channel', v: dirI === 0 || dirI === 3 ? 1 : 0 }); waterChannels(m); }
   else setO(m, x, y, { k, d: dirI });
+  if (k === 'fence' && dragTraps(m, x, y)) { delObj(m, x, y); if (typeof fenceMasks === 'function') fenceMasks(m); return 'unsafe'; }
   take(id); return true;
+}
+/* round 2: a drawn line never goes under you or across a way off the map (2 tiles round each exit stay open), and a fence that
+   would cut you off from every exit is taken back up */
+function dragUnsafe(m, x, y) {
+  const px = S.p.x, py = S.p.y;
+  if (px + 6 > x * 16 && px - 6 < x * 16 + 16 && py + 2 > y * 16 && py - 6 < y * 16 + 16) return true;
+  return (m.warps || []).some(w => x >= w.x - 2 && x < w.x + w.w + 2 && y >= w.y - 2 && y < w.y + w.h + 2);
+}
+function dragTraps(m, x, y) {
+  const ws = m.warps || []; if (!ws.length) return false;
+  const sx = Math.floor(S.p.x / 16), sy = Math.floor((S.p.y - 2) / 16);
+  const out = () => ws.some(w => findPath(m, sx, sy, w.x + (w.w >> 1), w.y + (w.h >> 1), 8000));
+  if (out()) return false;
+  const o = getO(m, x, y); delObj(m, x, y); const before = out(); putObj(m, x, y, o);
+  return before;
 }
 const OBJ_NAME = o => { const n = (IT[o.k] && IT[o.k].n) || (o.k === 'tgrass' ? 'tall grass' : o.k); return n.charAt(0).toUpperCase() + n.slice(1); };
 primaryUse = (f => function () {
   if (!PAUSED && !TITLE && !fishing && S && cur && MOUSE.down && dragKind(selKind())) {
     if (DRAGP) return;   // held: the drag handles it
     const [x, y] = clickTarget(); DRAGP = { x, y, n: 0 };
-    const r = dragPlaceOne(x, y, S.p.dir | 0); if (r === true) { DRAGP.n++; SFX.ok(); } else if (r === 'skip') toast(dragBlockWhy(x, y));
+    const r = dragPlaceOne(x, y, S.p.dir | 0); if (r === true) { DRAGP.n++; SFX.ok(); } else if (r === 'skip') toast(dragBlockWhy(x, y)); else if (r === 'unsafe') toast('Not there: keep your own spot and the ways off the map clear.');
     return;
   }
   return f.apply(this, arguments);
@@ -561,6 +579,7 @@ primaryUse = (f => function () {
 function dragBlockWhy(x, y) { const m = cur, o = inb(m, x, y) && getO(m, x, y); return 'Can\'t place there: ' + (o ? OBJ_NAME(o) + ' is in the way.' : m.solidB[y * m.w + x] ? 'a building is in the way.' : TER[getT(m, x, y)].water ? 'that\'s water.' : TER[getT(m, x, y)].solid ? 'the ground is rock.' : 'a crop grows there.'); }
 addEventListener('mousemove', () => {
   if (!DRAGP || !MOUSE.down || !cur) return;
+  if (MODAL || DIALOG || PAUSED || PLACING) { DRAGP = null; return; }   // a window opened mid-drag: stop laying pieces under it
   const [wx, wy] = mouseWorld(), tx = Math.floor(wx / 16), ty = Math.floor(wy / 16);
   let { x, y } = DRAGP;
   while ((x !== tx || y !== ty) && has(selKind())) {
@@ -591,6 +610,21 @@ renderCraft = (f => function (b) {
   if (chips) chips.insertBefore(btn, chips.children[1] || null); else b.prepend(btn);
   if (can && !shown) b.append(el('p', { class: 'note' }, 'You don\'t have the materials for anything here yet. Click "Can make" to see every recipe.'));
 })(renderCraft);
+
+/* ---- a stack you drop stays on the ground until you've walked away from it (round 2: it flew straight back into the bag) ---- */
+updateDrops = (f => function (m, dt) {
+  for (const d of m.ents) if (d.type === 'drop' && d.manual) {
+    if (dist(d.x, d.y, S.p.x, S.p.y - 4) > 48) d.manual = 0; else d.t = Math.min(d.t, 0);
+  }
+  return f.apply(this, arguments);
+})(updateDrops);
+
+/* ---- a blueprint on the hotbar places on left click, like the bag's Place button (round 2: the hint said Use, nothing happened) ---- */
+primaryUse = (f => function () {
+  const id = S && !PLACING && !TITLE && selKind();
+  if (id && IT[id] && IT[id].t === 'blueprint' && has(id)) { useItem(id); return; }
+  return f.apply(this, arguments);
+})(primaryUse);
 
 /* ---- the shipping bin lists what's in it and gives things back (asked 2026-11-03) ---- */
 openBin = function () {
@@ -797,7 +831,7 @@ function repriceCrafts() {
   const catMembers = k => Object.keys(IT).filter(i => CATF[k] && CATF[k](i));
   const worth = k => k[0] === '$' ? Math.min(...catMembers(k).map(i => IT[i].p || 0).concat([1e9])) % 1e9 : (IT[k] ? IT[k].p || 0 : 0);
   // shops that sell at their own fixed price (Mara's Pantry, Hale's materials, Brann's ore, Odile's feed): the cheapest you can buy it for
-  const SHOP_PRICE = { salt: 10, sugar: 45, butter: 90, flour: 70, wood: 10, stone: 10, hardwood: 60, clay: 40, fiber: 8, hay: 25, iron_ore: 75, silver_ore: 120, gold_ore: 180, mythril_ore: 400, golden_oats: 1500 };
+  const SHOP_PRICE = { salt: 10, sugar: 45, butter: 90, flour: 70, wood: 6, stone: 6, hardwood: 32, clay: 30, fiber: 5, hay: 25, coal: 24, copper_ore: 10, iron_ore: 25, silver_ore: 45, gold_ore: 60, mythril_ore: 130, golden_oats: 1500 };
   const buyCost = k => { if (k[0] === '$') return Math.min(...catMembers(k).filter(i => BUY.has(i)).map(i => Math.min(IT[i].p || 0, SHOP_PRICE[i] || 1e9)).concat([1e9])) % 1e9; return Math.min(worth(k), SHOP_PRICE[k] || 1e9); };
   const memoB = {}, memoD = {};
   const buyable = (k, seen = new Set()) => {
@@ -824,3 +858,22 @@ function repriceCrafts() {
   for (const k in SHOP_PRICE) if (IT[k] && IT[k].p * (HALF_SELL.has(IT[k].t) ? .5 : 1) > SHOP_PRICE[k] * .85) IT[k].p = Math.max(1, Math.round(SHOP_PRICE[k] * .85 / (HALF_SELL.has(IT[k].t) ? .5 : 1)));
 }
 document.addEventListener('DOMContentLoaded', () => { try { repriceCrafts(); } catch (e) { console.error(e); } });
+
+/* ---- round 2 economy: artisan goods stay in line with their input (hops to pale ale paid x14, wheat to ale x8, yeti fur to
+   frostweave x7.5; smoked tuna sold below raw tuna), and town delivery jobs pay more than the goods would sell for ---- */
+function rebalanceRound2() {
+  const cap = { pale_ale: 'hops', ale: 'wheat', frost_cloth: 'yeti_fur' };
+  for (const k in cap) if (IT[k] && IT[cap[k]]) IT[k].p = Math.min(IT[k].p, Math.round(IT[cap[k]].p * 4.5));
+  for (const k in IT) if (k.startsWith('smoked_') && IT[k.slice(7)]) IT[k].p = Math.max(IT[k].p, Math.round(IT[k.slice(7)].p * 1.6));
+  if (typeof TOWN_JOBS !== 'undefined') for (const j of TOWN_JOBS) if (j.t === 'bring' && j.items) {
+    const worth = Object.entries(j.items).reduce((t, [k, n]) => t + ((IT[k] && IT[k].p) || 0) * n, 0);
+    j.gold = Math.max(j.gold || 0, Math.ceil(worth * 1.35 / 50) * 50);
+  }
+}
+document.addEventListener('DOMContentLoaded', () => { try { rebalanceRound2(); } catch (e) { console.error(e); } });
+
+/* ---- arriving on a map never leaves you inside a tree or a rock (round 2: the Wilds entry put you in a trunk) ---- */
+EVT.on('map', () => {
+  if (!S || !cur || !S.p || S.flying || boxFree(cur, S.p.x, S.p.y, 5)) return;
+  if (!freeSpot(cur, S.p, 5)) { const t = openTileNear(cur, Math.floor(S.p.x / 16), Math.floor(S.p.y / 16)); if (t) { S.p.x = (t[0] + .5) * 16; S.p.y = (t[1] + .8) * 16; } }
+});

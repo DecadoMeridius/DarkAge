@@ -32,7 +32,7 @@ killEnemy = (f => function (m, e) {
   const b = m && m.bio ? BIOMES[m.bio[Math.floor(e.y / 16) * m.w + Math.floor(e.x / 16)]] : null;
   for (const sid in STORIES) { const st = stepOf(sid); if (!st || st.t !== 'kill' || !st.enemy || st.enemy[0] !== '*') continue;
     const q = S.story.q[sid];
-    if (st.enemy === '*assist' && e.allyHit && gameT - e.allyHit < 12) q.kills = (q.kills || 0) + 1;
+    if (st.enemy === '*assist' && ((e.allyHit && gameT - e.allyHit < 12) || (typeof ALLIES !== 'undefined' && ALLIES.some(al => !al.down && !al.gone && dist(al.x, al.y, e.x, e.y) < 120)))) q.kills = (q.kills || 0) + 1;
     if (st.enemy.startsWith('*bio:') && m.id === 'wilds' && b === st.enemy.slice(5)) q.kills = (q.kills || 0) + 1; }
 })(killEnemy);
 

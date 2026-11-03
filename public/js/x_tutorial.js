@@ -39,7 +39,8 @@ STORIES.welcome = {
         lines: AL("Ha. She'd be pleased. She built half this valley's fences with her own hands, and quarrelled over the other half.",
           "That's my morning spent. I'll ride on ahead to the village: meet me at the fountain. The road east, past the signpost. Mara keeps the store there; she'll sell you more seeds.",
           "And mind the time. Be in your tent by two in the morning, or you'll wake up somewhere you'd rather not.") },
-      { t: 'go', at: 'village:plaza', r: 8, hint: 'Follow the road east to Emberhollow village.',
+      // reached the village at all, or went straight into Mara's (round 2: only the plaza counted, so the shop visit didn't)
+      { t: 'cond', test: () => cur && (cur.id === 'village' || cur.id === 'in_store'), at: 'village:plaza', hint: 'Follow the road east to Emberhollow village.',
         lines: [['narr', 'Emberhollow: a fountain, a few shopfronts, smoke from the tavern chimney, and people who all turn to look at the new farmer.'],
           ['ashcombe', "Here we part. The manor's on the hill, if you ever want more land. Good luck, farmer. You'll need less of it than you think."]] },
       { t: 'talk', who: 'mara', hint: 'Say hello to Mara at the general store.',
@@ -103,8 +104,8 @@ EVT.on('tick', () => {
   if (S.flags.tutWalk === 2 && q && (q.done || q.i >= 7)) { S.flags.tutWalk = 3; if (TUT.n) TUT.path = null; }
   if ((S.day > 1 || S.season > 0 || S.year > 1) && S.flags.tutWalk) { S.flags.tutWalk = 0; if (MAPS.farm && MAPS.farm.npcs) MAPS.farm.npcs = MAPS.farm.npcs.filter(n => n.id !== 'tut_ashcombe'); TUT.n = null; }
 });
-// back on the farm after a reload or a trip: put him back where he was standing
-EVT.on('map', id => { if (id === 'farm' && S && S.flags && (S.flags.tutWalk === 1 || S.flags.tutWalk === 2) && !TUT.n) { tutSpawn(); if (S.flags.tutWalk === 2) { TUT.n.x = S.p.x + 24; TUT.n.y = S.p.y; } } });
+// back on the farm after a reload or a trip: put him back where he was standing (reloaded before you answered him: he asks again)
+EVT.on('map', id => { if (id === 'farm' && S && S.flags && S.flags.tutWalk === 2 && !S.flags.tutorial && !S.flags.tutSkip) S.flags.tutWalk = 1; if (id === 'farm' && S && S.flags && (S.flags.tutWalk === 1 || S.flags.tutWalk === 2) && !TUT.n) { tutSpawn(); if (S.flags.tutWalk === 2) { TUT.n.x = S.p.x + 24; TUT.n.y = S.p.y; } } });
 // talking to him: the task in hand
 doorAction = (f => function (act, who) {
   if (act !== 'k_tut') return f(act, who);

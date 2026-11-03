@@ -84,7 +84,7 @@ There is no light map. `pixGrade` in `h_pixel.js` multiplies the frame by one fl
 - **Plots:** West, South and South-west of the farm (`PLOTS`). `plotInfo(k)` derives everything from the world seed + grid position: type (meadow, woodland, rocky, lakeside, hillside, marsh; the West plot is always lakeside), soil quality (multiplies crop growth), resources, price and 0-2 features (ruin with a loot chest, hot spring that restores energy, fairy ring, ancient tree), some hidden until surveyed. Each plot is its own farm map `plot_<dir>` (in `PERSIST`, saved like the farm). Owning one opens a gap in the farm's tree line with a warp; plot-to-plot exits only open into land you own.
 - **Landowner:** Lord Ashcombe's manor in the village (`addB(..., 'manor', 'landowner')`). Deeds show a mini-map, soil, resources, known features and price. Buy outright, lease (25% down, 6% a week; missing a payment closes the plot again), survey (4%), or buy out a lease. Ownership is `S.land`.
 - **Shops:** every `buyRow` list has stock per shop (`S.stock`, refilled each morning) and a weekly price drift (±10%). Selling lowers that item's price ~0.6% per unit (to at most −50%), recovering 15% a day (`S.demand`, `S.shipSnap`, `econDaily` after `endDay`).
-- **Market stall:** a blueprint from Hale (60 wood, 2 cloth). Interact to put goods on display; from 8:00 to 18:00 it sells a few items per hour at 130% of the going price, twice as many at weekends (`S.stall`).
+- **Market stall:** a blueprint from Hale (60 wood, 2 cloth). Interact to put goods on display; from 8:00 to 18:00 it sells about three lots an hour at 112% of the going price, twice as many at weekends (`S.stall`; it was 130%, which resold shop goods at a profit).
 - Tested: buy the lakeside plot → walk west through the opened fence line → fish a carp in its pond.
 
 ## Village life (`public/js/r_life.js`, design doc Phase 6)
@@ -835,3 +835,26 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
     - Helmet icons are cropped to the helmet, in profile (`hb_helm_<tk>_2`), and fill the slot.
     - New `ic_bowl`, `ic_roast`, `ic_cake`, `ic_fish_long`, `ic_fish_flat`, `ic_fish_round` in icons_hand.py, given to dishes, meat and fish by name (x_fix6.js).
   - **Cliffs:** painted cliff rims wander in width (`cliffTop`), with no ruled lines.
+
+## Round 2 fixes (findings in `docs/playtest/round2/SUMMARY.md`)
+- **Story:** Empty Throne chapter 4 (`*assist`) counts a kill with a knight within 120 px, like the barracks job (`x_story2.js`); it needed a knight's hit in the last 12 s.
+- **Tutorial:** a reload before you answer Ashcombe's welcome sets `tutWalk` back to 1, so he asks again. The village step is a `cond` that's met anywhere in the village or in Mara's store.
+- **Drag to place:** never on your own tile or within 2 tiles of a map exit (`dragUnsafe`), a fence that would cut you off from every exit is taken back up (`dragTraps`), and a window, dialogue or building ghost ends the drag.
+- **Economy:**
+  - Wild flowers keep their forage item 25% of the time (up to 60% with Foraging), else 1 fibre; morels are 15% of mushrooms; both come back after 5 days (`pickWild`).
+  - The greenhouse repair costs 4,000g, 150 wood, 100 stone and 5 iron bars.
+  - Greyhelm's supply no longer sells the Staircase or Warp Totem (price 0).
+  - Town shops sell at 1.45x (1.3x at 50+ standing), above any buy-back bonus even in a cheap week; inn take-away is 1.35x.
+  - Selling a stack at once lowers the price per unit like single sales (`bulkPay` in q_land.js; Mara, town shops, the bin).
+  - The inn's hot meal (health and half your energy) and the two-hour rest are once a day each (`S.flags.hotDay`, `restDay`).
+  - Hale's materials are about town prices (wood and stone 6, hardwood 32, clay 30, fibre 5); Brann's coal 24, copper ore 10, iron 25, silver 45, gold 60, mythril 130.
+  - `rebalanceRound2` (x_fix6.js, on DOMContentLoaded): pale ale, ale and frostweave are at most 4.5x their input, smoked fish at least 1.6x the raw fish, and town delivery jobs pay at least 1.35x the goods' worth.
+- **Systems:**
+  - A blueprint on the hotbar places on left click.
+  - The hammer finds a well from any tile of its footprint, so E works.
+  - Removing an unfinished site gives its blueprint back (`demolish`).
+  - A dropped stack stays on the ground until you've walked 3 tiles away (`d.manual`).
+  - Placement refusals name objects in words (`objLabel` in x_fix5.js: "tall grass", not "tgrass").
+  - Arriving on a map inside a tree or rock moves you to open ground.
+  - Hammering a build site costs 0.3 energy a stroke and stops when you're spent.
+

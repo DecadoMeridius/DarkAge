@@ -125,7 +125,7 @@ function packMenu(e, i) {
   opts.push(['Examine', () => toast(((q ? QNAME[q] + ' ' : '') + it.n) + ': ' + itemDesc(id))]);
   ctxMenu(e.clientX, e.clientY, it.n, opts);
 }
-function dropSlot(i, n) { const s = S.pack[i]; if (!s) return; const [id, q] = parseK(s.k); n = Math.min(n, s.n); s.n -= n; if (s.n <= 0) S.pack[i] = null; touched(); for (let k = 0; k < (stacks(id) ? 1 : n); k++) { dropItem(cur, S.p.x, S.p.y, id, stacks(id) ? n : 1); const d = cur.ents[cur.ents.length - 1]; d.q = q; d.t = -2; } SFX.pop(); refresh(); }
+function dropSlot(i, n) { const s = S.pack[i]; if (!s) return; const [id, q] = parseK(s.k); n = Math.min(n, s.n); s.n -= n; if (s.n <= 0) S.pack[i] = null; touched(); for (let k = 0; k < (stacks(id) ? 1 : n); k++) { dropItem(cur, S.p.x, S.p.y, id, stacks(id) ? n : 1); const d = cur.ents[cur.ents.length - 1]; d.q = q; d.t = -2; d.manual = 1; } SFX.pop(); refresh(); }
 function ctxMenu(x, y, title, opts) {
   let m = $('#ctxmenu'); if (!m) { m = el('div', { id: 'ctxmenu' }); document.body.append(m); addEventListener('mousedown', ev => { if (!m.contains(ev.target)) m.hidden = true; }); }
   m.innerHTML = ''; m.append(el('div', { class: 'ctxhead' }, title));

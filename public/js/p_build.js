@@ -152,6 +152,9 @@ function openSite(b) {
 function hammerTick() {
   if (!HAMMER) return; const b = HAMMER.b, s = b.struct, B = BP[s.k];
   if (Math.hypot(S.p.x - HAMMER.at[0], S.p.y - HAMMER.at[1]) > 3 || cur.id !== 'farm') { HAMMER = null; toast('You stop building.'); return; }
+  // hammering is work like any other: a little energy each stroke, and it stops when you're spent (round 2: it ran at 0)
+  if (S.p.st < .3) { HAMMER = null; toast('Too tired to keep building. Eat or sleep.', 'bad'); return; }
+  useStamina(.3);
   pl.anim = .25; pl.tool = 'pick'; snd(220 + Math.random() * 60, .05, 'square', .03); noiseBurst(.04, .03, 700);
   for (let i = 0; i < 3; i++) PARTS.push({ x: (b.x + Math.random() * b.w) * 16, y: (b.y + b.h - .5) * 16, vx: (Math.random() - .5) * 50, vy: -Math.random() * 60, t: .4, c: '#c89058' });
   s.work += 1 + lifeL('construction') * .02; addXP('construction', 1.5);

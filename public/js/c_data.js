@@ -363,7 +363,7 @@ const BUILD = {
   barn: { n: 'Barn', lv: [[0, {}, 4], [6000, { wood: 300, stone: 150 }, 8], [12000, { wood: 400, hardwood: 60, iron_bar: 6 }, 14], [25000, { hardwood: 120, gold_bar: 6, cloth: 3 }, 20]], what: 'cows, goats, sheep, pigs' },
   stable: { n: 'Stable', lv: [[0, {}, 3], [8000, { wood: 300, hardwood: 30 }, 6], [18000, { hardwood: 80, iron_bar: 8, cloth: 2 }, 10]], what: 'horses' },
   silo: { n: 'Silo', lv: [[0, {}, 0], [1500, { stone: 100, clay: 10, copper_bar: 5 }, 240]], what: 'hay from cut grass' },
-  greenhouse: { n: 'Greenhouse', lv: [[0, {}, 0], [15000, { wood: 300, hardwood: 50, iron_bar: 10, aquamarine: 3 }, 1]], what: 'crops in any season' },
+  greenhouse: { n: 'Greenhouse', lv: [[4000, { wood: 150, stone: 100, iron_bar: 5 }, 0], [15000, { wood: 300, hardwood: 50, iron_bar: 10, aquamarine: 3 }, 1]], what: 'crops in any season' },
 };
 const RUMORS = ['The deeper the mine, the richer the ore. Gold shows up past floor nine.', 'Beehives make honey every few days, except in winter.', 'Gold sprinklers water a 5×5 square every morning.', 'Wolves prowl the Wilds after dark.',
   'Every fifth mine floor, the elevator remembers you.', 'Rain waters every crop on your farm.', 'Cut tall grass with your scythe: it gives fibre and hay. Store the hay in a silo for winter.', 'Wiggling worms in the soil mean something is buried there.',

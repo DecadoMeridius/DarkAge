@@ -452,6 +452,8 @@ renderCraft = (f => function (b) {
 
 /* placement: every tile of the ghost is green or red on its own, and a refusal says why */
 let PLACE_WHY = null;
+// object kinds that aren't items read as words, never as their key (round 2: "clear the tgrass first")
+const objLabel = k => (IT[k] && IT[k].n) || ({ tgrass: 'tall grass', weed: 'weeds', grass: 'grass', twig: 'twig', stone_small: 'stone', stump: 'stump', bush: 'bush' }[k]) || k.replace(/_/g, ' ');
 function tileWhy(m, i, j, B, x, y) {
   if (i < 1 || j < 1 || i >= m.w - 1 || j >= m.h - 2) return 'Too close to the edge of the farm.';
   const idx = j * m.w + i, t = m.t[idx], o = m.o[idx];
@@ -459,7 +461,7 @@ function tileWhy(m, i, j, B, x, y) {
   if (TER[t].solid) return 'Not on rock or cliffs.';
   if (m.soil[idx]) return 'Not on tilled soil.';
   if (m.solidB[idx]) return 'Another building is in the way.';
-  if (o && !(j === y + B.h && !(OBJ[o.k] || {}).solid)) return j === y + B.h ? 'Keep the row in front of the door clear (a ' + (((IT[o.k] || {}).n) || o.k).toLowerCase() + ' is there).' : 'Clear the ' + (((IT[o.k] || {}).n) || o.k).toLowerCase() + ' first.';
+  if (o && !(j === y + B.h && !(OBJ[o.k] || {}).solid)) return j === y + B.h ? 'Keep the row in front of the door clear (' + objLabel(o.k).toLowerCase() + ' is there).' : 'Clear the ' + objLabel(o.k).toLowerCase() + ' first.';
   if (m === cur) { const x0 = S.p.x - 6, x1 = S.p.x + 6, y0 = S.p.y - 6, y1 = S.p.y + 2; if (x1 > i * 16 && x0 < (i + 1) * 16 && y1 > j * 16 && y0 < (j + 1) * 16) return 'Step out of the way first.'; }
   return null;
 }

@@ -177,6 +177,8 @@ function demolish(s) {
   if (s.stage >= 4 && B.build && !S.structures.some(x => x.k === s.k && x.stage >= 4)) S.build[B.build] = 0;
   if (s.k === 'silo' && typeof siloSync === 'function') siloSync();
   for (const [i, n] of Object.entries(back)) if (n > 0) give(i, n, 0, true);
+  // an unfinished site gives its blueprint back too: placing it used the blueprint up (round 2)
+  const bpi = s.stage < 4 && Object.keys(IT).find(i => IT[i].t === 'blueprint' && IT[i].bp === s.k); if (bpi) { give(bpi, 1, 0, true); back[bpi] = 1; }
   CHUNK.clear(); SFX.chop(); toast(B.n + ' demolished.' + (Object.values(back).some(n => n > 0) ? ' Materials returned: ' + Object.entries(back).filter(([, n]) => n > 0).map(([i, n]) => n + ' ' + IT[i].n).join(', ') + '.' : ''), 'lvl');
 }
 const _renderBuildD = renderBuild;

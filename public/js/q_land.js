@@ -12,7 +12,7 @@
    week to week. Selling lowers that item's price (about 0.6% per item sold, down to
    half), recovering 15% a day.
    MARKET STALL: a blueprint from Hale. Stock it with goods; between 8:00 and 18:00 it
-   sells to passers-by for 30% over the going price, twice as fast on weekends. */
+   sells to passers-by for 12% over the going price, three an hour (six at weekends). */
 
 const PLOTS = { W: { dx: -1, dy: 0, n: 'West plot' }, S: { dx: 0, dy: 1, n: 'South plot' }, SW: { dx: -1, dy: 1, n: 'South-west plot' } };
 const PLOT_TYPES = ['meadow', 'woodland', 'rocky', 'lakeside', 'hillside', 'marsh'];
@@ -145,6 +145,12 @@ EVT.on('tick', () => { if (!S || PAUSED || !cur || !cur.spring) return; const [s
 /* ---- crops on plots grow too, scaled by soil quality (patched into endDay's loop via ownedPlots) ---- */
 
 /* ---- economy: stock, restock, drifting and demand-driven prices ---- */
+// selling a stack at once: each unit drops the price like single sales do (round 2: "All" sold 300 at the first price)
+function bulkPay(id, each, n) {
+  const d0 = (S && S.stats) ? demandOf(id) : 0; let t = 0;
+  for (let i = 0; i < n; i++) t += each * (1 - Math.min(.5, d0 + i * .006)) / (1 - d0);
+  return Math.round(t);
+}
 const demandOf = id => { const D = S.demand || {}, shipped = (S.stats.shipped || {})[id] || 0, snap = (S.shipSnap || {})[id] || 0; return clamp((D[id] || 0) + (shipped - snap) * .006, 0, .5); };
 const _sellPriceL = sellPrice;
 sellPrice = function (id) { const p = _sellPriceL(id); return p ? Math.max(1, Math.round(p * (1 - demandOf(id)))) : p; };
@@ -175,7 +181,7 @@ const _endDayL = endDay;
 endDay = function (f) { _endDayL(f); try { econDaily(); } catch (e) { console.error(e); } };
 
 /* ---- market stall ---- */
-BP.stall = { n: 'Market Stall', kind: 'stall', act: 'stall', w: 3, h: 2, gold: 1200, cost: { wood: 60, cloth: 2 }, work: 25, desc: 'Stock it with goods; passers-by pay 30% over the going price, more on weekends.' };
+BP.stall = { n: 'Market Stall', kind: 'stall', act: 'stall', w: 3, h: 2, gold: 1200, cost: { wood: 60, cloth: 2 }, work: 25, desc: 'Stock it with goods; passers-by pay 12% over the going price, while you work elsewhere.' };
 const _buildingSprL = buildingSpr;
 buildingSpr = function (w, h, kind) { if (kind === 'stall') { const c = PIX.get('bld_stall_3x2'); if (c) return c; } return _buildingSprL(w, h, kind); };
 const _doorActionL2 = doorAction;
@@ -183,9 +189,9 @@ doorAction = function (act, who) { if (act === 'stall') return openStall(); retu
 function openStall() {
   S.stall = S.stall || { goods: {}, earned: 0 };
   openModal('Market Stall', [{ id: 's', label: 'Stall', render: b => {
-    b.append(el('p', { class: 'note' }, 'Open 8:00 to 18:00. Goods sell for 30% over the going price, twice as fast on Saturdays and Sundays. Earned so far: ' + S.stall.earned.toLocaleString() + 'g.'));
+    b.append(el('p', { class: 'note' }, 'Open 8:00 to 18:00. Goods sell for 12% over the going price, about three lots an hour, twice as fast on Saturdays and Sundays. Earned so far: ' + S.stall.earned.toLocaleString() + 'g.'));
     const on = el('div', { class: 'list' });
-    for (const k in S.stall.goods) { const [id, q] = parseK(k); on.append(el('div', { class: 'rrow' }, icon(id, 32, q), el('div', { class: 'rtxt' }, el('b', null, IT[id].n + ' ×' + S.stall.goods[k]), el('small', null, Math.round(valK(k) * 1.3) + 'g each')), el('button', { class: 'btn ghost', on: () => { GIVE_NO_DROP = true; const left = give(id, S.stall.goods[k], q, true); GIVE_NO_DROP = false; if (left) S.stall.goods[k] = left; else delete S.stall.goods[k]; refresh(); } }, 'Take back'))); }
+    for (const k in S.stall.goods) { const [id, q] = parseK(k); on.append(el('div', { class: 'rrow' }, icon(id, 32, q), el('div', { class: 'rtxt' }, el('b', null, IT[id].n + ' ×' + S.stall.goods[k]), el('small', null, Math.round(valK(k) * 1.12) + 'g each')), el('button', { class: 'btn ghost', on: () => { GIVE_NO_DROP = true; const left = give(id, S.stall.goods[k], q, true); GIVE_NO_DROP = false; if (left) S.stall.goods[k] = left; else delete S.stall.goods[k]; refresh(); } }, 'Take back'))); }
     b.append(el('h3', null, 'On display'), on.children.length ? on : el('p', { class: 'note' }, 'Nothing on display.'));
     const ks = sortedInv().filter(k => valK(k) > 0 && !IT[parseK(k)[0]].slot), add = el('div', { class: 'grid' });
     for (const k of ks) { const [id, q] = parseK(k); add.append(el('button', { class: 'cell f-slot', title: IT[id].n, on: () => { const n = S.inv[k]; takeK(k, n); S.stall.goods[k] = (S.stall.goods[k] || 0) + n; refresh(); } }, icon(id, 32, q), el('b', null, S.inv[k]))); }
@@ -198,7 +204,7 @@ EVT.on('tick', () => {
   const hr = Math.floor(S.time / 60); if (hr === stallHour) return; stallHour = hr;
   if (hr < 8 || hr >= 18) return;
   const keys = Object.keys(S.stall.goods); if (!keys.length) return;
-  const weekend = (dayIndex() - 1) % 7 >= 5, sales = (weekend ? 4 : 2); let earned = 0, sold = [];
-  for (let i = 0; i < sales; i++) { const ks = Object.keys(S.stall.goods); if (!ks.length) break; const k = pickR(ks), [id] = parseK(k); const n = Math.min(S.stall.goods[k], 1 + Math.floor(Math.random() * 3)); S.stall.goods[k] -= n; if (S.stall.goods[k] <= 0) delete S.stall.goods[k]; const p = Math.round(valK(k) * 1.3) * n; earned += p; S.stats.shipped[id] = (S.stats.shipped[id] || 0) + n; sold.push(n + ' ' + IT[id].n.toLowerCase()); }
+  const weekend = (dayIndex() - 1) % 7 >= 5, sales = (weekend ? 6 : 3); let earned = 0, sold = [];
+  for (let i = 0; i < sales; i++) { const ks = Object.keys(S.stall.goods); if (!ks.length) break; const k = pickR(ks), [id] = parseK(k); const n = Math.min(S.stall.goods[k], 1 + Math.floor(Math.random() * 3)); S.stall.goods[k] -= n; if (S.stall.goods[k] <= 0) delete S.stall.goods[k]; const p = Math.round(valK(k) * 1.12) * n; earned += p; S.stats.shipped[id] = (S.stats.shipped[id] || 0) + n; sold.push(n + ' ' + IT[id].n.toLowerCase()); }
   if (earned) { S.gold += earned; S.stall.earned += earned; toast('Your stall sold ' + sold.join(', ') + ' for ' + earned + 'g.'); SFX.coin(); }
 });

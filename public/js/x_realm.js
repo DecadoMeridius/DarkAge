@@ -194,7 +194,7 @@ const SHOP_STOCK = {
   af_saw: () => listOf(['wood', 'hardwood', 'fence', 'workbench', 'stone_path', 'gravel_path']),
   sm_fish: () => listOf(['sardine', 'anchovy', 'tuna', 'clam', 'kelp', 'crab_trap', 'harpoon']),
   sm_chandler: () => listOf(['salt', 'fiber', 'lantern', 'canoe', 'crab_trap', 'kelp']),
-  gh_supply: () => listOf(['coal', 'copper_ore', 'iron_ore', 'silver_ore', 'staircase', 'warp_totem', 'lantern', 'stone']),
+  gh_supply: () => listOf(['coal', 'copper_ore', 'iron_ore', 'silver_ore', 'lantern', 'stone']),
   gh_forge: () => listOf(['iron_bar', 'steel_bar', 'cobalt_bar', 'iron_hammer', 'steel_hammer', 'steel_dagger', 'iron_body', 'steel_body']),
 };
 const SELL_TO = { kb_market: id => ['crop', 'fruit', 'artisan', 'animal', 'food'].includes(IT[id].t), kb_stall: id => ['fruit', 'artisan'].includes(IT[id].t), kb_smith: id => ['bar', 'ore', 'weapon', 'armor'].includes(IT[id].t),
@@ -206,14 +206,14 @@ function sellTab(act) {
     b.append(el('p', { class: 'note' }, BONUS[act] ? 'Pays ' + Math.round((BONUS[act] - 1) * 100) + '% over the usual price for what they deal in.' : 'Buys what it deals in.'));
     const ks = sortedInv().filter(k => valK(k) > 0 && SELL_TO[act](parseK(k)[0])), list = el('div', { class: 'list' });
     if (!ks.length) b.append(el('p', { class: 'note' }, 'Nothing to sell here.'));
-    for (const k of ks) { const [id, q] = parseK(k), each = Math.round(valK(k) * (BONUS[act] || 1)), sell = n => { n = Math.min(n, S.inv[k] || 0); if (!n) return; takeK(k, n); S.gold += each * n; S.stats.shipped[id] = (S.stats.shipped[id] || 0) + n; SFX.coin(); refresh(); };
+    for (const k of ks) { const [id, q] = parseK(k), each = Math.round(valK(k) * (BONUS[act] || 1)), sell = n => { n = Math.min(n, S.inv[k] || 0); if (!n) return; takeK(k, n); S.gold += bulkPay(id, each, n); S.stats.shipped[id] = (S.stats.shipped[id] || 0) + n; SFX.coin(); refresh(); };
       list.append(el('div', { class: 'rrow' }, icon(id, 32, q), el('div', { class: 'rtxt' }, el('b', null, (q ? QNAME[q] + ' ' : '') + IT[id].n + ' ×' + S.inv[k]), el('small', null, each + 'g each')),
         el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => sell(1) }, 'Sell 1'), el('button', { class: 'btn', on: () => sell(S.inv[k]) }, 'All')))); }
     b.append(list);
   } };
 }
 function buyTab(act, note) {
-  return { id: 'buy', label: 'Buy', render: b => { const k = keeperOf(act); if (k) greet(b, k); if (note) b.append(el('p', { class: 'note' }, note)); const L = el('div', { class: 'list' }); for (const id of SHOP_STOCK[act]()) L.append(buyRow(id, price(id, rep(TOWN_ACTS[act] ? TOWN_ACTS[act].town : 'kingsbridge') >= 50 ? 1.15 : 1.3))); b.append(L); } };
+  return { id: 'buy', label: 'Buy', render: b => { const k = keeperOf(act); if (k) greet(b, k); if (note) b.append(el('p', { class: 'note' }, note)); const L = el('div', { class: 'list' }); for (const id of SHOP_STOCK[act]()) L.append(buyRow(id, price(id, rep(TOWN_ACTS[act] ? TOWN_ACTS[act].town : 'kingsbridge') >= 50 ? 1.3 : 1.45))); b.append(L); } };
 }
 const rep = t => (S.realm && S.realm.rep[t]) || 0;
 function addRep(t, n) { S.realm.rep[t] = Math.min(100, rep(t) + n); for (const id in TOWN_NPCS) if (TOWN_NPCS[id].town === t) addFriend(id, n * 2); }
@@ -230,15 +230,15 @@ function townMenu(act, who) {
     G(b); b.append(el('p', { class: 'note' }, 'Rumour: ' + pickR(RUMORS_T[town])));
     // a hot meal at the table: eaten on the spot, health and energy back (playtest: meals only went into the bag, at 1.6x)
     const hot = 40 + 10 * TOWN_ORDER.indexOf(town);
-    b.append(el('div', { class: 'acts' }, el('button', { class: 'btn', on: () => { if (S.gold < hot) { toast('A hot meal is ' + hot + 'g.'); return; } S.gold -= hot; S.p.hp = maxHP(); if (typeof maxST === 'function') S.p.st = maxST(); SFX.ok(); toast('A bowl of the house stew and fresh bread. Health and energy restored.'); refresh(); } }, 'Eat a hot meal here (' + hot + 'g)')));
+    b.append(el('div', { class: 'acts' }, el('button', { class: 'btn', on: () => { S.flags = S.flags || {}; if (S.flags.hotDay === dayIndex()) { toast('You’ve had your hot meal today. Come back tomorrow.'); return; } if (S.gold < hot) { toast('A hot meal is ' + hot + 'g.'); return; } S.gold -= hot; S.flags.hotDay = dayIndex(); S.p.hp = maxHP(); if (typeof maxST === 'function') S.p.st = Math.min(maxST(), S.p.st + maxST() / 2); SFX.ok(); toast('A bowl of the house stew and fresh bread. Health restored, and half your energy.'); refresh(); } }, 'Eat a hot meal here (' + hot + 'g, once a day)')));
     b.append(el('h3', null, 'To take away')); b.append(el('p', { class: 'note' }, 'Plain fare for the road. The feasts are only served at the table.'));
-    const L = el('div', { class: 'list' }); listOf(mealsAt[town]).filter(id => IT[id].p <= 400).forEach(id => L.append(buyRow(id, price(id, 1.1)))); /* feasts at 1,000g+ read as a rip-off beside a 40g hot meal (playtest night #143) */ b.append(L);
+    const L = el('div', { class: 'list' }); listOf(mealsAt[town]).filter(id => IT[id].p <= 400).forEach(id => L.append(buyRow(id, price(id, 1.35)))); /* feasts at 1,000g+ read as a rip-off beside a 40g hot meal (playtest night #143) */ b.append(L);
     const free = k && hearts(k) >= 6, cost = free ? 0 : 120;
     const night = S.time >= 1080 || S.time < 300;
     b.append(el('div', { class: 'acts' }, night
       // after six in the evening: a bed for the night, and you wake here (playtest: resting at 1 am still meant collapsing at 2)
       ? el('button', { class: 'btn', on: () => { if (S.gold < cost) { toast('A room is ' + cost + 'g.'); return; } S.gold -= cost; S.flags = S.flags || {}; S.flags.innWake = act; closeModal(); endDay(false); } }, free ? 'Sleep here until morning (free for a friend)' : 'Sleep here until morning (' + cost + 'g)')
-      : el('button', { class: 'btn', on: () => { if (S.gold < cost) { toast('A room is ' + cost + 'g.'); return; } S.gold -= cost; S.p.hp = maxHP(); if (typeof maxST === 'function') S.p.st = maxST(); if (typeof S.lives === 'number') S.lives = 3; S.time = Math.min(S.time + 120, 1500); closeModal(); SFX.ok(); toast('You sleep a couple of hours in a warm bed upstairs. Health, energy and lives restored.', 'lvl'); } }, free ? 'Rest two hours (free for a friend)' : 'Rest two hours (' + cost + 'g)')));
+      : el('button', { class: 'btn', on: () => { S.flags = S.flags || {}; if (S.flags.restDay === dayIndex()) { toast('You’ve rested here today already.'); return; } if (S.gold < cost) { toast('A room is ' + cost + 'g.'); return; } S.gold -= cost; S.flags.restDay = dayIndex(); S.p.hp = maxHP(); if (typeof maxST === 'function') S.p.st = maxST(); if (typeof S.lives === 'number') S.lives = 3; S.time = Math.min(S.time + 120, 1500); closeModal(); SFX.ok(); toast('You sleep a couple of hours in a warm bed upstairs. Health, energy and lives restored.', 'lvl'); } }, free ? 'Rest two hours, once a day (free for a friend)' : 'Rest two hours, once a day (' + cost + 'g)')));
   } }]);
   if (ty === 'bank') return openBank();
   if (ty === 'smith') return openModal(title, [buyTab(act, 'Bars and arms, forged here.'), sellTab(act), { id: 'forge', label: 'Forge', render: b => { if (!MODAL.opts.st || MODAL.opts.st === 'forge') MODAL.opts.st = 'furnace'; MODAL.opts.station = 'forge'; renderCraft(b); } }]);

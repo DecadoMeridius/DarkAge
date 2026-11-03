@@ -238,7 +238,7 @@ const _openModalV = openModal;
 openModal = function (title, tabs, start, opts) {
   if (title === 'Hale\'s Workshop') tabs = tabs.concat([plansTab([2])]);
   if (cur && cur.region && / forge$/.test(title)) { const t = Object.entries(PLANS).filter(([, P]) => P.where.includes(cur.region)).map(([t]) => +t); if (t.length) tabs = tabs.concat([plansTab(t)]); }
-  if (title === 'Mara\'s General Store') tabs = tabs.concat([{ id: 'pantry', label: 'Pantry', render: b => { const L = el('div', { class: 'list' }); [['salt', 10], ['sugar', 45], ['butter', 90], ['flour', 70]].forEach(([id, p]) => L.append(buyRow(id, p))); b.append(el('p', { class: 'note' }, 'Baking needs flour, butter, sugar and salt. They\'re cheaper to make yourself.'), L); } }]);
+  if (title === 'Mara\'s General Store') tabs = tabs.concat([{ id: 'pantry', label: 'Pantry', render: b => { const L = el('div', { class: 'list' }); [['salt', 10], ['sugar', 45], ['butter', 90], ['flour', 70]].forEach(([id, p]) => L.append(buyRow(id, p))); b.append(el('p', { class: 'note' }, 'Baking needs flour, butter, sugar and salt. A mill and a butter churn make your own.'), L); } }]);
   return _openModalV(title, tabs, start, opts);
 };
 if (REGIONS.saltreach) REGIONS.saltreach.trade.push(['salt', 5]);
