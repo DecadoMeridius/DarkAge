@@ -414,6 +414,12 @@ EVT.on('map', id => {
 /* ---- ripe crops drawn one by one (art/sprites/crops2.py, `crop_<key>_3`): a ripe crop with its own drawing uses it
    as it is (real colours); others keep the shape templates of crops.py ---- */
 cropSpr = (f => function (k, st, dead) {
+  // growth stages 0-2 of their own too (art/sprites/crops_stages.py, 2026-11-04); smoothed in a painted style
+  if (st < 3 && !dead && PIX.map && PIX.map['crop_' + k + '_' + st]) {
+    const key = k + st + 'own' + SETTINGS.artStyle; if (CROPSPR[key] && !CROPSPR[key].__lost) return CROPSPR[key];
+    let c = PIX.get('crop_' + k + '_' + st); if (c && SETTINGS.artStyle !== 'pixel' && typeof smoothUp === 'function') c = smoothUp(c);
+    if (c) return CROPSPR[key] = c;
+  }
   if (st === 3 && !dead && PIX.map && PIX.map['crop_' + k + '_3']) { const key = k + st + 'own'; if (CROPSPR[key] && !CROPSPR[key].__lost) return CROPSPR[key]; const c = PIX.get('crop_' + k + '_3'); if (c) return CROPSPR[key] = c; }
   return f.apply(this, arguments);
 })(cropSpr);
@@ -937,3 +943,19 @@ EVT.on('map', () => {
   for (const k in FTREES) add(k, 2);
   C.desc = 'Turns 5 fibre, 4 hay, 3 kelp, 4 wild flowers, or 2 of any crop or fruit into 1 compost';
 }
+
+/* ---- planted fruit trees grow through saplings of their own kind (art/sprites/saplings.py, 2026-11-04): a whip, a young
+   tree, then a small crown with blossom or green fruit, instead of the one shared sapling ---- */
+{
+  const SAPC = {};
+  objSprite = (f => function (o, season) {
+    if (o.k === 'ftree' && o.age < 14 && PIX.map && PIX.map['sapling_' + o.tree + '.0']) {
+      const st = Math.min(2, Math.floor(o.age / 5)), key = o.tree + st + SETTINGS.artStyle;
+      if (SAPC[key] && !SAPC[key].__lost) return SAPC[key];
+      let c = PIX.get('sapling_' + o.tree + '.' + st); if (c && SETTINGS.artStyle !== 'pixel' && typeof smoothUp === 'function') c = smoothUp(c);
+      if (c) return SAPC[key] = c;
+    }
+    return f.apply(this, arguments);
+  })(objSprite);
+}
+
