@@ -213,7 +213,7 @@ function sellTab(act) {
   } };
 }
 function buyTab(act, note) {
-  return { id: 'buy', label: 'Buy', render: b => { const k = keeperOf(act); if (k) greet(b, k); if (note) b.append(el('p', { class: 'note' }, note)); const L = el('div', { class: 'list' }); for (const id of SHOP_STOCK[act]()) L.append(buyRow(id, price(id, rep(TOWN_ACTS[act] ? TOWN_ACTS[act].town : 'kingsbridge') >= 50 ? 1.3 : 1.45))); b.append(L); } };
+  return { id: 'buy', label: 'Buy', render: b => { const k = keeperOf(act); if (k) greet(b, k); if (note) b.append(el('p', { class: 'note' }, note)); const L = el('div', { class: 'list' }); for (const id of SHOP_STOCK[act]()) L.append(buyRow(id, price(id, rep(TOWN_ACTS[act] ? TOWN_ACTS[act].town : 'kingsbridge') >= 50 ? 1.15 : 1.25))); b.append(L); } };
 }
 const rep = t => (S.realm && S.realm.rep[t]) || 0;
 function addRep(t, n) { S.realm.rep[t] = Math.min(100, rep(t) + n); for (const id in TOWN_NPCS) if (TOWN_NPCS[id].town === t) addFriend(id, n * 2); }

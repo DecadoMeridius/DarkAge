@@ -62,7 +62,26 @@ function mktSet(m, id, v) { const s = mktState().s; (s[m] = s[m] || {})[id] = Ma
 function mktF(m, id, s) {
   if (s === undefined) s = mktStock(m, id);
   const T = mktT(m, id), k = clamp(Math.pow(T / Math.max(.5, s), .6), .55, 1.8);
-  return clamp(mktPf(m, id) * k, .5, 2);
+  return clamp(mktPf(m, id) * k, .5, 2) * (1 + Math.min(DRY_MAX, mktDry(m, id) * DRY_DAY));
+}
+// a dry spell (asked 2026-11-04): each morning a town's stock of a good is under a quarter of normal counts a dry day,
+// and every dry day adds 5% on top of the shortage price, up to 3x after 40 days (a month out of halibut: ~2.5x); when
+// it's back the count falls four days a day (S.mkt.dry[m][id])
+const DRY_LOW = .25, DRY_DAY = .05, DRY_MAX = 2;
+const mktDry = (m, id) => { const d = S && S.mkt && S.mkt.dry && S.mkt.dry[m]; return (d && d[id]) || 0; };
+function mktDryDay() {
+  const M = mktState(), D = M.dry = M.dry || {};
+  for (const m in MARKETS) {
+    const st = M.s[m] || {}, dm = D[m] = D[m] || {};
+    for (const id of new Set([...Object.keys(st), ...Object.keys(dm)])) {
+      if (!IT[id]) { delete dm[id]; continue; }
+      if (mktStock(m, id) / mktT(m, id) < DRY_LOW) {
+        dm[id] = (dm[id] || 0) + 1;
+        if (dm[id] === 14 || dm[id] === 30) mktNews(mktName(m) + ' has been out of ' + IT[id].n.toLowerCase() + ' for ' + (dm[id] === 14 ? 'two weeks' : 'a month') + ': the price there keeps climbing.');
+      } else if (dm[id]) { dm[id] = Math.max(0, dm[id] - 4); if (!dm[id]) delete dm[id]; }
+    }
+    if (!Object.keys(dm).length) delete D[m];
+  }
 }
 // which market you're trading in: the region you're in, the town whose shop or streets you're in, else the village
 function mktHere() {
@@ -81,7 +100,8 @@ function mktBulk(id, each, n) {
   return Math.round(t);
 }
 function mktNote(m, id) {
-  const r = mktStock(m, id) / mktT(m, id);
+  const r = mktStock(m, id) / mktT(m, id), d = mktDry(m, id);
+  if (d >= 3) return '▲ Out of it for ' + d + ' days here';
   return r < .45 ? '▲ Very scarce here' : r < .8 ? '▲ Scarce here' : r > 1.8 ? '▼ A glut here' : r > 1.25 ? '▼ Plentiful here' : '';
 }
 // sell rows say so too: a scarce good pays well here, a glut pays badly
@@ -126,6 +146,7 @@ function mktShip(id, q, a, b, mins) {
 }
 function mktDaily() {
   const M = mktState(), st = M.s;
+  mktDryDay();   // counted on the morning's stocks, before production refills them
   // production and consumption: every stock moves a fifth of the way back to its normal level
   for (const m in st) for (const id in st[m]) {
     if (!IT[id] || !MARKETS[m]) { delete st[m][id]; continue; }
@@ -175,7 +196,7 @@ const stallPace = mul => { const c = stallChance(mul); return c >= .9 ? 'sells f
 openStall = function () {
   S.stall = S.stall || { goods: {}, earned: 0 }; S.stall.mul = S.stall.mul || {}; stallClean();
   openModal('Market Stall', [{ id: 's', label: 'Stall', render: b => {
-    b.append(el('p', { class: 'note' }, 'Open 8:00 to 18:00. Set each price against what the village pays: the cheaper, the faster it sells. Traders call at 10:00 and 15:00 for what a town is short of. Earned so far: ' + S.stall.earned.toLocaleString() + 'g.'));
+    b.append(el('p', { class: 'note' }, 'Open 8:00 to 18:00. Set each price against what the village pays: the cheaper, the faster it sells. Traders call at 10:00 and 15:00 and buy anything a town pays more for than your price (after their 15%). Earned so far: ' + S.stall.earned.toLocaleString() + 'g.'));
     const on = el('div', { class: 'list' });
     for (const k in S.stall.goods) {
       const [id, q] = parseK(k), mul = stallMul(k), set = d => { S.stall.mul[k] = clamp(Math.round((mul + d) * 100) / 100, .7, 1.6); refresh(); };
@@ -185,17 +206,27 @@ openStall = function () {
           el('button', { class: 'btn ghost', on: () => { GIVE_NO_DROP = true; const left = give(id, S.stall.goods[k], q, true); GIVE_NO_DROP = false; if (left) S.stall.goods[k] = left; else delete S.stall.goods[k]; refresh(); } }, 'Take back'))));
     }
     b.append(el('h3', null, 'On display'), on.children.length ? on : el('p', { class: 'note' }, 'Nothing on display.'));
-    const ks = sortedInv().filter(k => valK(k) > 0 && !IT[parseK(k)[0]].slot), add = el('div', { class: 'grid' });
-    for (const k of ks) { const [id, q] = parseK(k); add.append(el('button', { class: 'cell f-slot', title: IT[id].n, on: () => { const n = S.inv[k]; takeK(k, n); S.stall.goods[k] = (S.stall.goods[k] || 0) + n; refresh(); } }, icon(id, 32, q), el('b', null, S.inv[k]))); }
-    b.append(el('h3', null, 'Put out from your backpack'), add);
+    // a search, and how many go out per click (round 4: a click put the whole stack out)
+    const sq = (MODAL.opts.sq || '').toLowerCase(), amt = MODAL.opts.sn === undefined ? 10 : MODAL.opts.sn;
+    const ks = sortedInv().filter(k => valK(k) > 0 && !IT[parseK(k)[0]].slot && (!sq || IT[parseK(k)[0]].n.toLowerCase().includes(sq))), add = el('div', { class: 'grid' });
+    for (const k of ks) { const [id, q] = parseK(k); add.append(el('button', { class: 'cell f-slot', title: IT[id].n, on: () => { const n = Math.min(S.inv[k] || 0, amt === 'All' ? Infinity : amt); if (!n) return; takeK(k, n); S.stall.goods[k] = (S.stall.goods[k] || 0) + n; refresh(); } }, icon(id, 32, q), el('b', null, S.inv[k]))); }
+    const find = el('input', { class: 'f-input', placeholder: 'Find in your backpack…', value: MODAL.opts.sq || '' });
+    find.oninput = () => { MODAL.opts.sq = find.value; refresh(); setTimeout(() => { const f = document.querySelector('#mbody input[placeholder^="Find in your"]'); if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); } }, 0); };
+    const chips = el('div', { class: 'chips' }, el('span', null, 'Put out per click:'), ...STALL_AMTS.map(a => el('button', { class: 'chip' + (amt === a ? ' on' : ''), on: () => { MODAL.opts.sn = a; refresh(); } }, String(a))));
+    b.append(el('h3', null, 'Put out from your backpack'), el('div', { class: 'acts wrap' }, find), chips, ks.length ? add : el('p', { class: 'note' }, sq ? 'Nothing in your backpack matches.' : 'Nothing to put out.'));
   } }, { id: 'orders', label: 'Buy orders', render: renderOrders }]);
 };
 /* ---- buy orders (asked 2026-11-04): you name an item, your top price and how many; the traders who call at 10:00 and
    15:00 buy it in a town whose shop sells it under your price, take it from that town's stock and bring it (the town's shop
    price, `ORDER_CUT` x the market price, so an order saves the walk but is never cheaper than buying there yourself). You pay your price when it arrives; deliveries wait in the stall (S.stall.orders, S.stall.bought). ---- */
-const ORDER_CUT = 1.45;   // as town shops charge (x_realm.js); 1.1 let an order buy Greyhelm ore that resold in the village at +25%
+const ORDER_CUT = 1.25;   // as town shops charge (x_realm.js); 1.1 let an order buy Greyhelm ore that resold in the village at +25%
+// besides trade goods, orders take seeds, saplings, fertiliser, placeables and the like, and gear up to iron (no better tools,
+// weapons, armour or rings); those come from the traders' own stock at a little over the usual price, up to 20 a visit
+const ORDER_TYPES = new Set(['seed', 'sapling', 'fert', 'feed', 'place', 'path', 'ammo', 'implement', 'boat', 'fishtool', 'buildtool']);
+const orderable = id => { const it = IT[id]; if (!it || !(it.p > 0)) return false; if (mktTracks(id) || ORDER_TYPES.has(it.t)) return true; return ['weapon', 'armor'].includes(it.t) && (it.ti || 0) <= 3; };
+const AFAR = 'afar', srcName = m => m === AFAR ? 'their own stock' : mktName(m);
 const orderCost = (m, id) => Math.max(1, Math.round(valBase(id) * mktF(m, id) * ORDER_CUT));   // what a trader needs from you to bring one from m
-function orderBest(id) { let best = null; for (const m in MARKETS) { if (mktStock(m, id) < 1) continue; const c = orderCost(m, id); if (!best || c < best[1]) best = [m, c]; } return best; }
+function orderBest(id) { if (!mktTracks(id)) return orderable(id) ? [AFAR, Math.max(1, Math.round(IT[id].p * 1.1))] : null; let best = null; for (const m in MARKETS) { if (mktStock(m, id) < 1) continue; const c = orderCost(m, id); if (!best || c < best[1]) best = [m, c]; } return best; }
 function renderOrders(b) {
   const st = S.stall; st.orders = st.orders || []; st.bought = st.bought || {};
   b.append(el('p', { class: 'note' }, 'Ask the travelling traders to bring goods. At 10:00 and 15:00 they buy them in a town whose shop sells them under your price and bring them here; you pay your price when they arrive (you need the gold then, not now). It saves the trip, at the town’s own price.'));
@@ -208,16 +239,16 @@ function renderOrders(b) {
   }
   const L = el('div', { class: 'list' });
   st.orders.forEach((o, i) => {
-    const best = orderBest(o.id), now = best ? (best[1] <= o.price ? 'A trader can get it now from ' + mktName(best[0]) + ' (' + best[1] + 'g).' : 'Cheapest now: ' + mktName(best[0]) + ', ' + best[1] + 'g. Raise your price or wait for a glut.') : 'No town has any.';
+    const best = orderBest(o.id), now = best ? (best[1] <= o.price ? 'A trader can get it now from ' + srcName(best[0]) + ' (' + best[1] + 'g).' : 'Cheapest now: ' + srcName(best[0]) + ', ' + best[1] + 'g. Raise your price or wait for a glut.') : 'No town has any.';
     L.append(el('div', { class: 'rrow' }, icon(o.id, 32), el('div', { class: 'rtxt' }, el('b', null, IT[o.id].n + ': ' + o.left + ' more at up to ' + o.price + 'g'), el('small', null, now)),
       el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => { st.orders.splice(i, 1); refresh(); } }, 'Cancel'))));
   });
   b.append(el('h3', null, 'Your orders'), st.orders.length ? L : el('p', { class: 'note' }, 'No orders yet.'));
   // a new order: find the item, then the price and how many
-  const ids = mktIds().slice().sort((a, b2) => IT[a].n.localeCompare(IT[b2].n)), q0 = MODAL.opts.oq || '';
+  const ids = Object.keys(IT).filter(orderable).sort((a, b2) => IT[a].n.localeCompare(IT[b2].n)), q0 = MODAL.opts.oq || '';
   const sel = el('select', { class: 'f-input' }), find = el('input', { class: 'f-input', placeholder: 'Find an item…', value: q0 });
   const price = el('input', { class: 'f-input', type: 'number', min: 1, style: 'width:90px' }), qty = el('input', { class: 'f-input', type: 'number', min: 1, value: 10, style: 'width:70px' }), hint = el('small', null, '');
-  const setPrice = () => { const id = sel.value; if (!id) { hint.textContent = ''; return; } const best = orderBest(id); price.value = best ? best[1] : Math.round(valBase(id) * ORDER_CUT); hint.textContent = best ? 'Cheapest now: ' + mktName(best[0]) + ', ' + best[1] + 'g each (usual ' + valBase(id) + 'g).' : 'No town has any right now.'; };
+  const setPrice = () => { const id = sel.value; if (!id) { hint.textContent = ''; return; } const best = orderBest(id); price.value = best ? best[1] : Math.round(valBase(id) * ORDER_CUT); hint.textContent = best ? 'Cheapest now: ' + srcName(best[0]) + ', ' + best[1] + 'g each.' : 'No town has any right now.'; };
   const fill = () => { const q = find.value.toLowerCase(); sel.innerHTML = ''; for (const id of ids.filter(id => !q || IT[id].n.toLowerCase().includes(q)).slice(0, 150)) sel.append(el('option', { value: id }, IT[id].n)); setPrice(); };
   find.oninput = () => { MODAL.opts.oq = find.value; fill(); }; sel.onchange = setPrice;
   const place = el('button', { class: 'btn', on: () => {
@@ -236,7 +267,7 @@ function stallOrderDeals() {
   for (const o of (S.stall.orders || [])) {
     if (o.left < 1 || !IT[o.id]) continue;
     const best = orderBest(o.id); if (!best || best[1] > o.price) continue;
-    const q = Math.min(o.left, Math.floor(mktStock(best[0], o.id) * .4), Math.floor(gold / o.price)); if (q < 1) continue;
+    const q = Math.min(o.left, best[0] === AFAR ? 20 : Math.floor(mktStock(best[0], o.id) * .4), Math.floor(gold / o.price)); if (q < 1) continue;
     gold -= q * o.price; out.push({ o, m: best[0], q });
   }
   return out;
@@ -244,9 +275,9 @@ function stallOrderDeals() {
 function stallOrdersFill(list) {
   const st = S.stall; st.bought = st.bought || {}; const said = [];
   for (const { o, m, q: want } of list) {
-    const q = Math.min(want, o.left, Math.floor(S.gold / o.price), Math.floor(mktStock(m, o.id))); if (q < 1) continue;
-    S.gold -= q * o.price; mktSet(m, o.id, mktStock(m, o.id) - q); st.bought[o.id] = (st.bought[o.id] || 0) + q; o.left -= q;
-    said.push(q + ' ' + IT[o.id].n.toLowerCase() + ' from ' + mktName(m) + ' (' + (q * o.price).toLocaleString() + 'g)');
+    const q = Math.min(want, o.left, Math.floor(S.gold / o.price), m === AFAR ? want : Math.floor(mktStock(m, o.id))); if (q < 1) continue;
+    S.gold -= q * o.price; if (m !== AFAR) mktSet(m, o.id, mktStock(m, o.id) - q); st.bought[o.id] = (st.bought[o.id] || 0) + q; o.left -= q;
+    said.push(q + ' ' + IT[o.id].n.toLowerCase() + (m === AFAR ? '' : ' from ' + mktName(m)) + ' (' + (q * o.price).toLocaleString() + 'g)');
   }
   st.orders = (st.orders || []).filter(o => o.left > 0);
   if (said.length) { toast('A trader brought your order: ' + said.join(', ') + '. It’s waiting at your stall.', 'lvl'); SFX.coin(); }
@@ -255,12 +286,13 @@ function stallOrdersFill(list) {
 function stallOffer(k) {
   const [id] = parseK(k); if (!mktTracks(id)) return '';
   let best = null;
-  for (const m in MARKETS) { if (mktStock(m, id) / mktT(m, id) > .85) continue; const pays = Math.round(valBase(k) * mktF(m, id) * .85); if (!best || pays > best[1]) best = [m, pays]; }
-  if (!best) return 'No town is short of it now.';
-  return mktName(best[0]) + ' is short: a trader pays up to ' + best[1] + 'g' + (stallEach(k) <= best[1] ? ' and would take it.' : ', under your price.');
+  for (const m in MARKETS) { const pays = Math.round(valBase(k) * mktF(m, id) * .85); if (!best || pays > best[1]) best = [m, pays]; }
+  if (!best) return '';
+  return 'Best for a trader: ' + mktName(best[0]) + ', up to ' + best[1] + 'g' + (stallEach(k) <= best[1] ? ': a trader would take it.' : ', under your price.');
 }
 // goods whose item no longer exists are dropped from the stall (an unknown key threw on every tick)
 const stallClean = () => { if (S && S.stall && S.stall.goods) for (const k in S.stall.goods) if (!IT[parseK(k)[0]]) delete S.stall.goods[k]; if (S && S.stall && S.stall.orders) S.stall.orders = S.stall.orders.filter(o => IT[o.id] && o.left > 0); };
+const STALL_AMTS = [1, 5, 10, 25, 'All'];
 const stallBuilt = () => S && S.stall && S.structures && S.structures.some(s => s.k === 'stall' && s.stage >= 4) && (stallClean(), true);
 function stallSell(k, n, each, who) {
   const [id] = parseK(k); n = Math.min(n, S.stall.goods[k] || 0); if (!n) return 0;
@@ -276,14 +308,52 @@ EVT.on('tick', () => {
   if (hr < 8 || hr >= 18) return;
   if (hr === 10 || hr === 15) stallTrader();
   if (!Object.keys(S.stall.goods).length) return;
-  const weekend = (dayIndex() - 1) % 7 >= 5; let earned = 0; const sold = [];
+  const weekend = (dayIndex() - 1) % 7 >= 5, pend = [];
   for (let i = 0; i < (weekend ? 6 : 3); i++) {
     const ks = Object.keys(S.stall.goods); if (!ks.length) break;
     const k = pickR(ks), mul = stallMul(k); if (Math.random() > stallChance(mul)) continue;
-    const n = 1 + Math.floor(Math.random() * 3), g = stallSell(k, n, stallEach(k)); if (g) { earned += g; sold.push(IT[parseK(k)[0]].n.toLowerCase()); }
+    pend.push({ k, n: 1 + Math.floor(Math.random() * 3) });
   }
-  if (earned) { toast('Your stall sold ' + [...new Set(sold)].join(', ') + ' for ' + earned + 'g.'); SFX.coin(); }
+  if (!pend.length) return;
+  // on the farm you see the passer-by walk up to the stall and buy (2026-11-04: sales were invisible); elsewhere it just happens
+  if (cur && cur.id === 'farm' && BUYERS.length < 3 && buyerWalk(pend)) return;
+  stallPasserSell(pend);
 });
+function stallPasserSell(pend) {
+  let earned = 0; const sold = [];
+  for (const { k, n } of pend) { const g = S.stall.goods[k] ? stallSell(k, n, stallEach(k)) : 0; if (g) { earned += g; sold.push(IT[parseK(k)[0]].n.toLowerCase()); } }
+  if (earned) { toast('Your stall sold ' + [...new Set(sold)].join(', ') + ' for ' + earned + 'g.'); SFX.coin(); }
+}
+/* ---- passers-by you can see: a villager walks in from the village road, stops at the stall, buys and goes back ---- */
+const BUYERS = [], BUYER_LOOKS = [['#f0c8a0', '#5a3a22', 'long', '#a8402a'], ['#c89070', '#2a1a10', 'short', '#4a6a8a'], ['#e0b090', '#c89a50', 'bun', '#6a8a4a'], ['#a87050', '#3a2a2a', 'spiky', '#8a6a3a']];
+BUYER_LOOKS.forEach(([skin, hair, hs, shirt], i) => Object.defineProperty(NPCS, 'mkt_buyer' + i, { value: { n: 'Villager', role: 'Shopper', shop: 'k_buyer', P: HP(0, { skin, hair, hs, shirt, pants: '#4a3a2a', apron: i % 2 ? null : '#e8dcc0' }), love: [], like: [], hate: [], lines: [[]], gifts: [] }, enumerable: false, writable: true, configurable: true }));
+function buyerWalk(pend) {
+  const m = MAPS.farm, s = S.structures.find(s => s.k === 'stall' && s.stage >= 4); if (!m || !s) return false;
+  const sx = m.w - 2, sy = 18 + (BUYERS.length % 2), gx = s.x + (BUYERS.length % 3), gy = s.y + BP.stall.h;
+  const path = findPath(m, sx, sy, gx, gy, 8000); if (!path) return false;
+  const free = BUYER_LOOKS.findIndex((_, i) => !BUYERS.some(b => b.n.id === 'mkt_buyer' + i)); if (free < 0) return false;
+  const n = { id: 'mkt_buyer' + free, x: (sx + .5) * 16, y: (sy + .8) * 16, hx: (sx + .5) * 16, hy: (sy + .8) * 16, dir: 1, walk: true, t: 1e9, vx: 0 };
+  m.npcs = (m.npcs || []).filter(q => q.id !== n.id); m.npcs.push(n);
+  BUYERS.push({ n, path, pi: 1, phase: 1, wait: 0, pend }); return true;
+}
+function buyerFrame(dt) {
+  const m = MAPS.farm;
+  for (const B of BUYERS.slice()) {
+    const n = B.n, gone = () => { if (m && m.npcs) m.npcs = m.npcs.filter(q => q !== n); BUYERS.splice(BUYERS.indexOf(B), 1); };
+    if (!m || cur !== m || !m.npcs.includes(n)) { if (B.phase === 1) stallPasserSell(B.pend); gone(); continue; }
+    if (B.wait > 0) { B.wait -= dt; n.walk = false; if (B.wait <= 0) { const p = findPath(m, Math.floor(n.x / 16), Math.floor((n.y - 2) / 16), m.w - 2, 18, 8000); if (!p) { gone(); continue; } B.path = p; B.pi = 1; B.phase = 2; } continue; }
+    const node = B.path && B.path[B.pi];
+    if (!node) { if (B.phase === 1) { stallPasserSell(B.pend); B.pend = []; B.wait = 1.8; n.dir = 3; } else gone(); continue; }
+    const wx = (node[0] + .5) * 16, wy = (node[1] + .8) * 16, dx = wx - n.x, dy = wy - n.y, d = Math.hypot(dx, dy);
+    if (d < 2) { B.pi++; continue; }
+    const sp = 34 * dt; n.x += dx / d * Math.min(sp, d); n.y += dy / d * Math.min(sp, d); n.hx = n.x; n.hy = n.y; n.walk = true;
+    n.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : (dy < 0 ? 3 : 0);
+  }
+}
+doorAction = (f => function (act, who) {
+  if (act !== 'k_buyer') return f(act, who);
+  storyDialog([[who, pickR(['Fresh from your own fields? Lovely.', 'Mara never has these. I\'ll take a few.', 'Your prices are fair. Mostly.'])]], { title: 'Villager' });
+})(doorAction);
 // a trader looks for goods some town is short of, and buys them if your price leaves them a margin there
 function stallTraderDeal() {
   let deal = null;
@@ -291,9 +361,11 @@ function stallTraderDeal() {
     const [id] = parseK(k); if (!mktTracks(id)) continue;
     const each = stallEach(k);
     for (const m in MARKETS) {
-      const s = mktStock(m, id), T = mktT(m, id); if (s / T > .85) continue;
+      const s = mktStock(m, id), T = mktT(m, id);
       const pays = Math.round(valBase(k) * mktF(m, id) * .85); if (each > pays) continue;
-      const q = Math.min(S.stall.goods[k], Math.ceil(T - s)), gain = (pays - each) * q;
+      // any town that pays more than your price after the trader's cut (asked 2026-11-04: dear goods in a city sold slowly at
+      // the stall): a short town takes what it lacks, any other some 15% of its usual stock
+      const q = Math.min(S.stall.goods[k], Math.max(Math.ceil(T - s), Math.ceil(T * .15))), gain = (pays - each) * q;
       if (q > 0 && (!deal || gain > deal.gain)) deal = { k, id, m, q, each, gain };
     }
   }
@@ -336,7 +408,7 @@ function traderFrame(dt) {
   n.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : (dy < 0 ? 3 : 0);
 }
 function traderGone() { const m = MAPS.farm; if (m && m.npcs) m.npcs = m.npcs.filter(q => q.id !== 'mkt_trader'); TRADER.n = null; TRADER.deal = null; TRADER.phase = 0; }
-update = (f => function (dt) { f(dt); if (S && !TITLE) { traderFrame(dt); caravanFrame(dt); } })(update);
+update = (f => function (dt) { f(dt); if (S && !TITLE) { traderFrame(dt); buyerFrame(dt); caravanFrame(dt); } })(update);
 doorAction = (f => function (act, who) {
   if (act !== 'k_trader') return f(act, who);
   storyDialog([['narr', pickR(['"Good stock you keep. I\'ll be back when the towns are hungry again."', '"Prices are up wherever the roads are bad. Mind the bandits."', '"Cheaper than the village, and I\'ll take it off your hands. Fair?"'])]], { title: 'Travelling trader' });
