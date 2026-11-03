@@ -804,3 +804,4 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - **Snow:** flakes are 1.6-3.2 px (x1.4 above 900 px tall) with a faint shadow, so they show on snowy ground.
   - **Zombie and Drowned Pirate:** the zombie has green skin, glowing eyes and bare ribs; the pirate drowned-blue skin, a red bandana and ribs.
   - **Ribs:** `hb_ribs_<d>` was never drawn: a `//` comment in `humanSpr` hid `if (P.ribs) add(...)`. It's fixed, so skeletons show their ribs too.
+- **Little stones (asked 2026-11-03: they looked like urns):** `stone_small` in props.py is now a cluster of rough, angular stones with cracks and lichen (the single smooth oval read as an egg, and its painting as a banded urn). In painted styles it uses the smoothed pixel drawing (`stone$` in `STYLE_SMOOTH`). It isn't repainted, because it shares the rocks' paint sheet.

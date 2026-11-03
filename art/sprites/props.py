@@ -197,9 +197,18 @@ def twig():
 
 
 def stone_small():
+    """A few rough, angular stones (2026-11-03: the single smooth oval read as an egg, and painted as an urn)."""
     s = cv(32, 32)
-    shadow(s, 16, 25, 8, 2.5)
-    s.shade(ellipse(16, 21, 7, 5), None, 'form', colors=STONE)
+    shadow(s, 16, 25, 10, 2.5)
+    for pts in ([(9, 24), (8, 19), (11, 15), (16, 14), (19, 17), (19, 23), (15, 25)],   # the big one
+                [(18, 25), (18, 20), (21, 18), (25, 19), (26, 23), (23, 25)],          # one beside it
+                [(6, 25), (6, 23), (8, 21), (10, 23), (10, 25)]):                       # a chip in front
+        s.shade(poly(pts), None, 'form', colors=STONE)
+    for x, y in ((12, 18), (13, 19), (14, 21), (22, 21), (23, 22)):   # cracks
+        s.set(x, y, STONE[0])
+    for x, y in ((11, 16), (12, 16), (20, 19)):   # lit facets
+        s.set(x, y, STONE[-1])
+    s.set(16, 17, '#7a8a4a'); s.set(17, 17, '#8a9a5a')   # a speck of lichen
     return done(s)
 
 
