@@ -1,0 +1,29 @@
+# R3_art — Painterly art-and-feel (Kingdom test + Test sandbox), port 9304
+
+## Game-breaking
+- None found in what I played. The only console errors (`TypeError ... reading 'p'` from `mktT` via `stallEach` on the tick) were my own fault: I put a non-item key (`parsnip`) into `S.stall.goods` by hand. Not a game bug, but note that one bad key in `S.stall.goods` throws every tick (no guard against stale item ids, e.g. after an item is renamed). Low.
+- Side note: in the sandbox, clicking every button labelled "Continue" (the sandbox dialogue's and, hidden, the title's) loaded the newest [::1] slot while the TEST SANDBOX banner and `SANDBOX` flag stayed on (day 8, 3,444g). Not reproducible by a normal player because the title is hidden, so not ranked.
+
+## Economy
+- Not my focus. Stall + trader worked: the trader paid 25g each for 20 wheat (500g) when Greyhelm was short. On day 1 of the Kingdom test there are no caravans at all and no shortages anywhere (all 396 tracked goods at 90%+ stock), so the Markets tab and the Wilds caravans only come alive after some days.
+
+## Art
+Setup: Painterly via `SETTINGS.artStyle='painterly'; applyGraphics()`, FPS on, Developer mode ticked, Kingdom test.
+
+- **Farm stall + travelling trader: works and reads well.** Shortcut: I added a finished stall with `S.structures.push({k:'stall',x:14,y:12,stage:4})` + `placeStructure`, put 20 wheat and 10 parsnips in `S.stall.goods`, and forced a shortage (`mktSet('greyhelm','wheat', T*.3)`), then set `S.time` to 9:58. At 10:00 the trader (purple coat, hat, beard) walked in from the east road, bought the 20 wheat for 500g and walked off. The painted stall (striped awning, produce on the counter) is one of the nicest props on the farm. Shots R3_art_2, R3_art_3.
+- **Stepped ground borders (round 2) - CONFIRMED.** The farm's dirt road edge is a staircase of square art-pixel steps with a dark lip, while the grass and road textures are soft paint. Very visible on every road on the farm (R3_art_2, bottom half). High impact: roads are on screen almost all the time.
+- **Mixed pixel and paint on the farm:** knights on horses, the player and the trader are crisp pixel sprites standing next to soft painted wagons, stall and tent. The wagons are painted (lovely), the horses pulling them pixel. Known (characters stay pixel by design) but it is the most noticeable mismatch in every scene with people.
+- **Village by day (R3_art_4, R3_art_5):** buildings are well painted and 5-8 walkers make it feel lived in. But the plaza is a huge bare field of grey cobbles: a fountain, a well, a notice board, two lamp posts and a grey stone block (the altar?) that reads as a featureless box with an orange dot. No benches, planters, flower tubs or stalls, so the centre feels empty. Where the cobbles meet the grass there are tall grey "fingers" of paving reaching up into the lawn (R3_art_4 at x~180 and x~1270, also at night R3_art_6) that look like a painting glitch. Medium.
+- **Village at night (R3_art_6):** moody and good. Window glow lands on the windows of the tavern and the cottage. Lamp posts glow. Nobody is on the streets at 21:30 (they're in the tavern, which is fine).
+- **Tavern interior (R3_art_7): interiors are pixel art except the floor - CONFIRMED,** but the room is consistent with itself and lively (8 patrons, a lit hearth). What hurts more is that the patrons stand in a cluster in the middle of the floor; there is one small table with two stools, so nobody seems to be sitting or drinking. Low-medium.
+- **Trade caravan (R3_art_8): shows up and reads OK.** Shortcut: no caravans exist on day 1 (`S.mkt.cv` empty, even after `mktDaily()`); I forced one by setting Greyhelm's iron/copper/coal/log/wheat to 20% and calling `mktDaily()`, then `CARAVAN_T=0` in the Wilds. A painted covered wagon with a mounted guard in front and one on foot. The wagon has no horse of its own (the guard's horse sits at its front, so it mostly passes), and the wagon slides without wheel turning. Low.
+- **Wilds cliffs are square blocks (R3_art_8, bottom half):** the raised ground below the Greyhelm road is drawn as tile-sized green squares with straight ruled edges and small rock faces, like stacked crates, with stepped corners. Next to the painted pine and the soft grass it's the most artificial-looking terrain I saw. High: the Wilds are full of them.
+
+
+## Top 5
+1. **Region towns feel dead** (Port Saltreach, R3_art_16): four buildings, an unmanned stall, nobody walking, and a hard-edged grey rectangle of cobbles in a rectangle of sand. Next to Kingsbridge it looks unfinished.
+2. **Stepped, square terrain edges everywhere**: dirt roads on the farm (R3_art_2), the cobble-grass border in the village (with odd grey "fingers" of paving reaching into the lawn, R3_art_4), and the Wilds cliffs drawn as tile-sized green blocks with ruled edges (R3_art_8). Soft painted textures next to hard pixel steps are on screen nearly all the time.
+3. **Flat roofs in towns**: Greyhelm's turf roofs are flat bright-green rectangles and slate roofs near-black slabs (R3_art_10; also Kingsbridge, R3_art_11), so whole streets look like coloured boxes from above.
+4. **Briarholt's throne room doesn't feel royal and its benches are see-through**: a tiny throne, radiator-like pillars, a vast empty chequered floor (R3_art_15); the fountain-plaza benches show only as faint grey legs (R3_art_14).
+5. **The repaired greenhouse is a blank salmon glass box with ivy stains** (R3_art_25), and the **Stone Troll is washed out and see-through with a box edge** (R3_art_27). Also still open: the Fence Gate reads as a table/goalpost (R3_art_23), and the well (plus altar, notice board, tent) has no snow in winter (R3_art_19).
+Cleared: birches look painted (R3_art_20); the Saltmere pier reads as a pier (R3_art_13). Working well: the stall and travelling trader, the caravan, Kingsbridge, Ashford, Briarholt's grounds, the village in winter and at night.

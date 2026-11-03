@@ -158,7 +158,8 @@ const demandOf = id => { const D = S.demand || {}, shipped = (S.stats.shipped ||
 const _sellPriceL = sellPrice;
 sellPrice = function (id) {
   const p = _sellPriceL(id); if (!p || !S) return p;
-  if (typeof MKT_BIN !== 'undefined' && MKT_BIN) return p;
+  if (typeof MKT_RAW !== 'undefined' && MKT_RAW) return p;
+  if (typeof MKT_BIN !== 'undefined' && MKT_BIN) return Math.max(1, Math.round(p * BIN_K));   // the bin: a fixed 80% of the base price
   if (typeof mktTracks === 'function' && mktTracks(id)) return mktSellPrice(id, p);
   return Math.max(1, Math.round(p * (1 - demandOf(id))));
 };

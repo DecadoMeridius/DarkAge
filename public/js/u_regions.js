@@ -327,7 +327,7 @@ doorAction = function (act, who) {
   if (act === 'r_inn') return openModal(Rg.town.n + ' inn', [{ id: 'eat', label: 'Meals', render: b => {
     b.append(el('p', { class: 'note' }, 'Rumor: ' + pickR(RUMORS)));
     const L = el('div', { class: 'list' }); Rg.meals.forEach(([id, p]) => L.append(buyRow(id, p))); b.append(L);
-    b.append(el('div', { class: 'acts' }, el('button', { class: 'btn', on: () => { if (S.gold < 300) { toast('A room is 300g.'); return; } S.gold -= 300; S.p.hp = maxHP(); S.p.st = maxST(); SFX.ok(); toast('You rest by the fire. Health and energy restored.'); refresh(); } }, 'Rest (300g)')));
+    b.append(el('div', { class: 'acts' }, el('button', { class: 'btn', on: () => { S.flags = S.flags || {}; if (S.flags.restDay === dayIndex()) { toast('You’ve rested today already. Come back tomorrow.'); return; } if (S.gold < 300) { toast('A room is 300g.'); return; } S.gold -= 300; S.flags.restDay = dayIndex(); S.p.hp = maxHP(); S.p.st = maxST(); SFX.ok(); toast('You rest by the fire. Health and energy restored.'); refresh(); } }, 'Rest, once a day (300g)')));
   } }]);
   if (act === 'r_smith') return openModal(Rg.town.n + ' forge', [{ id: 'forge', label: 'Forge', render: b => { if (!MODAL.opts.st || MODAL.opts.st === 'forge') MODAL.opts.st = 'furnace'; MODAL.opts.station = 'forge'; renderCraft(b); } }]);
   toast(pickR(['Smoke rises from the chimney, but no one answers.', 'A voice calls through the door: "Come back when the road\'s safer."', 'The shutters are closed against the wind.']));

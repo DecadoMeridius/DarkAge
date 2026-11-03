@@ -197,7 +197,7 @@ function sellListIn(b, mode, filter) {
   if (!ks.length) b.append(el('p', { class: 'note' }, 'Nothing to sell here.'));
   const list = el('div', { class: 'list' });
   ks.forEach(k => { const [id, q] = parseK(k); const sell = n => { n = Math.min(n, S.inv[k]); takeK(k, n); if (mode === 'bin') S.bin[k] = (S.bin[k] || 0) + n; else { S.gold += bulkPay(id, Math.round(valK(k) * (mode === 'fisher' ? 1.1 : 1)), n); S.stats.shipped[id] = (S.stats.shipped[id] || 0) + n; } SFX.coin(); refresh(); };
-    list.append(el('div', { class: 'rrow' }, icon(id, 32, q), el('div', { class: 'rtxt' }, el('b', null, (q ? QNAME[q] + ' ' : '') + IT[id].n + ' ×' + S.inv[k]), el('small', null, Math.round(valK(k) * (mode === 'fisher' ? 1.1 : 1)) + 'g each')), el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => sell(1) }, mode === 'bin' ? 'Ship 1' : 'Sell 1'), el('button', { class: 'btn', on: () => sell(9999) }, 'All')))); });
+    list.append(el('div', { class: 'rrow' }, icon(id, 32, q), el('div', { class: 'rtxt' }, el('b', null, (q ? QNAME[q] + ' ' : '') + IT[id].n + ' ×' + S.inv[k]), el('small', null, Math.round(valK(k) * (mode === 'fisher' ? 1.1 : 1)) + 'g each' + (mode !== 'bin' && typeof mktSellNote === 'function' ? mktSellNote(id) : ''))), el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => sell(1) }, mode === 'bin' ? 'Ship 1' : 'Sell 1'), el('button', { class: 'btn', on: () => sell(9999) }, 'All')))); });
   b.append(list);
 }
 function greet(b, id) {

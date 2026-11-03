@@ -203,11 +203,11 @@ const SELL_TO = { kb_market: id => ['crop', 'fruit', 'artisan', 'animal', 'food'
 const BONUS = { sm_fish: 1.15, af_saw: 1.15, gh_supply: 1.1, kb_market: 1.05 };
 function sellTab(act) {
   return { id: 'sell', label: 'Sell', render: b => {
-    b.append(el('p', { class: 'note' }, BONUS[act] ? 'Pays ' + Math.round((BONUS[act] - 1) * 100) + '% over the usual price for what they deal in.' : 'Buys what it deals in.'));
+    b.append(el('p', { class: 'note' }, BONUS[act] ? 'Pays ' + Math.round((BONUS[act] - 1) * 100) + '% over the going price for what they deal in but don’t sell themselves.' : 'Buys what it deals in.'));
     const ks = sortedInv().filter(k => valK(k) > 0 && SELL_TO[act](parseK(k)[0])), list = el('div', { class: 'list' });
     if (!ks.length) b.append(el('p', { class: 'note' }, 'Nothing to sell here.'));
-    for (const k of ks) { const [id, q] = parseK(k), each = Math.round(valK(k) * (BONUS[act] || 1)), sell = n => { n = Math.min(n, S.inv[k] || 0); if (!n) return; takeK(k, n); S.gold += bulkPay(id, each, n); S.stats.shipped[id] = (S.stats.shipped[id] || 0) + n; SFX.coin(); refresh(); };
-      list.append(el('div', { class: 'rrow' }, icon(id, 32, q), el('div', { class: 'rtxt' }, el('b', null, (q ? QNAME[q] + ' ' : '') + IT[id].n + ' ×' + S.inv[k]), el('small', null, each + 'g each')),
+    for (const k of ks) { const [id, q] = parseK(k), each = Math.round(valK(k) * (BONUS[act] && !SHOP_STOCK[act]().includes(id) ? BONUS[act] : 1)), sell = n => { n = Math.min(n, S.inv[k] || 0); if (!n) return; takeK(k, n); S.gold += bulkPay(id, each, n); S.stats.shipped[id] = (S.stats.shipped[id] || 0) + n; SFX.coin(); refresh(); };
+      list.append(el('div', { class: 'rrow' }, icon(id, 32, q), el('div', { class: 'rtxt' }, el('b', null, (q ? QNAME[q] + ' ' : '') + IT[id].n + ' ×' + S.inv[k]), el('small', null, each + 'g each' + (typeof mktSellNote === 'function' ? mktSellNote(id) : ''))),
         el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => sell(1) }, 'Sell 1'), el('button', { class: 'btn', on: () => sell(S.inv[k]) }, 'All')))); }
     b.append(list);
   } };
