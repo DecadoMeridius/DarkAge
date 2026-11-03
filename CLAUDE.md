@@ -251,8 +251,8 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - Enemy leash (home, heal, bosses wake within 190 px and stop beyond 280); kill loot homes to the player.
   - Small fixes: flame overlay, toasts, creator, saving only after the creator closes.
 - **x_ui.js:**
-  - Recipe search and category chips (RC swapped during `renderCraft`).
-  - Backpack search, Sort and "Recipes & uses"; bank search, category chips with counts (`BANK_CATS`, `MODAL.opts.kc`), headings per category and a Sort button cycling type, name, amount and value (`BANK_SORTS`, `MODAL.opts.ks`).
+  - Recipe search and category chips (RC swapped during `renderCraft`; `rcatOf`): Blueprints, Machines, Parts, Gear, Farming (fences, gates and horse tools too), Food (with flour, sugar, butter and salt), Tools & travel (staircase, warp totem, canoe, harpoon, crab trap, hammer); the Ember Pendant is Gear. Every recipe has a chip.
+  - Backpack search, Sort and "Recipes & uses"; bank search, category chips with counts (`BANK_CATS`, rules on type and id, `MODAL.opts.kc`: Gear (with the staircase, warp totem and treasure map), Food, Farm, Fish & forage, Materials (monster parts too, from round 4), Building, Treasure & trophies (boss trophies, artifacts, ember shards), Story items), headings per category and a Sort button cycling type, name, amount and value (`BANK_SORTS`, `MODAL.opts.ks`).
   - Getting-started checklist; a shorter milestone list.
   - Door name plates; closed-shop notice; buy confirmation.
   - Combat bar only when fighting; watering-can level.

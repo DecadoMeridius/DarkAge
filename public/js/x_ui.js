@@ -4,7 +4,7 @@
    B2 Sort: the backpack gets a Sort button (by type, then name, empty slots last).
    B3 Selecting an item in the backpack shows what it's used in, and "Recipes & uses" opens it in the
       encyclopedia; right click on an item has the same option.
-   B4 Category chips in the recipe book and station windows: Blueprints, Machines, Parts, Gear, Farming, Food.
+   B4 Category chips in the recipe book and station windows: Blueprints, Machines, Parts, Gear, Farming (fences and gates too), Food, Tools & travel.
    B5 Onboarding: a "Getting started" checklist at the top of the Quests tab until you've done your first
       day; the milestone list only shows the next few open ones (a button shows them all).
    B6 Shops: name plates over village doors, a closed shop says its hours at the door instead of letting
@@ -16,13 +16,16 @@
       farm's own trees are oaks and birches (no Woodcutting-10 maples at the start). */
 
 /* ---------- B1 + B4: recipe search and categories ---------- */
-const RCAT = [['all', 'Every kind'], ['bp', 'Blueprints'], ['mach', 'Machines'], ['part', 'Parts'], ['gear', 'Gear'], ['farm', 'Farming'], ['food', 'Food']];
+const RCAT = [['all', 'Every kind'], ['bp', 'Blueprints'], ['mach', 'Machines'], ['part', 'Parts'], ['gear', 'Gear'], ['farm', 'Farming'], ['food', 'Food'], ['tool', 'Tools & travel']];
 function rcatOf(r) {
   const it = IT[r[0]] || {};
   if (r[0].startsWith('bp_')) return 'bp';
   if (r[3] === 'kitchen' || it.t === 'food') return 'food';
   if (it.t === 'weapon' || it.t === 'armor' || it.t === 'ring' || it.t === 'ammo') return 'gear';
-  if (it.t === 'fert' || it.t === 'path' || /sprinkler|scarecrow|beehive|compost|channel/.test(r[0])) return 'farm';
+  // fences and gates are farming (the gate fell into no chip, fences into Machines); tools and travel kit get their own
+  if (r[0] === 'ember_pendant') return 'gear';   // jewellery (the proposal pendant)
+  if (it.t === 'fert' || it.t === 'path' || it.t === 'implement' || /sprinkler|scarecrow|beehive|compost|channel|^fence/.test(r[0])) return 'farm';   // horse tools too
+  if (['special', 'boat', 'fishtool', 'buildtool', 'tool'].includes(it.t)) return 'tool';
   if ((typeof AUTOTIER !== 'undefined' && AUTOTIER[r[0]]) || (OBJ[r[0]] && (OBJ[r[0]].mach || OBJ[r[0]].place)) || (it.place && OBJ[it.place] && OBJ[it.place].mach)) return 'mach';
   if (it.t === 'mat' || it.t === 'bar') return 'part';
   return 'all';
@@ -173,17 +176,23 @@ genFarm = function () { const m = _genFarmU(); for (const o of m.o) if (o && o.k
 /* ---------- bank: categories, group headings and a Sort button (asked 2026-11-03: "so it's clear what we have") ----------
    Category chips filter the list (MODAL.opts.kc); Sort cycles type → name → amount → value (MODAL.opts.ks); in
    type order each category gets a heading. */
+// round 4 (asked 2026-11-03: hide sat under "other"): monster parts are materials, boss trophies, artifacts and ember shards are
+// treasure, story items have a chip of their own, and the usable specials go with gear or the farm. Rules get the type and the id.
+const BANK_USE = { staircase: 'gear', warp_totem: 'gear', treasure_map: 'gear', golden_oats: 'farm', ember_shard: 'misc', void_essence: 'mats', dragon_scale: 'mats' };
+let BOSS_LOOT = null;
+const bossLoot = id => { if (!BOSS_LOOT) { BOSS_LOOT = new Set(); for (const k in EN) if (EN[k].boss) for (const d of (EN[k].drops || [])) BOSS_LOOT.add(d[0]); } return BOSS_LOOT.has(id); };
 const BANK_CATS = [
   ['all', 'All', () => true],
-  ['gear', 'Gear', t => ['weapon', 'armor', 'ring', 'ammo', 'boat', 'fishtool', 'buildtool', 'tool'].includes(t)],
+  ['gear', 'Gear', (t, id) => BANK_USE[id] === 'gear' || ['weapon', 'armor', 'ring', 'ammo', 'boat', 'fishtool', 'buildtool', 'tool'].includes(t)],
   ['food', 'Food', t => ['food', 'artisan'].includes(t)],
-  ['farm', 'Farm', t => ['seed', 'sapling', 'fert', 'crop', 'fruit', 'animal', 'feed'].includes(t)],
+  ['farm', 'Farm', (t, id) => BANK_USE[id] === 'farm' || ['seed', 'sapling', 'fert', 'crop', 'fruit', 'animal', 'feed'].includes(t)],
   ['fish', 'Fish & forage', t => ['fish', 'forage'].includes(t)],
-  ['mats', 'Materials', t => ['mat', 'ore', 'bar', 'gem'].includes(t)],
+  ['mats', 'Materials', (t, id) => BANK_USE[id] === 'mats' || ['mat', 'ore', 'bar', 'gem'].includes(t) || (t === 'loot' && !bossLoot(id))],
   ['build', 'Building', t => ['place', 'path', 'implement', 'blueprint'].includes(t)],
-  ['misc', 'Treasure & other', t => ['loot', 'artifact', 'special'].includes(t) || typeof t === 'number'],
+  ['misc', 'Treasure & trophies', (t, id) => BANK_USE[id] === 'misc' || t === 'artifact' || t === 'loot' || typeof t === 'number'],
+  ['story', 'Story items', t => t === 'special'],
 ];
-const bankCat = id => { const t = IT[id] && IT[id].t; return (BANK_CATS.find(([k, , f]) => k !== 'all' && f(t)) || BANK_CATS[BANK_CATS.length - 1])[0]; };
+const bankCat = id => { const t = IT[id] && IT[id].t; const c = BANK_CATS.find(([k, , f]) => k !== 'all' && f(t, id)); return c ? c[0] : 'misc'; };
 const BANK_SORTS = [['type', 'Sort: type'], ['name', 'Sort: name'], ['amount', 'Sort: amount'], ['value', 'Sort: value']];
 const _bankSortedC = bankSorted;
 bankSorted = function () {
