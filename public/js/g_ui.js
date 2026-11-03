@@ -193,7 +193,7 @@ function sellList(b, mode, filter) {
 }
 function sellListIn(b, mode, filter) {
   const ks = sortedInv().filter(k => valK(k) > 0 && (!filter || filter(parseK(k)[0])));
-  if (mode === 'bin') { let tot = 0; for (const k in S.bin) tot += valK(k) * S.bin[k]; b.append(el('p', { class: 'note' }, 'Items in the bin sell overnight. Tonight so far: ' + tot.toLocaleString() + 'g.')); }
+  if (mode === 'bin') { let tot = 0; for (const k in S.bin) tot += valK(k) * S.bin[k]; b.append(el('p', { class: 'note' }, 'Items in the bin sell overnight for a fixed 80% of their usual price. Tonight so far: ' + tot.toLocaleString() + 'g.')); }
   if (!ks.length) b.append(el('p', { class: 'note' }, 'Nothing to sell here.'));
   const list = el('div', { class: 'list' });
   ks.forEach(k => { const [id, q] = parseK(k); const sell = n => { n = Math.min(n, S.inv[k]); takeK(k, n); if (mode === 'bin') S.bin[k] = (S.bin[k] || 0) + n; else { S.gold += bulkPay(id, Math.round(valK(k) * (mode === 'fisher' ? 1.1 : 1)), n); S.stats.shipped[id] = (S.stats.shipped[id] || 0) + n; } SFX.coin(); refresh(); };

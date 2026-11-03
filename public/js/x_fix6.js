@@ -629,6 +629,12 @@ primaryUse = (f => function () {
 /* ---- the shipping bin lists what's in it and gives things back (asked 2026-11-03) ---- */
 openBin = function () {
   openModal('Shipping bin', [{ id: 'b', label: 'Ship', render: b => {
+    // the rows show what the bin pays (a fixed 80% of the base price), not the market price (round 4)
+    const was = MKT_BIN; MKT_BIN = true; try { binRender(b); } finally { MKT_BIN = was; }
+  } }]);
+};
+function binRender(b) {
+  {
     const keys = Object.keys(S.bin || {}).filter(k => S.bin[k] > 0);
     if (keys.length) {
       b.append(el('h3', null, 'In the bin'));
@@ -642,8 +648,8 @@ openBin = function () {
       b.append(L, el('h3', null, 'Ship more'));
     }
     sellList(b, 'bin');
-  } }]);
-};
+  }
+}
 
 /* ---- each festival has its own look (they all had the same lanterns and flowers, overnight playtest) ----
    Blossom Day: a ring of flowers round the plaza; Lantern Night: twice the lanterns, and the released lanterns are
