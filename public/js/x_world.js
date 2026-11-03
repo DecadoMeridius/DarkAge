@@ -69,6 +69,8 @@ EVT.on('map', id => { const m = MAPS[id]; if (m && m.wild && S && !TITLE) spawnN
    sweet pea, ice bloom, cinderbloom) still turns up now and then */
 const WILDFLOWERS = [['buttercup', 'Buttercup', 5, '#ffe060'], ['foxglove', 'Foxglove', 8, '#ff8ab8'], ['bluebell', 'Bluebell', 6, '#6a80ff'], ['daisy', 'Daisy', 4, '#f4f4f8'], ['marigold', 'Marigold', 7, '#ffa060']];
 for (const [id, n, p, c] of WILDFLOWERS) if (!IT[id]) I(id, n, 'forage', p, 'flower', c, null, { desc: 'A wild flower, picked fresh' });
+// the dandelion is a common meadow flower too: 12g, not 40 (it out-earned the wild flowers threefold, 2026-11-03)
+if (IT.dandelion) IT.dandelion.p = 12;
 function pickWild(m, x, y, o) {
   const bio = m.bio ? BIOMES[m.bio[y * m.w + x]] : 'meadow';
   let id;
