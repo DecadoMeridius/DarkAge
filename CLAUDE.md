@@ -139,6 +139,7 @@ These come from the original game and were checked against the rebuilt systems: 
 - **Roles, not coordinates:** `storyWhere` resolves `wilds:<poi>[:<biome>]`, `<region>:town|dungeon|arena`, `village:plaza|altar`, `farm:home` and `site:<map>:<biome>` (a new clearing in that biome, created when first needed). Resolved places are remembered in `S.story.places`. `storyPlace` clears every story object and puts back what the current steps need, after each load and each step.
 - **Dialogue** is a box along the bottom (`storyDialog`): portrait, name, line by line, choices at the end; the game pauses; Space, Enter or E continue.
 - **Journal:** the Quests tab (J) starts with the stories (chapter, hint, where). Track one to get a bobbing marker over the target, an arrow at your feet and a `!` on the map.
+- **Story recap (`x_recap.js`, loaded just before z_main so it wraps the final `renderQuests`):** every begun story's journal row is clickable (and has a Read button); `storyRecap(sid)` opens the story so far: each chapter reached, the done steps' hints ticked and their dialogue lines with speakers (`who`), then "Now:" the current step.
 - Story state is `S.story` (`q` per story: chapter `c`, step `i`, `kills`; `flags`; `places`; `track`). Older saves start the stories fresh.
 - Tested: all five stories played through to the end in a fresh game; every role resolved and every region opened.
 
