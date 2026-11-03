@@ -821,3 +821,16 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
     - Natural ground layers (g, sn, a, i, s) are smoothed before their edges are found in the painted ground, so biome borders curve.
     - Lava blends a mirrored copy (`SOFT.l`).
     - Night window glow only takes clearly blue glass near a pixel-art window position (`styleGlow`).
+- **Art pass 3 (pixel atlas rebuilt; the Painterly atlas was left alone, because a rebuild would repaint the shared rock sheet and every icon sheet):**
+  - **Animals:**
+    - The rabbit's tail sits on its rear, and a hind foot no longer floats.
+    - The chicken has whole two-pixel legs.
+    - In Painterly both use their smoothed pixel frames (`STYLE_SKIP` `an_(rabbit|chicken)`).
+    - Coat patterns are drawn over the sprite in the coat's second colour (`animalSpr` wrapper): spotted pig and rabbit get spots, the dapple horse soft pale dapples, the belted cow a white belt.
+  - **Women's body:** `human.py` draws every body frame again with a female torso (`FEM`, `hb_bodyf_*`: narrower shoulders, a waist, fuller hips). `humanSpr` uses it for `P.sex === 'f'`, else when the hair is long, a bun or a ponytail. `playerPal`/`lookToP` pass `S.look.sex`.
+  - **Creator preview:** drawn at twice its CSS size, smooth in painted styles.
+  - **Armour:** the plate tiers have their own chest detail (steel lames, frost streaks, adamant studs, a cobalt boss, rime crackle). Adamant gear is deep raspberry (`#a8305e`), not hot pink.
+  - **Icons:**
+    - Helmet icons are cropped to the helmet, in profile (`hb_helm_<tk>_2`), and fill the slot.
+    - New `ic_bowl`, `ic_roast`, `ic_cake`, `ic_fish_long`, `ic_fish_flat`, `ic_fish_round` in icons_hand.py, given to dishes, meat and fish by name (x_fix6.js).
+  - **Cliffs:** painted cliff rims wander in width (`cliffTop`), with no ruled lines.

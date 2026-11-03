@@ -122,7 +122,7 @@ FOODS.forEach(f => I(f[0], f[1], 'food', f[2], f[3], f[4], null, { eat: f[5], bu
 const TIERS = [
   ['wood', 'Wooden', '#a8794a', 'wood', 1], ['leather', 'Leather', '#8a5a32', 'hide', 2], ['copper', 'Copper', '#e8853e', 'copper_bar', 3], ['iron', 'Iron', '#c8d0d8', 'iron_bar', 3],
   ['steel', 'Steel', '#8fa3b8', 'steel_bar', 3], ['silver', 'Silver', '#eef4fa', 'silver_bar', 3], ['gold', 'Golden', '#ffd040', 'gold_bar', 3], ['mythril', 'Mythril', '#4fe0c8', 'mythril_bar', 3],
-  ['frost', 'Frostsilver', '#8fd8ff', 'frost_bar', 3], ['obsidian', 'Obsidian', '#6a4aa8', 'obsidian_plate', 3], ['adamant', 'Adamant', '#ff5a8a', 'adamant_bar', 3], ['dragon', 'Dragonscale', '#e0562a', 'dragon_scale', 3], ['star', 'Starforged', '#fff6a8', 'star_ingot', 3],
+  ['frost', 'Frostsilver', '#8fd8ff', 'frost_bar', 3], ['obsidian', 'Obsidian', '#6a4aa8', 'obsidian_plate', 3], ['adamant', 'Adamant', '#a8305e', 'adamant_bar', 3], ['dragon', 'Dragonscale', '#e0562a', 'dragon_scale', 3], ['star', 'Starforged', '#fff6a8', 'star_ingot', 3],
 ];
 const TIER_ATK = [4, 6, 9, 13, 17, 20, 23, 29, 35, 40, 47, 55, 66];
 const WTYPE = { sword: { n: 'Sword', m: 1, cd: .32, reach: 15, arc: 1.3, cost: 4 }, spear: { n: 'Spear', m: 1.05, cd: .4, reach: 24, arc: .45, cost: 3 }, hammer: { n: 'Warhammer', m: 1.65, cd: .62, reach: 16, arc: 1.7, cost: 6, kb: 2 }, dagger: { n: 'Dagger', m: .68, cd: .17, reach: 12, arc: 1, cost: 2, crit: .15 }, bow: { n: 'Bow', m: .95, cd: .5, reach: 0, arc: 0, cost: 3, bow: 1 } };

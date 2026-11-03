@@ -763,8 +763,9 @@ def chicken_f(step):
                           ([(22 + fwd, 16 + bob), (24 + fwd, 7 + bob), (29 + fwd, 5 + bob), (32 + fwd, 8 + bob), (31 + fwd, 15 + bob), (28 + fwd, 19 + bob)], 'b'),  # neck + head
                           ([(13, 19), (21, 18), (24, 22), (19, 26), (13, 24)], 'm')])                         # wing
     lx = [(15, 20), (16, 19), (15, 20), (14, 21)][step]
-    det = [(30 - k, lx[0] + (k if step == 1 else 0) // 3, 'T') for k in range(0, 4)] + [(30 - k, lx[1], 'T') for k in range(0, 4)]
-    det += [(34, lx[0] - 1, 'TTT'), (34, lx[1], 'TTT'), (31, lx[0], 'T'), (31, lx[1], 'T'), (32, lx[0], 'T'), (32, lx[1], 'T'), (33, lx[0], 'T'), (33, lx[1], 'T')]
+    # legs: unbroken two-pixel shanks from the body to the toes (they were broken dashes)
+    det = [(y, lx[0], 'TT') for y in range(27, 34)] + [(y, lx[1], 'TT') for y in range(27, 34)]
+    det += [(34, lx[0] - 1, 'TTTT'), (34, lx[1] - 1, 'TTTT')]
     hx, hy = 29 + fwd, 8 + bob
     det += [(hy, hx, 'W'), (hy + 1, hx, 'E'), (hy + 1, hx + 3, 'TTT'), (hy + 2, hx + 3, 'TT'), (hy - 4, hx - 3, 'RR'), (hy - 3, hx - 4, 'RRRR'), (hy - 2, hx - 3, 'RRR'),
             (hy + 5, hx + 1, 'R'), (hy + 6, hx + 1, 'R'), (21, 15, '666'), (22, 14, '6666'), (17, 16, '444'), (16, 20, '44')]
@@ -793,9 +794,12 @@ def rabbit_f(step):
     body, (hx, hy), air = shp
     g = polygrid(38, 32, [(body, 'b'), ([(hx, hy + 1), (hx + 5, hy - 3), (hx + 11, hy - 1), (hx + 13, hy + 4), (hx + 9, hy + 8), (hx + 3, hy + 7)], 'b'),
                           ([(hx + 2, hy - 1), (hx + 5, hy - 1), (hx + 4, hy - 13), (hx + 2, hy - 12)], 'b'), ([(hx + 6, hy - 1), (hx + 9, hy - 1), (hx + 9, hy - 12), (hx + 7, hy - 12)], 'b')])
-    feet = {0: [(29, 6, 'mmmmmmmmmm'), (28, 22, 'mmm')], 1: [(29 + air, 2, 'mmmmmmm'), (27, 24, 'mmm')], 2: [(26 + air // 2, 2, 'mmmmmm'), (24 + air // 2, 26, 'mmm')], 3: [(28, 6, 'mmmmmmmm'), (29, 24, 'mmm')]}[step]
+    feet = {0: [(29, 6, 'mmmmmmmmmm'), (28, 22, 'mmm')], 1: [(29 + air, 2, 'mmmmmmm'), (27, 24, 'mmm')], 2: [(26 + air // 2, 2, 'mmmmmm'), (24 + air // 2, 26, 'mmm')], 3: [(28, 6, 'mmmmmmmm'), (27, 20, 'mmm')]}[step]
     det = feet + [(hy + 1, hx + 7, 'W'), (hy + 2, hx + 7, 'E'), (hy + 3, hx + 12, 'N'), (hy - 8, hx + 3, '7'), (hy - 7, hx + 3, '7'), (hy - 6, hx + 3, '7'), (hy - 8, hx + 8, '7'), (hy - 7, hx + 8, '7'),
-                  (17 + air // 2, 2, 'WW'), (18 + air // 2, 1, 'WWW'), (19 + air // 2, 2, 'WW'), (15 + air // 2, 12, '444')]
+                  (15 + air // 2, 12, '444')]
+    # the cotton tail sits on the body's rear edge (it floated off the body in the hop frames)
+    tx, ty = body[1][0] - 2, body[1][1] + 3
+    det += [(ty, tx, 'WW'), (ty + 1, tx - 1, 'WWW'), (ty + 2, tx, 'WW')]
     return grid_sprite(with_detail(g, det, 38), 38, 32)
 
 

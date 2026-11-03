@@ -66,14 +66,23 @@ def scarf(s, d, dx=0, dy=0):
         flat(s, sh_({(12, 22), (11, 23), (11, 24)}), 'acc', 1)                                  # a tail at the back of the neck
 
 
+FEM = [False]   # set while drawing the female body frames (hb_bodyf_*): narrower shoulders, a waist, fuller hips
+
+
 def torso_f(dx=0, dy=0):
     """Front / back torso: sloped shoulders, a chest, a waist, the hips."""
+    if FEM[0]:
+        return poly([(10 + dx, 22 + dy), (22 + dx, 22 + dy), (23 + dx, 25 + dy), (22 + dx, 30 + dy), (21 + dx, 33 + dy), (24 + dx, 38 + dy), (23 + dx, 40 + dy),
+                     (9 + dx, 40 + dy), (8 + dx, 38 + dy), (11 + dx, 33 + dy), (10 + dx, 30 + dy), (9 + dx, 25 + dy)])
     return poly([(9 + dx, 22 + dy), (23 + dx, 22 + dy), (24 + dx, 25 + dy), (23 + dx, 31 + dy), (22 + dx, 34 + dy), (23 + dx, 40 + dy),
                  (9 + dx, 40 + dy), (10 + dx, 34 + dy), (9 + dx, 31 + dy), (8 + dx, 25 + dy)])
 
 
 def torso_s(dx=0, dy=0):
     # a little depth from the side: the back curves out a pixel and the chest a pixel (it read as paper-thin)
+    if FEM[0]:   # a fuller chest, a narrower waist, the hip curving out behind
+        return poly([(11 + dx, 22 + dy), (20 + dx, 22 + dy), (22 + dx, 25 + dy), (23 + dx, 28 + dy), (21 + dx, 31 + dy), (21 + dx, 34 + dy), (22 + dx, 38 + dy), (21 + dx, 40 + dy),
+                     (11 + dx, 40 + dy), (10 + dx, 37 + dy), (11 + dx, 33 + dy), (10 + dx, 29 + dy), (10 + dx, 25 + dy)])
     return poly([(11 + dx, 22 + dy), (20 + dx, 22 + dy), (22 + dx, 26 + dy), (22 + dx, 32 + dy), (21 + dx, 35 + dy), (21 + dx, 40 + dy),
                  (11 + dx, 40 + dy), (11 + dx, 35 + dy), (10 + dx, 30 + dy), (10 + dx, 25 + dy)])
 
@@ -637,4 +646,14 @@ def _anim():
     return out
 
 
+def _fem(fn):
+    def go():
+        FEM[0] = True
+        try: return fn()
+        finally: FEM[0] = False
+    return go
+
+
 SPRITES = {**_all(), **_anim()}
+# the female body: every body frame again with the female torso (humanSpr picks it for women)
+SPRITES.update({k.replace('hb_body_', 'hb_bodyf_', 1): _fem(v) for k, v in list(SPRITES.items()) if k.startswith('hb_body_')})

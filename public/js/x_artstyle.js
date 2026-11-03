@@ -25,7 +25,7 @@ const STYLE_SMOOTH = /^(fence|soil_|waystone|pet_|furn_hole|dec_dais|dec_runner|
 const STYLE_FIT = /^(well$|bld_barn_|bld_kb_market_)/;
 // creatures whose paintings didn't hold up (drawn 2-3x as Old Snapper and the Frost Giant): their pixel animation,
 // rounded and lit like the characters (pixTemplate wrapper)
-const STYLE_SKIP = /^en_(crab|yeti)(_atk)?\./;
+const STYLE_SKIP = /^(en_(crab|yeti)(_atk)?|an_(rabbit|chicken))\./;   // the rabbit's tail and the chicken's legs were redrawn in the pixel art (2026-11-03); their old paintings had the faults
 PIX.get = (f => function (n) {
   const st = STYLE_ATLAS[SETTINGS.artStyle];
   if (st && STYLE_SMOOTH.test(n)) {

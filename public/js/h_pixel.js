@@ -228,9 +228,16 @@ function cliffTop(P, m, X, Y, t, bx, by) {
   const open = (dx, dy) => inb(m, X + dx, Y + dy) && getT(m, X + dx, Y + dy) !== t;
   P(bx, by, 32, 32, t === 'r' ? 'rgba(236,224,196,.14)' : 'rgba(10,6,4,.35)'); // a raised plateau: lit a touch lighter than the ground below (round 3: the dark wash read as pits)
   if (t === 'r') for (let k = 0; k < 5; k++) if (hsh(X * 7 + k, Y, 53) < .6) { const sx = bx + 3 + (hsh(X, Y * 5 + k, 11) * 24 | 0), sy = by + 4 + (hsh(Y, X + k * 3, 19) * 22 | 0), w = 3 + (hsh(k, X, Y) * 4 | 0); P(sx, sy, w, 2, C[2]); P(sx, sy, w - 1, 1, C[3]); P(sx + 1, sy + 2, w, 1, C[0]); }
+  if (SETTINGS.artStyle !== 'pixel') {   // painted styles: rims that wander in width, no ruled lines (cliffs read as outlined boxes)
+    const wob = (k, a) => 2 + Math.round(hsh(X * 13 + (k >> 2), Y * 7 + a, 71) * 3);
+    if (open(0, -1)) for (let k = 0; k < 32; k++) { const w = wob(k, 1); P(bx + k, by, 1, w, C[4]); P(bx + k, by + w, 1, 1, C[3]); }
+    if (open(-1, 0)) for (let k = 0; k < 32; k++) { const w = wob(k, 2); P(bx, by + k, w, 1, C[2]); P(bx + w, by + k, 1, 1, C[1]); }
+    if (open(1, 0)) for (let k = 0; k < 32; k++) { const w = wob(k, 3); P(bx + 32 - w, by + k, w, 1, C[1]); }
+  } else {
   if (open(0, -1)) { P(bx, by, 32, 3, C[4]); P(bx, by + 3, 32, 1, C[3]); P(bx, by - 1, 32, 1, 'rgba(20,12,8,.5)'); }
   if (open(-1, 0)) { P(bx, by, 4, 32, C[2]); P(bx, by, 1, 32, C[3]); P(bx + 3, by, 1, 32, C[0]); }
   if (open(1, 0)) { P(bx + 28, by, 4, 32, C[1]); P(bx + 28, by, 1, 32, C[0]); P(bx + 31, by, 1, 32, C[0]); }
+  }
   for (let k = 0; k < 3; k++) if (hsh(X * 3 + k, Y, 41) < .45) { const sx = bx + 5 + (hsh(X, Y * 3 + k, 7) * 20 | 0), sy = by + 5 + (hsh(Y, X + k, 9) * 18 | 0); P(sx, sy, 3, 2, C[3]); P(sx, sy, 2, 1, C[4]); P(sx + 1, sy + 2, 3, 1, C[0]); }
 }
 
@@ -309,10 +316,12 @@ humanSpr = function (key, P, dir, f) {
   const wf = typeof f === 'string' && /^w\d$/.test(f) ? +f[1] : -1, po = typeof f === 'string' && wf < 0 && !ride ? f : null;
   const bob = f === 1 || f === 3 || wf === 2 || wf === 6 ? 1 : po ? POSE_DY[po] || 0 : 0, lx = po && d === 2 ? POSE_DX[po] || 0 : 0;
   const L = [], add = (n, dy = bob, dx = lx) => { const c = PIX.get(n); if (c) L.push([c, dy, dx]); };
+  // women get the female body (hb_bodyf_*): chosen in the creator, otherwise read from the hairstyle like sexOf
+  const fem = P.sex ? P.sex === 'f' : P.fem !== undefined ? !!P.fem : ['long', 'bun', 'pony'].includes(hs);
   if (P.cape && d !== 3) add('hb_cape_' + d);
   if (P.quiver && d !== 3) add('hb_quiver_' + d);
   if (P.hood) add(`hb_hood_${d}_back`); else if (!P.helm) add(`hb_hair_${hs}_${d}_back`);
-  add(ride ? 'hb_ride_2' : `hb_body_${d}_${f}`, wf >= 0 ? bob : 0, 0); if (P.ribs) add('hb_ribs_' + d);   // 'ride' = seated pose, facing right (the ribs were hidden behind this comment)
+  add(ride ? 'hb_ride_2' : (fem && PIX.has(`hb_bodyf_${d}_${f}`) ? `hb_bodyf_${d}_${f}` : `hb_body_${d}_${f}`), wf >= 0 ? bob : 0, 0); if (P.ribs) add('hb_ribs_' + d);   // 'ride' = seated pose, facing right (the ribs were hidden behind this comment)
   if (P.robe) add('hb_robe_' + d); if (P.apron) add('hb_apron_' + d); if (P.belt) add('hb_belt_' + d); if (P.armS && !P.robe) { const a = armFit('hb_arm_' + P.armS + '_' + d, d, ride ? null : f); if (a) L.push([a, bob, lx]); } if (P.vest) add('hb_vest_' + d); if (P.quiver && d === 3) add('hb_quiver_3');
   if (P.cape && d === 3) add('hb_cape_3');
   if (P.beard) add('hb_beard_' + d); if (P.ears) add('hb_ears_' + d);

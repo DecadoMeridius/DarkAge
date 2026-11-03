@@ -23,13 +23,20 @@ itemIcon = function (id) {
   else {
     const it = IT[id], tk = armTier(id);
     if (it && tk && (it.sh === 'helm' || it.sh === 'plate')) {
-      const name = it.sh === 'helm' ? 'hb_helm_' + tk + '_0' : 'hb_arm_' + tk + '_0', t = PIX.get(name);
+      const name = it.sh === 'helm' ? (PIX.has('hb_helm_' + tk + '_2') ? 'hb_helm_' + tk + '_2' : 'hb_helm_' + tk + '_0') : 'hb_arm_' + tk + '_0', t = PIX.get(name);   // helmets in profile: visor and crest read as a helmet (front on, they looked like bottles)
       if (t) {
         const ramps = HCH.map(n => pixRamp(n === 'plume' || n === 'trim' ? GEAR_ACC[tk] : it.c));
         const K = t.hi || 1, full = mk(t.width, t.height, x => x.drawImage(t, 0, 0)); // K: an art style's scale
         if (t.lum) styledSwap(full, ramps); else { pixSwap(full, ramps); pixOutline(full, null); }
         const [sy, h] = it.sh === 'helm' ? [-1, 26] : [16, 26]; // the head, or the chest and shoulders
-        c = mk(32 * K, 32 * K, x => x.drawImage(full, 0, Math.max(0, sy) * K, 32 * K, h * K, 0, (3 + Math.max(0, -sy)) * K, 32 * K, h * K)); c.ww = c.wh = 16; if (K > 1) c.hi = K;
+        if (it.sh === 'helm') {
+          // a helmet is cropped to its own outline and fills the slot (cut at 1:1 it sat small and tall, like a bottle)
+          const W = full.width, Hh = Math.min(full.height, 30 * K), dd = mkCPU(W, Hh, x => x.drawImage(full, 0, 0)).getContext('2d').getImageData(0, 0, W, Hh).data;
+          let x0 = W, x1 = -1, y0 = Hh, y1 = -1; for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) if (dd[(y * W + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+          if (x1 >= x0) { const bw = x1 - x0 + 1, bh = y1 - y0 + 1, sc = Math.min(28 * K / bw, 28 * K / bh), dw = bw * sc, dh = bh * sc;
+            c = mk(32 * K, 32 * K, x => { x.imageSmoothingEnabled = K > 1; x.drawImage(full, x0, y0, bw, bh, (32 * K - dw) / 2, (32 * K - dh) / 2, dw, dh); }); c.ww = c.wh = 16; if (K > 1) c.hi = K; }
+        }
+        if (!c) { c = mk(32 * K, 32 * K, x => x.drawImage(full, 0, Math.max(0, sy) * K, 32 * K, h * K, 0, (3 + Math.max(0, -sy)) * K, 32 * K, h * K)); c.ww = c.wh = 16; if (K > 1) c.hi = K; }
       }
     }
   }

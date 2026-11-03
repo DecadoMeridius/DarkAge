@@ -282,6 +282,24 @@ def chest(s, pat, tk, d):
             for x in range(x0 + 1, x1 - 1, 3):
                 if (x, y) in body and d != 3:
                     s.set(x, y, RUNE[tk])
+    # the plate tiers each get their own chest detail, not only a colour (art playtest: tiers read as flat recolours)
+    if d != 3:
+        if tk == 'steel':   # banded lames over the belly
+            for y in (32, 34):
+                hline(s, x0, x1 - 1, y, 'armor', 0); hline(s, x0, x1 - 1, y + 1, 'armor', 3)
+        elif tk == 'frost':   # frosted streaks
+            for k in range(3):
+                flat(s, {p for p in line(x0 + 1 + k * 4, 24, x0 + 4 + k * 4, 30) if p in body}, 'trim', 3)
+        elif tk == 'adamant':   # a lattice of studs
+            for y in range(24, 36, 3):
+                for x in range(x0 + 1 + (y // 3) % 2, x1 - 1, 3):
+                    if (x, y) in body:
+                        s.set(x, y, code('trim', 3)); s.set(x, y + 1, code('armor', 0)) if (x, y + 1) in body else None
+        elif tk == 'cobalt' and d == 0:   # a raised boss on the breast
+            cel(s, ellipse(16, 27, 2.5, 2.5), 'trim'); s.set(15, 26, code('trim', 3))
+        elif tk == 'rime':   # crackle lines in the ice-blue plate
+            for a_, b_ in (((x0 + 1, 25), (x0 + 4, 28)), ((x0 + 4, 28), (x0 + 3, 32)), ((x1 - 2, 24), (x1 - 5, 29)), ((x1 - 5, 29), (x1 - 3, 34))):
+                flat(s, {p for p in line(*a_, *b_) if p in body}, 'armor', 0)
     if d != 2:
         hline(s, 10, 21, 37, 'trim', 1); hline(s, 10, 21, 36, 'trim', 2)
     else:

@@ -30,12 +30,15 @@ function openCreator(onDone) {
   let dir = 0;
   const draw = (cvs) => {
     const P = playerPal(), spr = humanSpr('cc' + Math.random(), P, dir, 0), x = cvs.getContext('2d');
-    x.imageSmoothingEnabled = false; x.clearRect(0, 0, cvs.width, cvs.height);
-    x.fillStyle = '#8ab05a'; x.fillRect(0, cvs.height - 40, cvs.width, 40);
-    x.drawImage(spr, (cvs.width - 32 * 5) / 2, cvs.height - 64 * 5 - 14, 32 * 5, 64 * 5);
+    // drawn at twice the canvas's CSS size: smooth in a painted style, whole-pixel steps in the pixel style (it was a
+    // 1.25x nearest-neighbour squeeze of the painted sprite, so it looked blurry and jagged)
+    const painted = SETTINGS.artStyle !== 'pixel'; cvs.style.imageRendering = painted ? 'auto' : 'pixelated';
+    x.imageSmoothingEnabled = painted; x.imageSmoothingQuality = 'high'; x.clearRect(0, 0, cvs.width, cvs.height);
+    x.fillStyle = '#8ab05a'; x.fillRect(0, cvs.height - 80, cvs.width, 80);
+    x.drawImage(spr, (cvs.width - 32 * 10) / 2, cvs.height - 64 * 10 - 28, 32 * 10, 64 * 10);
   };
   openModal('Who are you?', [{ id: 'c', label: 'Appearance', render: b => {
-    const wrap = el('div', { class: 'creator' }), cvs = el('canvas', { width: 220, height: 360, class: 'ccprev' });
+    const wrap = el('div', { class: 'creator' }), cvs = el('canvas', { width: 440, height: 720, class: 'ccprev' });
     const left = el('div', { class: 'ccleft' }, cvs,
       el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => { dir = [2, 3, 1, 0][[0, 2, 3, 1].indexOf(dir)]; draw(cvs); } }, '⟲ Turn'),
         el('button', { class: 'btn ghost', on: () => { for (const k in LOOK_OPTS) S.look[k] = pickR(LOOK_OPTS[k]); refresh(); } }, '🎲 Random')));

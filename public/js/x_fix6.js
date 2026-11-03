@@ -726,3 +726,48 @@ function waterDepthDraw(m, x0, y0, x1, y1) {
     return BIG[key] = out;
   })(enemySpr);
 }
+
+/* ---- coat patterns that match the coat's name (art detail playtest: the spotted pig had no spots, the dapple horse was
+   plain grey, the belted cow had no belt). Drawn over the finished sprite, only on its own pixels (source-atop), in the
+   coat's second colour; the same spots in every frame (seeded by species + coat), so they don't jump as it walks. ---- */
+{
+  const PAT = {};
+  const PATTERN = { pig: { spotted: 'spots' }, rabbit: { spotted: 'spots' }, horse: { dapple: 'dapple' }, cow: { belted: 'belt' } };
+  animalSpr = (f => function (sp, coat, fr) {
+    const c = f.apply(this, arguments), kind = PATTERN[sp] && PATTERN[sp][coat];
+    if (!kind || !c || !c.width) return c;
+    const key = sp + coat + fr + SETTINGS.artStyle; if (PAT[key] && !PAT[key].__lost) return PAT[key];
+    const Cc = (COATS[sp] || {})[coat] || ['#888', '#444'], W = c.width, H = c.height;
+    const out = mk(W, H, x => {
+      x.drawImage(c, 0, 0); x.globalCompositeOperation = 'source-atop';
+      let s = (sp.length * 131 + coat.length * 17) | 0; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+      if (kind === 'spots') { x.fillStyle = Cc[1]; for (let i = 0; i < 6; i++) { x.beginPath(); x.ellipse(W * (.22 + rnd() * .5), H * (.35 + rnd() * .3), W * (.04 + rnd() * .04), H * (.04 + rnd() * .04), 0, 0, 6.283); x.fill(); } }
+      if (kind === 'dapple') { x.fillStyle = 'rgba(236,236,240,.42)'; for (let i = 0; i < 16; i++) { x.beginPath(); x.ellipse(W * (.15 + rnd() * .6), H * (.32 + rnd() * .3), W * (.018 + rnd() * .016), H * (.016 + rnd() * .014), 0, 0, 6.283); x.fill(); } }   // soft pale dapples
+      if (kind === 'belt') { x.fillStyle = Cc[1]; x.fillRect(W * .33, H * .25, W * .16, H * .5); }   // round the body, not the legs
+      x.globalCompositeOperation = 'source-over';
+    });
+    for (const q of ['ww', 'wh', 'ax', 'ay', 'hi', 'lum', 'off']) if (c[q] !== undefined) out[q] = c[q];
+    return PAT[key] = out;
+  })(animalSpr);
+}
+
+/* ---- the player's body follows the creator's choice (S.look.sex) ---- */
+playerPal = (f => function () { const P = f(); if (P && S && S.look && S.look.sex) P.sex = S.look.sex; return P; })(playerPal);
+lookToP = (f => function (L) { const P = f(L); if (P && L && L.sex) P.sex = L.sex; return P; })(lookToP);
+
+/* ---- dishes and fish get their own icon shapes (icons_hand.py: bowl, roast, cake, fish_long, fish_flat, fish_round)
+   instead of one plate and one silhouette for all of them; chosen by name ---- */
+for (const k in IT) {
+  const it = IT[k], n = (it.n || '').toLowerCase();
+  if (it.t === 'food' && it.sh === 'food') {
+    if (/soup|stew|chowder|porridge|curry|broth|risotto|gumbo|congee|bisque|goulash/.test(n)) it.sh = 'bowl';
+    else if (/roast|steak|pork|poultry|sausage|chop|ribs|drumstick|meat/.test(n)) it.sh = 'roast';
+    else if (/cake|tart|pudding|cobbler|crumble|trifle|sweet/.test(n)) it.sh = 'cake';
+  }
+  if (it.t === 'fish' && it.sh === 'fish') {
+    if (/eel|lamprey|snake|pike|gar/.test(n)) it.sh = 'fish_long';
+    else if (/flounder|halibut|sole|plaice|ray|manta|turbot|skate/.test(n)) it.sh = 'fish_flat';
+    else if (/puffer|sunfish|globe|blowfish|bream|pomfret|piranha/.test(n)) it.sh = 'fish_round';
+  }
+  if (it.meat && it.sh === 'food') it.sh = 'roast';   // raw meat isn't a plated dish either
+}
