@@ -140,7 +140,7 @@ function render(dt) {
     if (b.spr.chim && Math.random() < dt * 2.2) SMOKE.push({ x: b.x * 16 + b.spr.chim[0], y: b.y * 16 + b.spr.chim[1], t: 0, s: Math.random() });
   }
   for (const a of (typeof animalsOn === 'function' ? animalsOn(m) : m.id === 'farm' ? S.animals : [])) { if (S.mounted && a.id === S.rideId && m.id === 'farm') continue; L.push({ y: a.y, f: () => drawAnimal(a) }); }
-  for (const n of m.npcs || []) L.push({ y: n.y, f: () => { if (n.horse && typeof drawNpcRider === 'function') return drawNpcRider(n); shadow(n.x, n.y, 6); const N = NPCS[n.id]; D(humanSpr('npc' + n.id, N.P, n.dir || 0, n.walk ? 'w' + Math.floor(gameT * 10) % 8 : 0), n.x - 8, n.y - 31, 16, 32); } });
+  for (const n of m.npcs || []) L.push({ y: n.y, f: () => { if (n.horse && typeof drawNpcRider === 'function') return drawNpcRider(n); shadow(n.x, n.y, 6); const N = NPCS[n.id]; D(humanSpr('npc' + n.id, N.P, n.dir || 0, n.pose || (n.walk ? 'w' + Math.floor(gameT * 10) % 8 : 0)), n.x - 8, n.y - 31, 16, 32); } });
   for (const e of m.ents) L.push({ y: e.y, f: () => drawEnt(e) });
   if (!TITLE) L.push({ y: S.p.y, f: drawPlayer });
   L.sort((a, b) => a.y - b.y); for (const q of L) q.f();

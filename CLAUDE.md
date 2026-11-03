@@ -898,3 +898,7 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - Winter caps of snow on the well, altar, notice boards, bin, signposts, lamp posts, workbench and crates (`snowCap` in an `objSprite` wrapper, x_fix6.js; not indoors or in the Emberwaste).
 - **Region towns (`x_regionfolk.js`):** five townsfolk dressed for the region walk the town by day (two stay by the inn at night) and a stallholder stands at the market stall, opening the market when you talk to them. Runtime only (`rf_<region>_<i>`, `k_rfolk`).
 
+## Weapons in the hand while walking (y_anim.js, asked 2026-11-03)
+- A held weapon rides in the swinging hand: `walkHand(dir, f)` works out the weapon hand of walk frame `f` with the same arm maths as `walk()` in human.py (side view: the near arm from the shoulder at (15, 24), upper arm and forearm 7 art px; front and back: the outer arm), and `walkHeld` turns it into world coordinates and a blade angle that leans a little with the forearm. Sideways the weapon used to sit at a fixed point in the middle of the body and only rock.
+- Knights and guards (Wilds allies in x_realm.js, Briarholt's armed court in x_court.js) use `npcSword`: the sword in the walk-frame hand, at the idle hand, or carried through a wind-up and strike; their body takes the `wind` / `strike` pose meanwhile (`n.pose`, drawn by f_render's NPC loop).
+

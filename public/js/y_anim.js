@@ -21,6 +21,40 @@ const HAND = {
 };
 const lerpc = (a, b, t) => a + (b - a) * clamp(t, 0, 1); // clamped (a_core's lerp is not)
 function handAt(pose, dir) { const h = (HAND[pose] || HAND.idle)[dir === 1 ? 2 : dir] || [16, 38]; return [S.p.x - 8 + (dir === 1 ? 32 - h[0] : h[0]) / 2, S.p.y - 31 + h[1] / 2]; }
+// where the weapon hand is in walk frame f (art px in the 32x64 frame, facing right for the side view; the caller mirrors
+// it for left), worked out with the same arm swing human.py's walk() draws, plus the forearm's angle: a held weapon rides in
+// the swinging hand instead of sitting at a fixed point (2026-11-03: sideways, it hung at the middle of the body and rocked)
+function walkHand(dir, f) {
+  const ph = f / 8 * Math.PI * 2, bob = Math.abs(Math.sin(ph)) < .5 ? -1 : 0;
+  if (dir === 1 || dir === 2) {
+    const u = .55 * Math.sin(ph), fa = u + .35 + .35 * Math.max(0, Math.sin(ph));
+    const ex = 15 + Math.sin(u) * 7, ey = 24 + bob + Math.cos(u) * 7;
+    return [ex + Math.sin(fa) * 7, ey + Math.cos(fa) * 7 + 1, fa];
+  }
+  const fwd = Math.sin(dir === 0 ? ph : ph + Math.PI), x0 = dir === 0 ? 25 : 6, side = dir === 0 ? -1 : 1;
+  return [x0 + side * Math.round(Math.max(0, fwd) * 2), 37 + bob - Math.round(Math.max(0, fwd) * 3) + 1, fwd];
+}
+// that hand in world coordinates for a figure standing at (x, y), and the angle a held weapon takes there
+function walkHeld(x, y, dir, f) {
+  const [hx, hy, a] = walkHand(dir, f), side = dir === 1 ? -1 : 1;
+  const wx = x - 8 + (dir === 1 ? 32 - hx : hx) / 2, wy = y - 31 + hy / 2;
+  // side view: the blade leans with the forearm (forward when the arm swings forward); front and back: a small sway
+  const lean = dir === 1 || dir === 2 ? (a - .5) * .35 : a * .15;
+  return [wx, wy, side * (-.6 + lean) - Math.PI / 4 + (dir === 1 ? -Math.PI / 2 : 0)];
+}
+// a sword in an NPC's hand (knights, guards): in the hand of the walk frame, at the hand of the idle pose, or carried
+// through a wind-up and strike while `sw` (0-1) runs; `nPose` gives the body pose to draw with it
+function npcPose(sw) { return sw > 0 ? (sw < .35 ? 'wind' : 'strike') : null; }
+function npcSword(ic, x, y, dir, walking, sw, size) {
+  const side = dir === 1 ? -1 : 1;
+  if (sw > 0) {
+    const pose = npcPose(sw), h = HAND[pose][dir === 1 ? 2 : dir] || [16, 38], base = Math.atan2(DIRV[dir][1], DIRV[dir][0]);
+    const ang = pose === 'wind' ? base - 2.1 * side : lerpc(base - 1.7 * side, base + 1.1 * side, (sw - .35) / .4);
+    heldIcon(ic, x - 8 + (dir === 1 ? 32 - h[0] : h[0]) / 2, y - 31 + h[1] / 2, ang, size); return;
+  }
+  if (walking) { const [wx, wy, wa] = walkHeld(x, y, dir, Math.floor(gameT * 10) % 8); heldIcon(ic, wx, wy, wa, size); return; }
+  const h = HAND.idle[dir === 1 ? 2 : dir]; heldIcon(ic, x - 8 + (dir === 1 ? 32 - h[0] : h[0]) / 2, y - 31 + h[1] / 2, side * -.6 - Math.PI / 4 + (dir === 1 ? -Math.PI / 2 : 0), size);
+}
 function heldIcon(ic, x, y, ang, size) { if (!ic) return; g.save(); g.translate(Math.round(x * 2) / 2, Math.round(y * 2) / 2); g.rotate(ang + Math.PI / 4); D(ic, -size * .2, -size * .8, size, size); g.restore(); }
 function px2(x, y, c, w = 1, h = 1) { g.fillStyle = c; g.fillRect(Math.round(x * 2) / 2, Math.round(y * 2) / 2, w, h); }
 const FXL = [], CORPSES = []; // short-lived effects drawn over the world
@@ -93,7 +127,9 @@ drawPlayer = function () {
   }
   const frame = A.pose || A.frame, spr = humanSpr(HC_P, P, p.dir, frame), back = p.dir === 3;
   const drawHeld = () => {
-    if (A.held) { const id = S.eq.weapon; if (!id || pl.anim > 0) return; const [hx, hy] = handAt('idle', p.dir), sw = pl.moving ? Math.sin(gameT * 12 / 8 * Math.PI * 2) * .25 : 0; heldIcon(itemIcon(id), hx, hy, (p.dir === 1 ? -1 : 1) * (-.6 + sw) - Math.PI / 4 + (p.dir === 1 ? -Math.PI / 2 : 0), 10); return; }
+    if (A.held) { const id = S.eq.weapon; if (!id || pl.anim > 0) return;
+      if (pl.moving) { const [wx, wy, wa] = walkHeld(p.x, p.y, p.dir, Math.floor(gameT * 12) % 8); heldIcon(itemIcon(id), wx, wy, wa, 10); return; }
+      const [hx, hy] = handAt('idle', p.dir); heldIcon(itemIcon(id), hx, hy, (p.dir === 1 ? -1 : 1) * -.6 - Math.PI / 4 + (p.dir === 1 ? -Math.PI / 2 : 0), 10); return; }
     const [hx, hy] = handAt(A.pose, p.dir);
     if (A.bow) { // bow upright at the front hand, string to the drawing hand
       const fx = hx, fy = hy, dx = DIRV[p.dir][0], dy = DIRV[p.dir][1], pull = A.pull || 0;
