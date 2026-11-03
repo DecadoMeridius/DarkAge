@@ -584,7 +584,10 @@ renderCraft = (f => function (b) {
   const all = RC.slice(); let shown = 0;
   if (can) { RC.length = 0; for (const r of all) if (enough(r)) RC.push(r); shown = RC.length; }
   try { f.apply(this, arguments); } finally { if (can) { RC.length = 0; RC.push(...all); } }
-  const chips = b.querySelector('.chips'), btn = el('button', { class: 'chip' + (can ? ' on' : ''), on: () => { MODAL.opts.rcan = !can; refresh(); } }, can ? 'Can make ✓' : 'Can make');
+  const chips = b.querySelector('.chips');
+  b.querySelectorAll('.chips button').forEach(c => { if (c.textContent === 'Can make') c.remove(); });
+  MODAL.opts.ready = false;
+  const btn = el('button', { class: 'chip' + (can ? ' on' : ''), on: () => { MODAL.opts.rcan = !can; refresh(); } }, can ? 'Can make ✓' : 'Can make');
   if (chips) chips.insertBefore(btn, chips.children[1] || null); else b.prepend(btn);
   if (can && !shown) b.append(el('p', { class: 'note' }, 'You don\'t have the materials for anything here yet. Click "Can make" to see every recipe.'));
 })(renderCraft);
@@ -771,3 +774,53 @@ for (const k in IT) {
   }
   if (it.meat && it.sh === 'food') it.sh = 'roast';   // raw meat isn't a plated dish either
 }
+
+/* ---- crafting economy (asked 2026-11-03): easy recipes sell for less than their ingredients, medium and high-tier ones for
+   more, so time spent as a crafter pays, but buying ingredients in a shop to craft and sell never does.
+   - tier: high if the recipe needs skill 6+ (old 1-10 scale) or sits three steps deep (made of made parts); medium if it
+     needs skill 3-5 or uses a made part; else easy. Multiplier on the ingredients' worth: easy 0.75, medium 1.25, high 1.6.
+   - if every ingredient can be bought in some shop (directly, or made only from things that can), the price is capped at
+     0.9x the ingredients: the Layer Cake (444g of shop goods -> 1,300g) and the harrow were money loops.
+   - prices are what the item SELLS for: gear, seeds, machines and the like sell back at half, so their listed price is
+     twice the target. Horse implements and the building hammer now sell at half like other gear (they sold at full).
+   Runs after priceMadeGoods (t_balance.js), intermediates first, so made parts carry their new worth up the chain. ---- */
+const HALF_SELL = new Set(['seed', 'weapon', 'armor', 'place', 'feed', 'sapling', 'ring', 'fert', 'ammo', 'implement', 'buildtool']);
+sellPrice = (f => function (id) { const it = IT[id]; if (it && (it.t === 'implement' || it.t === 'buildtool')) return Math.floor(it.p / 2); return f.apply(this, arguments); })(sellPrice);
+function repriceCrafts() {
+  const BUY = new Set(['gold_ore', 'golden_oats', 'hay', 'iron_ore', 'mythril_ore', 'silver_ore', 'anchovy', 'apple', 'arrow', 'blackberry', 'butter', 'chanterelle', 'cherry', 'clam', 'coal', 'cobalt_bar', 'compost', 'copper_bar', 'copper_ore',
+    'egg', 'fiber', 'flour', 'goat_cheese', 'gold_bar', 'growth_tonic', 'hardwood', 'hazelnut', 'honey', 'iron_bar', 'kelp', 'leather', 'milk', 'morel', 'orange', 'peach', 'plum', 'rich_compost', 'salt', 'sap', 'sardine', 'silver_bar', 'steel_bar', 'stone', 'sugar', 'tuna', 'wood', 'wine_grape', 'jam_cherry', 'jam_plum']);
+  for (const k in IT) if (IT[k].t === 'seed' || IT[k].t === 'sapling') BUY.add(k);
+  try { for (const id in REGIONS) for (const [k] of (REGIONS[id].trade || [])) BUY.add(k); } catch (e) {}
+  try { for (const a in GUILDS) for (const [k] of (GUILDS[a].store || [])) BUY.add(k); } catch (e) {}
+  const recipes = {};
+  for (const r of RC) { const [o, n, ing, , req] = r; if (IT[o] && ing) (recipes[o] = recipes[o] || []).push({ n: n || 1, ing, L: Array.isArray(req) ? req[1] || 0 : 0 }); }
+  const catMembers = k => Object.keys(IT).filter(i => CATF[k] && CATF[k](i));
+  const worth = k => k[0] === '$' ? Math.min(...catMembers(k).map(i => IT[i].p || 0).concat([1e9])) % 1e9 : (IT[k] ? IT[k].p || 0 : 0);
+  // shops that sell at their own fixed price (Mara's Pantry, Hale's materials, Brann's ore, Odile's feed): the cheapest you can buy it for
+  const SHOP_PRICE = { salt: 10, sugar: 45, butter: 90, flour: 70, wood: 10, stone: 10, hardwood: 60, clay: 40, fiber: 8, hay: 25, iron_ore: 75, silver_ore: 120, gold_ore: 180, mythril_ore: 400, golden_oats: 1500 };
+  const buyCost = k => { if (k[0] === '$') return Math.min(...catMembers(k).filter(i => BUY.has(i)).map(i => Math.min(IT[i].p || 0, SHOP_PRICE[i] || 1e9)).concat([1e9])) % 1e9; return Math.min(worth(k), SHOP_PRICE[k] || 1e9); };
+  const memoB = {}, memoD = {};
+  const buyable = (k, seen = new Set()) => {
+    if (k[0] === '$') return catMembers(k).some(i => BUY.has(i));
+    if (BUY.has(k)) return true; if (memoB[k] !== undefined) return memoB[k]; if (!recipes[k] || seen.has(k)) return false;
+    seen.add(k); const r = recipes[k].some(rc => Object.keys(rc.ing).every(i => buyable(i, seen))); seen.delete(k); return memoB[k] = r;
+  };
+  const depth = (k, seen = new Set()) => { if (memoD[k] !== undefined) return memoD[k]; if (!recipes[k] || seen.has(k) || k[0] === '$') return 0; seen.add(k); const d = 1 + Math.max(0, ...recipes[k].map(rc => Math.max(0, ...Object.keys(rc.ing).map(i => depth(i, seen))))); seen.delete(k); return memoD[k] = d; };
+  const SKIP = new Set(['tool', 'special', 'quest', 'buildtool']);
+  const ids = Object.keys(recipes).filter(k => !SKIP.has(IT[k].t)).sort((a, b) => depth(a) - depth(b));
+  for (const id of ids) {
+    let best = null;
+    for (const rc of recipes[id]) { let s = 0; for (const k in rc.ing) s += rc.ing[k] * worth(k); const per = s / rc.n; if (!best || per < best.per) best = { per, rc }; }
+    if (!best || !(best.per > 0)) continue;
+    const L = best.rc.L, d = depth(id), madeIn = Object.keys(best.rc.ing).some(k => recipes[k]);
+    let mult = L >= 6 || d >= 3 ? 1.6 : L >= 3 || madeIn ? 1.25 : .75;
+    const sf = HALF_SELL.has(IT[id].t) ? .5 : 1;
+    let sell = best.per * mult;
+    // everything in it can be bought: it sells for under what the cheapest ingredients cost, even after a 10% price dip
+    if (Object.keys(best.rc.ing).every(k => buyable(k))) { let c = 0; for (const k in best.rc.ing) c += best.rc.ing[k] * buyCost(k); sell = Math.min(sell, c / best.rc.n * .9 * .85); }
+    IT[id].p = Math.max(1, Math.round(sell / sf));
+  }
+  // and nothing a shop sells at a fixed price sells back for more than it costs there (sugar was 45g in the Pantry, 120g sold)
+  for (const k in SHOP_PRICE) if (IT[k] && IT[k].p * (HALF_SELL.has(IT[k].t) ? .5 : 1) > SHOP_PRICE[k] * .85) IT[k].p = Math.max(1, Math.round(SHOP_PRICE[k] * .85 / (HALF_SELL.has(IT[k].t) ? .5 : 1)));
+}
+document.addEventListener('DOMContentLoaded', () => { try { repriceCrafts(); } catch (e) { console.error(e); } });
