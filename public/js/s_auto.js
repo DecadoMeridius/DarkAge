@@ -97,8 +97,11 @@ function autoTick(m) {
     if (o.k === 'splitter') { if (o.next === undefined) o.next = 0; d = o.next ? RIGHT[o.d] : o.d; }
     const nx = x + DIRV[d][0], ny = y + DIRV[d][1]; if (!inb(m, nx, ny)) continue;
     const ni = ny * W + nx, n = m.o[ni];
-    if (isBelt(n)) { if (!n.item && !moved.has(ni)) { n.item = o.item; o.item = null; moved.add(ni); n.slideFrom = d; n.slideT = TICK.n; if (o.k === 'splitter') o.next = 1 - o.next; } }
-    else if ((isAuto(n) || isMach(n)) && accept(n, o.item)) { o.item = null; if (o.k === 'splitter') o.next = 1 - o.next; }
+    if (isBelt(n)) { if (!n.item && !moved.has(ni)) { n.item = o.item; o.item = null; o.jam = 0; moved.add(ni); n.slideFrom = d; n.slideT = TICK.n; if (o.k === 'splitter') o.next = 1 - o.next; } }
+    else if (isAuto(n) || isMach(n)) {
+      if (accept(n, o.item)) { o.item = null; o.jam = 0; if (o.k === 'splitter') o.next = 1 - o.next; }
+      else if (pass === 1 && !round) o.jam = (o.jam || 0) + 1;   // the machine won't take it: counted so the belt can show it's stuck (x_fix6.js)
+    }
   }
   }
 }
@@ -158,7 +161,7 @@ objInteract = function (m, x, y, o) {
     if (o.k === 'sorter' && holding) return { label: 'Filter', fn: () => { o.filter = k; toast('Sorter: ' + IT[k].n + ' goes straight, everything else turns right.'); } };
     return { label: 'Rotate', fn: () => { o.d = [1, 3, 0, 2][o.d]; SFX.pop(); } }; // clockwise: down, left, up, right
   }
-  if (o.k === 'storage') return { label: S.mounted && selKind() === 'cart' ? 'Unload cart' : 'Open', fn: () => S.mounted && selKind() === 'cart' ? unloadCart(o) : openCrate(o) };
+  if (o.k === 'storage') return { label: cartOn() ? 'Unload cart' : 'Open', fn: () => cartOn() ? unloadCart(o) : openCrate(o) };
   if (o.k === 'triphammer') return { label: 'Set up', fn: () => openHammer(o, m, x, y) };
   if (o.k === 'treadwheel') return { label: 'Feed', fn: () => { let n = 0; while (has('hay') && accept(o, 'hay', 1, true) && n < 40) { take('hay'); accept(o, 'hay'); n++; } toast(n ? 'Fed ' + n + ' hay. It powers things within 7 tiles while it has hay.' : 'The treadwheel runs on hay.'); } };
   if (o.k === 'channel' && o.clog) return { label: 'Clear debris', fn: () => { if (S.p.st < 1) { toast('Too tired. Eat or sleep.', 'bad'); return; } useStamina(1); o.clog = 0; waterChannels(m); SFX.pop(); sparkle(x, y, '#9ad0ff'); toast('Channel cleared: the water flows again.', 'good'); } };
@@ -305,9 +308,11 @@ let CHANNEL_NEWS = 0;
 /* ---- horse cart: while riding with the cart selected, what you pick up goes in the cart;
    interact with a storage crate to unload it ---- */
 const CART_CAP = 400;
+// the cart works while it's hitched to the horse you ride (selKind() was only 'cart' inside asKind, so it never filled)
+function cartOn() { return !!(S && S.mounted && (S.hitch ? S.hitch.k === 'cart' : selKind() === 'cart')); }
 const _giveA = give;
 give = function (id, n = 1, q = 0, quiet) {
-  if (S && S.mounted && selKind() === 'cart' && id !== '$' && IT[id] && !GIVE_NO_DROP) {
+  if (S && cartOn() && id !== '$' && IT[id] && !(GIVE_NO_DROP && MODAL)) {   // ground pickups go in the cart too (not bank withdrawals)
     S.cart = S.cart || {}; const room = CART_CAP - sum(S.cart), put = Math.min(room, n), k = keyOf(id, QUAL_T.has(IT[id].t) ? q : 0);
     if (put > 0) { S.cart[k] = (S.cart[k] || 0) + put; if (!quiet) floatText(S.p.x, S.p.y - 34, '+' + put + ' ' + IT[id].n + ' (cart)', '#fff6d8'); }
     return put < n ? _giveA(id, n - put, q, quiet) : 0;
@@ -316,7 +321,7 @@ give = function (id, n = 1, q = 0, quiet) {
 };
 function unloadCart(o) { o.inv = o.inv || {}; let n = 0; for (const k in S.cart || {}) { o.inv[k] = (o.inv[k] || 0) + S.cart[k]; n += S.cart[k]; } S.cart = {}; toast(n ? 'Unloaded ' + n + ' items into the crate.' : 'The cart is empty.'); SFX.ok(); }
 const _hudTickA = hudTick;
-hudTick = function (dt) { _hudTickA(dt); if (S && !TITLE && $('#pL') && S.mounted && selKind() === 'cart') $('#pL').innerHTML = '<kbd>Cart</kbd>' + sum(S.cart) + ' / ' + CART_CAP + ' (interact with a storage crate to unload)'; };
+hudTick = function (dt) { _hudTickA(dt); if (S && !TITLE && $('#pL') && cartOn()) $('#pL').innerHTML = '<kbd>Cart</kbd>' + sum(S.cart) + ' / ' + CART_CAP + ' (interact with a storage crate to unload)'; };
 
 /* Channels are drawn as full squares that join their neighbours (2026-11-03: the old straight pieces made odd corners
    and needed turning): a dug bed edged with stone on every side that doesn't meet another channel, water in it

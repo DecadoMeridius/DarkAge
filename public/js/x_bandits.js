@@ -44,9 +44,9 @@ function bHitMonster(m, e, t) {
 function banditsFrame(dt) {
   const m = cur; if (!m || m.id !== 'wilds' || !m.towns) return;
   const day = (S.year - 1) * 112 + S.season * 28 + S.day;
-  BANDIT_T -= dt;
+  BANDIT_T -= dt;   // patrols come from the second week (on day 3 they took a level-3 player's lives)
   BANDIT_PATROLS = BANDIT_PATROLS.filter(P => P.members.some(e => !e.dead && m.ents.includes(e)));
-  if (BANDIT_T <= 0) { BANDIT_T = 40; if (day >= 2 && BANDIT_PATROLS.length < 2) spawnBandits(m); }
+  if (BANDIT_T <= 0) { BANDIT_T = 40; if (day >= 7 && BANDIT_PATROLS.length < 2) spawnBandits(m); }
   const monsters = m.ents.filter(e => e.type === 'enemy' && !e.dead && !e.bandit && !(EN[e.k] && EN[e.k].boss));
   for (const P of BANDIT_PATROLS) {
     P.age += dt; const live = P.members.filter(e => !e.dead && m.ents.includes(e));
@@ -89,7 +89,8 @@ wildSpawns = (f => function (m, dt) { WILD_SPAWN = true; try { return f.apply(th
 spawnEnemy = (f => function (m, k, x, y, lvl) {
   const e = f.apply(this, arguments);
   if (WILD_SPAWN && e && !e.dead && PACKS.has(e.k) && !e.pack) {
-    WILD_SPAWN = false; const n = 1 + Math.floor(Math.random() * 4);
+    // strong creatures and region packs come two or three at a time (seven Rime Wolves beat a full Tidesteel player)
+    WILD_SPAWN = false; const tough = (EN[e.k] && EN[e.k].hp >= 200) || m.region || (typeof REGIONS !== 'undefined' && REGIONS[m.id]), n = tough ? 1 + Math.floor(Math.random() * 2) : 1 + Math.floor(Math.random() * 4);
     for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, r = 14 + Math.random() * 26; const t = typeof openTileNear === 'function' ? openTileNear(m, Math.floor((e.x + Math.cos(a) * r) / 16), Math.floor((e.y + Math.sin(a) * r) / 16)) : null;
       const q = t ? f(m, e.k, (t[0] + .5) * 16 + (Math.random() - .5) * 10, (t[1] + .8) * 16 + (Math.random() - .5) * 6, lvl) : null; if (q) { q.pack = e; q.ai.t = Math.random() * 3; } }
     e.pack = e; WILD_SPAWN = true;

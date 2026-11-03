@@ -75,7 +75,8 @@ function campTick() {
       if (spot) { strikeCamp(m, C); const n = 1 + Math.floor(Math.random() * 3); buildCamp(m, spot[0], spot[1], n); C.x = spot[0]; C.y = spot[1]; C.size = n; st.pos = [C.x, C.y, n]; st.cleared = 0; st.seen = 0; if (typeof CHUNK !== 'undefined') CHUNK.clear(); d = dist(S.p.x / 16, S.p.y / 16, C.x, C.y); }
     }
     const live = m.ents.filter(e => e.camp === C.i && !e.dead);
-    if (d < 34 && !live.length && !st.here && (!st.cleared || dayIndex() - st.cleared >= 2)) {
+    // the first four days the camps stand empty, so a new player's first trips into the Wilds aren't a tribe and an ogre
+    if (d < 34 && !live.length && !st.here && dayIndex() >= 5 && (!st.cleared || dayIndex() - st.cleared >= 2)) {
       const kinds = ['goblin', 'goblin', 'goblin_slinger'], extra = Math.floor(Math.random() * (C.size + 1)); /* small tribes: 3-6 */
       for (let i = 0; i < extra; i++) kinds.push(Math.random() < .35 ? 'goblin_slinger' : 'goblin');
       if (C.size >= 2 || Math.random() < .35) kinds.push('ogre');
@@ -84,7 +85,8 @@ function campTick() {
       st.here = 1; if (!st.seen) { st.seen = 1; toast('Smoke and shrieking ahead: a goblin camp!', 'bad'); }
     }
     const now = m.ents.filter(e => e.camp === C.i && !e.dead);
-    if (st.here && !now.length && m.ents.some(e => e.camp === C.i)) { st.here = 0; st.cleared = dayIndex(); m.ents = m.ents.filter(e => e.camp !== C.i); toast('The goblin camp is cleared. They\'ll be back in a couple of days.', 'good'); }
+    // the dead are already out of m.ents, so "all gone while you're near" means cleared (the old test never fired)
+    if (st.here && !now.length && d < 30) { st.here = 0; st.cleared = dayIndex(); m.ents = m.ents.filter(e => e.camp !== C.i); toast('The goblin camp is cleared. They\'ll be back in a couple of days.', 'good'); }
     if (st.here && d > 70) { st.here = 0; m.ents = m.ents.filter(e => e.camp !== C.i); }   // gone home for now
   }
 }

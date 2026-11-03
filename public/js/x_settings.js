@@ -101,7 +101,12 @@ let REBIND = null;
 for (const type of ['keydown', 'keyup']) addEventListener(type, e => {
   if (e.__mapped) return;
   const k = e.key.toLowerCase();
-  if (REBIND && type === 'keydown') { e.preventDefault(); e.stopImmediatePropagation(); if (k !== 'escape') { for (const id in SETTINGS.binds) if (SETTINGS.binds[id] === k) delete SETTINGS.binds[id]; SETTINGS.binds[REBIND] = k; saveSettings(); buildKeymap(); } REBIND = null; if (MODAL) refresh(); return; }
+  if (REBIND && type === 'keydown') { e.preventDefault(); e.stopImmediatePropagation(); if (k !== 'escape') {
+      // a key already used by another action: the two swap keys (binding Ride to I used to leave the backpack without a key)
+      const keyOf_ = id => SETTINGS.binds[id] || ACTIONS.find(a => a[0] === id)[2], old = keyOf_(REBIND);
+      for (const [id, n] of ACTIONS) if (id !== REBIND && keyOf_(id) === k && old !== k) { SETTINGS.binds[id] = old; toast(n + ' moved to ' + KEYNAME(old) + '.'); }
+      SETTINGS.binds[REBIND] = k; for (const [id, , def] of ACTIONS) if (SETTINGS.binds[id] === def) delete SETTINGS.binds[id];
+      saveSettings(); buildKeymap(); } REBIND = null; if (MODAL) refresh(); return; }
   if (e.target && /input|textarea/i.test(e.target.tagName)) return;
   if (KEYMAP[k]) { e.preventDefault(); e.stopImmediatePropagation(); const ev = new KeyboardEvent(type, { key: DEF_EVENT_KEY(KEYMAP[k]), bubbles: true, repeat: e.repeat }); ev.__mapped = 1; dispatchEvent(ev); return; }
   if (SUPPRESS.has(k)) { e.preventDefault(); e.stopImmediatePropagation(); }
@@ -135,6 +140,7 @@ renderOpts = function (b) {
       el('div', { class: 'acts', style: 'justify-content:flex-end;margin-top:8px' }, el('button', { class: 'btn', on: () => { KEYPOP = 0; REBIND = null; refresh(); } }, 'Done')));
     const ov = el('div', null, box); ov.style.cssText = 'position:fixed;inset:0;background:rgba(10,6,4,.55);display:flex;align-items:center;justify-content:center;z-index:60';
     ov.onclick = e => { if (e.target === ov) { KEYPOP = 0; REBIND = null; refresh(); } };
+    box.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); box.scrollTop += e.deltaY; }, { passive: false });   // the window's own wheel handling kept the list from scrolling
     b.append(ov);
   }
 };

@@ -81,8 +81,8 @@ function render(dt) {
     else for (let y = cy * CH; y < Math.min(m.h, cy * CH + CH); y++) for (let x = cx * CH; x < Math.min(m.w, cx * CH + CH); x++) { g.fillStyle = groundStyle(paintKey(m, x, y), m.dark || m.indoor ? 0 : sea, m.theme).base; g.fillRect(x * 16, y * 16, 16.1, 16.1); }
   }
   // past the top and bottom map edges (the camera may scroll a little past them) the edge chunks are drawn mirrored,
-  // so there's ground there instead of a dark strip
-  if (cyp < 0 || cyp + vh > m.h * 16) for (let cx = Math.floor(x0 / CH); cx <= Math.floor((x1 - 1) / CH); cx++) for (const top of [true, false]) {
+  // so there's ground there instead of a dark strip (not indoors or underground: a room's back wall showed doubled)
+  if (!m.indoor && !m.dark && !m.room && (cyp < 0 || cyp + vh > m.h * 16)) for (let cx = Math.floor(x0 / CH); cx <= Math.floor((x1 - 1) / CH); cx++) for (const top of [true, false]) {
     if (top ? cyp >= 0 : cyp + vh <= m.h * 16) continue;
     const ey = top ? 0 : Math.floor((m.h - 1) / CH), c = CHUNK_LAST.get(m.uid + '|' + cx + ',' + ey); if (!c) continue;
     const X0 = Math.round((cx * P - cxp) * Z), X1 = Math.round(((cx + 1) * P - cxp) * Z), edge = Math.round(((top ? 0 : m.h * 16) - cyp) * Z), Hs = Math.round(P * Z);

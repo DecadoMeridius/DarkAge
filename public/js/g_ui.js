@@ -38,7 +38,7 @@ function itemDesc(id) {
   if (it.eat) d.push('Restores ' + it.eat[0] + ' health and ' + it.eat[1] + ' energy.');
   if (it.buff) d.push('Buff: ' + Object.entries(it.buff).filter(([k]) => k !== 'dur').map(([k, v]) => ({ atk: '+' + v + ' attack', def: '+' + v + ' defense', spd: '+' + Math.round(v * 100) + '% speed', luck: '+' + v + ' luck', regen: 'regeneration', mine: 'better mining', fish: 'easier fishing', crit: '+' + Math.round(v * 100) + '% crit', maxhp: '+' + v + ' max health', fireres: 'fire immunity' }[k])).join(', ') + '.');
   if (it.wt) d.push(WTYPE[it.wt].n + '. Attack ' + it.atk + ', ' + (it.cd < .25 ? 'very fast' : it.cd < .35 ? 'fast' : it.cd < .45 ? 'steady' : 'slow') + (it.wt === 'spear' ? ', long reach' : it.wt === 'hammer' ? ', heavy knockback and stun' : it.wt === 'dagger' ? ', huge crits' : it.wt === 'bow' ? ', fires arrows' : '') + (it.tier === 'frost' ? ', chills enemies' : it.tier === 'obsidian' || it.tier === 'dragon' ? ', burns enemies' : '') + '.');
-  if (it.def) d.push('Defense ' + it.def + (it.block ? ', ' + Math.round(it.block * 100) + '% block chance' : '') + '.');
+  if (it.def) d.push('Defence ' + it.def + (it.block ? ', ' + Math.round(it.block * 100) + '% block chance' : '') + '.');
   if (it.tier && SETB[it.tier] && it.slot !== 'weapon' && it.slot !== 'shield') d.push('Full ' + TIERS.find(t => t[0] === it.tier)[1] + ' set: ' + SETB[it.tier][0] + '.');
   if (it.desc) d.push(it.desc + '.');
   if (it.crop) { const C = CROPS[it.crop]; d.push('Grows in ' + C.d + ' days during ' + C.s.map(q => SEASONS[q]).join(', ') + (C.re ? '. Regrows every ' + C.re + ' days.' : '.') + (C.y > 1 ? ' Up to ' + C.y + ' per harvest.' : '')); }
@@ -175,7 +175,7 @@ function renderQuests(b) {
 }
 function renderOpts(b) {
   b.append(el('div', { class: 'acts wrap' },
-    el('button', { class: 'btn', on: () => { if (!PERSIST.includes(cur.id)) { toast('Return to the surface to save.'); return; } toast(saveGame() ? 'Game saved.' : 'Could not save.'); } }, 'Save game'),
+    el('button', { class: 'btn', on: () => { toast(saveGame() ? (PERSIST.includes(cur.id) ? 'Game saved.' : 'Game saved. Loading it starts you on your farm.') : 'Could not save.'); } }, 'Save game'),
     el('button', { class: 'btn ghost', on: () => { S.music = MUSIC_ON = !MUSIC_ON; refresh(); } }, 'Music: ' + (MUSIC_ON ? 'on' : 'off')),
     el('button', { class: 'btn ghost', on: () => { S.sound = SOUND_ON = !SOUND_ON; refresh(); } }, 'Sound: ' + (SOUND_ON ? 'on' : 'off'))));
   b.append(el('div', { class: 'help', html: '<h3>How to play</h3><p><b>WASD</b> walks. <b>Left click</b> uses the selected tool, weapon or item (click far away to walk there and use it). <b>Right click</b> or <b>E</b> talks, opens, picks and enters. <b>Mouse wheel</b> or <b>1–0</b> pick a hotbar slot. <b>Shift</b> dodges, <b>R</b> rides.</p><p><b>I</b> backpack and hotbar, <b>B</b> recipes, <b>K</b> skills, <b>T</b> passive tree, <b>J</b> quests, <b>M</b> map, <b>U</b> encyclopedia, <b>Pause</b> pauses. Sleep before 2 am. The game autosaves every few minutes and every morning.</p><p>The full guide (HOW_TO_PLAY) comes with every release.</p>' }));
@@ -248,7 +248,7 @@ function renderHorseShop(b) {
 function renderBuild(b) {
   greet(b, 'hale'); const L = el('div', { class: 'list' });
   for (const k in BUILD) { const B = BUILD[k], lv = S.build[k] || 0, nx = B.lv[lv]; const cap = lv ? B.lv[lv - 1][2] : 0;
-    const row = el('div', { class: 'rrow' }, el('div', { class: 'qck' }, lv || '–'), el('div', { class: 'rtxt' }, el('b', null, B.n + (lv ? ' (level ' + lv + ')' : ' (not built)')), el('small', null, (k === 'silo' ? (lv ? 'Stores up to 240 hay from cut grass. Holding ' + S.silo + '.' : 'Cut grass becomes hay you can feed in winter.') : k === 'greenhouse' ? (lv ? 'Repaired. Crops grow in any season.' : 'Repair your grandmother\'s greenhouse.') : 'Holds ' + cap + ' ' + B.what + '.') + (nx ? ' Next: ' + nx[0].toLocaleString() + 'g, ' + Object.entries(nx[1]).map(([i, n]) => n + ' ' + IT[i].n).join(', ') + (k !== 'silo' && k !== 'greenhouse' ? ' → holds ' + nx[2] + '.' : '.') : ' Fully built.'))));
+    const row = el('div', { class: 'rrow' }, el('div', { class: 'qck' }, lv || '–'), el('div', { class: 'rtxt' }, el('b', null, B.n + (lv ? ' (level ' + lv + ')' : ' (not built)')), el('small', null, (k === 'silo' ? (lv ? 'Stores up to 240 hay from cut grass. Holding ' + S.silo + '.' : 'Cut grass becomes hay you can feed in winter.') : k === 'greenhouse' ? (lv ? 'Repaired. Crops grow in any season.' : 'Repair your grandmother\'s greenhouse.') : 'Holds ' + cap + ' ' + B.what + '.') + (nx ? ' Next: ' + ([nx[0] ? nx[0].toLocaleString() + 'g' : ''].concat(Object.entries(nx[1]).map(([i, n]) => n + ' ' + IT[i].n)).filter(Boolean).join(', ') || 'no cost') + (k !== 'silo' && k !== 'greenhouse' ? ' → holds ' + nx[2] + '.' : '.') : ' Fully built.'))));
     if (nx) { const ok = S.gold >= nx[0] && Object.entries(nx[1]).every(([i, n]) => has(i, n)); row.append(el('button', { class: 'btn' + (ok ? '' : ' off'), on: () => { if (!ok) { toast('Not enough gold or materials.', 'bad'); return; } S.gold -= nx[0]; for (const [i, n] of Object.entries(nx[1])) take(i, n); S.build[k] = lv + 1; SFX.lvl(); toast(B.n + (lv ? ' upgraded!' : ' built!'), 'lvl'); refresh(); } }, lv ? 'Upgrade' : 'Build')); }
     L.append(row); }
   b.append(L);

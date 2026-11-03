@@ -109,7 +109,7 @@ clickTarget = function () {
   return [tx, ty];
 };
 function counterNear(m, x, y) {
-  for (let dy = 0; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const [, , o] = mainOf(m, x + dx, y + dy); if (o && /counter|bar/.test(o.k)) return [x + dx, y + dy]; } // a little wider: Pip's bar sits further from him than Mara's counter
+  for (let dy = 0; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const [, , o] = mainOf(m, x + dx, y + dy); if (o && /^furn_(counter|bar)(_|$)/.test(o.k)) return [x + dx, y + dy]; } // a little wider: Pip's bar sits further from him than Mara's counter
   return null;
 }
 npcWalk = (f => function (dt) {
@@ -193,7 +193,7 @@ talkNPC = function (id) {
 drawModal = (f => function () {
   if (MODAL && MODAL.opts.giftTo && MODAL.tabs && MODAL.tabs.length > 1) { MODAL.tabs = MODAL.tabs.filter(t => t.id === 'bag'); MODAL.cur = 'bag'; } // the gift picker shows only the bag
   const r = f.apply(this, arguments);
-  const box = document.querySelector('#modal'); if (!MODAL || !box || !box.classList.contains('small')) return r;
+  const box = document.querySelector('#modal'); if (!MODAL || !box || !box.querySelector('.greet')) return r;   // (the street window only gets its 'small' class after this ran, so that test never matched)
   // street chat window: a real Chat button, and the shop greyed while it's closed
   const id = Object.keys(NPCS).find(k => NPCS[k].n === MODAL.title); if (!id) return r;
   const shut = MODAL.opts.closedShop === NPCS[id].shop || (NPCS[id].shop && HOURS[NPCS[id].shop] && !openAt(NPCS[id].shop, S.time) && cur && cur.id === 'village');
@@ -371,7 +371,7 @@ recalc = (f => function () {
   showDayReport = (f => function (lines) {
     if (fainted && performance.now() - fainted.t < 8000) {
       const F = fainted, hm = Math.floor(F.at / 60) % 24; fainted = null;
-      lines = [['coin', (/exhaustion/.test(F.msg) ? 'You stayed up past 2 am and collapsed' : 'You were knocked out') + ' (around ' + ((hm % 12) || 12) + (hm < 12 ? ' am' : ' pm') + '). Someone carried you to bed' + (F.lost > 0 ? ' and took ' + F.lost.toLocaleString() + 'g for the trouble' : '') + '. Sleep ' + (typeof castleOwned === 'function' && castleOwned() ? 'in a bed' : 'in your tent') + ' before 2 am next time.']].concat(lines);
+      lines = [['coin', (/exhaustion/.test(F.msg) ? 'You stayed up past 2 am and collapsed' : 'You were knocked out') + ' (around ' + ((hm % 12) || 12) + (hm < 12 ? ' am' : ' pm') + '). Someone carried you to bed' + (F.lost > 0 ? ' and took ' + F.lost.toLocaleString() + 'g for the trouble' : '') + (/exhaustion/.test(F.msg) ? '. Sleep ' + (typeof castleOwned === 'function' && castleOwned() ? 'in a bed' : 'in your tent') + ' before 2 am next time.' : '. Eat to heal in a fight, and dodge (Shift) the big attacks.')]].concat(lines);
     }
     fainted = null; return f(lines);
   })(showDayReport);
@@ -389,6 +389,7 @@ stepWhere = (f => function (sid, st) {
 // the first nights in the Wilds come with a warning
 EVT.on('map', id => {
   if (!S || TITLE || id !== 'wilds' || dayIndex() > 14) return;
+  if (typeof townAt === 'function' && cur && townAt(cur, S.p.x / 16, S.p.y / 16, 2)) return;   // arriving in a town by waystone: you're safe there
   if ((S.time >= 1200 || S.time < 330) && S.flags) { const k = 'nightWarn' + dayIndex(); if (S.flags[k]) return; S.flags[k] = 1; toast('Night in the Wilds: stronger creatures roam until dawn. Stay near the road, or come back in daylight.', 'bad'); }
 });
 // the map: a Centre button, and zooming keeps your marker in view

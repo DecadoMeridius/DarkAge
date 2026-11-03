@@ -115,7 +115,7 @@ function objInteract(m, x, y, o) {
   if (k === 'shard') return { label: 'Take', fn: () => { if (!S.flags[o.id]) { S.flags[o.id] = 1; give('ember_shard', 1); } setO(m, x, y, null); } };
   if (k === 'shrine') return { label: 'Pray', fn: () => openShrine(o.bio) };
   if (k === 'altar') return { label: 'Altar', fn: openAltar };
-  if (k === 'well') return { label: 'Wish', fn: wishWell };
+  if (k === 'well') return { label: 'Wish (100g)', fn: wishWell };
   if (k === 'sign' || k === 'statue') return { label: 'Read', fn: () => toast(o.text || 'Weathered letters you can\'t quite read.') };
   if (k === 'grave') return { label: 'Read', fn: () => toast('HERE LIES PIP THE ELDER. HE MADE GOOD ALE.') };
   if (k === 'cave') return { label: 'Enter', fn: () => { S.poiSeen = S.poiSeen || {}; goMap(o.id); } };
@@ -156,7 +156,7 @@ function useTool() {
   } else if (k === 'axe' || k === 'pick') {
     if (o && OBJ[o.k]) {
       const D = OBJ[o.k];
-      if (D.place && !o.fixed) { if (k === 'pick' || o.k === 'fence' || o.k === 'fgate') { if (D.mach && o.out) { toast('Collect what\'s inside first.'); return; } delObj(m, ax, ay); give(o.k === 'cheese' ? 'cheese_press' : o.k, 1, 0, true); SFX.pick(); } return; }
+      if (D.place && !o.fixed) { if (k === 'pick' || k === 'multi') { if (D.mach && o.out) { toast('Collect what\'s inside first.'); return; } delObj(m, ax, ay); give(o.k === 'cheese' ? 'cheese_press' : o.k === 'fgate' ? 'fence_gate' : o.k, 1, 0, true); SFX.pick(); } return; }   // only the pickaxe picks things up (an axe click used to open a fenced field)
       if (o.k === 'ftree' && k === 'axe') { if (!o.chop) { o.chop = 1; toast('Chop again to cut down this fruit tree.'); return; } delObj(m, ax, ay); give('wood', 8); return; }
       if (D.tool === k) { if (D.tlvl && lvl < D.tlvl) { toast('You need a better ' + (k === 'axe' ? 'axe' : 'pickaxe') + ' (' + TIER_TOOL[D.tlvl] + ').', 'bad'); SFX.bad(); o.shake = .2; return; } hitObj(m, ax, ay, o, power(lvl)); useStamina(cost(3)); return; }
       if (D.tool) { toast('Use the ' + (D.tool === 'axe' ? 'axe' : 'pickaxe') + ' on that.'); return; }
@@ -292,7 +292,7 @@ function killEnemy(m, e) {
 }
 function hurtPlayer(dmg, sx, sy, elem) {
   if (pl.inv > 0 || pl.roll > 0) return;
-  if (S.eq.shield && Math.random() < IT[S.eq.shield].block) { dmg *= .3; floatText(S.p.x, S.p.y - 30, 'Block', '#c8d0d8'); snd(800, .05, 'square', .04); }
+  if (S.eq.shield && Math.random() < IT[S.eq.shield].block) { dmg *= .3; floatText(S.p.x - 14, S.p.y - 40, 'Block', '#c8d0d8'); snd(800, .05, 'square', .04); }
   const d = Math.max(1, Math.round(dmg - PS.def)); S.p.hp -= d; pl.inv = .9; SFX.hurt(); SHAKE = .15;
   if (elem === 'fire' && !PS.fireres) pl.burn = 3; if (elem === 'ice') pl.chill = 2.5;
   floatText(S.p.x, S.p.y - 26, '-' + d, '#ff6a5a');
@@ -470,7 +470,7 @@ function fishLocs() {
 function startFishing(lava) {
   if (lava && S.tools.rod < 3) { toast('Your line would burn. You need an Iron rod or better.', 'bad'); return; }
   if (S.p.st < 1) { toast('Too tired to fish.'); return; }
-  useStamina(Math.max(.5, 2 - S.sk.fishing.l * .15)); fishing = { phase: 'wait', t: 1.2 + Math.random() * 3, locs: fishLocs() }; SFX.splash();
+  useStamina(Math.max(1, 3 - S.sk.fishing.l * .2)); fishing = { phase: 'wait', t: 1.2 + Math.random() * 3, locs: fishLocs() }; SFX.splash();
 }
 function chooseFish(locs) {
   const day = S.time >= 360 && S.time < 1140;
@@ -541,7 +541,7 @@ function fairyRing(m, x, y, o) {
   if (o.day === dayIndex()) { toast('The lights have faded for tonight.'); return; }
   o.day = dayIndex(); give('moon_mushroom', 2); if (!S.flags.sh_fairy) { S.flags.sh_fairy = 1; give('ember_shard', 1); } SFX.secret(); toast('Tiny lights dance around you and leave gifts behind.', 'lvl');
 }
-function wishWell() { if (S.flags.well === dayIndex()) { toast('You\'ve made your wish today.'); return; } if (S.gold < 100) { toast('Wishes cost 100g.'); return; } S.gold -= 100; S.flags.well = dayIndex(); SFX.coin(); const r = Math.random(); if (r < .5) { S.buffs.push({ id: 'wish', t: 600, luck: 1 }); toast('The water shimmers. You feel lucky.'); } else if (r < .8) { give('$', ri(50, 300)); toast('Coins glint at the bottom. Someone else\'s wish came true.'); } else { give(pickR(['golden_oats', 'treasure_map', 'topaz', 'growth_tonic']), 1); toast('Something bobs to the surface!'); } recalc(); }
+function wishWell() { if (S.flags.well === dayIndex()) { toast('You\'ve made your wish today.'); return; } if (S.gold < 100) { toast('Wishes cost 100g.'); return; } if (!(gameT - (window.__wishAsk || -9) < 4)) { window.__wishAsk = gameT; toast('Toss 100g into the well and make a wish? Interact again to throw it.'); return; } window.__wishAsk = -9; S.gold -= 100; S.flags.well = dayIndex(); SFX.coin(); const r = Math.random(); if (r < .5) { S.buffs.push({ id: 'wish', t: 600, luck: 1 }); toast('The water shimmers. You feel lucky.'); } else if (r < .8) { give('$', ri(50, 300)); toast('Coins glint at the bottom. Someone else\'s wish came true.'); } else { give(pickR(['golden_oats', 'treasure_map', 'topaz', 'growth_tonic']), 1); toast('Something bobs to the surface!'); } recalc(); }
 function checkPOIs() {
   const m = cur; if (m.id !== 'wilds') return; S.poiSeen = S.poiSeen || {}; const tx = S.p.x / 16, ty = S.p.y / 16;
   const cx = Math.floor(tx / 4), cy = Math.floor(ty / 4); for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) { const X = cx + i, Y = cy + j; if (X >= 0 && Y >= 0 && X < EW && Y < EH) EXPL[Y * EW + X] = 1; }
@@ -627,7 +627,12 @@ function dailyWorld(report) {
   for (let k = 0; k < 200; k++) { const x = ri(3, 34), y = ri(22, 40), i = y * MAPS.farm.w + x; if (!MAPS.farm.o[i] && !MAPS.farm.soil[i] && getT(MAPS.farm, x, y) === 'g') { MAPS.farm.o[i] = { k: 'dig' }; break; } }
   for (const o of m.o) if (o && o.k === 'bush') o.ripe = (S.season === 2 || (S.season === 1 && Math.random() < .3)) && Math.random() < .5 ? 1 : 0;
   // ore respawn
-  let ores = 0; for (let k = 0; k < 3000 && ores < 30; k++) { const x = ri(3, m.w - 4), y = ri(3, m.h - 6), i = y * m.w + x, t = m.t[i]; if (m.o[i] || TER[t].solid || TER[t].water || t === 'd' || t === 'b' || m.solidB[i]) continue; const b = BIOMES[m.bio[i]]; const pool = { highlands: [['rock', 4], ['ore_copper', 2], ['ore_iron', 2], ['ore_silver', 1.5], ['ore_gold', .6], ['ore_coal', 1]], frost: [['ore_frost', 2], ['crystalnode', 1], ['ore_silver', 1]], ash: [['ore_obsidian', 2], ['ore_adamant', .6], ['ore_gold', 1]] }[b]; if (!pool) continue; m.o[i] = { k: wpick(pool), v: b === 'frost' ? 'S' : null }; ores++; }
+  // only tops the highland, frost and ash rocks back up to what the map had (it added 30 every night, so the Wilds and
+  // the save grew without end: overnight playtest, 20,160 -> 23,496 objects in a year)
+  const OREB = { highlands: 1, frost: 1, ash: 1 }, oreK = /^(rock|ore_|crystalnode)/;
+  let have = 0; for (let i = 0; i < m.o.length; i++) { const o = m.o[i]; if (o && oreK.test(o.k) && OREB[BIOMES[m.bio[i]]]) have++; }
+  if (m._oreBase === undefined) m._oreBase = have;
+  let ores = 0; const want = Math.min(30, m._oreBase - have); for (let k = 0; k < 3000 && ores < want; k++) { const x = ri(3, m.w - 4), y = ri(3, m.h - 6), i = y * m.w + x, t = m.t[i]; if (m.o[i] || TER[t].solid || TER[t].water || t === 'd' || t === 'b' || m.solidB[i]) continue; const b = BIOMES[m.bio[i]]; const pool = { highlands: [['rock', 4], ['ore_copper', 2], ['ore_iron', 2], ['ore_silver', 1.5], ['ore_gold', .6], ['ore_coal', 1]], frost: [['ore_frost', 2], ['crystalnode', 1], ['ore_silver', 1]], ash: [['ore_obsidian', 2], ['ore_adamant', .6], ['ore_gold', 1]] }[b]; if (!pool) continue; m.o[i] = { k: wpick(pool), v: b === 'frost' ? 'S' : null }; ores++; }
   // merchant
   const wd = (dayIndex() - 1) % 7; if ((wd === 4 || wd === 6) && m.merchant) { const [x, y] = m.merchant; putObj(m, x - 1, y, { k: 'cart' }); report.push(['coin', 'The wandering merchant has set up in Amber Meadow today.']); }
   // meteor

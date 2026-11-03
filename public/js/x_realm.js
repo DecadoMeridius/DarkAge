@@ -445,6 +445,8 @@ doorAction = (f => function (act, who) {
   if (TOWN_ACTS[act] && (who || (cur && cur.id === 'in_' + act))) {
     if (storyTalk(who || keeperOf(act))) return; // a story waiting on this keeper speaks first
     const H = HOURS[act]; if (!who && H && (S.time < H[0] || S.time >= H[1])) { toast('Closed. Open ' + fmtHM(H[0]) + ' to ' + fmtHM(H[1]) + '.'); return; }
+    // a keeper met on the street outside their hours just talks (it opened the whole shop)
+    if (who && H && (S.time < H[0] || S.time >= H[1]) && !(cur && cur.id === 'in_' + act)) return openModal(NPCS[who] ? NPCS[who].n : 'Talk', [{ id: 't', label: 'Talk', render: b => { greet(b, who); b.append(el('p', { class: 'note' }, 'The ' + (TOWN_ACTS[act].name || 'shop') + ' is shut. Open ' + fmtHM(H[0]) + ' to ' + fmtHM(H[1]) + '.')); } }]);
     return townMenu(act, who);
   }
   return f(act, who);
@@ -826,7 +828,7 @@ carvePath = (f => function (m, a, b) { if (m && m.id === 'wilds' && typeof realm
 /* waking at the inn you slept in */
 endDay = (f => function (fainted) {
   const r = f(fainted), act = S && S.flags && S.flags.innWake;
-  if (act && !fainted) { S.flags.innWake = null; const b = MAPS.wilds && MAPS.wilds.bld.find(b => b.act === act); if (b) { goMap('wilds', (b.door.x + .5) * 16, (b.door.y + 1.8) * 16, 0); toast('You wake rested at ' + (TOWN_ACTS[act] ? TOWN_ACTS[act].name : 'the inn') + '.'); } }
+  if (act && !fainted) { S.flags.innWake = null; const b = MAPS.wilds && MAPS.wilds.bld.find(b => b.act === act); if (b) { if (ROOMS[act]) goMap('in_' + act); else goMap('wilds', (b.door.x + .5) * 16, (b.door.y + 1.8) * 16, 0); toast('You wake rested at ' + (TOWN_ACTS[act] ? TOWN_ACTS[act].name : 'the inn') + '.'); } }
   else if (S && S.flags) S.flags.innWake = null;
   return r;
 })(endDay);

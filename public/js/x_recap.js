@@ -12,14 +12,14 @@ function storyRecap(sid) {
     const upto = q.done || c < q.c ? ch.steps.length : q.i;
     for (let i = 0; i < upto; i++) {
       const st = ch.steps[i]; let lines = st.lines; try { if (typeof lines === 'function') lines = lines(); } catch (e) { lines = null; }
-      let hint = st.hint; try { if (typeof hint === 'function') hint = hint(); } catch (e) { hint = ''; }
+      let hint = st.hint; try { if (typeof hint === 'function') hint = hint(st.t === 'kill' ? st.n : undefined); } catch (e) { hint = ''; }   // a finished kill step shows its full count
       if (hint) body.append(el('p', { class: 'recap-did' }, '✓ ' + String(hint).replace(/\s*\(\d+ of \d+[^)]*\)\.?$/, '')));   // what you did (without "2 of 3 found")
       for (const ln of Array.isArray(lines) ? lines : []) {
         const [sp, text] = ln, W = sp === 'narr' ? null : (typeof who === 'function' ? who(sp) : null);
         body.append(W ? el('p', null, el('b', null, W.n + ': '), '“' + text + '”') : el('p', null, el('i', null, text)));
       }
     }
-    if (!q.done && c === q.c) { const cur_ = ch.steps[q.i]; let h = cur_ && cur_.hint; try { if (typeof h === 'function') h = h(); } catch (e) {} if (h) body.append(el('p', { class: 'recap-now' }, 'Now: ' + h)); }
+    if (!q.done && c === q.c) { const cur_ = ch.steps[q.i]; let h = cur_ && cur_.hint; try { if (typeof h === 'function') h = h(cur_.t === 'kill' ? (q.kills || 0) : undefined); } catch (e) {} if (h) body.append(el('p', { class: 'recap-now' }, 'Now: ' + h)); }
   }
   if (q.done) body.append(el('p', { class: 'recap-now' }, 'The story is complete.'));
   openModal(Sd.n, [{ id: 'recap', label: 'The story so far', render: b => b.append(body) }]);

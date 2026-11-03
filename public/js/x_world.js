@@ -18,11 +18,11 @@
 const MEATS = [['poultry', 'Raw Poultry', 60, '#f0c8a8'], ['red_meat', 'Raw Red Meat', 90, '#c8423a'], ['pork', 'Raw Pork', 80, '#f0a0a0'], ['rabbit_meat', 'Rabbit Meat', 70, '#d8908a']];
 for (const [id, n, p, c] of MEATS) I(id, n, 'animal', p, 'food', c, '#f8e8e0', { meat: 1, desc: 'Raw meat. Cook it at a kitchen or campfire.' });
 CATF.$meat = k => !!(IT[k] && IT[k].meat); CATN.$meat = 'Any meat'; CATI.$meat = 'red_meat';
-I('roast_poultry', 'Roast Poultry', 160, 'food', 'food', '#d8a050', null, { eat: [50, 60] });
-I('steak', 'Grilled Steak', 220, 'food', 'food', '#8a3a22', null, { eat: [70, 60] });
-I('roast_pork', 'Roast Pork', 200, 'food', 'food', '#c87a5a', null, { eat: [60, 65] });
-I('meat_stew', 'Meat Stew', 420, 'food', 'food', '#9a5a2a', null, { eat: [110, 100] });
-I('sausage', 'Sausages', 300, 'food', 'food', '#a84a32', null, { eat: [70, 80], buff: { atk: 3, dur: 180 } });
+I('roast_poultry', 'Roast Poultry', 'food', 160, 'food', '#d8a050', null, { eat: [50, 60] });
+I('steak', 'Grilled Steak', 'food', 220, 'food', '#8a3a22', null, { eat: [70, 60] });
+I('roast_pork', 'Roast Pork', 'food', 200, 'food', '#c87a5a', null, { eat: [60, 65] });
+I('meat_stew', 'Meat Stew', 'food', 420, 'food', '#9a5a2a', null, { eat: [110, 100] });
+I('sausage', 'Sausages', 'food', 300, 'food', '#a84a32', null, { eat: [70, 80], buff: { atk: 3, dur: 180 } });
 RC.push(['roast_poultry', 1, { poultry: 1, salt: 1 }, 'kitchen'], ['steak', 1, { red_meat: 1, salt: 1 }, 'kitchen'], ['roast_pork', 1, { pork: 1, salt: 1 }, 'kitchen'],
   ['meat_stew', 1, { $meat: 2, potato: 1, carrot: 1 }, 'kitchen'], ['sausage', 2, { pork: 1, salt: 1, herb: 1 }, 'kitchen']);
 ['roast_poultry', 'steak', 'roast_pork'].forEach(k => BASIC_FOOD.add(k));
@@ -164,7 +164,8 @@ openModal = function (title, tabs, start, opts) {
     const fish = catCount('$fish');
     if (fish < 2) { b.append(el('p', { class: 'note' }, 'Bring 2 fish (any kind). You have ' + fish + '.')); return; }
     const nameIn = el('input', { placeholder: 'Name it', maxlength: 14 }); nameIn.style.cssText = 'padding:4px 8px;width:160px';
-    const adopt = kind => { catTake('$fish', 2); S.pet = { kind, name: nameIn.value.trim() || (kind === 'dog' ? 'Biscuit' : 'Ember'), aff: 10, x: 12 * 16, y: 12 * 16 }; SFX.lvl(); toast(S.pet.name + ' the ' + kind + ' is coming home with you!', 'lvl'); closeModal(); };
+    const adopt = kind => { if (S.pet || catCount('$fish') < 2) { closeModal(); return; } catTake('$fish', 2);   // once adopted, a stale window can't swap the pet
+    S.pet = { kind, name: nameIn.value.trim() || (kind === 'dog' ? 'Biscuit' : 'Ember'), aff: 10, x: 12 * 16, y: 12 * 16 }; SFX.lvl(); toast(S.pet.name + ' the ' + kind + ' is coming home with you!', 'lvl'); closeModal(); };
     b.append(el('div', { class: 'acts wrap' }, nameIn, el('button', { class: 'btn', on: () => adopt('dog') }, 'Adopt the dog'), el('button', { class: 'btn', on: () => adopt('cat') }, 'Adopt the cat')));
   } }]);
   return _openModalW(title, tabs, start, opts);

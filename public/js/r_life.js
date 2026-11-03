@@ -96,7 +96,7 @@ function festSetup() {
 const festState = () => { const key = S.year + '-' + S.season; S.fest = S.fest || {}; return S.fest[key] = S.fest[key] || {}; };
 function festPrize(F) {
   const st = festState(); if (st.done) { toast('You already took part in ' + F.n + ' this year.'); return; }
-  if (F.act === 'eggs') { const n = st.eggs || 0; if (S.time < 720) { toast('Eggs found: ' + n + '. Keep looking until noon!'); return; } st.done = 1; const g = n * 120; give('$', g); if (n >= 8) give('golden_egg' in IT ? 'golden_egg' : 'egg', 1); toast('You found ' + n + ' eggs! Prize: ' + g + 'g' + (n >= 8 ? ' and a special egg.' : '.'), 'lvl'); return; }
+  if (F.act === 'eggs') { const n = st.eggs || 0; if (S.time < 720) { toast('Eggs found: ' + n + '. Keep looking until noon!'); return; } st.done = 1; const g = n * 120; give('$', g); if (n >= 8) give('golden_egg' in IT ? 'golden_egg' : 'egg', 1); toast('You found ' + n + (n === 1 ? ' egg' : ' eggs') + '! Prize: ' + g + 'g' + (n >= 8 ? ' and a special egg.' : '.'), 'lvl'); return; }
   if (F.act === 'fair') {
     const best = sortedInv().filter(k => IT[parseK(k)[0]] && ['crop', 'fruit', 'forage', 'artisan', 'fish'].includes(IT[parseK(k)[0]].t)).sort((a, b) => valK(b) - valK(a))[0];
     if (!best) { toast('You need a crop, fish or artisan good to enter.', 'bad'); return; }

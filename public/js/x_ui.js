@@ -204,7 +204,7 @@ openModal = (f => function (title, tabs, start, opts) {
       render(b);
       const grid = b.querySelector('.bankcol.wide .grid'); if (!grid) return;
       const cur = MODAL.opts.kc || 'all', srt = MODAL.opts.ks || 'type', counts = {};
-      for (const k of Object.keys(S.bank)) if (S.bank[k] > 0 && IT[parseK(k)[0]]) { const c = bankCat(parseK(k)[0]); counts[c] = (counts[c] || 0) + 1; counts.all = (counts.all || 0) + 1; }
+      const kq = (MODAL.opts.kq || '').toLowerCase(); for (const k of Object.keys(S.bank)) if (S.bank[k] > 0 && IT[parseK(k)[0]] && (!kq || IT[parseK(k)[0]].n.toLowerCase().includes(kq))) { const c = bankCat(parseK(k)[0]); counts[c] = (counts[c] || 0) + 1; counts.all = (counts.all || 0) + 1; }
       const bar = el('div', { class: 'acts wrap', style: 'margin:2px 0 6px' });
       for (const [k, n] of BANK_CATS) if (k === 'all' || counts[k]) bar.append(el('button', { class: 'chip' + (cur === k ? ' on' : ''), on: () => { MODAL.opts.kc = k; refresh(); } }, n + ' ' + (counts[k] || 0)));
       const si = BANK_SORTS.findIndex(([k]) => k === srt);

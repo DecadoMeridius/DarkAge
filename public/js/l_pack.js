@@ -78,7 +78,7 @@ give = function (id, n = 1, q = 0, quiet) {
     if (IT[id].t === 'fish') S.stats.caught[id] = (S.stats.caught[id] || 0) + got;
   }
   if (left > 0) {
-    if (gameT - fullWarnT > 2) { toast('Your backpack is full.', 'bad'); fullWarnT = gameT; }
+    if (gameT - fullWarnT > 2) { toast('Your backpack is full' + (GIVE_NO_DROP ? '.' : ': ' + left + ' ' + IT[id].n + ' left on the ground.'), 'bad'); fullWarnT = gameT; }
     if (cur && !GIVE_NO_DROP) { for (let i = 0; i < left; i += stacks(id) ? left : 1) { dropItem(cur, S.p.x, S.p.y, id, stacks(id) ? left : 1); cur.ents[cur.ents.length - 1].q = q; cur.ents[cur.ents.length - 1].t = -1.2; } }
   }
   return left;

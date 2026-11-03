@@ -185,7 +185,7 @@ greet = function (b, id) {
 const _giftToF4 = giftTo;
 giftTo = function (id, item) {
   const before = fr(id).pts, ok = _giftToF4(id, item);
-  if (ok) { const d = fr(id).pts - before, h = hearts(id); if (d) toast(NPCS[id].n + (d >= 80 ? ' loved it' : d > 0 ? ' liked it' : ' didn\'t like it') + ' (' + (d > 0 ? '+' : '') + d + ' friendship' + (h < 10 ? ', ' + (250 - (fr(id).pts - h * 250)) + ' to the next heart' : '') + ').'); }
+  if (ok) { const d = fr(id).pts - before, h = hearts(id); if (d) toast(NPCS[id].n + (d >= 80 ? ' loved it' : d >= 45 ? ' liked it' : d > 0 ? ' thanked you for it' : ' didn\'t like it') + ' (' + (d > 0 ? '+' : '') + d + ' friendship' + (h < 10 ? ', ' + (250 - (fr(id).pts - h * 250)) + ' to the next heart' : '') + ').'); }
   return ok;
 };
 

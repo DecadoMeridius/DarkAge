@@ -133,7 +133,14 @@ if (typeof genCastle === 'function') genCastle = (f => function () { return join
 // Kingsbridge's west and east gates go: a gap in a north-south wall can't read with walls this tall (the wall
 // south of the gap is drawn over the passage and you vanish under it; style audit round 2). Roads come in at
 // the north and south gatehouses instead.
-if (typeof TOWNS !== 'undefined' && TOWNS.kingsbridge) { delete TOWNS.kingsbridge.gates.W; delete TOWNS.kingsbridge.gates.E; }
+if (typeof TOWNS !== 'undefined' && TOWNS.kingsbridge) {
+  const K = TOWNS.kingsbridge; delete K.gates.W; delete K.gates.E;
+  // and the plan stops pointing at them: the cross street ends at the side streets, the side-gate guards and towers go
+  // (overnight playtest: the main street, four guards and the lamps led into a blank wall)
+  K.st = K.st.map(s => s[0] === 1 && s[1] === 21 ? [12, 21, 32, 4, 'p'] : s);
+  K.guards = K.guards.filter(([x]) => x > 4 && x < 51);
+  K.towers = K.towers.filter(([x, y]) => y !== 20);
+}
 
 // is someone at (x, y) standing behind something tall (a tower, wall, gate or building in the rows below)?
 // Things drawn in the overlay pass (guards' swords) skip them, so a sword doesn't float on a tower's face

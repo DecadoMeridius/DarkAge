@@ -67,7 +67,7 @@ const STORIES = {
       { n: 'Rime and Ruin', steps: [
         { t: 'meet', who: 'sigrun', at: 'frostmere:town', hint: 'Find the elder of Rimehold.', lines: L('sigrun', 'Aldren\'s kin? You have his stubborn jaw.', 'The Rime Queen took the crown\'s cold half when he fell, and she has worn it ever since.', 'While she wears it, winter never leaves us. End her reign.', 'And mind yourself afterwards. When a crown falls, there is always someone waiting to pick up the throne.') },
         { t: 'boss', boss: 'rimequeen', hint: 'Defeat the Rime Queen in the Frostmere.', at: 'frostmere:arena' },
-        { t: 'meet', who: 'sigrun', at: 'frostmere:town', hint: 'Return to Elder Sigrun.', lines: L('sigrun', 'The ice cracked last night. Children ran out to hear it.', 'Aldren\'s trail ends in the Emberwaste. But the Pale Lich guards the way down your mine. Beat it first, or the crown\'s last bearer will wake knowing you\'re coming.') },
+        { t: 'meet', who: 'sigrun', at: 'frostmere:town', hint: 'Return to Elder Sigrun.', lines: L('sigrun', 'The ice cracked when the Rime Queen fell. Children ran out to hear it.', 'Aldren\'s trail ends in the Emberwaste. But the Pale Lich guards the way down your mine. Beat it first, or the crown\'s last bearer will wake knowing you\'re coming.') },
         { t: 'boss', boss: 'lich', hint: 'Defeat the Pale Lich on mine floor 30.' },
       ], reward: { gold: 7000, region: 'emberwaste' } },
       { n: 'The Hollow King', steps: [
@@ -80,7 +80,7 @@ const STORIES = {
   ashcombe: { n: 'The Ashcombe Signet', blurb: 'The landowner\'s lost ring, and the son who left.', start: () => S.day >= 5 || S.season > 0 || S.year > 1, how: 'Lord Ashcombe has asked to see you at the manor.',
     ch: [
       { n: 'A Debt of Land', steps: [
-        { t: 'talk', who: 'ashcombe', hint: 'Visit Lord Ashcombe at his manor in the village.', lines: L('ashcombe', 'So you are the one farming old Margit\'s land. Good. It was going to seed.', 'My family\'s signet was lost when our hunting lodge burned. It stood in the Wilds\' meadows, before the trees took it back.', 'Find the ruin and bring me that ring. I pay my debts.') },
+        { t: 'talk', who: 'ashcombe', hint: 'Visit Lord Ashcombe at his manor in the village.', lines: L('ashcombe', 'Our new neighbour comes calling. Margit\'s land looks better than it has in years.', 'My family\'s signet was lost when our hunting lodge burned. It stood in the Wilds\' meadows, before the trees took it back.', 'Find the ruin and bring me that ring. I pay my debts.') },
         { t: 'use', at: 'site:wilds:meadow', obj: 'lodge', hint: 'Find the burned hunting lodge in the Wilds\' meadows.', give: { ashcombe_signet: 1 }, lines: L('narr', 'Charred beams and a fallen chimney, half swallowed by brambles.', 'Under the hearthstone lies a heavy gold ring with a stag on it.') },
         { t: 'bring', who: 'ashcombe', items: { ashcombe_signet: 1 }, hint: 'Return the signet to Lord Ashcombe.', lines: L('ashcombe', 'The stag of Ashcombe. My father wore this every day of his life.', 'Any land you buy from me is a tenth cheaper from now on. A debt is a debt.') },
       ], reward: { gold: 1000, flag: 'ashDiscount' } },
@@ -100,7 +100,7 @@ const STORIES = {
         { t: 'use', at: 'wilds:ruins', obj: 'oldlantern', give: { old_lantern: 1 }, hint: 'Find the old lantern at the ruins in the Wilds.', lines: L('narr', 'A brass lantern on a toppled post, green with age. The glass is cracked, but whole.') },
         { t: 'use', at: 'site:wilds:forest', obj: 'oldlantern', give: { old_lantern: 1 }, hint: 'Find the old lantern deep in the Whisperwood.', lines: L('narr', 'Wrapped in ivy, high on an oak stump: the second lantern. A bird has nested in it.') },
         { t: 'use', at: 'wilds:hut', obj: 'oldlantern', give: { old_lantern: 1 }, hint: 'Find the old lantern by Corwin\'s hut on the coast.', lines: L('narr', 'Half buried in the sand by the dock, the third lantern. Salt has eaten its handle.') },
-        { t: 'bring', who: 'pip', items: { old_lantern: 3 }, hint: 'Bring the three lanterns to Pip.', lines: L('pip', 'All three! Dented, but they\'re ours.', 'Hale could mend them. He fixes everything else in this village.') },
+        { t: 'bring', who: 'pip', items: { old_lantern: 3 }, keep: 1, hint: 'Bring the three lanterns to Pip.', lines: L('pip', 'All three! Dented, but they\'re ours.', 'Hale could mend them. He fixes everything else in this village.') },
       ], reward: { gold: 600 } },
       { n: 'Mending the Light', steps: [
         { t: 'bring', who: 'hale', items: { old_lantern: 3, copper_bar: 3, sap: 2 }, hint: 'Bring Hale the lanterns, 3 copper bars and 2 amber sap.', wait: 'Old brass. Good brass. I\'ll need three copper bars and a bit of amber sap to seal the glass.',
@@ -136,7 +136,7 @@ const STORIES = {
       { n: 'The Sister at the Shrine', steps: [
         { t: 'meet', who: 'wren', at: 'wilds:shrine:forest', hint: 'Meet the pilgrim at the forest shrine in the Wilds.', lines: L('wren', 'Peace, traveller. I am Wren, of the Ember Pilgrims.', 'We tend the four shrines. This one has gone cold. It wants old hardwood and a lucky charm.', 'Wake it, and I\'ll tell you what the ember shards are for.') },
         { t: 'cond', test: () => !!S.shrines.forest, hint: 'Restore the Shrine of Leaves (30 hardwood and a rabbit\'s foot).', at: 'wilds:shrine:forest' },
-        { t: 'meet', who: 'wren', at: 'wilds:shrine:forest', hint: 'Speak with Sister Wren.', lines: L('wren', 'Warm again. Thank you.', 'The ember shards are pieces of the seal that bound the wyrm. Gather ten, and the old altar in the village will remember you.') },
+        { t: 'meet', who: 'wren', at: 'wilds:shrine:forest', hint: 'Speak with Sister Wren.', lines: L('wren', 'Warm again. Thank you.', 'The ember shards are pieces of the old seal that once bound the wyrm. Gather ten, and the old altar in the village will remember you.') },
       ], reward: { gold: 1000 } },
       { n: 'Ten Embers', steps: [
         { t: 'cond', test: () => S.shardsTotal >= 10, hint: () => 'Find 10 ember shards (' + S.shardsTotal + '/10).' },
@@ -166,7 +166,13 @@ const stepOf = sid => { const q = S.story && S.story.q[sid]; if (!q || q.done) r
 const hintOf = (sid, st) => { const h = st.hint; return typeof h === 'function' ? h(st.t === 'kill' ? (S.story.q[sid].kills || 0) : undefined) : h; };
 
 function storyGive(g) {
-  if (!g) return; for (const k in g) { if (k === '$') S.gold += g[k]; else give(k, g[k]); }
+  if (!g) return;
+  for (const k in g) {
+    if (k === '$') { S.gold += g[k]; continue; }
+    // a full backpack sends story items to the bank (never the ground: they were lost in the Wilds)
+    GIVE_NO_DROP = true; const left = give(k, g[k]); GIVE_NO_DROP = false;
+    if (left > 0 && IT[k]) { S.bank[k] = (S.bank[k] || 0) + left; toast('Your backpack is full: ' + left + ' ' + IT[k].n + ' went to your bank.'); }
+  }
 }
 function storyAdvance(sid) {
   const T = storyState(), q = T.q[sid], Sd = STORIES[sid], C = Sd.ch[q.c];
@@ -201,7 +207,8 @@ function storyDialog(lines, opts = {}) {
   const draw = () => {
     box.innerHTML = '';
     const [sp, text] = lines[i], W = sp === 'narr' ? null : who(sp);
-    if (W) { const spr = humanSpr('st' + sp, W.P, 0, 0), c = el('canvas', { width: spr.width, height: spr.height }); c.getContext('2d').drawImage(spr, 0, 0); Object.assign(c.style, { width: spr.width * 2 + 'px', height: spr.height * 2 + 'px', imageRendering: 'pixelated', flex: 'none' }); box.append(c); }
+    if (W) { const spr = humanSpr('st' + sp, W.P, 0, 0), c = el('canvas', { width: spr.width, height: spr.height }); c.getContext('2d').drawImage(spr, 0, 0); const pw = (spr.ww || spr.width / 2) * 4, ph = (spr.wh || spr.height / 2) * 4;   // world units: a painted style's sprite has 4x the pixels and filled half the screen
+    Object.assign(c.style, { width: pw + 'px', height: ph + 'px', imageRendering: SETTINGS.artStyle === 'pixel' ? 'pixelated' : 'auto', flex: 'none' }); box.append(c); }
     const txt = el('div', { class: 'rtxt' }, el('small', null, opts.title || ''), el('b', null, W ? W.n : ''), el('p', null, W ? '“' + text + '”' : el('i', null, text)));
     txt.style.flex = '1';
     const acts = el('div', { class: 'acts col' });
@@ -213,21 +220,24 @@ function storyDialog(lines, opts = {}) {
   draw();
   DIALOG = { close };
 }
-function runStep(sid, st, extraFirst) {
-  const lines = (extraFirst || []).concat(st.lines || []), finish = () => { storyGive(st.give); if (st.after) storyDialog(st.after, { title: STORIES[sid].n, done: () => storyAdvance(sid) }); else storyAdvance(sid); };
-  if (st.choices) return storyDialog(lines, { title: STORIES[sid].n, choices: st.choices.map(([label, c]) => [label, () => { S.story.flags[c.flag] = c.v; if (c.gold) S.gold += c.gold; storyGive(c.items); storyDialog([c.line], { title: STORIES[sid].n, done: () => storyAdvance(sid) }); }]) });
+function runStep(sid, st, extraFirst, pay) {   // pay: taken when the step completes, so a dialogue cut short never loses the items
+  const lines = (extraFirst || []).concat(st.lines || []), finish = () => { if (pay) { if (!hasAll(st.items)) return; pay(); } storyGive(st.give); if (st.after) storyDialog(st.after, { title: STORIES[sid].n, done: () => storyAdvance(sid) }); else storyAdvance(sid); };
+  if (st.choices) return storyDialog(lines, { title: STORIES[sid].n, choices: st.choices.map(([label, c]) => [label, () => { if (pay) { if (!hasAll(st.items)) return; pay(); } S.story.flags[c.flag] = c.v; if (c.gold) S.gold += c.gold; storyGive(c.items); storyDialog([c.line], { title: STORIES[sid].n, done: () => storyAdvance(sid) }); }]) });
   if (lines.length) storyDialog(lines, { title: STORIES[sid].n, done: finish }); else finish();
 }
-const hasAll = items => Object.entries(items || {}).every(([k, n]) => cnt(k) >= n);
-const takeAll = items => { for (const k in items || {}) take(k, items[k]); };
+// story items count from the backpack and the bank (a full backpack sends them to the bank)
+const storyCnt = k => cnt(k) + (S.bank[k] || 0);
+const hasAll = items => Object.entries(items || {}).every(([k, n]) => storyCnt(k) >= n);
+const takeAll = items => { for (const k in items || {}) { const inBag = Math.min(cnt(k), items[k]); if (inBag) take(k, inBag); const rest = items[k] - inBag; if (rest > 0 && S.bank[k]) { S.bank[k] -= rest; if (S.bank[k] <= 0) delete S.bank[k]; } } };
 
 /* talking to someone: if a story is waiting on them, the story goes first */
 function storyTalk(npc) {
+  if (DIALOG) return true;   // one press can reach this twice (door and keeper); a second dialogue used to cut the first short
   storyState();
   for (const sid in STORIES) {
     const st = stepOf(sid); if (!st || st.who !== npc || !['talk', 'bring', 'meet'].includes(st.t)) continue;
-    if (st.items && !hasAll(st.items)) { const miss = Object.entries(st.items).filter(([k, n]) => cnt(k) < n).map(([k, n]) => (n - cnt(k)) + ' ' + IT[k].n).join(', '); storyDialog([[npc, (st.wait ? st.wait + ' ' : '') + '(Still needed: ' + miss + '.)']], { title: STORIES[sid].n }); return true; }
-    takeAll(st.items); runStep(sid, st); return true;
+    if (st.items && !hasAll(st.items)) { const miss = Object.entries(st.items).filter(([k, n]) => storyCnt(k) < n).map(([k, n]) => (n - storyCnt(k)) + ' ' + IT[k].n).join(', '); storyDialog([[npc, (st.wait ? st.wait + ' ' : '') + '(Still needed: ' + miss + '.)']], { title: STORIES[sid].n }); return true; }
+    runStep(sid, st, null, st.items ? () => { if (!st.keep) takeAll(st.items); } : null); return true;   // keep: only shown (Pip sees the lanterns; Hale takes them)
   }
   return false;
 }
@@ -295,7 +305,7 @@ objSprite = function (o, season) {
 };
 const _objInteractW = objInteract;
 objInteract = function (m, x, y, o) {
-  if (o.k === 'storynpc') return { label: 'Talk', fn: () => { const st = stepOf(o.sid); if (!st || st.who !== o.c) return; if (st.items && !hasAll(st.items)) { storyDialog([[o.c, 'You don\'t have what I need yet. (' + Object.entries(st.items).map(([k, n]) => n + ' ' + IT[k].n).join(', ') + ')']], { title: STORIES[o.sid].n }); return; } takeAll(st.items); runStep(o.sid, st); } };
+  if (o.k === 'storynpc') return { label: 'Talk', fn: () => { const st = stepOf(o.sid); if (!st || st.who !== o.c) return; if (st.items && !hasAll(st.items)) { storyDialog([[o.c, 'You don\'t have what I need yet. (' + Object.entries(st.items).map(([k, n]) => n + ' ' + IT[k].n).join(', ') + ')']], { title: STORIES[o.sid].n }); return; } if (DIALOG) return; runStep(o.sid, st, null, st.items ? () => takeAll(st.items) : null); } };
   if (o.k === 'storyobj') return { label: 'Search', fn: () => { const st = stepOf(o.sid); if (!st) return; if (st.night && !(S.time >= 1200 || S.time < 300)) { toast('Nothing here by daylight. Corwin said the lights come after dark.'); return; } runStep(o.sid, st); } };
   const npc = o.k === 'keeper' ? o.npc : o.act ? ACTNPC[o.act] : null;
   if (npc && storyTalk(npc)) return { label: 'Talk', fn: () => storyTalk(npc) };

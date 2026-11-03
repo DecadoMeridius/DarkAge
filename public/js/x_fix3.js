@@ -46,7 +46,7 @@ primaryUse = function () {
   if (!PAUSED && !TITLE && !fishing && S && cur) {
     const k = selKind(), [tx, ty] = clickTarget();
     if (k === 'weapon' && typeof ACTION === 'function' && ACTION()) {
-      const [wx, wy] = mouseWorld(), onEnemy = enemyAt(wx, wy), ranged = typeof PS !== 'undefined' && (PS.wt === 'bow' || PS.wt === 'staff'), far = Math.hypot(wx - S.p.x, wy - S.p.y) > 140, near = cur.ents.some(e => e.type === 'enemy' && !e.dead && Math.hypot(e.x - S.p.x, e.y - S.p.y) < 200); // round 3: walking on far clicks made aimed swings drift, so a foe within 200 px means you attack
+      const [wx, wy] = mouseWorld(), onEnemy = enemyAt(wx, wy), ranged = typeof PS !== 'undefined' && (PS.wt === 'bow' || PS.wt === 'staff'), far = Math.hypot(wx - S.p.x, wy - S.p.y) > 140, near = foeNear(200); // round 3: walking on far clicks made aimed swings drift, so a foe within 200 px means you attack
       if (!onEnemy && !near && !inReach(tx, ty)) { walkTo(tx, ty, hasTarget(tx, ty) ? 'use' : null); return; }
     }
     if (!k) { if (!inReach(tx, ty)) walkTo(tx, ty, hasTarget(tx, ty) ? 'interact' : null); return; } // an empty slot never opens the satchel

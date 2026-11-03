@@ -91,7 +91,7 @@ for (const [tk, tn, col, mat, eff, rq, cl, sl, wood, setb, part] of RTIERS) {
   }
 }
 RC.push(['cobalt_bar', 1, { cobalt_ore: 5, coal: 2 }, 'furnace', ['smithing', 6]], ['tide_bar', 1, { tide_ore: 5, coal: 2, kelp: 1 }, 'furnace', ['smithing', 6]],
-  ['rime_bar', 1, { rime_ore: 5, coal: 3, rime_essence: 1 }, 'furnace', ['smithing', 8]], ['cinder_bar', 1, { cinder_ore: 5, coal: 4, hound_ember: 1 }, 'furnace', ['smithing', 9]]);
+  ['rime_bar', 1, { rime_ore: 5, coal: 3, rime_essence: 1 }, 'furnace', ['smithing', 7]], ['cinder_bar', 1, { cinder_ore: 5, coal: 4, hound_ember: 1 }, 'furnace', ['smithing', 9]]);
 
 /* ---- trophy rings: each boss part becomes a ring worth chasing ---- */
 [['ring_tyrant', 'Tyrant Band', 'tyrant_heart', { def: 6, maxhp: 40 }, '+6 defence, +40 health', 'cobalt_bar', 7],

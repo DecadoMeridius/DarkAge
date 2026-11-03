@@ -89,7 +89,7 @@ img, .ic, .cell img, .slot img, .eq img { image-rendering: pixelated; }
 .cell:hover, .slot:hover { background: #f0d8a8 !important; }
 
 /* title screen */
-#title small { font-size: 15px !important; }
+#title > small { font-size: 15px !important; }
 
 /* character creator */
 .creator { display: flex; gap: 22px; align-items: flex-start; }

@@ -100,15 +100,15 @@ endDay = function (f) {
 };
 function spouseChore(kid) {
   const m = MAPS.farm, who_ = kid ? '' : NPCS[fam().spouse].n + ' ', r = Math.random();
-  if (r < .35) { let n = 0; for (const k in m.soil) { const s = m.soil[k]; if (s && s.crop && !s.wet && n < 30) { s.wet = true; n++; } } if (n) return who_ + (kid ? 'watered ' : 'watered ') + n + ' crops.'; }
+  if (r < .35) { let n = 0; for (const k in m.soil) { const s = m.soil[k]; if (s && s.crop && !s.wet && n < 30) { s.wet = true; n++; } } if (n) return who_ + 'watered ' + n + (n === 1 ? ' crop.' : ' crops.'); }
   if (r < .6 && S.animals.length) { for (const a of S.animals) { a.aff = Math.min(100, (a.aff || 0) + 4); a.pet = dayIndex(); } return who_ + 'saw to the animals.'; }
-  if (r < .8) { let n = 0; for (let i = 0; i < m.o.length && n < 15; i++) { const o = m.o[i]; if (o && (o.k === 'weed' || o.k === 'twig' || o.k === 'stone')) { m.o[i] = null; n++; } } if (n) return who_ + 'cleared ' + n + ' weeds and stones.'; }
-  const dish = pickR(['omelette', 'pancakes', 'veggie_stew', 'berry_tart', 'fish_stew']); give(dish, 1, 0, true); return who_ + 'made you ' + IT[dish].n.toLowerCase() + '.';
+  if (r < .8) { let n = 0; for (let i = 0; i < m.o.length && n < 15; i++) { const o = m.o[i]; if (o && (o.k === 'weed' || o.k === 'twig' || o.k === 'stone')) { m.o[i] = null; n++; } } if (n) return who_ + 'cleared ' + (n === 1 ? 'a weed' : n + ' weeds and stones') + ' from the farm.'; }
+  const dish = pickR(['omelette', 'pancakes', 'veggie_stew', 'berry_tart', 'fish_stew']); give(dish, 1, 0, true); return who_ + 'made you ' + (/s$/.test(IT[dish].n) ? '' : /^[aeiou]/i.test(IT[dish].n) ? 'an ' : 'a ') + IT[dish].n.toLowerCase() + '.';
 }
 EVT.on('tick', n => {
   if (!S || TITLE || MODAL || (typeof DIALOG !== 'undefined' && DIALOG) || !S.fam || n % 2) return; const F = S.fam;
   if (F.deathQueued) { const why = F.deathQueued; F.deathQueued = null; return die(why); }
-  if (F.wedQueued) { const id = F.wedQueued; F.wedQueued = null; storyDialog([['narr', 'The whole village gathers in the plaza. Lanterns, flowers, and Pip crying into a tankard.'], [id, 'I don\'t have a speech. I just have you. That\'s enough.'], ['narr', 'You are married. ' + NPCS[id].n + ' moves into the farmhouse today.']], { title: 'The wedding', done: () => { SFX.lvl(); placeFamily(); } }); return; }
+  if (F.wedQueued) { const id = F.wedQueued; F.wedQueued = null; storyDialog([['narr', 'The whole village gathers in the plaza. Lanterns, flowers, and ' + (id === 'pip' ? 'Brann' : 'Pip') + ' crying into a tankard.'], [id, 'I don\'t have a speech. I just have you. That\'s enough.'], ['narr', 'You are married. ' + NPCS[id].n + ' moves into the farmhouse today.']], { title: 'The wedding', done: () => { SFX.lvl(); placeFamily(); } }); return; }
   if (F.birthQueued) { F.birthQueued = null; return nameBaby(); }
   if (F.notes && F.notes.length) { for (const t of F.notes) toast(t); F.notes = []; }
 });
@@ -121,6 +121,7 @@ function nameBaby() {
   openModal('A new arrival', [{ id: 'n', label: 'Name', render: b => {
     b.append(el('p', { class: 'note' }, 'Your baby ' + (look.sex === 'f' ? 'girl' : 'boy') + ' has arrived, healthy and loud. What will you call her?'.replace('her?', look.sex === 'f' ? 'her?' : 'him?')));
     const inp = el('input', { type: 'text', value: pickR(suggestions), maxlength: 16 }); inp.style.cssText = 'font:inherit;padding:6px 10px;width:220px';
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const bt = inp.parentElement && inp.parentElement.querySelector('button'); if (bt) bt.click(); } });   // Enter names them
     b.append(el('div', { class: 'acts' }, inp, el('button', { class: 'btn', on: () => { const name = (inp.value || '').trim().slice(0, 16) || pickR(suggestions); look.name = name; F.kids.push({ name, age0: 0, d0: dayIndex(), look, skill: null, xp: {} }); closeModal(); toast('Welcome to the family, ' + name + '.', 'lvl'); SFX.lvl(); placeFamily(); } }, 'Name them')));
   } }]);
 }
@@ -239,8 +240,8 @@ function renderFamily(b) {
   if (F.expect) L.append(el('div', { class: 'rrow' }, el('div', { class: 'qck' }, '♥'), el('div', { class: 'rtxt' }, el('b', null, 'A baby on the way'), el('small', null, 'Due in ' + Math.max(0, F.expect - dayIndex()) + ' days.'))));
   F.kids.forEach((k, i) => L.append(el('div', { class: 'rrow' }, portrait(lookToP(k.look), 'famkid' + i + stageOf(k)), el('div', { class: 'rtxt' }, el('b', null, k.name), el('small', null, STAGE_N[stageOf(k)] + ', ' + Math.floor(ageOf(k)) + '. ' + [ 'Asleep in the cradle most of the day.', 'Runs around the farm and brings you things.', k.skill ? 'Learning ' + SKN[k.skill] + ' (level ' + lvlFor((k.xp || {})[k.skill] || 0) + ').' : 'Talk to them on the farm to choose a skill to teach.', 'Grown. Helps with chores and could take over the farm.'][stageOf(k)])))));
   if (F.elder) L.append(el('div', { class: 'rrow' }, portrait(NPCS[F.elder].P, 'npc' + F.elder), el('div', { class: 'rtxt' }, el('b', null, NPCS[F.elder].n + ' (parent)'), el('small', null, 'Back at their old trade in the village.'))));
-  const cands = Object.keys(ROMANCE).filter(id => !F.rel[id]);
-  if (!F.spouse && cands.length) L.append(el('div', { class: 'rrow done' }, el('div', { class: 'qck' }, '♡'), el('div', { class: 'rtxt' }, el('b', null, 'Romance'), el('small', null, 'Could be courted: ' + cands.map(id => NPCS[id].n + ' (' + hearts(id) + '♥)').join(', ') + '. At 8 hearts, ask them out from their shop.'))));
+  const cands = Object.keys(ROMANCE).filter(id => !F.rel[id] && (typeof courtOk !== 'function' || courtOk(id)));
+  if (!F.spouse && cands.length) L.append(el('div', { class: 'rrow done' }, el('div', { class: 'qck' }, '♡'), el('div', { class: 'rtxt' }, el('b', null, 'Romance'), el('small', null, 'Could be courted: ' + cands.map(id => NPCS[id].n + ' (' + hearts(id) + '♥)').join(', ') + '. At 8 hearts, ask them out when you talk to them.'))));
   b.append(el('h3', null, 'Family'), L);
   if (F.tree.length) { const T = el('div', { class: 'list' }); F.tree.forEach(t => T.append(el('div', { class: 'rrow done' }, el('div', { class: 'qck' }, 'G' + t.gen), el('div', { class: 'rtxt' }, el('b', null, t.name), el('small', null, 'Died at ' + t.age + (t.why === 'old' ? ' of old age' : ' in the wilds') + '. ' + (t.spouse ? 'Married ' + t.spouse + '. ' : '') + (t.kids.length ? 'Children: ' + t.kids.join(', ') + '.' : '')))))); b.append(el('h3', null, 'Family tree'), T); }
 }

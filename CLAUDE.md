@@ -673,3 +673,108 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
   - **Odd paintings** are repainted alone (`REDO` in `style_free.py`: the well, lamp post, fountain, keep, notice board, storage chest). Cut-outs are despilled near the edge (pink and magenta pulled back to neutral). Paving switches sharply between three copies of its texture (as is, mirrored and shifted, quarter-turned) in noise patches (`mixs`), so the street has no visible repeat.
   - **Tried and dropped:** a style reference image for the free paintings (`--ref`, `STYLE_REF`): the model copies objects out of it, and the example scenes as a reference made the paintings more pixel-like.
 - **Menu icons:** the `ui_` dock icons are a styled sheet of their own (`ui_0`); `uiIcon` draws them at full size, and switching styles rebuilds the dock.
+
+## Overnight playtest fixes (`public/js/x_fix6.js` plus small edits; findings in `docs/playtest/overnight/SUMMARY.md`)
+- **Rooms:** the mirrored map-edge chunks are only drawn outdoors (`f_render.js`), so rooms no longer show a doubled back wall.
+- **Stories (`w_story.js`):**
+  - A step's items are taken when its dialogue finishes (`runStep`'s `pay`), not before, so a dialogue cut short by a second one keeps them. `storyTalk` doesn't start while a dialogue is open.
+  - A `bring` step with `keep: 1` only shows the items: Pip sees the Lost Lanterns, and Hale takes them.
+  - Story items that don't fit go to the bank (`storyGive`), and story steps count and take from the bag plus the bank (`storyCnt`, `hasAll`, `takeAll`).
+- **The cart** fills while it's hitched (`cartOn()` in `s_auto.js`), ground pickups included, and crates offer Unload.
+- **Goblin camps** count as cleared when the tribe is gone while you're within 30 tiles.
+- **Enemies on cliffs:** an enemy on a solid tile for 0.5 s moves to open ground. A leashed enemy that gets no closer to home for 2 s is put home. A siege kill doesn't start the Warlord's weekly timer.
+- **Keys:**
+  - Enter presses "Start the day".
+  - A HUD button you clicked (Next day) loses focus on Enter or Space.
+  - Space doesn't use your tool for 350 ms after a window or dialogue closes (`KEY_GAP`).
+  - Esc closes only the key bindings popup, and its list scrolls.
+  - Rebinding a key that another action uses swaps their keys.
+- **Saving:** the game saves on `pagehide`, `beforeunload` and when the window is hidden (not in the sandbox or the creator). Save game works anywhere; outside the saved maps, loading starts you on the farm.
+- **Load game list:** only the title's own hint is absolutely positioned (`#title > small`), so each slot shows its date and gold.
+- **Placing and picking up:**
+  - Holding a placeable aimed at an empty tile places it (`act` wrapper; it used to rotate the belt you stood on).
+  - The pickaxe aimed at your placed machines, crates and belts picks them up.
+  - Only the pickaxe picks up fences and gates; an axe click opened fenced fields.
+  - A gate gives back `fence_gate`.
+- **Hammer and wells:** the building hammer moves and removes wells.
+- **Shopkeepers:** `counterNear` only matches `furn_counter`/`furn_bar` (it matched `furn_barrel`, so right-clicking Brann walked you to a barrel).
+- **Street chat:** the street window's Chat and greyed Shop now work (the wrapper looked for a `small` class added later).
+- **goMap without a position** puts you at the map's start instead of NaN.
+- **Warrens hole:** drawn from its smoothed pixel sprite (`STYLE_SMOOTH`).
+- **Second pass:**
+  - **Kingsbridge:** the cross street ends at the side streets, and the side-gate guards and towers are gone (`x_terrain.js`).
+  - **Inn job boards:** in towns without a hall (Ashford, Saltmere), the inn has the Job board tab.
+  - **Jammed belts:** a belt whose machine won't take its item counts `o.jam` (`s_auto.js`). From 4 it shows a red "!", and interacting takes the item off.
+  - **Meat dishes:** they had type and price swapped in `I(...)` (`x_world.js`).
+  - **Pet adoption:** a stale window can't swap your pet.
+  - **Knockout report:** a fight knockout's report gives fight advice, not "sleep before 2 am".
+  - **Story portraits:** sized in world units, so they're no longer huge in a painted style.
+  - **Morning report:** it lists festivals, festivals within 3 days and birthdays.
+  - **Rock regrowth:** the Wilds' nightly rocks only top back up to the map's count (`m._oreBase` in `dailyWorld`; it added 30 a night, so saves grew).
+  - **Odile's:** animals costing 1000g or more need a second click, and Buy buttons rest 0.7 s after a purchase.
+  - **Recipe search:** it starts empty when a window opens.
+- **Third pass:**
+  - **Foes near a click:** a foe only counts for weapon and gathering clicks if it's within reach with open ground between you (`foeNear`, `lineClear`; a goblin across a pond made every click an air swing). Clicking a resource gathers unless a foe is within 110 px.
+  - **E:** when nothing is at the mouse, E tries the tile you face.
+  - **Food:** with food selected, a left click eats it.
+  - **Empty slot:** clicking a tree, rock, ore, grass or ripe crop with an empty slot selected picks the matching tool first.
+  - **Full backpack:** a "Backpack full" tag stays on screen while the bag is full, and the toast names what was left on the ground.
+  - **Sandbox:** it doesn't pay milestone quest gold.
+  - **Combat test:** no knight patrols or bandit patrols, the clock stays at 10:00, and everything but gear, food and arrows starts in the bank.
+- **Fourth pass:**
+  - **Melee skills (asked 2026-11-03: melee was weaker than bow and staff and needed more area skills):** in action combat, Cleave, Lunge and Rend have their own versions (`wrapA` in `x_fix6.js`; classic combat keeps the old ones, which rolled to hit and needed a clicked target).
+    - Cleave hits everything within 38 px for 1.5x.
+    - Lunge dashes up to 5 tiles toward the mouse, hitting everything on the way for 2x with a stagger.
+    - Rend hits a 46 px arc in front of you for 1.2x, and everything hit bleeds for 6 ticks.
+    - `SKILL_MULT`: Whirlwind 1, Blade Dash 1.25.
+    - Two new Blade skills, spliced into `CSKILLS` by level: **Earthshatter** (10: three widening quake rings, 0.8x each, a short stun) and **Cyclone** (30: 3 s of spinning that pulls normal enemies in and hits 0.45x every 0.3 s). They keep the coloured motes and weapon swing (`fx`).
+  - **Text and display fixes:**
+    - Recap kill steps show their real count.
+    - Respec reads "no points spent" when there's nothing to reset.
+    - The weapon a combat skill needs is a note, not a ✗ requirement.
+    - "Defence" everywhere.
+    - Spouse chores and egg prizes use singular and plural correctly; "made you an omelette".
+    - The wedding line names Brann when you marry Pip.
+    - Suitors are asked out "when you talk to them".
+    - Neutral gifts are "thanked you for it".
+    - "Block" floats beside the damage number.
+  - **Towns and inns:**
+    - Arriving in a town by waystone shows the town's banner, not "The Wilds".
+    - The first-nights warning skips towns.
+    - Sleeping at an inn wakes you inside it.
+- **Fifth pass:**
+  - **Defence:** in action combat, the Defence level lowers damage taken by 0.4% per level, up to 40% (`hurtPlayer` wrapper). Only armour counted before.
+  - **Scythe:** walking to a crop with the scythe cuts it on arrival (`act` wrapper; it found the crop's "use your scythe" hint).
+  - **Small fixes:**
+    - Bank category counts follow the search.
+    - Enter names a baby.
+    - Locked windows (the Farewell) hide their close button.
+    - The Family tab lists only people you could court now (`courtOk`, same age rule as `greet`).
+    - Hale's rows skip empty costs ("no cost" instead of "0g, .").
+  - **Briarholt:** the treasury hoard stays sealed until you own the castle.
+  - **Town keepers:** met on the street outside their hours, they just talk and say when the shop opens (they opened the whole shop).
+  - **Wishing well:** it asks before taking 100g, and its prompt shows the price.
+- **Sixth pass:**
+  - **Talking:** E talks to a person standing right on you (`findInteract` fallback within 14 px).
+  - **Week one near home:** goblin camps stay empty until day 5 (`campTick`), and bandit patrols start on day 7, not day 3 (`banditsFrame`).
+  - **Regions:** the Rimesteel bar needs Smithing 7 (old scale, about 60) instead of 8, so it fits its Mining 57 ore. Every region market sells coal.
+  - **Story lines:**
+    - Osric's bloodline line matches Elias: "the old king's daughter, and you her grandchild".
+    - Vey and Isolde speak of six knights.
+    - Ashcombe no longer introduces himself twice.
+    - Sigrun's ice line fits the same afternoon.
+    - Wren's shards are from the "old seal".
+- **Balance pass (from the overnight playtest):**
+  - **Staff:** basic bolts hit 0.85x and the basic fireball 1.2x (`WPN.staff`); it cleared camps far faster than a sword.
+  - **Forge King** (The Hollow Crown, chapter 3): 2600 health, 44 attack (`EN.forgeking`), between the Stone Warden and the Ember Wyrm.
+  - **Packs:** creatures with 200+ health and anything in a region come 2-3 at a time (`x_bandits.js`); Hollow Vale packs are unchanged.
+  - **Fishing:** fish sell for 20% less, like crops, and a cast costs 3 energy at first, down to 1 (`e_play.js`). Pond fishing paid 5-8x more per energy than crops in week one.
+  - The Stone Warden reference above was measured before the action-combat changes. In action mode it now takes about 20 s, so re-measure it before tuning bosses again.
+- **Art pass (code only, no atlas rebuild):**
+  - **Standing frames:** the painted frame 0 of the troll, basalt golem, ogre and goblin came out smeared or sheared, so `STYLE_ALIAS` uses their walk frame 2 for it.
+  - **Fruit trees:** in a painted style, a ripe tree gets fruit painted on its canopy in the fruit's colour (`treeImg` wrapper; the painted `_f` frames had no fruit).
+  - **Clay:** once per wild map, up to 30 more clay mounds go within two tiles of fresh water on grass, dirt or sand (`clay2_<map>` flag).
+  - **Ore rocks:** `ore_*` sprites are drawn at 80% on the same tile.
+  - **Still to do, needs new art and an atlas build:**
+    - recognisable ripe crops (strawberries and others);
+    - distinct flower shapes: the five wild flowers and the flower items share one shape in different colours.

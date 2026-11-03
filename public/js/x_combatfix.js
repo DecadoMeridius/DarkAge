@@ -71,7 +71,7 @@ const _primaryUseCF = primaryUse;
 primaryUse = function () {
   if (ACTION() && !PAUSED && !TITLE && !fishing && S && cur && selKind() === 'weapon') {
     const [tx, ty] = clickTarget(), o = getO(cur, tx, ty), res = o && OBJ[o.k] && OBJ[o.k].drop && OBJ[o.k].tool && OBJ[o.k].tool !== 'any';
-    const anyNear = cur.ents.some(e => e.type === 'enemy' && !e.dead && Math.hypot(e.x - S.p.x, e.y - S.p.y) < 200);
+    const anyNear = foeNear(res ? 110 : 200);   // a node you click gathers unless a foe is close and really in reach (foeNear, x_fix6.js)
     if (!res || anyNear) { actionAttack(); return; }
   }
   return _primaryUseCF();
