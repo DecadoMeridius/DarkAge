@@ -877,3 +877,8 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **Categories:** salt, kelp, clams, oysters, shells and pearls are sea goods whatever their item type, so Saltmere's discount covers them (`mktCat`).
 - Region inn rests are once a day (`S.flags.restDay`, shared with the town inns). The Painterly crate uses its smoothed pixel sprite (`furn_crate` in `STYLE_SMOOTH`).
 
+## Feature guides (`public/js/x_help.js`, asked 2026-11-03)
+- Windows with a guide get an "i" button in the title bar beside the close button (`#mhelp`, added in a `drawModal` wrapper); it opens a short popup on what the feature is and how it works (`#helppop`; Esc or ✕ closes it first, closing the window closes it too).
+- `HELP` holds the texts (title + paragraphs). `helpKey()` picks one by the window title, the Satchel tab, the station (`MODAL.opts.station`), the Markets tab, the town building (`TOWN_ACTS` + `actType`, guilds by `GUILDS`), the region market/inn/forge, or a machine's item name (artisan machines vs other machines).
+- Covered: stall, bin, notice boards, markets, village shops (Mara, Brann, Hale, Pip, Corwin, Odile), manor, museum, altar, waystones, merchant, request board, elevator, silo, crates, build sites, machines, crafting stations, town shops, forges, inns, halls, banks, temples, barracks, guilds, and every Satchel tab. New windows need an entry in `HELP` (and in `helpKey` if their title isn't fixed); keep the texts in step when a system changes.
+
