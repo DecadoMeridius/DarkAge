@@ -959,3 +959,17 @@ EVT.on('map', () => {
   })(objSprite);
 }
 
+
+/* ---- Zephyr stands beside his cart (2026-11-04: on market days only the cart was there): a runtime NPC on the Wilds map
+   at the front corner of the cart at m.merchant (the cart is wider than its tile and hid him behind it) whenever it's set up; talking to him opens his wares like the cart ---- */
+Object.defineProperty(NPCS, 'zephyr', { value: { n: 'Zephyr', role: 'Wandering merchant', shop: 'k_zephyr', P: HP(0, { skin: '#c89070', hair: '#2a1a10', hs: 'short', shirt: '#6a3a8a', pants: '#3a2a20', hat: '#4a2a5a', cape: '#8a5a2a', beard: '#2a1a10' }), love: [], like: [], hate: [], lines: [[]], gifts: [] }, enumerable: false, writable: true, configurable: true });
+function zephyrSync() {
+  const m = MAPS.wilds; if (!m || !m.merchant || !S) return;
+  const [x, y] = m.merchant, cart = getO(m, x - 1, y), up = !!(cart && cart.k === 'cart');
+  const here = (m.npcs || []).find(n => n.id === 'zephyr');
+  if (up && !here) (m.npcs = m.npcs || []).push({ id: 'zephyr', x: (x + 1.2) * 16, y: (y + 1.6) * 16, hx: (x + 1.2) * 16, hy: (y + 1.6) * 16, dir: 0, walk: false, t: 1e9, vx: 0 });
+  else if (!up && here) m.npcs = m.npcs.filter(n => n !== here);
+}
+EVT.on('map', zephyrSync);
+EVT.on('tick', n => { if (n % 20 === 0) zephyrSync(); });
+doorAction = (f => function (act, who) { if (act === 'k_zephyr') return openMerchant(); return f(act, who); })(doorAction);
