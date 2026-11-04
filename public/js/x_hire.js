@@ -106,9 +106,11 @@ function dropSpot() {
    worker (S.hire.log: d day index, k kind, nm name, e work ethic, it {item: n}, w where it went, j farmhand jobs) ---- */
 function hireLog(k, w, items, where) {
   const H = hireState(), L = H.log = H.log || [], d = dayIndex();
-  L.push({ d, k, nm: w.name, lv: w.lv || 1, e: w.ethic, it: Object.fromEntries(items), w: where, j: k === 'farmhand' ? (w.jobs || 0) : undefined });
+  L.push({ d, k, nm: w.name, lv: w.lv || 1, e: w.ethic, q: k === 'farmhand' ? undefined : w.dayQ, it: Object.fromEntries(items), w: where, j: k === 'farmhand' ? (w.jobs || 0) : undefined });
   while (L.length && L[0].d < d - 111) L.shift();
 }
+// how the day went: the hand's work ethic times the day's luck
+const dayKind = q => q === undefined ? '' : q < .6 ? 'a lazy day' : q < 1.1 ? 'an average day' : q < 1.6 ? 'a good day' : 'an exceptional day';
 const HLOG_W = { shed: 'storage shed', crate: 'storage crate', board: 'notice board' };
 function renderHireLog(b) {
   const H = hireState(), all = (H.log || []).slice(), today = dayIndex(), fk = MODAL.opts.hk || 'all';
@@ -136,7 +138,7 @@ function renderHireLog(b) {
       const ents = Object.entries(e.it), top = ents.sort((a, c) => c[1] - a[1])[0];
       box.append(el('div', { class: 'rrow' }, top ? icon(parseK(top[0])[0], 24, parseK(top[0])[1]) : null, el('div', { class: 'rtxt' },
         el('b', null, e.nm + ' the ' + HIRE[e.k].n.toLowerCase() + (e.lv ? ' (level ' + e.lv + ')' : '') + (e.k === 'farmhand' ? ' (' + (e.j || 0) + ' jobs)' : '')),
-        el('small', null, ents.length ? haulText(e.it) + ' · to your ' + (HLOG_W[e.w] || 'stores') : 'Brought nothing.'))));
+        el('small', null, (e.q !== undefined ? dayKind(e.q)[0].toUpperCase() + dayKind(e.q).slice(1) + ': ' : '') + (ents.length ? haulText(e.it) + ' · to your ' + (HLOG_W[e.w] || 'stores') : 'brought nothing.')))));
     }
     b.append(box);
   }
@@ -292,7 +294,7 @@ function walkIn(k, w) {
 }
 // the day's haul, delivered: seen walking to the drop-off when you're on the farm, at once otherwise
 function settle(k, w, seen) {
-  w.del = today_(); if (k !== 'farmhand') { const h = HIRE[k].haul(w.lv || 1), mult = hireMult(k) * (w.skill || 1) * dayLuck(); for (const id in h) { const n = Math.round(h[id] * mult); if (n > 0) w.carry[id] = (w.carry[id] || 0) + n; } w.lastHaul = haulText(w.carry); }
+  w.del = today_(); if (k !== 'farmhand') { const h = HIRE[k].haul(w.lv || 1), luck = dayLuck(), mult = hireMult(k) * (w.skill || 1) * luck; w.dayQ = (w.skill || 1) * luck; for (const id in h) { const n = Math.round(h[id] * mult); if (n > 0) w.carry[id] = (w.carry[id] || 0) + n; } w.lastHaul = haulText(w.carry); }
   else fhCatchUp(w);
   w.phase = 'home'; w.left--; w.worked = (w.worked || 0) + 1;
   const done = () => {
