@@ -67,11 +67,28 @@ function rainLoop(dt) {
 }
 /* surf on the coast (2026-11-04): one looping, low and muffled noise whose level swells and falls like waves (about every
    7 s), faded in and out as you reach or leave the coast biomes, the way rainLoop does rain */
-let SURF = null, SURF_T = 0;
+let SURF = null, SURF_T = 0, SURF_SCAN = 0, SURF_NEAR = 0;
+const SURF_R = 8;   // tiles from the sea where the surf starts
 function surfLoop(dt) {
   if (!AC || !SOUND_ON) return;
-  let near = false;
-  if (S && !TITLE && !PAUSED && cur && !cur.dark && !cur.indoor && cur.bio && SETTINGS.amb > 0) { const b = BIOMES[cur.bio[Math.floor(S.p.y / 16) * cur.w + Math.floor(S.p.x / 16)]]; near = b === 'coast' || b === 'isles' || b === 'reef'; }
+  // how close the sea is (2026-11-04: the coast biome reaches far inland, and the surf played all over it): the nearest
+  // water within SURF_R tiles in a coast biome, looked up a few times a second; louder the closer you are
+  let near = 0;
+  if (S && !TITLE && !PAUSED && cur && !cur.dark && !cur.indoor && cur.bio && SETTINGS.amb > 0) {
+    SURF_SCAN -= dt;
+    if (SURF_SCAN <= 0) {
+      SURF_SCAN = .4; SURF_NEAR = 0;
+      const px = Math.floor(S.p.x / 16), py = Math.floor(S.p.y / 16), coastal = id => ['coast', 'isles', 'reef'].includes(BIOMES[id]);
+      let best = 99;
+      for (let j = -SURF_R; j <= SURF_R; j++) for (let i = -SURF_R; i <= SURF_R; i++) {
+        const x = px + i, y = py + j; if (x < 0 || y < 0 || x >= cur.w || y >= cur.h) continue;
+        const t = TER[getT(cur, x, y)]; if (!t || !t.water || !coastal(cur.bio[y * cur.w + x])) continue;
+        const d = Math.hypot(i, j); if (d < best) best = d;
+      }
+      SURF_NEAR = best <= SURF_R ? Math.min(1, (SURF_R + 1 - best) / SURF_R) : 0;
+    }
+    near = SURF_NEAR;
+  }
   if (!SURF) { if (!near) return; BUS_MODE = 'amb'; try {
     const len = AC.sampleRate * 3, b = AC.createBuffer(1, len, AC.sampleRate), ch = b.getChannelData(0); let last = 0;
     for (let i = 0; i < len; i++) { last = last * .92 + (Math.random() * 2 - 1) * .08; ch[i] = last * 3; }
@@ -79,7 +96,7 @@ function surfLoop(dt) {
     src.buffer = b; src.loop = true; lp.type = 'lowpass'; lp.frequency.value = 700; hp.type = 'highpass'; hp.frequency.value = 90; gn.gain.value = 0;
     src.connect(hp); hp.connect(lp); lp.connect(gn); gn.connect(audioOut()); src.start(); SURF = { src, gn, lp, v: 0 };
   } finally { BUS_MODE = 'sfx'; } }
-  SURF_T += dt; const wave = .5 + .5 * Math.sin(SURF_T * 2 * Math.PI / 7), want = near ? .018 * (.3 + .7 * wave * wave) : 0;
+  SURF_T += dt; const wave = .5 + .5 * Math.sin(SURF_T * 2 * Math.PI / 7), want = near ? .018 * near * (.3 + .7 * wave * wave) : 0;
   SURF.v += (want - SURF.v) * Math.min(1, dt * .9); SURF.gn.gain.value = SURF.v; SURF.lp.frequency.value = 450 + 500 * wave;   // brighter as a wave breaks
   if (!near && SURF.v < .0005) { try { SURF.src.stop(); } catch (e) {} SURF = null; }
 }
