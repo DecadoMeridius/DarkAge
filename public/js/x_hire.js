@@ -323,7 +323,12 @@ function settle(k, w, seen) {
   const done = () => {
     const what = deliver(k, w), nm = w.name + ' the ' + HIRE[k].n.toLowerCase();
     toast((what ? nm + ' left ' + what + '.' : nm + ' brought nothing today.') + (k !== 'farmhand' && w.worked === 1 ? ' ' + w.name + ' seems ' + w.ethic + '.' : ''), what ? 'lvl' : '');
-    if (w.left <= 0) { delete hireState().w[k]; toast(nm + '’s contract is done. Hire again at the notice board.'); }
+    if (w.left <= 0) {
+      // auto-renew (asked 2026-11-04): the same length again at the level's price, if the gold is there; told next morning
+      const len = w.len || 1, fac = (HIRE_DAYS.find(d => d[0] === len) || [len, 1])[1], cost = Math.round(feeOf(k, w.lv || 1) * len * fac), H2 = hireState(); H2.notes = H2.notes || [];
+      if (w.auto && S.gold >= cost) { S.gold -= cost; w.left = len; H2.notes.push(['coin', nm + '’s contract renewed for ' + len + ' day' + (len > 1 ? 's' : '') + ' (' + cost.toLocaleString() + 'g).']); toast(nm + '’s contract renewed for ' + len + ' days.'); }
+      else { delete H2.w[k]; if (w.auto) H2.notes.push(['bad', nm + '’s contract ended: renewing it needed ' + cost.toLocaleString() + 'g.']); toast(nm + '’s contract is done. Hire again at the notice board.'); }
+    }
   };
   if (!seen) { done(); hwGone(k); return; }
   if (!HW[k]) hwSpawn(k, k === 'farmhand' ? hireSpot(k) : farmWarp('wilds'));
@@ -363,7 +368,7 @@ function hire(k, days, fac, lv) {
   const ex = H.w[k];
   if (ex) { ex.left += days; toast(ex.name + '’s contract is ' + ex.left + ' days now.', 'lvl'); refresh(); return; }
   const today = dayIndex(), t = S.time, now = t < HIRE_T.late;
-  const w = H.w[k] = Object.assign({ name: pickN(HIRE_NAMES[k], Math.random() * 97 | 0), lv, left: days, start: now ? today : today + 1, arr: null, del: null, carry: {} }, k === 'farmhand' ? { skill: 1, ethic: 'steady' } : rollEthic());
+  const w = H.w[k] = Object.assign({ name: pickN(HIRE_NAMES[k], Math.random() * 97 | 0), lv, len: days, left: days, start: now ? today : today + 1, arr: null, del: null, carry: {} }, k === 'farmhand' ? { skill: 1, ethic: 'steady' } : rollEthic());
   toast(w.name + ', a level ' + lv + ' ' + HIRE[k].n.toLowerCase() + ', is hired for ' + days + ' day' + (days > 1 ? 's' : '') + (now ? '. On the way now.' : ': starting tomorrow at 7:00.'), 'lvl');
   const lag = Object.keys(HW).length * 3;   // seconds behind whoever is already walking in
   if (now && t >= HIRE_T.arrive) { w.arr = today; w.jobs = 0; w.phase = k === 'farmhand' ? 'work' : 'out'; if (onFarm()) HLATER.push([lag, () => walkIn(k, w)]); }
@@ -392,6 +397,8 @@ function renderHire(b) {
     if (inG) {
       const row = el('div', { class: 'acts wrap' }, el('span', null, w ? 'Add:' : 'Hire for:'));
       for (const [d, fac] of HIRE_DAYS) { const c = Math.round(fee * d * fac); row.append(el('button', { class: 'btn ghost' + (S.gold < c ? ' off' : ''), title: fac < 1 ? Math.round((1 - fac) * 100) + '% off' : '', on: () => hire(k, d, fac, lv) }, d + ' day' + (d > 1 ? 's' : '') + ' · ' + c.toLocaleString() + 'g')); }
+      if (w) { const len = w.len || 1, cb = el('input', { type: 'checkbox' }); cb.checked = !!w.auto; cb.onchange = () => { w.auto = cb.checked ? 1 : 0; refresh(); };
+        const fac = (HIRE_DAYS.find(d => d[0] === len) || [len, 1])[1]; card.append(el('label', { class: 'bwpull' }, cb, ' Renew when it ends (' + len + ' day' + (len > 1 ? 's' : '') + ', ' + Math.round(fee * len * fac).toLocaleString() + 'g)')); }
       if (w) row.append(el('button', { class: 'btn ghost', title: 'Ends the contract; days not yet worked are paid back', on: () => { const back = Math.max(0, w.left - (w.arr === dayIndex() && w.del !== dayIndex() ? 1 : 0)) * feeOf(k, w.lv || 1); S.gold += back; delete H.w[k]; hwGone(k); toast(w.name + ' is let go' + (back ? ': ' + back + 'g paid back.' : '.')); refresh(); } }, 'Let go'));
       card.append(row);
     }
@@ -422,3 +429,8 @@ document.head.append(el('style', null, `
 .hirecard .hirehead b { font-size: 16px; } .hirecard small { font-size: 13px; }
 .hirecard small.ok { color: #3a6a2a; } .hirecard small.bad { color: #a8402a; } .hirecard .hirenow { font-weight: 700; }
 `));
+// renewals and contracts that couldn't be renewed, in the morning report
+showDayReport = (f => function (lines) {
+  try { const H = S && S.hire; if (H && H.notes && H.notes.length && Array.isArray(lines)) { lines = H.notes.concat(lines); H.notes = []; } } catch (e) { console.error(e); }
+  return f.call(this, lines);
+})(showDayReport);
