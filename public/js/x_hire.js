@@ -122,6 +122,10 @@ function deliver(k, w) {
 /* ---- walkers (only while you're on the farm) ---- */
 const HW = {};   // kind -> { n, path, pi, then, wait }
 const onFarm = () => cur && cur === MAPS.farm;
+const hireIdx = k => Object.keys(HIRE).indexOf(k);
+const hireAt = (k, t) => t + hireIdx(k) * 7;   // game minutes
+// the drop-off spot, a tile apart per kind so they don't stand on each other
+const hireSpot = k => { const d = dropSpot(), m = MAPS.farm; if (!d || !m) return null; const [x, y] = d.at, o = [0, 1, -1, 2, -2][hireIdx(k)] || 0; return nearFree(m, x + o, y); };
 function hwSpawn(k, from) {
   const m = MAPS.farm; if (!m || !from) return null;
   const n = { id: 'hire_' + k, x: (from[0] + .5) * 16, y: (from[1] + .8) * 16, hx: 0, hy: 0, dir: 0, walk: true, t: 1e9, vx: 0 };
@@ -135,8 +139,10 @@ function hwGo(k, to, then) {
   if (!p) { H.n.x = (to[0] + .5) * 16; H.n.y = (to[1] + .8) * 16; H.path = null; if (then) then(); return; }
   H.path = p; H.pi = 1; H.then = then || null;
 }
+const HLATER = [];   // [seconds, fn]: walkers that set off a little later
 function hireFrame(dt) {
   const m = MAPS.farm;
+  for (const L of HLATER.slice()) if ((L[0] -= dt) <= 0) { HLATER.splice(HLATER.indexOf(L), 1); if (onFarm()) L[1](); }
   for (const k of Object.keys(HW)) {
     const H = HW[k], n = H.n;
     if (!m || cur !== m || !(m.npcs || []).includes(n)) { hwGone(k); continue; }
@@ -146,7 +152,7 @@ function hireFrame(dt) {
     if (!node) { n.walk = false; H.path = null; if (H.then) { const f = H.then; H.then = null; f(); } continue; }
     const wx = (node[0] + .5) * 16, wy = (node[1] + .8) * 16, dx = wx - n.x, dy = wy - n.y, d = Math.hypot(dx, dy);
     if (d < 2) { H.pi++; continue; }
-    const sp = 36 * dt; n.x += dx / d * Math.min(sp, d); n.y += dy / d * Math.min(sp, d); n.hx = n.x; n.hy = n.y; n.walk = true;
+    const sp = (33 + hireIdx(k) * 1.5) * dt; n.x += dx / d * Math.min(sp, d); n.y += dy / d * Math.min(sp, d); n.hx = n.x; n.hy = n.y; n.walk = true;
     n.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : (dy < 0 ? 3 : 0);
   }
   if (onFarm()) farmhandFrame(dt);
@@ -216,16 +222,16 @@ function hireTick() {
     const w = H.w[k]; w.carry = w.carry || {};
     if (today < w.start) continue;
     // morning: they come in
-    if (t >= HIRE_T.arrive && t < HIRE_T.back && w.arr !== today) { w.arr = today; w.jobs = 0; w.phase = k === 'farmhand' ? 'work' : 'out'; if (onFarm()) walkIn(k, w); }
+    if (t >= hireAt(k, HIRE_T.arrive) && t < HIRE_T.back && w.arr !== today) { w.arr = today; w.jobs = 0; w.phase = k === 'farmhand' ? 'work' : 'out'; if (onFarm()) walkIn(k, w); }
     // evening: back with the day's haul
-    if (t >= HIRE_T.back && w.arr === today && w.del !== today) settle(k, w, onFarm());
+    if (t >= hireAt(k, HIRE_T.back) && w.arr === today && w.del !== today) settle(k, w, onFarm());
   }
 }
 EVT.on('tick', () => { if (S && !PAUSED) try { hireTick(); } catch (e) { console.error(e); } });
 function walkIn(k, w) {
   const east = farmWarp('village'); if (!hwSpawn(k, east)) return;
-  if (k === 'farmhand') hwGo(k, dropSpot().at, () => { HW[k].wait = 1; });
-  else { const board = dropSpot().at; hwGo(k, board, () => { HW[k].wait = 1.2; HW[k].after = () => hwGo(k, farmWarp('wilds'), () => hwGone(k)); }); }
+  if (k === 'farmhand') hwGo(k, hireSpot(k), () => { HW[k].wait = 1; });
+  else { const board = hireSpot(k); hwGo(k, board, () => { HW[k].wait = 1.2; HW[k].after = () => hwGo(k, farmWarp('wilds'), () => hwGone(k)); }); }
 }
 // the day's haul, delivered: seen walking to the drop-off when you're on the farm, at once otherwise
 function settle(k, w, seen) {
@@ -238,8 +244,8 @@ function settle(k, w, seen) {
     if (w.left <= 0) { delete hireState().w[k]; toast(nm + '’s contract is done. Hire again at the notice board.'); }
   };
   if (!seen) { done(); hwGone(k); return; }
-  if (!HW[k]) hwSpawn(k, k === 'farmhand' ? dropSpot().at : farmWarp('wilds'));
-  hwGo(k, dropSpot().at, () => { HW[k].wait = 1; HW[k].after = () => { done(); hwGo(k, farmWarp('village'), () => hwGone(k)); }; });
+  if (!HW[k]) hwSpawn(k, k === 'farmhand' ? hireSpot(k) : farmWarp('wilds'));
+  hwGo(k, hireSpot(k), () => { HW[k].wait = 1; HW[k].after = () => { done(); hwGo(k, farmWarp('village'), () => hwGone(k)); }; });
 }
 const today_ = () => dayIndex();
 // sleeping before 17:00 settles the day; the walkers don't stay overnight
@@ -251,7 +257,7 @@ endDay = (f => function () {
 EVT.on('map', () => {
   if (!S || !S.hire || !onFarm()) return;
   const w = S.hire.w.farmhand, today = dayIndex();
-  if (w && w.arr === today && w.del !== today && !HW.farmhand) { hwSpawn('farmhand', dropSpot().at); }
+  if (w && w.arr === today && w.del !== today && !HW.farmhand) { hwSpawn('farmhand', hireSpot('farmhand')); }
 });
 
 /* ---- talking to them ---- */
@@ -275,8 +281,9 @@ function hire(k, days, fac) {
   const today = dayIndex(), t = S.time, now = t < HIRE_T.late;
   const w = H.w[k] = Object.assign({ name: pickN(HIRE_NAMES[k], Math.random() * 97 | 0), left: days, start: now ? today : today + 1, arr: null, del: null, carry: {} }, k === 'farmhand' ? { skill: 1, ethic: 'steady' } : rollEthic());
   toast(w.name + ' the ' + HIRE[k].n.toLowerCase() + ' is hired for ' + days + ' day' + (days > 1 ? 's' : '') + (now ? '. On the way now.' : ': starting tomorrow at 7:00.'), 'lvl');
-  if (now && t >= HIRE_T.arrive) { w.arr = today; w.jobs = 0; w.phase = k === 'farmhand' ? 'work' : 'out'; if (onFarm()) walkIn(k, w); }
-  else if (!now && onFarm()) { const east = farmWarp('village'); if (hwSpawn(k, east)) hwGo(k, dropSpot().at, () => { HW[k].wait = 1.5; HW[k].after = () => hwGo(k, east, () => hwGone(k)); }); }
+  const lag = Object.keys(HW).length * 3;   // seconds behind whoever is already walking in
+  if (now && t >= HIRE_T.arrive) { w.arr = today; w.jobs = 0; w.phase = k === 'farmhand' ? 'work' : 'out'; if (onFarm()) HLATER.push([lag, () => walkIn(k, w)]); }
+  else if (!now && onFarm()) HLATER.push([lag, () => { const east = farmWarp('village'); if (hwSpawn(k, east)) hwGo(k, hireSpot(k), () => { HW[k].wait = 1.5; HW[k].after = () => hwGo(k, east, () => hwGone(k)); }); }]);
   refresh();
 }
 function renderHire(b) {

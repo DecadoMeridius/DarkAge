@@ -183,15 +183,14 @@ function stationXP(o, r) {
   addXP(sk, Math.max(1, Math.round(base * .5)));
 }
 
-/* windows pause the game, so a station stood still while you watched it (asked 2026-11-04): with a station window open,
-   the farm's automation runs on a 0.6 s real-time step, like crafting jobs (x_craftjobs.js), and the window is redrawn;
-   not while you drag a stack */
+/* a station window is redrawn every 0.6 s so you see it work (the game runs on behind windows since x_nopause.js; it
+   used to pause, and this step ran the machines itself); not while you drag a stack */
 let ST_ACC = 0;
 setInterval(() => {
   if (!S || TITLE || !MODAL || !MODAL.opts || !MODAL.opts.stLive) { ST_ACC = 0; return; }
   ST_ACC += .1; if (ST_ACC < .6) return; ST_ACC -= .6;
   if (STDRAG) return;
-  try { TICK.n++; for (const m of farmMaps()) autoTick(m); refresh(); } catch (e) { console.error(e); }
+  try { if (!PAUSED) refresh(); } catch (e) { console.error(e); }   // windows don't pause the game (x_nopause.js): the game's own tick runs the machines, this only redraws
 }, 100);
 
 document.head.append(el('style', null, `
@@ -214,3 +213,32 @@ document.head.append(el('style', null, `
 .strecline { font-size: 12px; margin-top: 0; }
 .sthint { opacity: .7; margin-left: 8px; }
 `));
+
+/* ---- lit stations keep their look in a painted style (asked 2026-11-04): the lit and unlit frames were painted apart, so
+   a stone furnace turned from a grey dome into a brick block when it lit, and the oven, kiln and trip hammer changed shape.
+   In a painted style the lit frame uses the unlit painting (STYLE_ALIAS) and the fire is drawn over its mouth here, a
+   flickering flame with a glow at the lit pixel frame's meta.light (or low in the middle). Pixel art keeps its own
+   frames, which only differ in the fire. ---- */
+const LIT_STATIONS = ['smelter', 'kiln', 'oven', 'stonefurnace', 'blastfurnace', 'emberforge'];
+if (typeof STYLE_ALIAS !== 'undefined') { for (const k of LIT_STATIONS) STYLE_ALIAS[k + '.1'] = k + '.0'; STYLE_ALIAS['triphammer.1'] = 'triphammer.0'; STYLE_ALIAS['powerhammer.1'] = 'powerhammer.0'; }
+function stationFireAt(o, x, y) {
+  const n = o.k + '.1', c = PIX.get(n), f = PIX.map && PIX.map[n], L = f && f.meta && f.meta.light;
+  if (!c) return [x * 16 + 8, (y + 1) * 16 - 6];
+  return L ? [x * 16 + 8 - c.ww / 2 + L[0] / 2, (y + 1) * 16 - c.wh + L[1] / 2] : [x * 16 + 8, (y + 1) * 16 - Math.min(10, c.wh * .3)];
+}
+pcCursorDraw = (f => function (m) {
+  const r = f.apply(this, arguments);
+  if (!m || !m.o || !S || TITLE || SETTINGS.artStyle === 'pixel') return r;
+  const x0 = Math.max(0, Math.floor(camX / 16) - 2), x1 = Math.min(m.w, x0 + 64), y0 = Math.max(0, Math.floor(camY / 16) - 2), y1 = Math.min(m.h, y0 + 44);
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const o = m.o[y * m.w + x]; if (!o || !o.on || !LIT_STATIONS.includes(o.k)) continue;
+    const [cx, cy] = stationFireAt(o, x, y), t = gameT * 7 + x * 1.7, a = Math.sin(t) * .5 + .5, b = Math.sin(t * 1.9 + 1) * .5 + .5;
+    g.save(); g.globalCompositeOperation = 'lighter';
+    g.globalAlpha = .35 + a * .15; g.fillStyle = '#ff7a20'; g.beginPath(); g.ellipse(cx, cy + 1, 6, 4, 0, 0, Math.PI * 2); g.fill();
+    g.restore();
+    g.fillStyle = '#e8501a'; g.beginPath(); g.ellipse(cx, cy + 1.5, 3.2, 2.2 + a * .6, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#ffb030'; g.beginPath(); g.ellipse(cx - .6 + b * 1.2, cy + .5 - a * .5, 2, 1.6 + b * .7, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#fff2b0'; g.beginPath(); g.ellipse(cx + .3 - a * .6, cy + .8, 1, .9 + a * .4, 0, 0, Math.PI * 2); g.fill();
+  }
+  return r;
+})(pcCursorDraw);
