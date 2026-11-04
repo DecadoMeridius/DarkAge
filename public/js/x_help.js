@@ -91,11 +91,14 @@ const HELP = {
     'Finished goods sell for well over their input. Belts can load and empty them.']],
   machine: ['Machines', [
     'The window shows input, fuel and output. If it stands idle it says why: no power, no input, output full or no fuel.',
+    'Drag stacks between your backpack and the input, fuel and output slots, or click them. Move sets how many (Shift: half, Ctrl: one). Drag wood onto Fuel to burn it in a kiln.',
+    'Make: pick one recipe and the machine only takes and makes that one, from belts too. Any lets it choose.',
     'Power comes from a windmill, waterwheel, treadwheel, tide mill or ember core within reach; fuel is wood, charcoal or coal.',
     'Belts feed machines and carry their output on. Pick a machine up with the pickaxe; its contents come with it.',
     'Use the next tier\'s piece on a placed one to upgrade it in place.']],
   station: ['Crafting at a station', [
     'Each station has its own recipes: workbench, furnace, anvil, kitchen, tanning rack.',
+    'Once you’ve built a Storage Shed, recipes use your bank too: the backpack first, then the bank.',
     '"Can make" shows only what your materials cover; click it to see every recipe. The search and chips filter the list.',
     'Make, ×5, ×10 or ×100 starts a timed batch. Keep the window open or stay close; walking away stops it.',
     'Recipes you don\'t know yet are bought: patterns from smiths, cookbook pages from cooks, item plans from Hale.']],

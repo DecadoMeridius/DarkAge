@@ -289,16 +289,16 @@ openStall = function () {
   S.stall = S.stall || { goods: {}, earned: 0 }; S.stall.mul = S.stall.mul || {}; stallClean();
   openModal('Market Stall', [{ id: 's', label: 'Stall', render: b => {
     b.append(el('p', { class: 'note' }, 'Open 8:00 to 18:00. Set each price against what the village pays: the cheaper, the faster it sells. Traders call every two hours from 9:00 to 17:00 and buy anything a town pays more for than your price (after their 15%). Earned so far: ' + S.stall.earned.toLocaleString() + 'g.'));
-    const on = el('div', { class: 'list' });
+    const on = el('div', { class: 'stallgrid' });
     for (const k in S.stall.goods) {
       const [id, q] = parseK(k), mul = stallMul(k), set = d => { S.stall.mul[k] = Math.max(.1, Math.round((mul + d * stallStep(mul, d)) * 100) / 100); refresh(); };
-      on.append(el('div', { class: 'rrow' }, icon(id, 32, q), el('div', { class: 'rtxt' }, el('b', null, IT[id].n + ' ×' + S.stall.goods[k]),
-        el('small', null, stallEach(k) + 'g each (' + Math.round(mul * 100) + '% of the village price) · ' + stallPace(mul) + '. ' + stallOffer(k))),
-        el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => set(-1) }, '−'), el('button', { class: 'btn ghost', on: () => set(1) }, '+'),
-          intelOn() && stallTraderMul(k) ? el('button', { class: 'btn ghost', title: 'Set your price to the most a trader would pay', on: () => { S.stall.mul[k] = stallTraderMul(k); refresh(); } }, 'Trader price') : null,
+      const offer = stallOffer(k);
+      on.append(el('div', { class: 'scard', title: offer }, el('div', { class: 'shead' }, icon(id, 24, q), el('b', null, IT[id].n + ' ×' + S.stall.goods[k])),
+        el('small', null, stallEach(k) + 'g each · ' + Math.round(mul * 100) + '% · ' + stallPace(mul)), offer ? el('small', { class: 'soffer' }, offer) : null,
+        el('div', { class: 'sacts' }, el('button', { class: 'btn ghost', on: () => set(-1) }, '−'), el('button', { class: 'btn ghost', on: () => set(1) }, '+'),
+          intelOn() && stallTraderMul(k) ? el('button', { class: 'btn ghost', title: 'Set your price to the most a trader would pay', on: () => { S.stall.mul[k] = stallTraderMul(k); refresh(); } }, 'Trader') : null,
           el('button', { class: 'btn ghost', on: () => { GIVE_NO_DROP = true; const left = give(id, S.stall.goods[k], q, true); GIVE_NO_DROP = false; if (left) S.stall.goods[k] = left; else delete S.stall.goods[k]; refresh(); } }, 'Take back'))));
     }
-    b.append(el('h3', null, 'On display'), on.children.length ? on : el('p', { class: 'note' }, 'Nothing on display.'));
     // a search, and how many go out per click (round 4: a click put the whole stack out)
     const sq = (MODAL.opts.sq || '').toLowerCase(), amt = MODAL.opts.sn === undefined ? 10 : MODAL.opts.sn;
     const ks = sortedInv().filter(k => valK(k) > 0 && !IT[parseK(k)[0]].slot && (!sq || IT[parseK(k)[0]].n.toLowerCase().includes(sq))), add = el('div', { class: 'grid' });
@@ -307,6 +307,7 @@ openStall = function () {
     find.oninput = () => { MODAL.opts.sq = find.value; refresh(); setTimeout(() => { const f = document.querySelector('#mbody input[placeholder^="Find in your"]'); if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); } }, 0); };
     const chips = el('div', { class: 'chips' }, el('span', null, 'Put out per click:'), ...STALL_AMTS.map(a => el('button', { class: 'chip' + (amt === a ? ' on' : ''), on: () => { MODAL.opts.sn = a; refresh(); } }, String(a))));
     b.append(el('h3', null, 'Put out from your backpack'), el('div', { class: 'acts wrap' }, find), chips, ks.length ? add : el('p', { class: 'note' }, sq ? 'Nothing in your backpack matches.' : 'Nothing to put out.'));
+    b.append(el('h3', null, 'On display'), on.children.length ? on : el('p', { class: 'note' }, 'Nothing on display.'));
   } }, { id: 'orders', label: 'Buy orders', render: renderOrders }, { id: 'log', label: 'Log', render: renderStallLog }, { id: 'mkt', label: 'Market news', render: renderIntel }]);
 };
 /* ---- the stall's log (asked 2026-11-04): every sale and every delivered order of the last game year (112 days), by day
@@ -662,6 +663,11 @@ function mktTownClose() { const b = document.getElementById('mtownpop'); if (b) 
 closeModal = (f => function () { mktTownClose(); return f.apply(this, arguments); })(closeModal);
 addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('mtownpop')) { mktTownClose(); e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 document.head.append(el('style', null, `
+.stallgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
+.stallgrid .scard { display: flex; flex-direction: column; gap: 2px; padding: 5px 7px; border: 2px solid rgba(80, 50, 20, .3); border-radius: 4px; background: rgba(255, 245, 220, .35); min-width: 0; }
+.stallgrid .shead { display: flex; align-items: center; gap: 6px; min-width: 0; } .stallgrid .shead b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stallgrid small { font-size: 12px; line-height: 1.25; } .stallgrid .soffer { opacity: .75; }
+.stallgrid .sacts { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; } .stallgrid .sacts .btn { padding: 2px 8px; min-width: 0; font-size: 13px; }
 .rrow.mtown { cursor: pointer; } .rrow.mtown:hover { filter: brightness(1.07); }
 #mtownpop { position: fixed; z-index: 2000; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(820px, calc(100vw - 32px)); max-height: 86vh; display: flex; flex-direction: column; padding: 14px 18px 14px; box-sizing: border-box; }
 #mtownpop .ph { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }

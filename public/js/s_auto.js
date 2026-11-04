@@ -44,7 +44,9 @@ const BELTS = new Set(['conveyor', 'sorter', 'splitter']), BELT_SPEED = {}, BELT
 const isBelt = o => o && BELTS.has(o.k);
 const isMach = o => o && OBJ[o.k] && OBJ[o.k].mach; // the artisan machines (keg, jar, loom...)
 const hammerRecipe = o => { const r = RC[o.recipe]; return r ? { in: r[2], out: [r[0], r[1]], ticks: 12 } : null; };
-const recipesOf = o => o.k === 'triphammer' || o.k === 'powerhammer' ? [hammerRecipe(o)].filter(Boolean) : STATIONS[o.k] ? STATIONS[o.k].recipes : [];
+// a station set to one recipe (o.sel = its output, chosen in the window, x_stationui.js) only takes and makes that one, by hand and from belts
+const stationRecipes = o => { const all = STATIONS[o.k].recipes; if (!o.sel) return all; const one = all.filter(r => r.out[0] === o.sel); return one.length ? one : all; };
+const recipesOf = o => o.k === 'triphammer' || o.k === 'powerhammer' ? [hammerRecipe(o)].filter(Boolean) : STATIONS[o.k] ? stationRecipes(o) : [];
 const usesInput = (o, id) => recipesOf(o).some(r => r.in[id]);
 const sum = o => Object.values(o || {}).reduce((a, b) => a + b, 0);
 
@@ -123,7 +125,7 @@ function stationTick(m, o, x, y) {
   if (st.power && !powered(m, x, y)) { o.on = 0; return; }
   const r = recipesOf(o).find(r => Object.entries(r.in).every(([k, n]) => ((o.in || {})[k] || 0) >= n) && ((o.out || {})[r.out[0]] || 0) + r.out[1] <= CAP);
   if (!r) { o.on = 0; o.prog = 0; return; }
-  if (st.fuel && !(o.burn > 0)) { const f = Object.keys(o.fuel || {}).find(k => o.fuel[k] > 0); if (!f) { o.on = 0; return; } o.fuel[f]--; if (!o.fuel[f]) delete o.fuel[f]; o.burn = Math.round(FUEL[f] * (st.fuelx || 1)); }
+  if (st.fuel && !(o.burn > 0)) { const f = Object.keys(o.fuel || {}).find(k => o.fuel[k] > 0); if (!f) { o.on = 0; return; } o.fuel[f]--; if (!o.fuel[f]) delete o.fuel[f]; o.burn = o.burnMax = Math.round(FUEL[f] * (st.fuelx || 1)); }
   o.on = 1; if (st.fuel) o.burn--;
   o.prog = (o.prog || 0) + 1;
   if (o.prog < Math.max(1, Math.round(r.ticks * (st.mult || 1)))) return; // faster stations have a lower mult
