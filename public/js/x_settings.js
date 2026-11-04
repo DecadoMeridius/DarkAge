@@ -46,7 +46,7 @@ function ambientTick(dt) {
       for (let i = 0; i < n; i++) snd(f + i * 140, .07, 'sine', .012, Math.random() < .5 ? 600 : -500, i * .09);
     }
     if (night && S.season > 0 && S.season < 3 && Math.random() < .3) for (let i = 0; i < 2; i++) snd(2600, .03, 'sine', .0018, 0, i * .07); // crickets, soft
-    if (b === 'coast' || b === 'isles' || b === 'reef') noiseBurst(1.1, .012, 500); // surf
+    // (the surf was a 1.1 s burst of high-passed noise every 0.35-0.85 s: it sounded like footsteps in grass; now surfLoop)
     for (let y = -3; y <= 3; y++) for (let x = -3; x <= 3; x++) { const o = getO(cur, Math.floor(S.p.x / 16) + x, Math.floor(S.p.y / 16) + y); if (o && (o.k === 'campfire' || (o.on && /forge|furnace|smelter|kiln|oven/.test(o.k)))) { noiseBurst(.06, .02, 2500); return; } }
   } finally { BUS_MODE = 'sfx'; }
 }
@@ -65,8 +65,26 @@ function rainLoop(dt) {
   RAIN.v += (want - RAIN.v) * Math.min(1, dt * .8); RAIN.gn.gain.value = RAIN.v;
   if (!want && RAIN.v < .0005) { try { RAIN.src.stop(); } catch (e) {} RAIN = null; }
 }
+/* surf on the coast (2026-11-04): one looping, low and muffled noise whose level swells and falls like waves (about every
+   7 s), faded in and out as you reach or leave the coast biomes, the way rainLoop does rain */
+let SURF = null, SURF_T = 0;
+function surfLoop(dt) {
+  if (!AC || !SOUND_ON) return;
+  let near = false;
+  if (S && !TITLE && !PAUSED && cur && !cur.dark && !cur.indoor && cur.bio && SETTINGS.amb > 0) { const b = BIOMES[cur.bio[Math.floor(S.p.y / 16) * cur.w + Math.floor(S.p.x / 16)]]; near = b === 'coast' || b === 'isles' || b === 'reef'; }
+  if (!SURF) { if (!near) return; BUS_MODE = 'amb'; try {
+    const len = AC.sampleRate * 3, b = AC.createBuffer(1, len, AC.sampleRate), ch = b.getChannelData(0); let last = 0;
+    for (let i = 0; i < len; i++) { last = last * .92 + (Math.random() * 2 - 1) * .08; ch[i] = last * 3; }
+    const src = AC.createBufferSource(), lp = AC.createBiquadFilter(), hp = AC.createBiquadFilter(), gn = AC.createGain();
+    src.buffer = b; src.loop = true; lp.type = 'lowpass'; lp.frequency.value = 700; hp.type = 'highpass'; hp.frequency.value = 90; gn.gain.value = 0;
+    src.connect(hp); hp.connect(lp); lp.connect(gn); gn.connect(audioOut()); src.start(); SURF = { src, gn, lp, v: 0 };
+  } finally { BUS_MODE = 'sfx'; } }
+  SURF_T += dt; const wave = .5 + .5 * Math.sin(SURF_T * 2 * Math.PI / 7), want = near ? .018 * (.3 + .7 * wave * wave) : 0;
+  SURF.v += (want - SURF.v) * Math.min(1, dt * .9); SURF.gn.gain.value = SURF.v; SURF.lp.frequency.value = 450 + 500 * wave;   // brighter as a wave breaks
+  if (!near && SURF.v < .0005) { try { SURF.src.stop(); } catch (e) {} SURF = null; }
+}
 const _updateS = update;
-update = function (dt) { _updateS(dt); ambientTick(dt); rainLoop(dt); if (PARTS.length > 400 * PARTICLE_K) PARTS.splice(0, PARTS.length - Math.floor(400 * PARTICLE_K)); };
+update = function (dt) { _updateS(dt); ambientTick(dt); rainLoop(dt); surfLoop(dt); if (PARTS.length > 400 * PARTICLE_K) PARTS.splice(0, PARTS.length - Math.floor(400 * PARTICLE_K)); };
 
 /* ---- graphics ---- */
 const _pixZoomS = pixZoom;

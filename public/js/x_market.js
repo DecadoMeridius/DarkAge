@@ -708,3 +708,44 @@ function renderIntel(b) {
 }
 // (until 2026-11-04 the Markets tab was also on the farm notice board, every town board and inn: it's now the stall's hired Market news)
 
+
+/* ---- market stalls sell what the town made that day (asked 2026-11-04: Kingsbridge's stalls had the same 12 goods every
+   day and a region market only its fixed seeds, timber and ore). From S.mkt.made, up to 16 at Kingsbridge and 14 in a
+   region, those it has most of first; nothing it's out of. Prices and stock are the market's (buyRow -> mktBuyRow). ---- */
+// goods from the far regions (u_regiondata.js: their fish, forage, crops, woods and bars, and anything made from them, such
+// as their dishes): a lowland stall doesn't have them
+let EXOTIC = null;
+function exoticGood(id) {
+  if (!EXOTIC) {
+    EXOTIC = new Set();
+    try {
+      for (const f of RFISH) EXOTIC.add(f[0]);
+      for (const k in RFORAGE) for (const id of RFORAGE[k]) if (!(FORAGE.meadow || []).flat().includes(id) && !(FORAGE.coast || []).flat().includes(id)) EXOTIC.add(id);
+      for (const r in RCROPS) for (const c of RCROPS[r]) EXOTIC.add(c[0]);
+      for (const k in RWOOD) EXOTIC.add(RWOOD[k][0]);
+      for (const t of RTIERS) if (t[3]) EXOTIC.add(t[3]);
+      for (let pass = 0; pass < 3; pass++) for (const r of RC) if (r[2] && Object.keys(r[2]).some(k => EXOTIC.has(k))) EXOTIC.add(r[0]);
+    } catch (e) { }
+  }
+  return EXOTIC.has(id);
+}
+const STALL_TYPES = new Set(['crop', 'fruit', 'forage', 'artisan', 'animal', 'food', 'fish']);
+function marketPicks(m, n, types) {
+  // only what the town made this morning (asked 2026-11-04: it's what a market stall would have), most made first
+  const made = ((S.mkt && S.mkt.made && S.mkt.made[m]) || []).filter(id => IT[id]);
+  // a region's own goods (and their smoked, pickled... versions) only sell there; legendary goods (over 600g) never on a stall
+  const lowland = !MARKETS[m].region, foreign = id => { const base = id.replace(/^(smoked|pickles|jam|wine|juice|dried)_/, ''); return (lowland && (exoticGood(id) || exoticGood(base))) || Object.keys(MARKETS).some(k => k !== m && MARKETS[k].own && (MARKETS[k].own.has(id) || MARKETS[k].own.has(base))); };
+  const ok = id => types.has(IT[id].t) && IT[id].p <= 600 && !foreign(id) && !(CROPS[id] && CROPS[id].secret && !(MARKETS[m].own && MARKETS[m].own.has(id))) && mktStock(m, id) >= 1;
+  return [...new Set(made)].filter(ok).sort((a, b) => mktStock(m, b) / Math.max(1, mktT(m, b)) - mktStock(m, a) / Math.max(1, mktT(m, a))).slice(0, n)
+    .sort((a, b) => IT[a].n.localeCompare(IT[b].n));
+}
+SHOP_STOCK.kb_stall = () => marketPicks('kingsbridge', 16, STALL_TYPES);
+// a region market's Buy tab also lists that day's stalls, below its seeds, timber and ore
+doorAction = (f => function (act, who) {
+  const r = f.apply(this, arguments);
+  if (act === 'r_trade' && MODAL && MODAL.tabs) {
+    const t = MODAL.tabs.find(t => t.id === 'buy'), m = typeof mktHere === 'function' ? mktHere() : null;
+    if (t && m && MARKETS[m] && !t.__stalls) { const base = t.render; t.__stalls = 1; t.render = b => { base(b); const ids = marketPicks(m, 14, new Set([...STALL_TYPES, 'mat', 'ore', 'gem'])); b.append(el('h3', null, 'At the stalls today'), el('p', { class: 'note' }, 'What the town made this morning: it changes every day.')); const L = el('div', { class: 'list' }); for (const id of ids) L.append(buyRow(id, Math.max(5, Math.round((IT[id].p || 20) * 1.25)))); b.append(ids.length ? L : el('p', { class: 'note' }, 'The stalls are bare today.')); }; drawModal(); }
+  }
+  return r;
+})(doorAction);

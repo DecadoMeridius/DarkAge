@@ -70,7 +70,16 @@ function stSlotBox(o, bag, label, count) {
   return box;
 }
 
+// the fuel's game ticks left: the item burning now plus every stack in the fuel slots (as stationTick burns them)
+function stFuelTicks(o, st) {
+  let t = Math.max(0, o.burn || 0);
+  for (const k in o.fuel || {}) t += (stTread(o) ? 20 : Math.round((FUEL[k] || 0) * (st.fuelx || 1))) * (o.fuel[k] || 0);
+  return t;
+}
+// ticks as time (a tick is 0.6 s)
+const stTime = t => { const s = Math.round(Math.max(0, t) * .6), h = Math.floor(s / 3600), mm = Math.floor(s % 3600 / 60), ss = s % 60; return h ? h + 'h ' + String(mm).padStart(2, '0') + 'm' : mm + ':' + String(ss).padStart(2, '0'); };
 function stationPanel(b, o, m, x, y, opt) {
+  MODAL.opts.stLive = 1;   // the window keeps the machines running (below)
   const st = STATIONS[o.k] || {}, fuel = stHasFuel(o), tread = stTread(o);
   // what it does and why it's idle
   let status;
@@ -102,12 +111,21 @@ function stationPanel(b, o, m, x, y, opt) {
     const fb = stSlotBox(o, 'fuel', tread ? 'Hay' : 'Fuel', ST_SLOTS.fuel);
     const burn = o.burn > 0 ? Math.min(1, o.burn / Math.max(1, o.burnMax || (tread ? 20 : o.burn))) : 0;
     fb.append(el('div', { class: 'stflame', title: burn ? 'Burning' : 'Not burning' }, el('i', { style: 'width:' + Math.round(burn * 100) + '%' })));
+    // how long the fuel lasts: what's burning now plus every stack waiting (asked 2026-11-04)
+    const left = stFuelTicks(o, st);
+    fb.append(el('small', { class: 'stinfo' }, left > 0 ? (o.burn > 0 ? 'Burning: ' : 'Ready: ') + stTime(left) + ' of fuel' : 'No fuel'));
     row.append(fb);
   }
   if (!tread) {
     const r = stRecipeNow(o), need = r ? Math.max(1, Math.round(r.ticks * (st.mult || 1))) : 1, k = r ? Math.min(1, (o.prog || 0) / need) : 0;
     row.append(el('div', { class: 'starrow', title: r ? 'Making ' + IT[r.out[0]].n : 'Nothing to make' }, el('div', { class: 'stbar' }, el('i', { style: 'width:' + Math.round(k * 100) + '%' })), el('span', null, '➜')));
-    row.append(stSlotBox(o, 'out', 'Output', ST_SLOTS.out));
+    const ob = stSlotBox(o, 'out', 'Output', ST_SLOTS.out);
+    // how many more the inputs make, how long that takes, and everything made here so far
+    const rr = r || recipesOf(o)[0], more = rr ? Math.min(...Object.entries(rr.in).map(([kk, n]) => Math.floor(((o.in || {})[kk] || 0) / n))) : 0;
+    const each = rr ? Math.max(1, Math.round(rr.ticks * (st.mult || 1))) : 0, outN = rr ? rr.out[1] * (st.yield || 1) : 0;
+    ob.append(el('small', { class: 'stinfo' }, rr && more > 0 ? 'Inputs make ' + more * outN + ' more ' + IT[rr.out[0]].n.toLowerCase() + ' (' + stTime(more * each - (o.prog || 0)) + ')' : 'Inputs make no more'),
+      el('small', { class: 'stinfo' }, 'Made here: ' + (o.madeN || 0).toLocaleString()));
+    row.append(ob);
   }
   b.append(row);
 
@@ -154,6 +172,28 @@ objInteract = (f => function (m, x, y, o) {
   return f.apply(this, arguments);
 })(objInteract);
 
+/* automated stations train their skill (asked 2026-11-04): each finished batch gives half the XP of making it by hand
+   (forge and kitchen 6 + price / 40, crafting 4 + price / 50; g_ui doCraft and o_skills): furnaces, smelters and hammers
+   Smithing, the mill, oven and churn Cooking, the kiln Crafting, the compost bin Farming. Night catch-up ticks count too. */
+const STATION_SKILL = { smelter: 'smithing', stonefurnace: 'smithing', blastfurnace: 'smithing', emberforge: 'smithing', triphammer: 'smithing', powerhammer: 'smithing',
+  mill: 'cooking', oven: 'cooking', churn: 'cooking', kiln: 'crafting', compostbin: 'farming' };
+function stationXP(o, r) {
+  const sk = STATION_SKILL[o.k]; if (!sk || !S.sk || !S.sk[sk] || !r || !IT[r.out[0]]) return;
+  const p = IT[r.out[0]].p || 0, base = sk === 'crafting' || sk === 'farming' ? 4 + p / 50 : 6 + p / 40;
+  addXP(sk, Math.max(1, Math.round(base * .5)));
+}
+
+/* windows pause the game, so a station stood still while you watched it (asked 2026-11-04): with a station window open,
+   the farm's automation runs on a 0.6 s real-time step, like crafting jobs (x_craftjobs.js), and the window is redrawn;
+   not while you drag a stack */
+let ST_ACC = 0;
+setInterval(() => {
+  if (!S || TITLE || !MODAL || !MODAL.opts || !MODAL.opts.stLive) { ST_ACC = 0; return; }
+  ST_ACC += .1; if (ST_ACC < .6) return; ST_ACC -= .6;
+  if (STDRAG) return;
+  try { TICK.n++; for (const m of farmMaps()) autoTick(m); refresh(); } catch (e) { console.error(e); }
+}, 100);
+
 document.head.append(el('style', null, `
 .strow { display: flex; align-items: stretch; gap: 14px; flex-wrap: wrap; margin: 8px 0 10px; padding: 10px 12px; border: 2px solid rgba(80, 50, 20, .35); border-radius: 4px; background: rgba(255, 245, 220, .35); }
 .stbox { display: flex; flex-direction: column; gap: 4px; padding: 4px; border-radius: 4px; border: 2px dashed transparent; }
@@ -167,6 +207,7 @@ document.head.append(el('style', null, `
 .stbar, .stflame { width: 64px; height: 8px; border: 2px solid rgba(80, 50, 20, .5); background: rgba(0, 0, 0, .12); }
 .stbar i, .stflame i { display: block; height: 100%; background: #6aa040; }
 .stflame { width: 56px; } .stflame i { background: linear-gradient(90deg, #e8a020, #e04a20); }
+.stinfo { font-size: 12px; opacity: .85; max-width: 130px; line-height: 1.25; }
 .stpack { display: grid; grid-template-columns: repeat(auto-fill, 60px); gap: 4px; padding: 4px; border: 2px dashed transparent; border-radius: 4px; }
 .stpack .cell, .stslots .cell { width: 56px !important; height: 56px !important; cursor: grab; }
 .strec .chip { display: inline-flex; align-items: center; gap: 2px; } .strec img { width: 20px; height: 20px; }

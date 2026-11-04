@@ -438,7 +438,7 @@ const KNOCK = {
 };
 doorAction = (f => function (act, who) {
   if (act === 'k_house') { const T = townAt(cur, S.p.x / 16, S.p.y / 16, 2); toast(pickR(KNOCK[T ? T.id : 'kingsbridge'])); return; }
-  if (act === 'kb_stall') return openModal('Market stall', [buyTab('kb_stall', 'Fresh from the farms around Kingsbridge.'), sellTab('kb_stall')]);
+  if (act === 'kb_stall') return openModal('Market stall', [buyTab('kb_stall', 'What Kingsbridge made this morning: it changes every day.'), sellTab('kb_stall')]);
   if (act === 'k_guard') { const kind = (ALLY_KINDS[who] || {}).n || 'Guard'; storyDialog([[who, pickR(/knight/.test(who) ? ALLY_LINES.knight : ALLY_LINES.guard)]], { title: (TOWNS_AT_ME() || kind) }); return; }
   if (act === 'k_talk' && storyTalk(who)) return;
   if (act === 'k_talk') return openModal(NPCS[who] ? NPCS[who].n : 'Talk', [{ id: 't', label: 'Talk', render: b => greet(b, who) }]);

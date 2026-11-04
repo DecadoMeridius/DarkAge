@@ -131,6 +131,8 @@ function stationTick(m, o, x, y) {
   if (o.prog < Math.max(1, Math.round(r.ticks * (st.mult || 1)))) return; // faster stations have a lower mult
   o.prog = 0; for (const [k, n] of Object.entries(r.in)) { o.in[k] -= n; if (!o.in[k]) delete o.in[k]; }
   o.out = o.out || {}; o.out[r.out[0]] = (o.out[r.out[0]] || 0) + r.out[1] * (st.yield || 1);
+  o.madeN = (o.madeN || 0) + r.out[1] * (st.yield || 1);   // shown in the station window (x_stationui.js)
+  if (typeof stationXP === 'function') stationXP(o, r);   // automated stations train their skill too (x_stationui.js)
 }
 function pushOut(m, o, x, y) {
   for (let d = 0; d < 4; d++) { // a belt next to it whose direction points away from it
