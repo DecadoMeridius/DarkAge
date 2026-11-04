@@ -169,17 +169,33 @@ endDay = (f => function () {
 })(endDay);
 
 /* ---- the seed book ---- */
+// where a strain still lives (asked 2026-11-04: the book only lists strains you still have): its seeds in the backpack,
+// the bank (Storage Shed), a crate or ledger, a hired hand's haul or the board's stash, the stall; or a plant in the ground
+function strainsAlive() {
+  const alive = new Set(), seen = k => { const m = /_seed~(\d+)$/.exec(parseK(k)[0]); if (m) alive.add(+m[1]); };
+  const bags = [S.inv, S.bank, S.hire && S.hire.stash, S.stall && S.stall.goods, S.stall && S.stall.bought];
+  if (S.hire) for (const k in S.hire.w) bags.push(S.hire.w[k].carry);
+  const maps = ['farm', 'greenhouse', ...(typeof ownedPlots === 'function' ? ownedPlots() : [])].map(id => MAPS[id]).filter(Boolean);
+  for (const m of maps) {
+    for (const o of m.o || []) if (o && o.inv) bags.push(o.inv);
+    for (const key in m.soil) { const c = m.soil[key] && m.soil[key].crop; if (c && c.st !== undefined && !c.dead) alive.add(c.st); }
+  }
+  for (const bag of bags) for (const k in bag || {}) if (bag[k] > 0) seen(k);
+  return alive;
+}
 function renderSeedBook(b) {
-  const L = strains();
+  const growing = {}; for (const id of ['farm', 'greenhouse', ...(typeof ownedPlots === 'function' ? ownedPlots() : [])]) { const m = MAPS[id]; if (m) for (const key in m.soil) { const c = m.soil[key] && m.soil[key].crop; if (c && c.st !== undefined && !c.dead) growing[c.st] = (growing[c.st] || 0) + 1; } }
+  const alive = strainsAlive(), L = strains().map((T, i) => [T, i]).filter(([, i]) => alive.has(i)), gone = strains().length - L.length;
   b.append(el('p', { class: 'note' }, 'Plant two different crops (or strains) side by side; harvesting one beside the other, grown, now and then gives a cross. A cross keeps the best of each parent\'s genes and half the time gains one more level, most often in a trait it already has, so you can breed a line up trait by trait or combine two strains. Growth +20% a level (3), yield +1 (3), worth +10% (5), hardy one more season (4: every season). Strains give their seeds back often.'));
-  if (!L.length) { b.append(el('p', { class: 'note' }, 'No strains yet.')); return; }
+  if (!L.length) { b.append(el('p', { class: 'note' }, strains().length ? 'You have no seeds or plants of any strain left.' : 'No strains yet.')); return; }
   const grid = el('div', { class: 'keepgrid' });
-  L.map((T, i) => [T, i]).sort((a, c) => (c[0].gen - a[0].gen) || a[0].name.localeCompare(c[0].name)).forEach(([T, i]) => {
-    const sid = T.k + '_seed~' + i, have = cnt(sid);
+  L.sort((a, c) => (c[0].gen - a[0].gen) || a[0].name.localeCompare(c[0].name)).forEach(([T, i]) => {
+    const sid = T.k + '_seed~' + i, have = cnt(sid), grow = growing[i] || 0;
     grid.append(el('div', { class: 'kcard' }, el('div', { class: 'khead' }, IT[T.k + '~' + i] ? icon(T.k + '~' + i, 20) : null, el('b', null, T.name), el('small', { title: 'How good this strain is so far' }, strainStars(T))), el('small', null, 'Generation ' + T.gen + '.'),
-      el('small', null, traitText(T)), el('small', { class: 'sbpa' }, geneText(T)), el('small', { class: 'sbpa' }, (T.pa ? 'From ' + T.pa.join(' × ') + '. ' : '') + (have ? 'You have ' + have + ' seed' + (have > 1 ? 's' : '') + '.' : 'No seeds on you.'))));
+      el('small', null, traitText(T)), el('small', { class: 'sbpa' }, geneText(T)), el('small', { class: 'sbpa' }, (T.pa ? 'From ' + T.pa.join(' × ') + '. ' : '') + (have ? 'You have ' + have + ' seed' + (have > 1 ? 's' : '') + '.' : 'No seeds on you.') + (grow ? ' ' + grow + ' growing.' : ''))));
   });
-  b.append(el('h3', null, L.length + ' strain' + (L.length > 1 ? 's' : '') + ' bred'), grid);
+  b.append(el('h3', null, L.length + ' strain' + (L.length > 1 ? 's' : '') + ' you have'), grid);
+  if (gone) b.append(el('p', { class: 'note' }, gone + (gone > 1 ? ' more you bred are' : ' more you bred is') + ' gone: no seeds or plants are left. Breed ' + (gone > 1 ? 'them' : 'it') + ' again and ' + (gone > 1 ? 'they come' : 'it comes') + ' back.'));
 }
 farmNotices = (f => function () {
   const r = f.apply(this, arguments);

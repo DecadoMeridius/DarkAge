@@ -288,7 +288,7 @@ const stallPace = mul => { const c = stallChance(mul); return c >= .9 ? 'sells f
 openStall = function () {
   S.stall = S.stall || { goods: {}, earned: 0 }; S.stall.mul = S.stall.mul || {}; stallClean();
   openModal('Market Stall', [{ id: 's', label: 'Stall', render: b => {
-    b.append(el('p', { class: 'note' }, 'Open 8:00 to 18:00. Set each price against what the village pays: the cheaper, the faster it sells. Traders call every two hours from 9:00 to 17:00 and buy anything a town pays more for than your price (after their 15%). Earned so far: ' + S.stall.earned.toLocaleString() + 'g.'));
+    b.append(el('p', { class: 'note' }, 'Open 8:00 to 18:00. Set each price against what the village pays: the cheaper, the faster it sells. Traders call in the morning, at midday and in the evening (9:00, 13:00, 17:00) and buy anything a town pays more for than your price (after their 15%). Earned so far: ' + S.stall.earned.toLocaleString() + 'g.'));
     const on = el('div', { class: 'stallgrid' });
     for (const k in S.stall.goods) {
       const [id, q] = parseK(k), mul = stallMul(k), set = d => { S.stall.mul[k] = Math.max(.1, Math.round((mul + d * stallStep(mul, d)) * 100) / 100); refresh(); };
@@ -344,7 +344,7 @@ function renderStallLog(b) {
   }
   if (days.length > shown) b.append(el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => { MODAL.opts.logN = shown + 28; refresh(); } }, 'Show older days (' + (days.length - shown) + ' more)')));
 }
-/* ---- buy orders (asked 2026-11-04): you name an item, your top price and how many; the traders who call (9:00 to 17:00, every two
+/* ---- buy orders (asked 2026-11-04): you name an item, your top price and how many; the traders who call (9:00, 13:00 and 17:00; was every two
    hours) buy it in a town whose shop sells it under your price, take it from that town's stock and bring it (the town's shop
    price, `ORDER_CUT` x the market price, so an order saves the walk but is never cheaper than buying there yourself). You pay your price when it arrives; deliveries wait in the stall (S.stall.orders, S.stall.bought). ---- */
 const ORDER_CUT = 1.25;   // as town shops charge (x_realm.js); 1.1 let an order buy Greyhelm ore that resold in the village at +25%
@@ -357,7 +357,7 @@ const orderCost = (m, id) => Math.max(1, Math.round(valBase(id) * mktF(m, id) * 
 function orderBest(id) { if (!mktTracks(id)) return orderable(id) ? [AFAR, Math.max(1, Math.round(IT[id].p * 1.1))] : null; let best = null; for (const m in MARKETS) { if (mktStock(m, id) < 1) continue; const c = orderCost(m, id); if (!best || c < best[1]) best = [m, c]; } return best; }
 function renderOrders(b) {
   const st = S.stall; st.orders = st.orders || []; st.bought = st.bought || {};
-  b.append(el('p', { class: 'note' }, 'Ask the travelling traders to bring goods. Every two hours from 9:00 to 17:00 they buy them in a town whose shop sells them under your price and bring them here; you pay your price when they arrive (you need the gold then, not now). It saves the trip, at the town’s own price.'));
+  b.append(el('p', { class: 'note' }, 'Ask the travelling traders to bring goods. Three times a day (9:00, 13:00, 17:00) they buy them in a town whose shop sells them under your price and bring them here; you pay your price when they arrive (you need the gold then, not now). It saves the trip, at the town’s own price.'));
   const got = Object.keys(st.bought).filter(id => st.bought[id] > 0 && IT[id]);
   if (got.length) {
     const L = el('div', { class: 'list' });
@@ -514,7 +514,7 @@ function stallTraderDeal() {
   }
   return deal;
 }
-const TRADER_HRS = [9, 11, 13, 15, 17];   // when traders call at the stall (was 10:00 and 15:00 until 2026-11-04)
+const TRADER_HRS = [9, 13, 17];   // when traders call at the stall: morning, midday, evening (asked 2026-11-04; it was every two hours, and 10:00 and 15:00 before that)
 function stallTrader() {
   if (TRADER.n) return;   // one already on the way
   const sell = stallTraderDeal(), orders = stallOrderDeals(); if (!sell && !orders.length) return;

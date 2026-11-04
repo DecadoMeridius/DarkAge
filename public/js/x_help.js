@@ -7,7 +7,7 @@ const HELP = {
     'Put goods out from your backpack. They sell from 8:00 to 18:00 while you work elsewhere, faster at weekends.',
     'Set each price with − and +, against what the village pays today; there is no top limit (the steps grow as the price rises). To villagers 70% always sells, 100% about half the time, 130% now and then, 160% hardly ever, and above double no villager buys.',
     'Passers-by are villagers, so they compare your price with the village price.',
-    'Every two hours from 9:00 to 17:00 a travelling trader may call. He buys anything some town pays more for than your price, after his 15% cut. Towns that are badly short can pay two or three times the usual price.',
+    'A travelling trader may call three times a day: at 9:00, 13:00 and 17:00. He buys anything some town pays more for than your price, after his 15% cut. Towns that are badly short can pay two or three times the usual price.',
     'Market news: hire Odo Fenn for a month (400g) to get the trade news, every town’s market (click a town for its full lists), and on each row the best town and the most a trader would pay, with a Trader price button that sets your price to it.',
     'Take back returns unsold goods to your backpack.',
     'Buy orders: name an item, your top price and how many. The same traders buy it in a town whose shop sells it under your price and bring it on one of those visits; you pay when it arrives, and it waits in the stall until you take it.',
