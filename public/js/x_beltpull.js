@@ -312,7 +312,7 @@ HELP.belt = ['Belts', [
   'R (or Shift+E) rotates the belt you aim at. A sorter sends its filter item straight and turns the rest right.',
   'A Splitter can be set: how many go straight, left and right (Out of every N), and chosen items sent a set way (they wait for it). Anything without a set way follows the ratio.',
   'A Merger takes from its back and both sides strictly in turn, so a full line shares evenly (a plain belt lets one input win). Switch sides off in its window.']];
-helpKey = (f => function () { if (MODAL && MODAL.opts && MODAL.opts.belt) return 'belt'; return f.apply(this, arguments); })(helpKey);
+helpKey = (f => function () { const r = f.apply(this, arguments); if (MODAL && MODAL.opts && MODAL.opts.belt) return r && r.startsWith('b:') ? r : 'belt'; return r; })(helpKey);
 if (HELP.bank) HELP.bank[1].push('A Storage Shed on your farm joins the belt line: belts pointing into it fill the bank, belts pointing away that pull take from it.');
 
 document.head.append(el('style', null, `

@@ -141,16 +141,27 @@ function helpKey() {
   if (/ — build site$/.test(t)) return 'site';
   // a town building: the guild, else by the kind of building (inn, hall, bank, forge, shop)
   const act = cur && cur.id.startsWith('in_') ? cur.id.slice(3) : null;
-  if (act && typeof GUILDS !== 'undefined' && GUILDS[act]) return 'guild';
-  if (act && typeof TOWN_ACTS !== 'undefined' && TOWN_ACTS[act] && t === TOWN_ACTS[act].name) { const ty = actType(act); return ty === 'fish' ? 'shop' : HELP[ty] ? ty : 'shop'; }
+  if (act && typeof GUILDS !== 'undefined' && GUILDS[act]) return 'g:' + act;
+  if (act && typeof TOWN_ACTS !== 'undefined' && TOWN_ACTS[act] && t === TOWN_ACTS[act].name) return 't:' + act;
   if (cur && cur.region && REGIONS[cur.region]) { const n = REGIONS[cur.region].town.n; if (t === n + ' market') return 'shop'; if (t === n + ' inn') return 'inn'; if (t === n + ' forge') return 'smith'; }
   // a machine window is titled with the machine's name
   const mk = Object.keys(IT).find(k => IT[k].t === 'place' && IT[k].n === t);
-  if (mk) return HELP_ARTISAN.has(mk) ? 'artisan' : 'machine';
+  if (mk) return HELP_ARTISAN.has(mk) ? 'artisan' : typeof BELTS !== 'undefined' && BELTS.has(mk) ? 'b:' + mk : 'm:' + mk;
+  if (t === 'Home') return 'home';
+  if (t === 'Royal Bedchamber') return 'bedchamber';
+  if (t === 'Farewell') return 'farewell';
+  if (t === 'Trip Hammer') return 'm:triphammer';
+  const tab = MODAL.tabs && MODAL.tabs[0] ? MODAL.tabs[0].label : '';
+  if (tab === 'Building') return 'hammer';
+  if (tab === 'The story so far') return 'recap';
+  if (typeof SHRINES !== 'undefined') for (const bio in SHRINES) if (SHRINES[bio].n === t) return 'shrine:' + bio;
+  if (typeof FEST !== 'undefined' && Object.values(FEST).some(F => F.n === t)) return 'fest:' + t;
+  if (typeof REGIONS !== 'undefined' && Object.values(REGIONS).some(R => R.dg && R.dg.n === t)) return 'dungeon';
+  if (S && S.fam && (S.fam.kids || []).some(k => k.name === t)) return 'child';
   return null;
 }
 function helpOpen(key) {
-  helpClose(); const H = HELP[key]; if (!H) return;
+  helpClose(); let H = HELP[key]; if (!H) try { H = helpGen(key); } catch (e) { console.error(e); } if (!H) return;
   const box = el('div', { id: 'helppop', class: 'f-panel' }, el('div', { class: 'ph' }, el('h2', null, H[0]), el('button', { class: 'btn ghost', 'aria-label': 'Close', on: helpClose }, '✕')),
     ...H[1].map(p => el('p', null, p)));
   document.body.append(box);
@@ -177,3 +188,105 @@ document.head.append(el('style', null, `
 #helppop .ph h2 { flex: 1; margin: 0; font-size: 20px !important; }
 #helppop p { margin: 0 0 9px; line-height: 1.4; }
 `));
+
+/* ---- guides written from the game's own data (2026-11-05): each machine, belt, town building and guild gets its own,
+   so the numbers stay true when recipes, fuel or ranks change ---- */
+const helpS = t => { const s = Math.round(t * 6) / 10; return (s % 1 ? s.toFixed(1) : s) + ' s'; };
+const helpN = (id, n) => n + ' ' + (IT[id] ? IT[id].n.toLowerCase() : id);
+const helpList = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+const HELP_TIER = ['', 'hand-built (tier 1)', 'iron (tier 2)', 'cobalt (tier 3)', 'tide and rime (tier 4)', 'ember (tier 5)'];
+const HELP_POWER = 'Power comes from a treadwheel (5 tiles, while it has hay), windmill (7), waterwheel (9, touching water), tide mill (13) or ember core (18) within reach.';
+const HELP_HOW = [
+  'Drag stacks between your backpack and the input, fuel and output slots, or click them. Move sets how many (Shift: half, Ctrl: one).',
+  'Make: pick one recipe and the machine only takes and makes that one, from belts too. Any lets it choose. A belt pointing in loads it; a belt pointing away takes what it made.',
+  'It keeps working while you’re away, even off the farm, and overnight. The window counts what it has made. Pick it up with the pickaxe: its contents come with it.'];
+const HELP_MACH = {
+  treadwheel: ['Treadwheel', ['Powers every machine and belt within 5 tiles while it runs. It eats 1 hay every 20 ticks (12 s); put hay in its slot, or lead a belt of hay into it.', 'A silo or the Storage Shed can feed it by a pulling belt. When the hay runs out, everything it powered stops and says “no power”.']],
+  windmill: ['Windmill', ['Powers machines and belts within 7 tiles, always, with no fuel.']],
+  waterwheel: ['Waterwheel', ['Powers machines and belts within 9 tiles, but only while it touches water. Use a tide mill on it to upgrade it (13 tiles).']],
+  tidemill: ['Tide mill', ['Powers everything within 13 tiles while it touches water. Inspect says whether it’s running.']],
+  embercore: ['Ember core', ['Powers everything within 18 tiles, always, with no fuel. The strongest power source.']],
+  seedhopper: ['Seed Hopper', ['Every morning it sows its seeds into empty tilled soil within 3 tiles: in-season seeds only, one seed a tile. Load it with seeds by hand or by belt.', 'Use an Ember Golem on it to upgrade it in place; the seeds stay.']],
+  golem: ['Ember Golem', ['Every morning it harvests, waters and replants everything within 6 tiles, using the seeds you load into it.', 'The harvest goes onto a belt leading away, or waits inside for you.']],
+  reaper: ['Reaper', ['While powered it cuts one ripe crop within 3 tiles every tick (0.6 s), and the rest overnight.', 'Crops go onto a belt leading away, or wait inside.']],
+};
+const HELP_BELT = {
+  conveyor: 'Moves one tile every tick (0.6 s) and needs power.',
+  chute: 'Hand-built: needs no power but moves only every other tick (one tile per 1.2 s). Use a Conveyor on it to upgrade it.',
+  fastbelt: 'Moves two tiles every tick and needs power. Use a Rune Belt on it to upgrade it.',
+  runebelt: 'Moves three tiles every tick and needs no power: the fastest belt.',
+  sorter: 'Needs power. Interact holding an item to set its filter: that item goes straight on, everything else turns right.',
+  splitter: 'Needs power. It alternates straight and right, or follows its settings: how many of every N go straight, left and right, and chosen items sent a set way (they wait until that way is free).',
+  merger: 'Takes from its back and both sides strictly in turn and sends everything out the front, so a full line shares evenly; a plain belt lets one input win. Switch sides off in its window.',
+};
+function helpMachine(k) {
+  if (HELP_MACH[k]) return HELP_MACH[k];
+  const st = STATIONS[k]; if (!st) return HELP.machine;
+  const it = IT[k] || { n: k }, mult = st.mult || 1, yl = st.yield || 1, ps = [];
+  const rec = (st.recipes || []).filter(r => IT[r.out[0]]);
+  if (st.desc && rec.length > 8) ps.push(st.desc + ' (' + helpS(Math.max(1, Math.round(rec[0].ticks * mult))) + ' each).');
+  else if (rec.length) ps.push('Makes: ' + rec.map(r => helpList(Object.entries(r.in).filter(([i]) => IT[i]).map(([i, n]) => helpN(i, n))) + ' → ' + helpN(r.out[0], r.out[1] * yl) + ' (' + helpS(Math.max(1, Math.round(r.ticks * mult))) + ')').join('; ') + '.');
+  if (k === 'triphammer' || k === 'powerhammer') ps.push('Set it up with any anvil recipe you know; it smiths that from the bars and parts put in, ' + (k === 'powerhammer' ? 'twice as fast as a trip hammer' : 'one at a time') + '. It needs power.');
+  if (mult !== 1) ps.push(mult < 1 ? 'Works ' + Math.round(1 / mult * 10) / 10 + '× as fast as the standard machine.' : 'A hand-built piece: slower than the iron one (' + mult + '× the time).');
+  if (st.fuel) ps.push('Burns fuel while it works: wood ' + helpS(FUEL.wood * (st.fuelx || 1)) + ', hardwood ' + helpS(FUEL.hardwood * (st.fuelx || 1)) + ', charcoal ' + helpS(FUEL.charcoal * (st.fuelx || 1)) + ', coal ' + helpS(FUEL.coal * (st.fuelx || 1)) + ' each' + (st.fuelx ? ' (fuel lasts ' + st.fuelx + '× as long here)' : '') + '. The fuel bar shows how long the fire in it and the fuel in the slot will last. Belts load inputs first, then fuel.');
+  else if (k === 'emberforge') ps.push('Needs no fuel and no power.');
+  if (st.power) ps.push(HELP_POWER);
+  const sk = typeof STATION_SKILL !== 'undefined' && STATION_SKILL[k];
+  if (sk) ps.push('Everything it makes gives you ' + (SKN[sk] || sk) + ' XP, at a share of what making it by hand gives.');
+  const tr = typeof AUTOTIER !== 'undefined' && AUTOTIER[k], nx = typeof UPG !== 'undefined' && UPG[k];
+  if (tr || nx) ps.push((tr ? 'Automation tier: ' + HELP_TIER[tr] + '. ' : '') + (nx && IT[nx] ? 'Use a ' + IT[nx].n + ' on it to upgrade it in place; what’s inside is kept.' : ''));
+  return [it.n, ps.concat(HELP_HOW)];
+}
+const HELP_TOWN = {
+  kb_market: 'Wynna sells seeds and saplings for every season and buys crops, fruit, artisan goods, animal products and food, paying 5% over the market for goods she doesn’t sell herself.',
+  kb_smith: 'Garrick sells copper to gold bars and iron and steel arms, and buys bars, ore, weapons and armour.',
+  gh_forge: 'Borek sells iron, steel and cobalt bars, hammers, daggers and plate, and buys bars, ore, weapons and armour. Cobalt patterns are bought here.',
+  gh_supply: 'Coal, ore, stone and lanterns for miners. It buys ore, gems and materials, paying 10% over the market for what it doesn’t sell itself.',
+  af_trader: 'Wood, hardwood, sap, fruit saplings and wild mushrooms. It buys forage and materials.',
+  af_saw: 'Wood, hardwood, fences, workbenches and paths. The sawmill buys timber, paying 15% over the market.',
+  sm_fish: 'Finn sells sea fish, clams, kelp, crab traps and the harpoon, and buys fish, paying 15% over the market for kinds he doesn’t sell.',
+  sm_chandler: 'Salt, fibre, lanterns, canoes, crab traps and kelp. Perrin buys monster loot and forage. The Shipwright tab builds the sailboat to the isles.',
+  kb_bank: 'Kingsbridge Bank opens the same bank as your Storage Shed and Mara’s chest.',
+  kb_temple: 'The Temple of the Ember gives one blessing a day.',
+  kb_barracks: 'Captain Vey’s barracks: the patrol job sends knights along the roads with you, a squad every 10 s while it’s on, and kills with a knight near count for the job.',
+};
+function helpTown(act) {
+  const T = TOWN_ACTS[act], ty = actType(act), base = HELP[ty === 'fish' ? 'shop' : HELP[ty] ? ty : 'shop'], ps = [];
+  if (HELP_TOWN[act]) ps.push(HELP_TOWN[act]);
+  if (ty === 'inn' && typeof mealsAt !== 'undefined' && mealsAt[T.town]) ps.push('Cooked here: ' + helpList(mealsAt[T.town].filter(k => IT[k]).map(k => IT[k].n)) + '. At 6 hearts with the keeper, the rest is free.');
+  if (ty === 'shop' || ty === 'fish') ps.push('Town shops charge 1.25× the market price (1.15× at 50 standing). Selling a stack lowers the price unit by unit, and what you sell adds to this town’s stock.');
+  return [T.name, ps.concat(base[1])];
+}
+function helpGuild(act) {
+  const G = GUILDS[act], ps = [];
+  if (G.blurb) ps.push(G.blurb);
+  ps.push('Joining costs ' + G.fee + 'g. Five ranks: ' + G.ranks.map(r => r.title).join(', ') + '. Each rank’s tasks are listed in the Ranks tab; bring goods are taken when you’re promoted.');
+  const hands = typeof HIRE !== 'undefined' ? Object.values(HIRE).filter(h => h.g === act).map(h => h.n.toLowerCase()) : [];
+  if (hands.length) ps.push('Members can hire a ' + helpList(hands) + ' at the farm notice board. Each rank opens the next level of hand (up to 4) and adds 5% to what they bring.');
+  if (G.store && G.store.length) ps.push('Guild store: ' + helpList(G.store.filter(s => IT[s[0]]).map(s => IT[s[0]].n + ' (rank ' + s[2] + ')')) + '.');
+  if (act === 'gh_guild') ps.push('From Hewer, the Guild Seam in Greyhelm’s north-east corner is yours to mine: a cave thick with ore, rebuilt every day and full on your first visit of the day.');
+  ps.push('Choose the title you go by in the Titles tab; guildmasters greet you by it.');
+  return [G.name, ps];
+}
+function helpGen(key) {
+  const [a, b] = key.split(/:(.*)/);
+  if (a === 'm') return helpMachine(b);
+  if (a === 'b') return [IT[b] ? IT[b].n : 'Belt', [HELP_BELT[b] || ''].concat(HELP.belt ? HELP.belt[1].slice(1) : [])];
+  if (a === 't' && TOWN_ACTS[b]) return helpTown(b);
+  if (a === 'g' && GUILDS[b]) return helpGuild(b);
+  if (a === 'shrine') { const D = SHRINES[b]; return [D.n, ['Each of the Wilds’ four shrines asks for an offering: ' + helpList(Object.entries(D.need).map(([k, n]) => helpN(k, n))) + '.', 'Give it once and its blessing is yours for good: ' + D.desc + '.', 'The items are taken from your backpack.']]; }
+  if (a === 'fest') { const F = Object.values(FEST).find(F => F.n === b); return [F.n, [F.desc, 'Shops close for the day (the tavern stays open) and everyone gathers in the plaza from 9:00. Talk to any villager there for the festival’s activity.']]; }
+  return null;
+}
+Object.assign(HELP, {
+  home: ['Home', ['Sleep until morning ends the day: crops grow, machines catch up overnight, the morning report comes, and the game saves.', 'Go to bed before 2:00. Past it you pass out where you stand and wake with less energy.', 'Once the cottage is built you wake beside your bed; the tent is only for the first weeks.']],
+  bedchamber: ['Royal Bedchamber', ['Your bed in Briarholt’s keep. Sleeping here ends the day like your farm bed, and you wake in the keep.', 'Any day that ends in the castle grounds wakes you here.']],
+  farewell: ['Farewell', ['Your life ends here. Choose your heir: your spouse or a grown child.', 'They keep the farm, gold, buildings, land and items, all titles and guild ranks, and take their own skills on; each generation adds 10% to all XP. The others in the family go their own ways.']],
+  hammer: ['Building hammer', ['Move lifts the building and lets you set it down anywhere it fits on the farm (right click or Esc puts it back).', 'Remove takes it down: a finished building gives back half its materials, an unfinished site everything delivered and its blueprint.']],
+  recap: ['The story so far', ['Every chapter reached, each finished step with what was said, and what to do now.', 'Track a story in the Quests tab for an arrow to the next place.']],
+  dungeon: ['Region dungeon', ['Five floors, rebuilt every visit. The boss and a tier-6 chest wait on floor 5.', 'Once you’ve reached floor 3 or 5 you can start there.']],
+  child: ['Your child', ['Babies grow into children at 4, teens at 13 and adults at 18 (5 years a game year).', 'Children bring forage now and then. Teens learn the skill you pick here: each day 2% of your XP in it. Grown children do chores and can inherit the farm.']],
+});
+HELP.notices = ['Notice boards', [
+  'Today: the weather, festivals coming up, birthdays and the day’s request.',
+  'Hire: hired hands from your guilds (see their own guide in that tab). Seeds: the Seed book of your crop strains.']];

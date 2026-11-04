@@ -23,6 +23,7 @@ STORIES.welcome = {
           "Now the soil. Take the hoe (1) and break a few tiles of ground. Somewhere flat and sunny, near water if you can.") },
       { t: 'cond', test: () => soilDone(1), hint: 'Till a few tiles of soil with the hoe (1).',
         lines: AL("Good dark earth under all that grass. Your grandmother swore by this meadow.",
+          "Mind, the meadow wants it back. Every morning some open soil goes back to long grass, crop and all. A fence round the field keeps it off; we'll see to that soon.",
           "You've turnip and potato seeds on your belt (8 and 9). Plant them in the tilled ground.") },
       { t: 'cond', test: () => soilDone(2), hint: 'Plant seeds (8, 9) on the tilled soil.',
         lines: AL("Seeds want water every day, or they sit and sulk. Take the can (2) to them.",
@@ -37,6 +38,7 @@ STORIES.welcome = {
           "That old workbench by the tent was your grandmother's. Make yourself something on it. A few fence posts, say. Walk up to it and press E.") },
       { t: 'cond', test: () => (S.stats.crafted || 0) > (S.flags.tutCraft0 || 0), hint: 'Make something at the workbench by your tent (walk up, press E).',
         lines: AL("Ha. She'd be pleased. She built half this valley's fences with her own hands, and quarrelled over the other half.",
+          "Run fences right round your fields, and hang a fence gate where you walk through. Soil the open meadow can't reach stays soil. Leave a gap, and the grass creeps in each morning. A water channel or a building closes a side as well as a fence does.",
           "That's my morning spent. I'll ride on ahead to the village: meet me at the fountain. The road east, past the signpost. Mara keeps the store there; she'll sell you more seeds.",
           "And mind the time. Be in your tent by two in the morning, or you'll wake up somewhere you'd rather not.") },
       // reached the village at all, or went straight into Mara's (round 2: only the plaza counted, so the shop visit didn't)
@@ -74,7 +76,7 @@ function tutWelcome() {
       ['Show me around', () => { S.flags.tutorial = 1; S.flags.tutCraft0 = S.stats.crafted || 0; storyState(); S.story.track = 'welcome';
         storyDialog(AL("Splendid. First, these weeds. There's a scythe on your belt (6). Find a clump of weeds or long grass and give it a swing."), { title: 'Hollowmere Farm' }); }],
       ['I know my way around a farm', () => { S.flags.tutSkip = 1;
-        storyDialog(AL("Ha! Her blood after all. Seeds at Mara's in the village, east along the road. Sleep in your tent before two. The manor's on the hill when you want more land."), { title: 'Hollowmere Farm', done: () => { S.flags.tutWalk = 3; } }); }],
+        storyDialog(AL("Ha! Her blood after all. Seeds at Mara's in the village, east along the road. Sleep in your tent before two. Fence your fields, or the meadow takes the soil back. The manor's on the hill when you want more land."), { title: 'Hollowmere Farm', done: () => { S.flags.tutWalk = 3; } }); }],
     ] });
 }
 function tutFrame(dt) {

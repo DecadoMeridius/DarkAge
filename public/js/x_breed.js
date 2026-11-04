@@ -2,7 +2,7 @@
    - Holding a sprinkler shows the tiles it would water around the tile you aim at (tilled soil brighter), and faintly
      what the sprinklers already placed reach; on the farm and in the greenhouse.
    - Seeds back: a harvest gives a seed of that crop (or strain) with a chance of 5% + 0.25% a Farming level (~30% at 99).
-   - Crosses: harvesting a crop with a different, grown crop or strain next to it (any of the 8 tiles, at least 60% grown)
+   - Crosses: harvesting a crop with a different, grown crop or strain next to it (any of the 8 tiles, at least half grown)
      gives a cross seed now and then (4% + 0.1% a Farming level). The cross is a strain of one parent's crop with the
      parents' traits mixed and a little changed (more when the two crops differ): growth speed (g), extra produce per
      harvest (y), worth and colour (v, col) and hardiness (h: survives the change of season and plants in any season).
@@ -137,7 +137,7 @@ function afterHarvest(m, tx, ty, k, st) {
   const partners = [];
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
     if (!dx && !dy) continue; const q = m.soil[(ty + dy) * m.w + tx + dx], pc = q && q.crop;
-    if (pc && !pc.dead && CROPS[pc.k] && IT[pc.k + '_seed'] && pc.age >= CROPS[pc.k].d * .6 && (pc.k !== k || pc.st !== st)) partners.push(pc);
+    if (pc && !pc.dead && CROPS[pc.k] && IT[pc.k + '_seed'] && pc.age >= CROPS[pc.k].d * .5 && (pc.k !== k || pc.st !== st)) partners.push(pc);
   }
   if (!partners.length || Math.random() > .04 + L * .001) return;
   const p = pickR(partners), i = crossStrain(traitsOf(k, st), traitsOf(p.k, p.st)); if (i < 0) return;
@@ -186,7 +186,7 @@ function strainsAlive() {
 function renderSeedBook(b) {
   const growing = {}; for (const id of ['farm', 'greenhouse', ...(typeof ownedPlots === 'function' ? ownedPlots() : [])]) { const m = MAPS[id]; if (m) for (const key in m.soil) { const c = m.soil[key] && m.soil[key].crop; if (c && c.st !== undefined && !c.dead) growing[c.st] = (growing[c.st] || 0) + 1; } }
   const alive = strainsAlive(), L = strains().map((T, i) => [T, i]).filter(([, i]) => alive.has(i)), gone = strains().length - L.length;
-  b.append(el('p', { class: 'note' }, 'Plant two different crops (or strains) side by side; harvesting one beside the other, grown, now and then gives a cross. A cross keeps the best of each parent\'s genes and half the time gains one more level, most often in a trait it already has, so you can breed a line up trait by trait or combine two strains. Growth +20% a level (3), yield +1 (3), worth +10% (5), hardy one more season (4: every season). Strains give their seeds back often.'));
+  b.append(el('p', { class: 'note' }, 'Plant two different crops (or strains) side by side; harvesting one beside the other (at least half grown) now and then gives a cross. A cross keeps the best of each parent\'s genes and half the time gains one more level, most often in a trait it already has, so you can breed a line up trait by trait or combine two strains. Growth +20% a level (3), yield +1 (3), worth +10% (5), hardy one more season (4: every season). Strains give their seeds back often.'));
   if (!L.length) { b.append(el('p', { class: 'note' }, strains().length ? 'You have no seeds or plants of any strain left.' : 'No strains yet.')); return; }
   const grid = el('div', { class: 'keepgrid' });
   L.sort((a, c) => (c[0].gen - a[0].gen) || a[0].name.localeCompare(c[0].name)).forEach(([T, i]) => {
@@ -204,7 +204,7 @@ farmNotices = (f => function () {
 })(farmNotices);
 drawModal = (f => function () { const r = f.apply(this, arguments); const p = document.querySelector('#modal'); if (p && MODAL && MODAL.title === 'Farm notices' && MODAL.cur === 'seeds') p.classList.remove('small'); return r; })(drawModal);
 if (typeof HELP !== 'undefined') {
-  HELP.seeds = ['Seed book', ['Harvests give a seed back now and then: 5% at Farming 1, about 30% at 99.', 'Plant two different crops (or strains) side by side. Harvesting one next to the other, grown, now and then gives a cross: a new strain with the parents’ traits mixed. Strains can grow faster, give more per harvest, sell for more, or be hardy (live through the change of season and plant any season).', 'Strain seeds are planted by hand. Cross strains again for better ones.']];
+  HELP.seeds = ['Seed book', ['Harvests give a seed back now and then: 5% at Farming 1, about 30% at 99.', 'Plant two different crops (or strains) side by side. Harvesting one next to the other (at least half grown) now and then gives a cross: a new strain with the parents’ traits mixed. Strains can grow faster, give more per harvest, sell for more, or be hardy (live through the change of season and plant any season).', 'Strain seeds are planted by hand. Cross strains again for better ones.']];
   helpKey = (f => function () { if (MODAL && MODAL.title === 'Farm notices' && MODAL.cur === 'seeds') return 'seeds'; return f.apply(this, arguments); })(helpKey);
 }
 document.head.append(el('style', null, '.sbpa { opacity: .7; }'));
