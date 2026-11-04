@@ -214,8 +214,42 @@ openStall = function () {
     find.oninput = () => { MODAL.opts.sq = find.value; refresh(); setTimeout(() => { const f = document.querySelector('#mbody input[placeholder^="Find in your"]'); if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); } }, 0); };
     const chips = el('div', { class: 'chips' }, el('span', null, 'Put out per click:'), ...STALL_AMTS.map(a => el('button', { class: 'chip' + (amt === a ? ' on' : ''), on: () => { MODAL.opts.sn = a; refresh(); } }, String(a))));
     b.append(el('h3', null, 'Put out from your backpack'), el('div', { class: 'acts wrap' }, find), chips, ks.length ? add : el('p', { class: 'note' }, sq ? 'Nothing in your backpack matches.' : 'Nothing to put out.'));
-  } }, { id: 'orders', label: 'Buy orders', render: renderOrders }]);
+  } }, { id: 'orders', label: 'Buy orders', render: renderOrders }, { id: 'log', label: 'Log', render: renderStallLog }]);
 };
+/* ---- the stall's log (asked 2026-11-04): every sale and every delivered order of the last game year (112 days), by day
+   (S.stall.log: d day index, h minute, k sold | trader | bought, id item key, n, g gold, w town) ---- */
+const LOG_DAYS = 112;
+function stallLog(k, key, n, g, w) {
+  const st = S.stall, L = st.log = st.log || [], d = dayIndex();
+  L.push({ d, h: Math.round(S.time), k, id: key, n, g, w: w || null });
+  while (L.length && L[0].d <= d - LOG_DAYS) L.shift();
+}
+const dayName = d => { const y = Math.floor((d - 1) / 112) + 1, r = (d - 1) % 112; return SEASONS[Math.floor(r / 28)] + ' ' + (r % 28 + 1) + (y > 1 ? ', year ' + y : ''); };
+const clockName = h => { const hh = Math.floor(h / 60) % 24, mm = Math.round(h % 60); return (hh % 12 || 12) + ':' + String(mm).padStart(2, '0') + (hh < 12 ? ' am' : ' pm'); };
+function renderStallLog(b) {
+  const L = (S.stall.log || []).slice(), today = dayIndex();
+  const sum = (f, k) => L.filter(f).filter(e => e.k === k || (k === 'sold' && e.k === 'trader')).reduce((t, e) => t + e.g, 0);
+  const week = e => e.d > today - 7;
+  b.append(el('p', { class: 'note' }, 'Every sale and every delivered buy order of the last year (112 days), newest first.'));
+  b.append(el('div', { class: 'list' },
+    el('div', { class: 'rrow' }, el('div', { class: 'rtxt' }, el('b', null, 'Last 7 days'), el('small', null, 'Sold ' + sum(week, 'sold').toLocaleString() + 'g · bought ' + sum(week, 'bought').toLocaleString() + 'g'))),
+    el('div', { class: 'rrow' }, el('div', { class: 'rtxt' }, el('b', null, 'This year'), el('small', null, 'Sold ' + sum(() => true, 'sold').toLocaleString() + 'g · bought ' + sum(() => true, 'bought').toLocaleString() + 'g')))));
+  if (!L.length) { b.append(el('p', { class: 'note' }, 'Nothing sold or bought yet.')); return; }
+  const days = [...new Set(L.map(e => e.d))].sort((a, c) => c - a), shown = MODAL.opts.logN || 14;
+  for (const d of days.slice(0, shown)) {
+    const es = L.filter(e => e.d === d).reverse(), so = es.filter(e => e.k !== 'bought').reduce((t, e) => t + e.g, 0), bo = es.filter(e => e.k === 'bought').reduce((t, e) => t + e.g, 0);
+    b.append(el('h3', null, (d === today ? 'Today, ' : d === today - 1 ? 'Yesterday, ' : '') + dayName(d) + ' · sold ' + so.toLocaleString() + 'g' + (bo ? ', bought ' + bo.toLocaleString() + 'g' : '')));
+    const box = el('div', { class: 'list' });
+    for (const e of es) {
+      const [id, q] = parseK(e.id), name = IT[id] ? (q ? QNAME[q] + ' ' : '') + IT[id].n.toLowerCase() : e.id;
+      const it = name + ' ×' + e.n, what = e.k === 'bought' ? 'Bought ' + it + (e.w && e.w !== AFAR ? ' from ' + mktName(e.w) : '') + ' (buy order)'
+        : e.k === 'trader' ? 'Sold ' + it + ' to a trader' + (e.w ? ' bound for ' + mktName(e.w) : '') : 'Sold ' + it + ' to a villager';
+      box.append(el('div', { class: 'rrow' }, IT[id] ? icon(id, 24, q) : null, el('div', { class: 'rtxt' }, el('b', null, what), el('small', null, clockName(e.h) + ' · ' + (e.k === 'bought' ? '−' : '+') + e.g.toLocaleString() + 'g'))));
+    }
+    b.append(box);
+  }
+  if (days.length > shown) b.append(el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => { MODAL.opts.logN = shown + 28; refresh(); } }, 'Show older days (' + (days.length - shown) + ' more)')));
+}
 /* ---- buy orders (asked 2026-11-04): you name an item, your top price and how many; the traders who call at 10:00 and
    15:00 buy it in a town whose shop sells it under your price, take it from that town's stock and bring it (the town's shop
    price, `ORDER_CUT` x the market price, so an order saves the walk but is never cheaper than buying there yourself). You pay your price when it arrives; deliveries wait in the stall (S.stall.orders, S.stall.bought). ---- */
@@ -277,6 +311,7 @@ function stallOrdersFill(list) {
   for (const { o, m, q: want } of list) {
     const q = Math.min(want, o.left, Math.floor(S.gold / o.price), m === AFAR ? want : Math.floor(mktStock(m, o.id))); if (q < 1) continue;
     S.gold -= q * o.price; if (m !== AFAR) mktSet(m, o.id, mktStock(m, o.id) - q); st.bought[o.id] = (st.bought[o.id] || 0) + q; o.left -= q;
+    stallLog('bought', o.id, q, q * o.price, m);
     said.push(q + ' ' + IT[o.id].n.toLowerCase() + (m === AFAR ? '' : ' from ' + mktName(m)) + ' (' + (q * o.price).toLocaleString() + 'g)');
   }
   st.orders = (st.orders || []).filter(o => o.left > 0);
@@ -294,10 +329,11 @@ function stallOffer(k) {
 const stallClean = () => { if (S && S.stall && S.stall.goods) for (const k in S.stall.goods) if (!IT[parseK(k)[0]]) delete S.stall.goods[k]; if (S && S.stall && S.stall.orders) S.stall.orders = S.stall.orders.filter(o => IT[o.id] && o.left > 0); };
 const STALL_AMTS = [1, 5, 10, 25, 'All'];
 const stallBuilt = () => S && S.stall && S.structures && S.structures.some(s => s.k === 'stall' && s.stage >= 4) && (stallClean(), true);
-function stallSell(k, n, each, who) {
+function stallSell(k, n, each, who, to) {
   const [id] = parseK(k); n = Math.min(n, S.stall.goods[k] || 0); if (!n) return 0;
   S.stall.goods[k] -= n; if (S.stall.goods[k] <= 0) delete S.stall.goods[k];
   S.gold += each * n; S.stall.earned += each * n; S.stats.shipped[id] = (S.stats.shipped[id] || 0) + n;
+  stallLog(who ? 'trader' : 'sold', k, n, each * n, to);
   if (!who) mktSet('village', id, mktStock('village', id) + n);
   return each * n;
 }
@@ -381,7 +417,7 @@ function stallTrader() {
 function stallTraderBuy(v) {
   if (v.orders && v.orders.length) stallOrdersFill(v.orders);
   const d = v.sell; if (!d || !S.stall.goods[d.k]) return;
-  const g = stallSell(d.k, d.q, d.each, 'trader'), n = Math.round(g / d.each); if (!g) return;
+  const g = stallSell(d.k, d.q, d.each, 'trader', d.m), n = Math.round(g / d.each); if (!g) return;
   const L = LINKS.find(([a, b]) => (a === 'village' && b === d.m) || (b === 'village' && a === d.m));
   mktShip(d.id, n, 'village', d.m, L ? L[2] : 600);
   toast('A trader bound for ' + mktName(d.m) + ' bought ' + n + ' ' + IT[d.id].n.toLowerCase() + ' at your stall for ' + g.toLocaleString() + 'g. ' + mktName(d.m) + ' is short of them.', 'lvl'); SFX.coin();

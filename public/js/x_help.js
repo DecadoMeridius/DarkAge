@@ -9,7 +9,8 @@ const HELP = {
     'Passers-by are villagers, so they compare your price with the village price.',
     'At 10:00 and 15:00 a travelling trader may call. He buys anything some town pays more for than your price, after his 15% cut; each row says the best town and the most he would pay.',
     'Take back returns unsold goods to your backpack.',
-    'Buy orders: name an item, your top price and how many. The same traders buy it in a town whose shop sells it under your price and bring it at 10:00 or 15:00; you pay when it arrives, and it waits in the stall until you take it.']],
+    'Buy orders: name an item, your top price and how many. The same traders buy it in a town whose shop sells it under your price and bring it at 10:00 or 15:00; you pay when it arrives, and it waits in the stall until you take it.',
+    'The Log tab lists every sale and every delivered order of the last year, by day, with totals.']],
   bin: ['Shipping bin', [
     'Anything in the bin is sold overnight, wherever you are.',
     'It always pays a fixed 80% of the base price: no markets, no gluts.',

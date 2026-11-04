@@ -173,7 +173,7 @@ objInteract = function (m, x, y, o) {
   if (o.k === 'storage') return { label: cartOn() ? 'Unload cart' : 'Open', fn: () => cartOn() ? unloadCart(o) : openCrate(o) };
   if (o.k === 'triphammer') return { label: 'Set up', fn: () => openHammer(o, m, x, y) };
   if (o.k === 'treadwheel') return { label: 'Feed', fn: () => { let n = 0; while (has('hay') && accept(o, 'hay', 1, true) && n < 40) { take('hay'); accept(o, 'hay'); n++; } toast(n ? 'Fed ' + n + ' hay. It powers things within 7 tiles while it has hay.' : 'The treadwheel runs on hay.'); } };
-  if (o.k === 'channel' && o.clog) return { label: 'Clear debris', fn: () => { if (S.p.st < 1) { toast('Too tired. Eat or sleep.', 'bad'); return; } useStamina(1); o.clog = 0; waterChannels(m); SFX.pop(); sparkle(x, y, '#9ad0ff'); toast('Channel cleared: the water flows again.', 'good'); } };
+  if (o.k === 'channel' && o.clog) return { label: 'Clear debris', fn: () => { if (S.p.st < 1) { toast('Too tired. Eat or sleep.', 'bad'); return; } useStamina(1); o.clog = 0; const nw = waterFromChannelsOn(m); if (nw) toast('The water runs again: ' + nw + ' tile' + (nw > 1 ? 's' : '') + ' of soil watered.'); SFX.pop(); sparkle(x, y, '#9ad0ff'); toast('Channel cleared: the water flows again.', 'good'); } };
   if (STATIONS[o.k]) return { label: 'Open', fn: () => openStation(o, m, x, y) };
   if (o.k === 'windmill' || o.k === 'waterwheel') return { label: 'Inspect', fn: () => { scanPower(m); toast(m.power.some(p => p[0] === x && p[1] === y) ? 'Turning. Powers everything within 7 tiles.' : 'Not turning: a waterwheel must touch water.'); } };
   return _objInteractA(m, x, y, o);
@@ -289,14 +289,16 @@ function waterChannels(m) {
     o.cm = (isAny(x, y - 1) ? 1 : 0) | (isAny(x + 1, y) ? 2 : 0) | (isAny(x, y + 1) ? 4 : 0) | (isAny(x - 1, y) ? 8 : 0); }
   return wet;
 }
-function waterFromChannels() {
-  for (const m of farmMaps()) {
-    const wet = waterChannels(m), W = m.w;
-    for (const i of wet) { const x = i % W, y = i / W | 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const s = m.soil[(y + dy) * W + x + dx]; if (s && !s.wet) s.wet = true; } }
-  }
+function waterFromChannels() { for (const m of farmMaps()) waterFromChannelsOn(m); }
+function waterFromChannelsOn(m) {
+  const wet = waterChannels(m), W = m.w; let n = 0;
+  for (const i of wet) { const x = i % W, y = i / W | 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const s = m.soil[(y + dy) * W + x + dx]; if (s && !s.wet) { s.wet = true; n++; } } }
+  return n;
 }
 const _endDayA2 = endDay;
-endDay = function (f) { _endDayA2(f); try { clogChannels(); waterFromChannels(); } catch (e) { console.error(e); } };
+// clogs are rolled before the night's report is written, so it tells you that same morning (it came a day late, 2026-11-04);
+// the channels water the soil after the new day has begun
+endDay = function (f) { try { clogChannels(); } catch (e) { console.error(e); } _endDayA2(f); try { waterFromChannels(); } catch (e) { console.error(e); } };
 /* Channels water every morning for free, so they'd outdo the best sprinklers: each connected run of channel has a
    10% chance each morning that one piece fills with leaves and debris. Water stops there (the soil past it stays dry)
    until you clear it (interact, 1 energy). */
