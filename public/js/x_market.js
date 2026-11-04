@@ -52,7 +52,7 @@ const USE = {
   highmarch: { farm: .14, food: .14, metal: .1, craft: .08 }, frostmere: { farm: .14, food: .14, metal: .1, wood: .1 },
   emberwaste: { farm: .14, food: .14, metal: .1, wood: .12 }, saltreach: { farm: .14, food: .14, metal: .1, wood: .1 },
 };
-const MKT = { k: .22, chance: .5, makers: [1, 2], side: .2, useK: .3, use0: .01, drift: .12, relax: .04, gap: .8, load: .15, events: [1, 2], yield: [.4, 1.6], wobble: .3, wantBack: .85, wantStep: .3 };   // k: share of normal stock made on a making day; useK scales USE; relax: the daily pull back to normal
+const MKT = { k: .22, chance: .5, makers: [1, 2], side: .2, useK: .3, use0: .01, drift: .12, relax: .04, gap: .5, load: .15, loads: 4, events: [1, 2], yield: [.4, 1.6], wobble: .3, wantBack: .85, wantStep: .3 };   // k: share of normal stock made on a making day; useK scales USE; relax: the daily pull back to normal
 function mktCat(id) {
   const t = IT[id].t;
   if (/salt|kelp|clam|oyster|mussel|shell|pearl|coral|seaweed/.test(id) && t !== 'fish') return 'sea';
@@ -202,10 +202,10 @@ function mktDaily() {
     for (const id of mktIds()) if (mktCat(id) === c && IT[id].p <= 600) mktSet(m, id, mktStock(m, id) * k);   // everyday goods, not legendary fish or rare gems
     mktNews(mktName(m) + (k < 1 ? ' is short of ' : ' has more ' + CAT_N[c] + ' than it can use: ') + (k < 1 ? CAT_N[c] + ': prices are up there.' : 'prices are down there.'));
   }
-  // traders: along each road, goods go from where the stock is high to where it's low (one load per good a day, only for
-  // real gaps, so a maker stays cheap and a user dear)
+  // traders: along each road, goods go from where the stock is high to where it's low (up to MKT.loads loads per good a
+  // day, where the stock gap is over MKT.gap, so a maker stays cheaper than a user)
   const ids = new Set(); for (const m in st) for (const id in st[m]) ids.add(id);
-  for (const id of ids) for (let it = 0; it < 1; it++) {
+  for (const id of ids) for (let it = 0; it < MKT.loads; it++) {
     let best = null, gap = MKT.gap;
     for (const [a, b, mins] of LINKS) {
       const ra = mktStock(a, id) / mktT(a, id), rb = mktStock(b, id) / mktT(b, id);
@@ -279,19 +279,23 @@ const MKT_STALL = 1;
 const stallMul = k => (S.stall.mul && S.stall.mul[k]) || 1;
 const stallEach = k => Math.max(1, Math.round(mktSellPrice(parseK(k)[0], valBase(k)) * stallMul(k)));
 function valBase(k) { const was = MKT_RAW; MKT_RAW = true; try { return valK(k); } finally { MKT_RAW = was; } }
-// the chance a try sells: 70% of the village price always, 100% half the time, 130% one in eight, 160% hardly ever
-const stallChance = mul => clamp(.5 * Math.pow(2, (1 - mul) / .15), .02, 1);
+// the chance a try sells: 70% of the village price always, 100% half the time, 130% one in eight, 160% hardly ever, and
+// no villager pays 2-3x (asked 2026-11-04: no ceiling on stall prices, since towns can pay that much; traders still buy)
+const stallChance = mul => Math.min(1, .5 * Math.pow(2, (1 - mul) / .15));
+// − and + move 5% up to double the village price, 10% up to 4x, then 25%
+const stallStep = (mul, d) => { const m = d < 0 ? mul - .001 : mul; return m < 2 ? .05 : m < 4 ? .1 : .25; };
 const stallPace = mul => { const c = stallChance(mul); return c >= .9 ? 'sells fast' : c >= .45 ? 'sells steadily' : c >= .2 ? 'sells slowly' : c >= .08 ? 'sells now and then' : 'hardly sells'; };
 openStall = function () {
   S.stall = S.stall || { goods: {}, earned: 0 }; S.stall.mul = S.stall.mul || {}; stallClean();
   openModal('Market Stall', [{ id: 's', label: 'Stall', render: b => {
-    b.append(el('p', { class: 'note' }, 'Open 8:00 to 18:00. Set each price against what the village pays: the cheaper, the faster it sells. Traders call at 10:00 and 15:00 and buy anything a town pays more for than your price (after their 15%). Earned so far: ' + S.stall.earned.toLocaleString() + 'g.'));
+    b.append(el('p', { class: 'note' }, 'Open 8:00 to 18:00. Set each price against what the village pays: the cheaper, the faster it sells. Traders call every two hours from 9:00 to 17:00 and buy anything a town pays more for than your price (after their 15%). Earned so far: ' + S.stall.earned.toLocaleString() + 'g.'));
     const on = el('div', { class: 'list' });
     for (const k in S.stall.goods) {
-      const [id, q] = parseK(k), mul = stallMul(k), set = d => { S.stall.mul[k] = clamp(Math.round((mul + d) * 100) / 100, .7, 1.6); refresh(); };
+      const [id, q] = parseK(k), mul = stallMul(k), set = d => { S.stall.mul[k] = Math.max(.1, Math.round((mul + d * stallStep(mul, d)) * 100) / 100); refresh(); };
       on.append(el('div', { class: 'rrow' }, icon(id, 32, q), el('div', { class: 'rtxt' }, el('b', null, IT[id].n + ' ×' + S.stall.goods[k]),
         el('small', null, stallEach(k) + 'g each (' + Math.round(mul * 100) + '% of the village price) · ' + stallPace(mul) + '. ' + stallOffer(k))),
-        el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => set(-.05) }, '−'), el('button', { class: 'btn ghost', on: () => set(.05) }, '+'),
+        el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => set(-1) }, '−'), el('button', { class: 'btn ghost', on: () => set(1) }, '+'),
+          intelOn() && stallTraderMul(k) ? el('button', { class: 'btn ghost', title: 'Set your price to the most a trader would pay', on: () => { S.stall.mul[k] = stallTraderMul(k); refresh(); } }, 'Trader price') : null,
           el('button', { class: 'btn ghost', on: () => { GIVE_NO_DROP = true; const left = give(id, S.stall.goods[k], q, true); GIVE_NO_DROP = false; if (left) S.stall.goods[k] = left; else delete S.stall.goods[k]; refresh(); } }, 'Take back'))));
     }
     b.append(el('h3', null, 'On display'), on.children.length ? on : el('p', { class: 'note' }, 'Nothing on display.'));
@@ -303,7 +307,7 @@ openStall = function () {
     find.oninput = () => { MODAL.opts.sq = find.value; refresh(); setTimeout(() => { const f = document.querySelector('#mbody input[placeholder^="Find in your"]'); if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); } }, 0); };
     const chips = el('div', { class: 'chips' }, el('span', null, 'Put out per click:'), ...STALL_AMTS.map(a => el('button', { class: 'chip' + (amt === a ? ' on' : ''), on: () => { MODAL.opts.sn = a; refresh(); } }, String(a))));
     b.append(el('h3', null, 'Put out from your backpack'), el('div', { class: 'acts wrap' }, find), chips, ks.length ? add : el('p', { class: 'note' }, sq ? 'Nothing in your backpack matches.' : 'Nothing to put out.'));
-  } }, { id: 'orders', label: 'Buy orders', render: renderOrders }, { id: 'log', label: 'Log', render: renderStallLog }]);
+  } }, { id: 'orders', label: 'Buy orders', render: renderOrders }, { id: 'log', label: 'Log', render: renderStallLog }, { id: 'mkt', label: 'Market news', render: renderIntel }]);
 };
 /* ---- the stall's log (asked 2026-11-04): every sale and every delivered order of the last game year (112 days), by day
    (S.stall.log: d day index, h minute, k sold | trader | bought, id item key, n, g gold, w town) ---- */
@@ -339,8 +343,8 @@ function renderStallLog(b) {
   }
   if (days.length > shown) b.append(el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => { MODAL.opts.logN = shown + 28; refresh(); } }, 'Show older days (' + (days.length - shown) + ' more)')));
 }
-/* ---- buy orders (asked 2026-11-04): you name an item, your top price and how many; the traders who call at 10:00 and
-   15:00 buy it in a town whose shop sells it under your price, take it from that town's stock and bring it (the town's shop
+/* ---- buy orders (asked 2026-11-04): you name an item, your top price and how many; the traders who call (9:00 to 17:00, every two
+   hours) buy it in a town whose shop sells it under your price, take it from that town's stock and bring it (the town's shop
    price, `ORDER_CUT` x the market price, so an order saves the walk but is never cheaper than buying there yourself). You pay your price when it arrives; deliveries wait in the stall (S.stall.orders, S.stall.bought). ---- */
 const ORDER_CUT = 1.25;   // as town shops charge (x_realm.js); 1.1 let an order buy Greyhelm ore that resold in the village at +25%
 // besides trade goods, orders take seeds, saplings, fertiliser, placeables and the like, and gear up to iron (no better tools,
@@ -352,7 +356,7 @@ const orderCost = (m, id) => Math.max(1, Math.round(valBase(id) * mktF(m, id) * 
 function orderBest(id) { if (!mktTracks(id)) return orderable(id) ? [AFAR, Math.max(1, Math.round(IT[id].p * 1.1))] : null; let best = null; for (const m in MARKETS) { if (mktStock(m, id) < 1) continue; const c = orderCost(m, id); if (!best || c < best[1]) best = [m, c]; } return best; }
 function renderOrders(b) {
   const st = S.stall; st.orders = st.orders || []; st.bought = st.bought || {};
-  b.append(el('p', { class: 'note' }, 'Ask the travelling traders to bring goods. At 10:00 and 15:00 they buy them in a town whose shop sells them under your price and bring them here; you pay your price when they arrive (you need the gold then, not now). It saves the trip, at the town’s own price.'));
+  b.append(el('p', { class: 'note' }, 'Ask the travelling traders to bring goods. Every two hours from 9:00 to 17:00 they buy them in a town whose shop sells them under your price and bring them here; you pay your price when they arrive (you need the gold then, not now). It saves the trip, at the town’s own price.'));
   const got = Object.keys(st.bought).filter(id => st.bought[id] > 0 && IT[id]);
   if (got.length) {
     const L = el('div', { class: 'list' });
@@ -407,8 +411,21 @@ function stallOrdersFill(list) {
   if (said.length) { toast('A trader brought your order: ' + said.join(', ') + '. It’s waiting at your stall.', 'lvl'); SFX.coin(); }
 }
 // what the traders would pay: the town that's short of it, and the most they'd give (its price less their 15%)
+function stallBest(k) {
+  const [id] = parseK(k); if (!mktTracks(id)) return null;
+  let best = null;
+  for (const m in MARKETS) { const pays = Math.round(valBase(k) * mktF(m, id) * .85); if (!best || pays > best[1]) best = [m, pays]; }
+  return best;
+}
+// the stall multiplier that asks exactly what the best trader would pay (or null)
+function stallTraderMul(k) {
+  const b = stallBest(k), v = Math.max(1, Math.round(mktSellPrice(parseK(k)[0], valBase(k)))); if (!b) return null;
+  let m = Math.floor(b[1] / v * 100) / 100; while (m > .1 && Math.max(1, Math.round(v * m)) > b[1]) m -= .01;
+  return Math.max(.1, Math.round(m * 100) / 100);
+}
 function stallOffer(k) {
   const [id] = parseK(k); if (!mktTracks(id)) return '';
+  if (!intelOn()) return 'Hire market analysis (Market news tab) to see what traders would pay.';
   let best = null;
   for (const m in MARKETS) { const pays = Math.round(valBase(k) * mktF(m, id) * .85); if (!best || pays > best[1]) best = [m, pays]; }
   if (!best) return '';
@@ -431,7 +448,7 @@ EVT.on('tick', () => {
   if (!stallBuilt() || PAUSED) return;
   const hr = Math.floor(S.time / 60); if (hr === stallHr2) return; stallHr2 = hr;
   if (hr < 8 || hr >= 18) return;
-  if (hr === 10 || hr === 15) stallTrader();
+  if (TRADER_HRS.includes(hr)) stallTrader();
   if (!Object.keys(S.stall.goods).length) return;
   const weekend = (dayIndex() - 1) % 7 >= 5, pend = [];
   for (let i = 0; i < (weekend ? 6 : 3); i++) {
@@ -496,6 +513,7 @@ function stallTraderDeal() {
   }
   return deal;
 }
+const TRADER_HRS = [9, 11, 13, 15, 17];   // when traders call at the stall (was 10:00 and 15:00 until 2026-11-04)
 function stallTrader() {
   if (TRADER.n) return;   // one already on the way
   const sell = stallTraderDeal(), orders = stallOrderDeals(); if (!sell && !orders.length) return;
@@ -607,7 +625,7 @@ drawEnt = (f => function (e) {
 function renderMarkets(b) {
   const N = (S.mkt && S.mkt.news) || [];
   b.append(el('h3', null, 'Trade news'), N.length ? el('div', { class: 'list' }, ...N.slice(0, 8).map(x => el('p', { class: 'note' }, (dayIndex() - x.d <= 0 ? 'Today: ' : dayIndex() - x.d === 1 ? 'Yesterday: ' : (dayIndex() - x.d) + ' days ago: ') + x.t))) : el('p', { class: 'note' }, 'Quiet on the roads.'));
-  b.append(el('h3', null, 'Where prices stand'), el('p', { class: 'note' }, 'Prices are shown against the usual price (100%).'));
+  b.append(el('h3', null, 'Where prices stand'), el('p', { class: 'note' }, 'Prices are shown against the usual price (100%). Click a town for everything it is short of and has plenty of.'));
   const L = el('div', { class: 'list' }), here = mktHere();
   for (const m of [here, ...Object.keys(MARKETS).filter(m => m !== here)]) {
     const st = (S.mkt && S.mkt.s[m]) || {}, rows = Object.keys(st).filter(id => IT[id]).map(id => [id, st[id] / mktT(m, id)]);
@@ -617,24 +635,70 @@ function renderMarkets(b) {
     const mk = ((S.mkt && S.mkt.made && S.mkt.made[m]) || []).filter(id => IT[id]).sort((a, c) => IT[c].p - IT[a].p), made = mk.length ? 'Made here today: ' + mk.slice(0, 6).map(id => IT[id].n).join(', ') + (mk.length > 6 ? ' and ' + (mk.length - 6) + ' more' : '') + '.' : 'Nothing made here today.';
     const W = (S.mkt && S.mkt.want && S.mkt.want[m]) || {}, wk = Object.keys(W).filter(c => CAT_N[c]), more = wk.filter(c => W[c] > 1.2).map(c => CAT_N[c]), less = wk.filter(c => W[c] < .83).map(c => CAT_N[c]);
     const wants = (more.length ? ' Wants more ' + more.join(', ') + ' than usual.' : '') + (less.length ? ' Wants less ' + less.join(', ') + '.' : '');
-    L.append(el('div', { class: 'rrow' }, el('div', { class: 'rtxt' }, el('b', null, mktName(m) + (m === here ? ' (here)' : '')), el('small', null, (short.length ? 'Short of ' + short.join(', ') + ' (dear). ' : '') + (glut.length ? 'Plenty of ' + glut.join(', ') + ' (cheap). ' : '') + (!short.length && !glut.length ? 'Prices as usual. ' : '') + made + wants))));
+    L.append(el('div', { class: 'rrow mtown', title: 'Everything ' + mktName(m) + ' is short of and has plenty of', on: () => mktTownOpen(m) }, el('div', { class: 'rtxt' }, el('b', null, mktName(m) + (m === here ? ' (here)' : '') + ' ›'), el('small', null, (short.length ? 'Short of ' + short.join(', ') + ' (dear). ' : '') + (glut.length ? 'Plenty of ' + glut.join(', ') + ' (cheap). ' : '') + (!short.length && !glut.length ? 'Prices as usual. ' : '') + made + wants))));
   }
   b.append(L);
 }
-farmNotices = (f => function () {
-  f.apply(this, arguments);
-  if (MODAL && MODAL.tabs && !MODAL.tabs.some(t => t.id === 'mkt')) { MODAL.tabs.push({ id: 'mkt', label: 'Markets', render: renderMarkets }); if (typeof drawModal === 'function') drawModal(); }
-})(farmNotices);
-// and in every town: the town board, the inns (the Drowsy Drake too) and the region markets and inns get the same tab
-openModal = (f => function (title) {
-  const r = f.apply(this, arguments);
-  try {
-    if (!S || !cur || !MODAL || MODAL.tabs.some(t => t.id === 'mkt')) return r;
-    const act = cur.id.startsWith('in_') ? cur.id.slice(3) : null, T = act && typeof TOWN_ACTS !== 'undefined' && TOWN_ACTS[act];
-    const rg = cur.region && REGIONS[cur.region];
-    const show = (T && title === T.name && ['inn', 'hall'].includes(actType(act))) || (act === 'tavern' && title === 'The Drowsy Drake') || (rg && (title === rg.town.n + ' inn' || title === rg.town.n + ' market'));
-    if (show) { MODAL.tabs.push({ id: 'mkt', label: 'Markets', render: renderMarkets }); drawModal(); }
-  } catch (e) { console.error(e); }
-  return r;
-})(openModal);
+/* ---- a town's full market (asked 2026-11-04): click a town in the Markets tab. Two scrollable lists, short of (dear) and
+   plenty of (cheap), each good with its price against usual and (stock / wanted stock); goods made there today are marked ---- */
+function mktTownOpen(m) {
+  mktTownClose();
+  const made = new Set((S.mkt && S.mkt.made && S.mkt.made[m]) || []), rows = mktIds().map(id => { const s = mktStock(m, id), T = mktT(m, id); return { id, s, T, r: s / T, f: mktF(m, id) }; });
+  const short = rows.filter(x => x.r < .8).sort((a, b) => a.r - b.r), plenty = rows.filter(x => x.r > 1.25).sort((a, b) => b.r - a.r);
+  const amt = v => v >= 10 ? Math.round(v).toLocaleString() : (Math.round(v * 10) / 10).toString();
+  const row = x => el('div', { class: 'mtrow' }, icon(x.id, 22), el('span', { class: 'mtn' }, IT[x.id].n, made.has(x.id) ? el('i', null, ' made today') : null),
+    el('b', { class: x.f >= 1 ? 'up' : 'down' }, Math.round(x.f * 100) + '%'), el('small', null, '(' + amt(x.s) + ' / ' + amt(x.T) + ')'));
+  const col = (title, sub, list, cls) => el('div', { class: 'mtcol ' + cls }, el('h3', null, title + ' (' + list.length + ')'), el('p', { class: 'note' }, sub),
+    el('div', { class: 'mtlist' }, ...(list.length ? list.map(row) : [el('p', { class: 'note' }, 'Nothing.')])));
+  const W = (S.mkt && S.mkt.want && S.mkt.want[m]) || {}, wk = Object.keys(W).filter(c => CAT_N[c]);
+  const more = wk.filter(c => W[c] > 1.2).map(c => CAT_N[c]), less = wk.filter(c => W[c] < .83).map(c => CAT_N[c]);
+  const box = el('div', { id: 'mtownpop', class: 'f-panel' },
+    el('div', { class: 'ph' }, el('h2', null, mktName(m) + (m === mktHere() ? ' (here)' : '')), el('button', { class: 'btn ghost', 'aria-label': 'Close', on: mktTownClose }, '✕')),
+    el('p', { class: 'note' }, 'Price against the usual price, then (in stock / the stock the town wants today). ' + made.size + ' goods made here today.' + (more.length ? ' Wants more ' + more.join(', ') + ' than usual.' : '') + (less.length ? ' Wants less ' + less.join(', ') + '.' : '')),
+    el('div', { class: 'mtcols' }, col('Short of', 'Under 80% of the stock it wants: dear here, a good place to sell.', short, 'short'), col('Plenty of', 'Over 125% of the stock it wants: cheap here, a good place to buy.', plenty, 'plenty')));
+  document.body.append(box);
+}
+function mktTownClose() { const b = document.getElementById('mtownpop'); if (b) b.remove(); }
+closeModal = (f => function () { mktTownClose(); return f.apply(this, arguments); })(closeModal);
+addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('mtownpop')) { mktTownClose(); e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+document.head.append(el('style', null, `
+.rrow.mtown { cursor: pointer; } .rrow.mtown:hover { filter: brightness(1.07); }
+#mtownpop { position: fixed; z-index: 2000; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(820px, calc(100vw - 32px)); max-height: 86vh; display: flex; flex-direction: column; padding: 14px 18px 14px; box-sizing: border-box; }
+#mtownpop .ph { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+#mtownpop .ph h2 { flex: 1; margin: 0; font-size: 22px !important; }
+#mtownpop .mtcols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; min-height: 0; flex: 1; }
+#mtownpop .mtcol { display: flex; flex-direction: column; min-height: 0; }
+#mtownpop .mtcol h3 { margin: 6px 0 2px; } #mtownpop .mtcol .note { margin: 0 0 6px; }
+#mtownpop .mtcol.short h3 { color: #a8402a; } #mtownpop .mtcol.plenty h3 { color: #4a7a3a; }
+#mtownpop .mtlist { overflow-y: auto; max-height: 58vh; border: 2px solid rgba(80, 50, 20, .35); border-radius: 4px; background: rgba(255, 245, 220, .35); }
+#mtownpop .mtrow { display: grid; grid-template-columns: 24px 1fr auto auto; align-items: center; gap: 8px; padding: 3px 8px; border-bottom: 1px solid rgba(80, 50, 20, .15); }
+#mtownpop .mtrow:nth-child(odd) { background: rgba(255, 255, 255, .25); }
+#mtownpop .mtn i { font-size: 11px; color: #6a7a3a; font-style: normal; }
+#mtownpop .mtrow b.up { color: #a8402a; } #mtownpop .mtrow b.down { color: #4a7a3a; }
+#mtownpop .mtrow small { opacity: .75; min-width: 72px; text-align: right; }
+@media (max-width: 640px) { #mtownpop .mtcols { grid-template-columns: 1fr; } #mtownpop .mtlist { max-height: 30vh; } }
+`));
+/* ---- market analysis (asked 2026-11-04): the trade news, every town's market and what traders would pay for your stall's
+   goods are a service hired at the stall, a month (28 days) at a time (S.stall.intel: the last day it runs). It used to be
+   a free tab on every notice board and inn. ---- */
+const INTEL_COST = 400, INTEL_DAYS = 28;
+const intelOn = () => !!(S && S.stall && S.stall.intel >= dayIndex());
+function renderIntel(b) {
+  const st = S.stall, on = intelOn(), left = on ? st.intel - dayIndex() + 1 : 0;
+  const hire = () => {
+    if (S.gold < INTEL_COST) { toast('You need ' + INTEL_COST + 'g.'); return; }
+    S.gold -= INTEL_COST; st.intel = Math.max(st.intel || 0, dayIndex() - 1) + INTEL_DAYS; SFX.coin && SFX.coin();
+    toast('Market analysis until ' + dayName(st.intel) + '.'); refresh();
+  };
+  if (!on) {
+    b.append(el('p', { class: 'note' }, 'Odo Fenn, a clerk who keeps the ledgers of the traders between Kingsbridge and the far regions, will send you a weekly bundle of letters and rumours: the trade news, what every town is short of and has plenty of, what it made today and wants more of, and what a trader would pay for each good on your stall.'),
+      el('p', { class: 'note' }, st.intel ? 'Your last month ran out on ' + dayName(st.intel) + '.' : 'You have never hired him.'),
+      el('div', { class: 'acts' }, el('button', { class: 'btn', on: hire }, 'Hire him for a month (' + INTEL_COST + 'g)')));
+    return;
+  }
+  b.append(el('div', { class: 'rrow' }, el('div', { class: 'rtxt' }, el('b', null, 'Market analysis by Odo Fenn'), el('small', null, 'Paid until ' + dayName(st.intel) + ' (' + left + (left === 1 ? ' day' : ' days') + ' left).')),
+    el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: hire }, 'Add a month (' + INTEL_COST + 'g)'))));
+  renderMarkets(b);
+}
+// (until 2026-11-04 the Markets tab was also on the farm notice board, every town board and inn: it's now the stall's hired Market news)
 

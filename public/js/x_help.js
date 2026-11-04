@@ -5,11 +5,12 @@
 const HELP = {
   stall: ['Market stall', [
     'Put goods out from your backpack. They sell from 8:00 to 18:00 while you work elsewhere, faster at weekends.',
-    'Set each price with − and +, against what the village pays today. 70% always sells, 100% about half the time, 130% now and then, 160% hardly ever.',
+    'Set each price with − and +, against what the village pays today; there is no top limit (the steps grow as the price rises). To villagers 70% always sells, 100% about half the time, 130% now and then, 160% hardly ever, and above double no villager buys.',
     'Passers-by are villagers, so they compare your price with the village price.',
-    'At 10:00 and 15:00 a travelling trader may call. He buys anything some town pays more for than your price, after his 15% cut; each row says the best town and the most he would pay.',
+    'Every two hours from 9:00 to 17:00 a travelling trader may call. He buys anything some town pays more for than your price, after his 15% cut. Towns that are badly short can pay two or three times the usual price.',
+    'Market news: hire Odo Fenn for a month (400g) to get the trade news, every town’s market (click a town for its full lists), and on each row the best town and the most a trader would pay, with a Trader price button that sets your price to it.',
     'Take back returns unsold goods to your backpack.',
-    'Buy orders: name an item, your top price and how many. The same traders buy it in a town whose shop sells it under your price and bring it at 10:00 or 15:00; you pay when it arrives, and it waits in the stall until you take it.',
+    'Buy orders: name an item, your top price and how many. The same traders buy it in a town whose shop sells it under your price and bring it on one of those visits; you pay when it arrives, and it waits in the stall until you take it.',
     'The Log tab lists every sale and every delivered order of the last year, by day, with totals.']],
   bin: ['Shipping bin', [
     'Anything in the bin is sold overnight, wherever you are.',
@@ -17,12 +18,11 @@ const HELP = {
     'Selling in person at a shop usually pays more, unless that market has a glut of the good.',
     'Take 1 or Take all gives back what you put in before the night.']],
   notices: ['Notice boards', [
-    'Today: the weather, festivals coming up, birthdays and the day\'s request.',
-    'Markets: trade news (caravans, shortages, gluts, raids) and what each town is short of or has plenty of, with prices against normal (100%).']],
+    'Today: the weather, festivals coming up, birthdays and the day\'s request.']],
   markets: ['Markets', [
-    'Every town keeps a stock of each trade good. A scarce good costs more, a glut less: from half to double the usual price.',
-    'Selling lowers the price there unit by unit; buying raises it. Stocks drift back over a few days as the town makes and uses goods.',
-    'Each town is cheap in what it makes (Greyhelm ore, Saltmere fish and salt, Ashford timber) and dear in what it lacks; region towns pay well for lowland food.',
+    'Every town keeps a stock of each trade good and wants a certain stock of it, which changes from day to day. With less than it wants a good costs more, with more it costs less; there is no limit either way.',
+    'Each day every good is made in only one or two towns, most often where it is the trade (Greyhelm ore, Saltmere fish and salt, Ashford timber), and every town uses up what it needs. Selling lowers the price there unit by unit; buying raises it.',
+    'Click a town for everything it is short of and has plenty of, with its stock against the stock it wants. This news comes from Odo Fenn, hired at your market stall by the month.',
     'Traders carry goods along the roads each morning; big loads go as caravans that bandits can loot.',
     'Rows say "Scarce here" or "Plentiful here". Gear, seeds, saplings, tools and placeables keep fixed prices.']],
   shop: ['Shops', [
@@ -38,7 +38,7 @@ const HELP = {
     'A hot meal at the table restores your health and half your energy, once a day.',
     'Take-away food goes into your backpack for the road.',
     'Rest two hours (once a day) or, after 18:00, sleep until morning and wake here.',
-    'The Markets tab shows trade news and prices in every town; the Job board appears where the town has no hall.']],
+    'The Job board appears where the town has no hall.']],
   hall: ['Town hall', [
     'The town board lists jobs: kill monsters around the town or deliver goods.',
     'Take a job, do it, then hand it in here for gold and standing. At 50 standing the town\'s shops give you friend prices.',
