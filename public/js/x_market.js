@@ -31,6 +31,28 @@ const LINKS = [['village', 'kingsbridge', 300], ['village', 'ashford', 600], ['v
   ['kingsbridge', 'saltmere', 660], ['greyhelm', 'ashford', 540], ['greyhelm', 'highmarch', 900], ['ashford', 'frostmere', 900], ['greyhelm', 'emberwaste', 1000], ['saltmere', 'saltreach', 900]]
   .filter(([a, b]) => MARKETS[a] && MARKETS[b]);
 const mktName = m => (MARKETS[m] && MARKETS[m].n) || m;
+/* ---- the markets live (asked 2026-11-04): what each town makes (PROD, how much when it produces) and uses up (USE, the
+   share of its stock it uses a day; MKT.use0 elsewhere). Each day every good is made in only one or two towns, drawn at
+   random with the makers far likelier (two towns land halibut, the others sardines or wood), every stock drifts a few percent, and 1-2 shortages or gluts strike.
+   Regional goods are made only in their region. Goods nobody makes (curios, rare finds) drift back to normal instead. ---- */
+const PROD = {
+  village: { farm: 1.5, food: .5, forage: .5, craft: .3 },
+  kingsbridge: { food: 1.2, luxury: 1, craft: .8, metal: .5, farm: .5 },
+  greyhelm: { mine: 1.5, metal: 1.2 },
+  ashford: { wood: 1.5, forage: 1, craft: .8, farm: .3 },
+  saltmere: { fish: 1.5, sea: 1.5, food: .3 },
+  highmarch: { mine: .8, wood: .6, forage: .5 }, frostmere: { fish: .6, forage: .6 }, emberwaste: { mine: .8 }, saltreach: { fish: 1, sea: 1 },
+};
+const USE = {
+  village: { food: .12, craft: .1, wood: .1, metal: .08 },
+  kingsbridge: { food: .15, farm: .14, luxury: .14, wood: .1, metal: .1, fish: .1, craft: .08 },
+  greyhelm: { food: .14, farm: .12, wood: .14, fish: .1, luxury: .06 },
+  ashford: { food: .12, farm: .1, metal: .12, mine: .08, fish: .08 },
+  saltmere: { wood: .14, farm: .12, food: .12, mine: .06, metal: .1 },
+  highmarch: { farm: .14, food: .14, metal: .1, craft: .08 }, frostmere: { farm: .14, food: .14, metal: .1, wood: .1 },
+  emberwaste: { farm: .14, food: .14, metal: .1, wood: .12 }, saltreach: { farm: .14, food: .14, metal: .1, wood: .1 },
+};
+const MKT = { k: .22, chance: .5, makers: [1, 2], side: .2, useK: .3, use0: .01, drift: .12, relax: .04, gap: .8, load: .15, events: [1, 2], yield: [.4, 1.6], wobble: .3, wantBack: .85, wantStep: .3 };   // k: share of normal stock made on a making day; useK scales USE; relax: the daily pull back to normal
 function mktCat(id) {
   const t = IT[id].t;
   if (/salt|kelp|clam|oyster|mussel|shell|pearl|coral|seaweed/.test(id) && t !== 'fish') return 'sea';
@@ -50,19 +72,42 @@ function mktCat(id) {
 const CAT_N = { farm: 'farm produce', forage: 'forage', fish: 'fish', mine: 'ore and stone', metal: 'metal bars', luxury: 'wine, cheese and fine goods', food: 'food', loot: 'curios', wood: 'timber', sea: 'salt and sea goods', craft: 'cloth, leather and fibre' };
 // the stock a market normally holds: more of cheap goods than dear ones, more in a big town, more of what it makes; the village
 // (the farmers' market, where your crops go) and Kingsbridge hold a lot of produce
-function mktT(m, id) {
+// what a town normally holds of a good (its supply side: where stocks settle with nothing going on)
+function mktT0(m, id) {
   const M = MARKETS[m], p = IT[id].p, q = p < 15 ? 4 : p < 60 ? 2 : p < 250 ? 1 : p < 1000 ? .6 : .35;
   return Math.max(3, Math.round(30 * M.R * q * (M.own && M.own.has(id) ? 1.5 : 1) * ((M.hold && M.hold[mktCat(id)]) || 1)));
 }
-const mktPf = (m, id) => { const M = MARKETS[m]; return M.own && M.own.has(id) ? .8 : (M.pf[mktCat(id)] || 1); };
+// what it wants to hold today (asked 2026-11-04: demand moves too): the normal level times the town's want for that kind of
+// good, a slow random walk per town and kind (S.mkt.want, mktWantDay), times a small wobble per good that changes daily
+// (worked out from the day, so it needs no saving). Prices come from wanted stock against real stock
+const mktHash = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619); return (h >>> 0) / 4294967296; };
+function mktWant(m, id) {
+  if (!S || !S.mkt) return 1;
+  const w = (S.mkt.want && S.mkt.want[m] && S.mkt.want[m][mktCat(id)]) || 1;
+  return w * (1 + (mktHash(m + id + dayIndex()) - .5) * MKT.wobble);
+}
+const mktT = (m, id) => mktT0(m, id) * mktWant(m, id);
+function mktWantDay() {
+  const W = mktState().want = mktState().want || {};
+  for (const m in MARKETS) {
+    const w = W[m] = W[m] || {};
+    for (const c of ['farm', 'fish', 'mine', 'metal', 'wood', 'food', 'forage', 'luxury', 'sea', 'craft', 'loot']) {
+      const v = 1 + ((w[c] || 1) - 1) * MKT.wantBack + (Math.random() - .5) * MKT.wantStep;
+      w[c] = Math.round(Math.max(.05, v) * 1000) / 1000;
+    }
+  }
+}
+const mktPf = (m, id) => 1;   // (fixed factors per town until 2026-11-04; now the stocks themselves are cheap where goods are made)
 function mktState() { if (!S.mkt || !S.mkt.s) S.mkt = { s: {}, cv: [], news: [] }; return S.mkt; }
-function mktStock(m, id) { const st = mktState().s[m]; return st && st[id] !== undefined ? st[id] : mktT(m, id); }
+function mktStock(m, id) { const st = mktState().s[m]; return st && st[id] !== undefined ? st[id] : mktT0(m, id); }
 function mktSet(m, id, v) { const s = mktState().s; (s[m] = s[m] || {})[id] = Math.max(0, Math.round(v * 10) / 10); }
 // price factor against the base: what the town makes or lacks, times how full its stock is
 function mktF(m, id, s) {
   if (s === undefined) s = mktStock(m, id);
-  const T = mktT(m, id), k = clamp(Math.pow(T / Math.max(.5, s), .6), .55, 1.8);
-  return clamp(mktPf(m, id) * k, .5, 2) * (1 + Math.min(DRY_MAX, mktDry(m, id) * DRY_DAY));
+  // no floor or ceiling (asked 2026-11-04): the price is wherever the town's supply and demand put it; half a unit in stock
+  // is the least it counts, so an empty market is very dear but not infinite
+  const T = mktT(m, id), k = Math.pow(T / Math.max(.5, s), .6);
+  return mktPf(m, id) * k * (1 + Math.min(DRY_MAX, mktDry(m, id) * DRY_DAY));
 }
 // a dry spell (asked 2026-11-04): each morning a town's stock of a good is under a quarter of normal counts a dry day,
 // and every dry day adds 5% on top of the shortage price, up to 3x after 40 days (a month out of halibut: ~2.5x); when
@@ -147,28 +192,27 @@ function mktShip(id, q, a, b, mins) {
 function mktDaily() {
   const M = mktState(), st = M.s;
   mktDryDay();   // counted on the morning's stocks, before production refills them
-  // production and consumption: every stock moves a fifth of the way back to its normal level
-  for (const m in st) for (const id in st[m]) {
-    if (!IT[id] || !MARKETS[m]) { delete st[m][id]; continue; }
-    const T = mktT(m, id), s = st[m][id] + (T - st[m][id]) * .2;
-    if (Math.abs(s / T - 1) < .03) delete st[m][id]; else st[m][id] = Math.round(s * 10) / 10;
-  }
-  // a shortage or a glut somewhere
-  if (Math.random() < .3) {
-    const m = pickR(Object.keys(MARKETS)), c = pickR(['farm', 'fish', 'mine', 'metal', 'wood', 'food', 'forage', 'luxury']), k = Math.random() < .55 ? .4 : 1.8;
+  for (const m in st) for (const id in st[m]) if (!IT[id] || !MARKETS[m]) delete st[m][id];
+  mktWantDay();
+  mktLife();
+  // shortages and gluts: one or two a day
+  const ev = MKT.events[0] + Math.floor(Math.random() * (MKT.events[1] - MKT.events[0] + 1));
+  for (let e = 0; e < ev; e++) {
+    const m = pickR(Object.keys(MARKETS)), c = pickR(['farm', 'fish', 'mine', 'metal', 'wood', 'food', 'forage', 'luxury', 'sea', 'craft']), k = Math.random() < .55 ? .4 : 1.8;
     for (const id of mktIds()) if (mktCat(id) === c && IT[id].p <= 600) mktSet(m, id, mktStock(m, id) * k);   // everyday goods, not legendary fish or rare gems
     mktNews(mktName(m) + (k < 1 ? ' is short of ' : ' has more ' + CAT_N[c] + ' than it can use: ') + (k < 1 ? CAT_N[c] + ': prices are up there.' : 'prices are down there.'));
   }
-  // traders: along each road, goods go from where the stock is high to where it's low (up to three loads per good)
+  // traders: along each road, goods go from where the stock is high to where it's low (one load per good a day, only for
+  // real gaps, so a maker stays cheap and a user dear)
   const ids = new Set(); for (const m in st) for (const id in st[m]) ids.add(id);
-  for (const id of ids) for (let it = 0; it < 3; it++) {
-    let best = null, gap = .3;
+  for (const id of ids) for (let it = 0; it < 1; it++) {
+    let best = null, gap = MKT.gap;
     for (const [a, b, mins] of LINKS) {
       const ra = mktStock(a, id) / mktT(a, id), rb = mktStock(b, id) / mktT(b, id);
       if (ra - rb > gap) { gap = ra - rb; best = [a, b, mins]; } else if (rb - ra > gap) { gap = rb - ra; best = [b, a, mins]; }
     }
     if (!best) break;
-    const [a, b, mins] = best, Ta = mktT(a, id), Tb = mktT(b, id), q = Math.floor(.35 * gap / (1 / Ta + 1 / Tb));
+    const [a, b, mins] = best, Ta = mktT(a, id), Tb = mktT(b, id), q = Math.floor(MKT.load * gap / (1 / Ta + 1 / Tb));
     if (q < 1) break;
     mktSet(a, id, mktStock(a, id) - q); mktShip(id, q, a, b, mins);
   }
@@ -176,6 +220,51 @@ function mktDaily() {
   const today = M.cv.filter(c => c.day === dayIndex());
   for (const c of today.filter(c => c.lost)) mktNews('Bandits took a caravan of ' + cvSay(c) + ' on the road to ' + mktName(c.to) + '.');
   today.filter(c => !c.lost && cvValue(c) >= 2500).sort((x, y) => cvValue(y) - cvValue(x)).slice(0, 2).forEach(c => mktNews('A caravan of ' + cvSay(c) + ' left ' + mktName(c.from) + ' for ' + mktName(c.to) + '.'));
+}
+// who can make a good, with a weight: its region only for regional goods; else the towns that make its kind (PROD), and
+// any lowland town now and then (MKT.side). Dear goods are made and traded like any other; monster loot is only traded (cached)
+const LOWLAND = ['village', 'kingsbridge', 'greyhelm', 'ashford', 'saltmere'];
+let MKT_MAKERS = null;
+function mktMakers(id) {
+  if (!MKT_MAKERS) MKT_MAKERS = {};
+  if (MKT_MAKERS[id]) return MKT_MAKERS[id];
+  const own = Object.keys(MARKETS).find(m => MARKETS[m].own && MARKETS[m].own.has(id)), c = mktCat(id);
+  if (own) return MKT_MAKERS[id] = [[own, 1.5]];
+  if (IT[id].t === 'loot') return MKT_MAKERS[id] = [];   // monster loot comes only from monsters: traded, never made
+  const w = {}; for (const m of LOWLAND) w[m] = MKT.side; for (const m in PROD) if (PROD[m][c]) w[m] = PROD[m][c];
+  return MKT_MAKERS[id] = Object.entries(w);
+}
+// today's makers of a good: 1 or 2 towns (MKT.makers), drawn by weight; a regional good is made in its region on MKT.chance of days
+function mktToday(makers) {
+  if (makers.length === 1) return Math.random() < MKT.chance ? makers : [];
+  const pool = makers.slice(), out = [], n = MKT.makers[0] + Math.floor(Math.random() * (MKT.makers[1] - MKT.makers[0] + 1));
+  while (out.length < n && pool.length) {
+    let r = Math.random() * pool.reduce((t, p) => t + p[1], 0), i = 0;
+    while ((r -= pool[i][1]) > 0 && i < pool.length - 1) i++;
+    out.push(pool.splice(i, 1)[0]);
+  }
+  return out;
+}
+// one day of making and using: each maker produces with MKT.chance, every town uses its share, everything is pulled a little
+// back to normal (trade from afar) and drifts. A maker settles around 1.5-2.5x normal stock, a heavy user around 0.6x
+function mktLife() {
+  const M = mktState(), st = M.s, made = M.made = {};   // made: town -> goods made there today (the Markets tab)
+  for (const id of mktIds()) {
+    const makers = mktMakers(id), today = mktToday(makers), c = mktCat(id);
+    for (const [m] of today) (made[m] = made[m] || []).push(id);
+    for (const m in MARKETS) {
+      const T = mktT0(m, id), want = mktWant(m, id); let s = mktStock(m, id);
+      if (makers.length) {
+        if (today.some(p => p[0] === m)) s += T * MKT.k * (MKT.yield[0] + Math.random() * (MKT.yield[1] - MKT.yield[0]));   // a good or a poor day's making
+        s -= s * ((USE[m] && USE[m][c]) || MKT.use0) * MKT.useK * want;   // a town that wants more uses more
+      }
+      s += (T - s) * MKT.relax;
+      s = Math.max(0, s * (1 + (Math.random() - .5) * MKT.drift));
+      const r = s / T;
+      if (Math.abs(r - 1) < .02) { if (st[m]) delete st[m][id]; }
+      else (st[m] = st[m] || {})[id] = s >= 10 ? Math.round(s) : Math.round(s * 10) / 10;
+    }
+  }
 }
 // caravans arrive when their time is up
 EVT.on('tick', n => {
@@ -525,7 +614,10 @@ function renderMarkets(b) {
     // the same thresholds as the shop notes (scarce under 80% of the normal stock, plentiful over 125%), with the price against normal
     const pct = id => IT[id].n + ' ' + Math.round(mktF(m, id) * 100) + '%';
     const short = rows.filter(r => r[1] < .8).sort((a, b) => a[1] - b[1]).slice(0, 4).map(r => pct(r[0])), glut = rows.filter(r => r[1] > 1.25).sort((a, b) => b[1] - a[1]).slice(0, 4).map(r => pct(r[0]));
-    L.append(el('div', { class: 'rrow' }, el('div', { class: 'rtxt' }, el('b', null, mktName(m) + (m === here ? ' (here)' : '')), el('small', null, (short.length ? 'Short of ' + short.join(', ') + ' (dear). ' : '') + (glut.length ? 'Plenty of ' + glut.join(', ') + ' (cheap). ' : '') + (!short.length && !glut.length ? 'Prices as usual.' : '')))));
+    const mk = ((S.mkt && S.mkt.made && S.mkt.made[m]) || []).filter(id => IT[id]).sort((a, c) => IT[c].p - IT[a].p), made = mk.length ? 'Made here today: ' + mk.slice(0, 6).map(id => IT[id].n).join(', ') + (mk.length > 6 ? ' and ' + (mk.length - 6) + ' more' : '') + '.' : 'Nothing made here today.';
+    const W = (S.mkt && S.mkt.want && S.mkt.want[m]) || {}, wk = Object.keys(W).filter(c => CAT_N[c]), more = wk.filter(c => W[c] > 1.2).map(c => CAT_N[c]), less = wk.filter(c => W[c] < .83).map(c => CAT_N[c]);
+    const wants = (more.length ? ' Wants more ' + more.join(', ') + ' than usual.' : '') + (less.length ? ' Wants less ' + less.join(', ') + '.' : '');
+    L.append(el('div', { class: 'rrow' }, el('div', { class: 'rtxt' }, el('b', null, mktName(m) + (m === here ? ' (here)' : '')), el('small', null, (short.length ? 'Short of ' + short.join(', ') + ' (dear). ' : '') + (glut.length ? 'Plenty of ' + glut.join(', ') + ' (cheap). ' : '') + (!short.length && !glut.length ? 'Prices as usual. ' : '') + made + wants))));
   }
   b.append(L);
 }
