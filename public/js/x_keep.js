@@ -12,8 +12,11 @@ let RESERVE_DEPTH = 0;
 function hideKeep(bag, keep) {
   const moved = [];
   if (!bag || !keep) return () => { };
-  for (const id in keep) {
-    let want = Math.max(0, keep[id] | 0); if (!want) continue;
+  // keep['*'] is a floor for every item (asked 2026-11-04: "nothing below 50"); an item's own amount counts when higher
+  const all = Math.max(0, (keep['*'] | 0)), ids = new Set(Object.keys(keep).filter(k => k !== '*'));
+  if (all) for (const k of Object.keys(bag)) ids.add(parseK(k)[0]);
+  for (const id of ids) {
+    let want = Math.max(0, keep[id] | 0, all); if (!want) continue;
     for (const k of Object.keys(bag).filter(k => parseK(k)[0] === id).sort()) {
       const n = Math.min(want, bag[k] || 0); if (n <= 0) continue;
       bag[k] -= n; if (bag[k] <= 0) delete bag[k]; moved.push([k, n]); want -= n; if (!want) break;
@@ -48,11 +51,15 @@ function renderKeep(b, bag, keep, noHands, setNoHands, isShed) {
       + ' Below, the least of each item to keep: belts, cranes, crafting' + (isShed ? ' from the shed' : '') + ' and the farmhand never take it below that. You can still take it yourself.'));
   const tot = id => Object.keys(bag).filter(k => parseK(k)[0] === id).reduce((a, k) => a + (bag[k] || 0), 0);
   const rows = el('div', { class: 'keepgrid' });   // small cards in a grid, so a long list stays short
-  for (const id of Object.keys(keep).filter(id => IT[id]).sort((a, c) => IT[a].n.localeCompare(IT[c].n))) {
+  // every item at once
+  const allIn = el('input', { type: 'number', min: 0, value: keep['*'] || 0, class: 'f-input' }); allIn.style.width = '70px';
+  allIn.onchange = () => { const v = Math.max(0, Math.floor(+allIn.value || 0)); if (v) keep['*'] = v; else delete keep['*']; refresh(); };
+  b.append(el('div', { class: 'acts wrap keepall' }, el('b', null, 'Every item: keep at least'), allIn, el('small', null, keep['*'] ? 'Nothing here goes below ' + keep['*'] + '; an item set higher below keeps its own amount.' : '0 is off. Set it to keep that much of everything in here.')));
+  for (const id of Object.keys(keep).filter(id => id !== '*' && IT[id]).sort((a, c) => IT[a].n.localeCompare(IT[c].n))) {
     const inp = el('input', { type: 'number', min: 0, value: keep[id], class: 'f-input' }); inp.style.width = '54px';
     inp.onchange = () => { const v = Math.max(0, Math.floor(+inp.value || 0)); keep[id] = v; refresh(); };
     const step = d => { keep[id] = Math.max(0, (keep[id] || 0) + d); refresh(); };
-    rows.append(el('div', { class: 'kcard' + (tot(id) < keep[id] ? ' under' : ''), title: IT[id].n + ': has ' + tot(id).toLocaleString() }, el('div', { class: 'khead' }, icon(id, 20), el('b', null, IT[id].n), el('small', null, tot(id).toLocaleString())),
+    rows.append(el('div', { class: 'kcard' + (tot(id) < Math.max(keep[id], keep['*'] || 0) ? ' under' : ''), title: IT[id].n + ': has ' + tot(id).toLocaleString() }, el('div', { class: 'khead' }, icon(id, 20), el('b', null, IT[id].n), el('small', null, tot(id).toLocaleString())),
       el('div', { class: 'kacts' }, el('button', { class: 'btn ghost', on: () => step(-10) }, '−'), inp, el('button', { class: 'btn ghost', on: () => step(10) }, '+'), el('button', { class: 'btn ghost', title: 'Stop keeping it', on: () => { delete keep[id]; refresh(); } }, '✕'))));
   }
   b.append(el('h3', null, 'Keep at least'), rows.children.length ? rows : el('p', { class: 'note' }, 'Nothing kept back yet: pick items below.'));
@@ -95,6 +102,7 @@ if (typeof HELP !== 'undefined') {
   helpKey = (f => function () { if (MODAL && MODAL.cur === 'keep') return 'keep'; return f.apply(this, arguments); })(helpKey);
 }
 document.head.append(el('style', null, `
+.keepall { align-items: center; gap: 8px; margin: 6px 0; }
 .keepgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 5px; }
 .kcard { display: flex; flex-direction: column; gap: 3px; padding: 4px 6px; border: 2px solid rgba(80, 50, 20, .3); border-radius: 4px; background: rgba(255, 245, 220, .35); min-width: 0; }
 .kcard.under { border-color: #c8901a; }

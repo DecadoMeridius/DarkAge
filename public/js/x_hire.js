@@ -253,16 +253,38 @@ function fhDo(m, w, x, y, job) {
   return false;
 }
 // the rest of the day's work at once (you weren't watching, or the day is over)
+// a map's jobs at once, best first, up to the day's cap (or max more)
+function fhWorkMap(m, w, max) {
+  if (!m) return 0; let jobs = fhJobs(m, w.lv).sort((a, b) => FH_PRI[a[2]] - FH_PRI[b[2]]), fertOut = false, n = 0;
+  for (const [x, y, j] of jobs) { if ((w.jobs || 0) >= fhCap(w) || (max && n >= max)) break; if (j === 'fert' && fertOut) continue; if (fhDo(m, w, x, y, j)) { w.jobs = (w.jobs || 0) + 1; n++; } else if (j === 'fert') fertOut = true; }
+  return n;
+}
+/* the greenhouse too (asked 2026-11-04: nothing but sprinklers watered it): once repaired (S.build.greenhouse), the farmhand
+   works it like the fields, at the same level. Seen on the farm: with the fields done they walk to its door, go in, work it
+   for a while (up to GH_VISIT jobs) and come back out, at most once a minute; the rest is done at 17:00 with the farm. */
+const ghOpen = () => !!(S.build && S.build.greenhouse && MAPS.greenhouse);
+const GH_VISIT = 60;
 function fhCatchUp(w) {
-  const m = MAPS.farm; if (!m) return;
-  let jobs = fhJobs(m, w.lv).sort((a, b) => FH_PRI[a[2]] - FH_PRI[b[2]]), fertOut = false;
-  for (const [x, y, j] of jobs) { if ((w.jobs || 0) >= fhCap(w)) break; if (j === 'fert' && fertOut) continue; if (fhDo(m, w, x, y, j)) w.jobs = (w.jobs || 0) + 1; else if (j === 'fert') fertOut = true; }
+  fhWorkMap(MAPS.farm, w);
+  if (ghOpen()) fhWorkMap(MAPS.greenhouse, w);
 }
 function farmhandFrame(dt) {
   const H = HW.farmhand, w = hireState().w.farmhand; if (!H || !w || w.phase !== 'work' || H.path || H.then || H.wait > 0) return;
   if ((w.jobs || 0) >= fhCap(w)) return;
   const m = MAPS.farm, nx = Math.floor(H.n.x / 16), ny = Math.floor((H.n.y - 2) / 16), hasF = !!fhFert();
-  const jobs = fhJobs(m, w.lv).filter(j => j[2] !== 'fert' || hasF); if (!jobs.length) { H.wait = 3; return; }
+  const jobs = fhJobs(m, w.lv).filter(j => j[2] !== 'fert' || hasF);
+  if (!jobs.length) {   // the fields are done: the greenhouse, if it needs anything
+    const G = MAPS.greenhouse, door = m.bGH && m.bGH.door;
+    if (ghOpen() && door && gameT - (w.ghT || -1e9) > 60 && fhJobs(G, w.lv).some(j => j[2] !== 'fert' || hasF)) {
+      w.ghT = gameT;
+      hwGo('farmhand', nearFree(m, door.x, door.y + 1), () => {
+        hwGone('farmhand'); w.inGH = 1;   // inside, out of sight
+        HLATER.push([12, () => { w.inGH = 0; fhWorkMap(MAPS.greenhouse, w, GH_VISIT); if (w.phase === 'work' && w.del !== dayIndex()) { hwSpawn('farmhand', nearFree(m, door.x, door.y + 1)); HW.farmhand.wait = 1; } }]);
+      });
+      return;
+    }
+    H.wait = 3; return;
+  }
   jobs.sort((a, b) => FH_PRI[a[2]] - FH_PRI[b[2]] || (Math.abs(a[0] - nx) + Math.abs(a[1] - ny)) - (Math.abs(b[0] - nx) + Math.abs(b[1] - ny)));
   const [x, y, job] = jobs[0];
   const stand = [[0, 1], [1, 0], [-1, 0], [0, -1], [0, 0]].map(([a, b]) => [x + a, y + b]).find(([a, b]) => inb(m, a, b) && !getO(m, a, b) && !m.solidB[b * m.w + a] && !TER[getT(m, a, b)].solid && !TER[getT(m, a, b)].water) || null;
