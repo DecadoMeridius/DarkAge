@@ -893,6 +893,10 @@ The rider uses a seated pose (`hb_ride_2` in `human.py`, `humanSpr(..., 'ride')`
 - **Categories:** salt, kelp, clams, oysters, shells and pearls are sea goods whatever their item type, so Saltmere's discount covers them (`mktCat`).
 - Region inn rests are once a day (`S.flags.restDay`, shared with the town inns). The Painterly crate uses its smoothed pixel sprite (`furn_crate` in `STYLE_SMOOTH`).
 
+## What stays in storage (`public/js/x_keep.js`, asked 2026-11-04)
+- The Storage Shed's bank window, storage crates and the storehouse ledger have a Keep tab (`renderKeep`): "Hired hands may not leave their haul here" (off by default; `S.flags.shedNoHands`, `o.noHands`, read by `dropSpot` in x_hire.js, which then goes on to the next storage) and a minimum per item (`S.bankKeep`, `o.keep`, all qualities together).
+- Automation never takes an item below its minimum: `autoTick` (belts pulling, crates pushing, the shed), `craneTick`, crafting from the shed (`canCraft`, `doCraft`, `renderCraft`, `jobStep`) and the farmhand's fertiliser (`fhDo`, `farmhandFrame`, `fhCatchUp`) run inside `withReserve`, which sets the kept amounts aside (`hideKeep`) and puts them back after. Taking items out yourself still works.
+
 ## Windows don't pause the game (`public/js/x_nopause.js`, asked 2026-11-04)
 - The clock, machines, crops, enemies and villagers keep going while a window is open. Only these pause (`windowPauses`, applied on open, on redraw and every 100 ms): the Options tab, the Pause key (`GPAUSE`), story dialogues and a shopkeeper's street chat (`DIALOG`, tab `t`), locked windows (`MODAL.lock`), the morning report, the character creator and the fishing minigames (`FG`).
 - With a window open you stay put: movement keys are swallowed (`NOPAUSE_MOVE`; `MOVE_KEYS` is taken by x_court.js) and a click-walk stops.

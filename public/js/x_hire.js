@@ -98,8 +98,9 @@ const nearFree = (m, x, y) => { if (inb(m, x, y) && !getO(m, x, y) && !m.solidB[
 // the drop-off: the shed's door, else a storage crate, else the notice board
 function dropSpot() {
   const m = MAPS.farm; if (!m) return null;
-  const sh = sheds(m)[0]; if (sh) return { kind: 'shed', at: nearFree(m, sh.door ? sh.door.x : sh.x + 1, sh.y + sh.h) };
-  const ci = m.o.findIndex(o => o && (o.k === 'storage' || o.k === 'ledger')); if (ci >= 0) return { kind: 'crate', o: m.o[ci], at: nearFree(m, ci % m.w, (ci / m.w | 0) + 1) };
+  // a storage can be closed to hired hands (x_keep.js: S.flags.shedNoHands, o.noHands): they go on to the next one
+  const sh = !(S.flags && S.flags.shedNoHands) && sheds(m)[0]; if (sh) return { kind: 'shed', at: nearFree(m, sh.door ? sh.door.x : sh.x + 1, sh.y + sh.h) };
+  const ci = m.o.findIndex(o => o && (o.k === 'storage' || o.k === 'ledger') && !o.noHands); if (ci >= 0) return { kind: 'crate', o: m.o[ci], at: nearFree(m, ci % m.w, (ci / m.w | 0) + 1) };
   const bi = m.o.findIndex(o => o && o.k === 'board' && o.farmboard); return { kind: 'board', at: bi >= 0 ? nearFree(m, bi % m.w, (bi / m.w | 0) + 1) : [23, 8] };
 }
 /* ---- the workers' log (asked 2026-11-04): every delivery of the last year (112 days) on the notice board, per day and per
