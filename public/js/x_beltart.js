@@ -45,7 +45,7 @@ function beltPx(kind, u, v, f, ends, gaps, curve) {
   return slat;
 }
 const beltKind = k => k === 'chute' ? 'chute' : k === 'fastbelt' ? 'fast' : k === 'runebelt' ? 'rune' : 'conv';
-// the joined belt, facing down, 32x32 art px: a straight piece, or a curve in from the east (mirrored for the west)
+// the joined belt, facing down, 32x32 art px: a straight piece, or a curve in from the east or the west
 function beltCanvas(o, f, bl) {
   const kind = beltKind(o.k), plain = !['sorter', 'splitter', 'merger'].includes(o.k);
   const side = bl & 6, curve = plain && !(bl & 1) && (side === 2 || side === 4);
@@ -55,8 +55,12 @@ function beltCanvas(o, f, bl) {
     for (let y = 0; y < 32; y++) for (let px = 0; px < 32; px++) {
       let u = px, v = y;
       if (curve) {   // a quarter ring round the bottom-east corner: in from the east edge, out at the bottom
-        const dx = px + .5 - 32, dy = y + .5 - 32, r = Math.hypot(dx, dy); if (r > 30.5 || r < 6) continue;   // a small open corner, so it reads as a belt bending, not a fan
-        u = Math.round(2 + (30.5 - r) * 27 / 24.5); v = Math.floor(Math.atan2(-dx, -dy) / (Math.PI / 2) * 32);
+        // the ring's radius is the distance across, exactly as on the straight belts it joins (u = 32 - r, floored), so the
+        // rails and the slats meet theirs at both edges; inside r 2 and outside r 30 stay open
+        // (from the east the ring is centred on the bottom-east corner, from the west on the bottom-west one; drawn, not
+        // mirrored, so each rail keeps its own shade where it meets the straight belt)
+        const east = side === 2, dx = east ? px + .5 - 32 : px + .5, dy = y + .5 - 32, r = Math.hypot(dx, dy);
+        u = east ? Math.floor(32 - r) : Math.floor(r); v = Math.floor(Math.atan2(east ? -dx : dx, -dy) / (Math.PI / 2) * 32);
       }
       const col = beltPx(kind, u, v, f, ends, gaps, curve); if (!col) continue;
       const j = (y * 32 + px) * 4; dt[j] = parseInt(col.slice(1, 3), 16); dt[j + 1] = parseInt(col.slice(3, 5), 16); dt[j + 2] = parseInt(col.slice(5, 7), 16); dt[j + 3] = 255;
@@ -77,7 +81,6 @@ function beltCanvas(o, f, bl) {
       R(12, 27, 8, 4, '#2a2a30'); R(13, 28, 6, 2, '#e8b040');
     }
   });
-  if (curve && side === 4) { const m = mkCPU(32, 32, x => { x.translate(32, 0); x.scale(-1, 1); x.drawImage(c, 0, 0); }); return m; }
   return c;
 }
 const BELTJ = new Map();

@@ -24,17 +24,17 @@ const forageNow = () => [...new Set([...(FORAGE.meadow[S.season] || []), ...(FOR
 const fishNow = () => FISH.filter(f => f[4].some(l => ['river', 'lake', 'pond'].includes(l)) && f[5].includes(S.season) && f[6] !== 'night' && (f[6] !== 'rain' || S.weather === 'rain') && IT[f[0]]);
 const ri2 = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const HIRE = {
-  woodcutter: { n: 'Woodcutter', g: 'af_guild', where: 'fells trees in the Wilds', bring: 'wood and some hardwood',
-    haul: () => ({ wood: ri2(30, 45), hardwood: ri2(3, 6), ...(Math.random() < .3 ? { sap: ri2(1, 3) } : {}) }),
+  woodcutter: { n: 'Woodcutter', g: 'af_guild', where: 'fells trees in the Wilds', bring: 'wood and hardwood, about as much of each',
+    haul: () => ({ wood: ri2(18, 26), hardwood: ri2(18, 26), ...(Math.random() < .3 ? { sap: ri2(2, 4) } : {}) }),
     look: { shirt: '#7a3a2a', pants: '#4a3a2a', hs: 'short', hair: '#5a3a1a' } },
-  miner: { n: 'Miner', g: 'gh_guild', where: 'breaks rock in the Wilds', bring: 'stone, copper and iron ore, and coal',
-    haul: () => ({ stone: ri2(20, 35), copper_ore: ri2(6, 12), iron_ore: ri2(2, 6), coal: ri2(3, 8) }),
+  miner: { n: 'Miner', g: 'gh_guild', where: 'breaks rock in the Wilds', bring: 'stone, copper ore, iron ore and coal, about as much of each',
+    haul: () => ({ stone: ri2(10, 15), copper_ore: ri2(10, 15), iron_ore: ri2(10, 15), coal: ri2(10, 15) }),
     look: { shirt: '#5a5a62', pants: '#3a3a3a', hs: 'bald', hair: '#2a1a10' } },
   forager: { n: 'Forager', g: 'af_guild', where: 'gathers in the Wilds', bring: 'what grows wild this season',
-    haul: () => { const p = forageNow(), o = {}; const n = ri2(4, 7); for (let i = 0; i < n && p.length; i++) { const id = pickR(p); o[id] = (o[id] || 0) + 1; } return o; },
+    haul: () => { const p = forageNow(), o = {}; const n = ri2(8, 12); for (let i = 0; i < n && p.length; i++) { const id = pickR(p); o[id] = (o[id] || 0) + 1; } return o; },
     look: { shirt: '#4a7a3a', pants: '#5a4a2a', hs: 'long', hair: '#a86a3a' } },
   fisher: { n: 'Fisher', g: 'sm_guild', where: 'fishes the Wilds\' rivers and lakes', bring: 'river and lake fish of the season',
-    haul: () => { const p = fishNow(), o = {}; const n = ri2(4, 7); for (let i = 0; i < n && p.length; i++) { const f = wpick(p.map(f => [f[0], f[8] || 10]), Math.random()); o[f] = (o[f] || 0) + 1; } return o; },
+    haul: () => { const p = fishNow(), o = {}; const n = ri2(5, 8); for (let i = 0; i < n && p.length; i++) { const f = pickR(p)[0]; o[f] = (o[f] || 0) + 1; } return o; },
     look: { shirt: '#3a5a7a', pants: '#3a4a5a', hs: 'spiky', hair: '#c89a50' } },
   farmhand: { n: 'Farmhand', g: 'kb_guild', where: 'tends your fields', bring: 'your harvest, put away for you',
     look: { shirt: '#8a7a3a', pants: '#4a5a3a', hs: 'bun', hair: '#6a4a2a', apron: '#e8dcc0' } },
@@ -45,7 +45,7 @@ for (const k in HIRE) Object.defineProperty(NPCS, 'hire_' + k, { value: { n: HIR
 // fixed fees a day (asked 2026-11-04: the fee is set, what they bring is luck)
 const HIRE_FEES = { woodcutter: 120, miner: 140, forager: 200, fisher: 120, farmhand: 80 };
 const feeOf = k => HIRE_FEES[k];
-const hireValue = o => Object.entries(o).reduce((a, [id, n]) => a + ((IT[parseK(id)[0]] && IT[parseK(id)[0]].p) || 0) * n, 0);
+const haulText = o => Object.entries(o).filter(([, n]) => n > 0).map(([id, n]) => n + ' ' + IT[parseK(id)[0]].n.toLowerCase()).join(', ');
 /* every hand but the farmhand has a work ethic, rolled when hired and found out after the first day (w.skill): lazy ones
    bring half or less, a rare great one twice the usual. On top, each day is good or bad (x0.5-1.5, and 1 day in 10 they
    bring next to nothing). The farmhand always works the same. */
@@ -68,10 +68,51 @@ function dropSpot() {
   const ci = m.o.findIndex(o => o && (o.k === 'storage' || o.k === 'ledger')); if (ci >= 0) return { kind: 'crate', o: m.o[ci], at: nearFree(m, ci % m.w, (ci / m.w | 0) + 1) };
   const bi = m.o.findIndex(o => o && o.k === 'board' && o.farmboard); return { kind: 'board', at: bi >= 0 ? nearFree(m, bi % m.w, (bi / m.w | 0) + 1) : [23, 8] };
 }
+/* ---- the workers' log (asked 2026-11-04): every delivery of the last year (112 days) on the notice board, per day and per
+   worker (S.hire.log: d day index, k kind, nm name, e work ethic, it {item: n}, w where it went, j farmhand jobs) ---- */
+function hireLog(k, w, items, where) {
+  const H = hireState(), L = H.log = H.log || [], d = dayIndex();
+  L.push({ d, k, nm: w.name, e: w.ethic, it: Object.fromEntries(items), w: where, j: k === 'farmhand' ? (w.jobs || 0) : undefined });
+  while (L.length && L[0].d < d - 111) L.shift();
+}
+const HLOG_W = { shed: 'storage shed', crate: 'storage crate', board: 'notice board' };
+function renderHireLog(b) {
+  const H = hireState(), all = (H.log || []).slice(), today = dayIndex(), fk = MODAL.opts.hk || 'all';
+  b.append(el('p', { class: 'note' }, 'What every hired hand brought back each day, for the last year, newest first.'));
+  if (!all.length) { b.append(el('p', { class: 'note' }, 'Nobody has brought anything back yet.')); return; }
+  const kinds = Object.keys(HIRE).filter(k => all.some(e => e.k === k));
+  b.append(el('div', { class: 'chips' }, el('button', { class: 'chip' + (fk === 'all' ? ' on' : ''), on: () => { MODAL.opts.hk = 'all'; refresh(); } }, 'Everyone'),
+    ...kinds.map(k => el('button', { class: 'chip' + (fk === k ? ' on' : ''), on: () => { MODAL.opts.hk = k; refresh(); } }, HIRE[k].n))));
+  const L = all.filter(e => fk === 'all' || e.k === fk);
+  // per worker: days worked and everything they brought
+  const per = {}; for (const e of L) { const key = e.k + '|' + e.nm, P = per[key] = per[key] || { k: e.k, nm: e.nm, e: e.e, days: 0, it: {}, j: 0, last: 0 }; P.days++; P.last = Math.max(P.last, e.d); P.j += e.j || 0; for (const id in e.it) P.it[id] = (P.it[id] || 0) + e.it[id]; }
+  const sumBox = el('div', { class: 'list' });
+  for (const P of Object.values(per).sort((a, c) => c.last - a.last)) {
+    const tot = Object.entries(P.it).sort((a, c) => c[1] - a[1]), top = tot[0] && parseK(tot[0][0]);
+    sumBox.append(el('div', { class: 'rrow' }, top ? icon(top[0], 24) : null, el('div', { class: 'rtxt' },
+      el('b', null, P.nm + ' the ' + HIRE[P.k].n.toLowerCase() + (P.k !== 'farmhand' && P.e ? ' (' + P.e + ')' : '') + ': ' + P.days + ' day' + (P.days === 1 ? '' : 's')),
+      el('small', null, (P.k === 'farmhand' ? P.j + ' jobs · ' : '') + (tot.length ? haulText(Object.fromEntries(tot)) : 'nothing brought') + (P.days > 1 && tot.length ? ' · per day about ' + haulText(Object.fromEntries(tot.map(([id, n]) => [id, Math.round(n / P.days)]))) : '')))));
+  }
+  b.append(el('h3', null, 'Per worker'), sumBox);
+  const days = [...new Set(L.map(e => e.d))].sort((a, c) => c - a), shown = MODAL.opts.hlogN || 14;
+  for (const d of days.slice(0, shown)) {
+    b.append(el('h3', null, (d === today ? 'Today, ' : d === today - 1 ? 'Yesterday, ' : '') + dayName(d)));
+    const box = el('div', { class: 'list' });
+    for (const e of L.filter(e => e.d === d)) {
+      const ents = Object.entries(e.it), top = ents.sort((a, c) => c[1] - a[1])[0];
+      box.append(el('div', { class: 'rrow' }, top ? icon(parseK(top[0])[0], 24, parseK(top[0])[1]) : null, el('div', { class: 'rtxt' },
+        el('b', null, e.nm + ' the ' + HIRE[e.k].n.toLowerCase() + (e.k === 'farmhand' ? ' (' + (e.j || 0) + ' jobs)' : '')),
+        el('small', null, ents.length ? haulText(e.it) + ' · to your ' + (HLOG_W[e.w] || 'stores') : 'Brought nothing.'))));
+    }
+    b.append(box);
+  }
+  if (days.length > shown) b.append(el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => { MODAL.opts.hlogN = shown + 28; refresh(); } }, 'Show older days (' + (days.length - shown) + ' more)')));
+}
 function deliver(k, w) {
   const items = Object.entries(w.carry || {}).filter(([, n]) => n > 0); w.carry = {};
-  if (!items.length) return '';
   const d = dropSpot(), H = hireState();
+  hireLog(k, w, items, d ? d.kind : 'board');
+  if (!items.length) return '';
   const bag = d && d.kind === 'shed' ? S.bank : d && d.kind === 'crate' ? (d.o.inv = d.o.inv || {}) : H.stash;
   for (const [id, n] of items) bag[id] = (bag[id] || 0) + n;
   const what = items.map(([id, n]) => n + ' ' + IT[parseK(id)[0]].n.toLowerCase()).join(', ');
@@ -188,7 +229,7 @@ function walkIn(k, w) {
 }
 // the day's haul, delivered: seen walking to the drop-off when you're on the farm, at once otherwise
 function settle(k, w, seen) {
-  w.del = today_(); if (k !== 'farmhand') { const h = HIRE[k].haul(), mult = hireMult(k) * (w.skill || 1) * dayLuck(); for (const id in h) { const n = Math.round(h[id] * mult); if (n > 0) w.carry[id] = (w.carry[id] || 0) + n; } w.lastV = hireValue(w.carry); }
+  w.del = today_(); if (k !== 'farmhand') { const h = HIRE[k].haul(), mult = hireMult(k) * (w.skill || 1) * dayLuck(); for (const id in h) { const n = Math.round(h[id] * mult); if (n > 0) w.carry[id] = (w.carry[id] || 0) + n; } w.lastHaul = haulText(w.carry); }
   else fhCatchUp(w);
   w.phase = 'home'; w.left--; w.worked = (w.worked || 0) + 1;
   const done = () => {
@@ -250,7 +291,7 @@ function renderHire(b) {
     const pv = k === 'farmhand' ? 'Harvests, waters, weeds and spreads fertiliser from your stores, up to ' + FH_CAP + ' jobs a day.' : 'Brings ' + D.bring + '. How much is luck: a lazy one brings a little, a good one well over the fee, and everyone has good and bad days.';
     card.append(el('div', { class: 'hirehead' }, el('b', null, D.n), el('span', null, ' ' + D.where + '. ' + fee + 'g a day.')), el('small', null, pv));
     card.append(el('small', { class: inG ? 'ok' : 'bad' }, inG ? '✓ ' + G.name + (r ? ' (rank ' + (r + 1) + ': +' + r * 10 + '%)' : '') : '✗ Join the ' + G.name + ' in ' + townN(G.town) + ' to hire one.'));
-    if (w) card.append(el('small', { class: 'hirenow' }, w.name + (k !== 'farmhand' && w.worked ? ' (' + w.ethic + (w.lastV !== undefined ? ', last haul worth ' + Math.round(w.lastV) + 'g' : '') + ')' : '') + ': ' + w.left + ' day' + (w.left === 1 ? '' : 's') + ' left. ' +(dayIndex() < w.start ? 'Starts tomorrow at 7:00.' : w.del === dayIndex() ? 'Done for today.' : w.arr === dayIndex() ? (k === 'farmhand' ? 'At work on the farm.' : 'Out in the Wilds, back at 17:00.') : 'Comes at 7:00.')));
+    if (w) card.append(el('small', { class: 'hirenow' }, w.name + (k !== 'farmhand' && w.worked ? ' (' + w.ethic + (w.lastHaul !== undefined ? '; last haul: ' + (w.lastHaul || 'nothing') : '') + ')' : '') + ': ' + w.left + ' day' + (w.left === 1 ? '' : 's') + ' left. ' +(dayIndex() < w.start ? 'Starts tomorrow at 7:00.' : w.del === dayIndex() ? 'Done for today.' : w.arr === dayIndex() ? (k === 'farmhand' ? 'At work on the farm.' : 'Out in the Wilds, back at 17:00.') : 'Comes at 7:00.')));
     if (inG) {
       const row = el('div', { class: 'acts wrap' }, el('span', null, w ? 'Add:' : 'Hire for:'));
       for (const [d, fac] of HIRE_DAYS) { const c = Math.round(fee * d * fac); row.append(el('button', { class: 'btn ghost' + (S.gold < c ? ' off' : ''), title: fac < 1 ? Math.round((1 - fac) * 100) + '% off' : '', on: () => hire(k, d, fac) }, d + ' day' + (d > 1 ? 's' : '') + ' · ' + c.toLocaleString() + 'g')); }
@@ -262,19 +303,20 @@ function renderHire(b) {
 }
 farmNotices = (f => function () {
   const r = f.apply(this, arguments);
-  if (MODAL && MODAL.title === 'Farm notices' && !MODAL.tabs.some(t => t.id === 'hire')) { MODAL.tabs.push({ id: 'hire', label: 'Hire hands', render: renderHire }); drawModal(); }
+  if (MODAL && MODAL.title === 'Farm notices' && !MODAL.tabs.some(t => t.id === 'hire')) { MODAL.tabs.push({ id: 'hire', label: 'Hire hands', render: renderHire }, { id: 'hlog', label: 'Workers’ log', render: renderHireLog }); drawModal(); }
   return r;
 })(farmNotices);
 // the Hire tab needs the full-size window
-drawModal = (f => function () { const r = f.apply(this, arguments); const p = document.querySelector('#modal'); if (p && MODAL && MODAL.title === 'Farm notices') p.classList.toggle('small', MODAL.cur !== 'hire'); return r; })(drawModal);
+drawModal = (f => function () { const r = f.apply(this, arguments); const p = document.querySelector('#modal'); if (p && MODAL && MODAL.title === 'Farm notices') p.classList.toggle('small', MODAL.cur === 'n'); return r; })(drawModal);
 
 HELP.hire = ['Hired hands', [
   'Hire a woodcutter, miner, forager, fisher or farmhand by the day, paid up front (7 days or more costs a little less a day).',
   'Every hand but the farmhand is a gamble: lazy, steady, hard-working or now and then exceptional (you find out after the first day), and each day is good or bad. A good one brings well over the fee; a lazy one less. The farmhand always works the same.',
   'Each needs you in their guild: the Hunters’ Lodge in Ashford (woodcutter, forager), the Miners’ Guild in Greyhelm, the Anglers’ Guild in Saltmere, the Growers’ Guild in Kingsbridge (farmhand). Every rank adds 10% to their haul.',
   'They walk in from the village at 7:00. The others head out to the Wilds and are back at 17:00; the farmhand works your fields all day. The day’s haul goes to your Storage Shed, else a storage crate, else this board.',
-  'Let go pays back the days not yet worked.']];
-helpKey = (f => function () { if (MODAL && MODAL.title === 'Farm notices' && MODAL.cur === 'hire') return 'hire'; return f.apply(this, arguments); })(helpKey);
+  'Let go pays back the days not yet worked.',
+  'The Workers’ log tab lists what each of them brought back every day, with totals per worker.']];
+helpKey = (f => function () { if (MODAL && MODAL.title === 'Farm notices' && (MODAL.cur === 'hire' || MODAL.cur === 'hlog')) return 'hire'; return f.apply(this, arguments); })(helpKey);
 
 document.head.append(el('style', null, `
 .hirecard { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; margin: 6px 0; border: 2px solid rgba(80, 50, 20, .3); border-radius: 4px; background: rgba(255, 245, 220, .35); }
