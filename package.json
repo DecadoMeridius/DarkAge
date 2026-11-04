@@ -1,6 +1,6 @@
 {
   "name": "emberhollow",
-  "version": "1.6.5",
+  "version": "1.6.6",
   "description": "Emberhollow: top-down pixel-art farming, crafting and adventure RPG",
   "main": "electron/main.cjs",
   "type": "module",
