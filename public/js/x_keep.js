@@ -3,9 +3,10 @@
    - "Hired hands may not leave their haul here": off by default. When on, deliveries skip it for the next storage
      (x_hire.js dropSpot reads S.flags.shedNoHands and o.noHands).
    - A minimum to keep per item (S.bankKeep for the shed, o.keep for a crate): automation never takes it below that.
-     Belts pulling from it, crates pushing onto belts, cranes, crafting from the shed and the farmhand's fertiliser all
-     run inside withReserve, which sets the kept amount aside first and puts it back after, so none of them can see it.
-     Taking things out yourself still works. */
+     Belts pulling from it, crates pushing onto belts, cranes and the farmhand's fertiliser all run inside withReserve,
+     which sets the kept amount aside first and puts it back after, so none of them can see it. Taking things out
+     yourself still works, and so does crafting by hand at a station (workbench, kitchen, campfire, anvil...): it takes
+     from the shed down to nothing (asked 2026-11-05). */
 
 let RESERVE_DEPTH = 0;
 // set aside up to keep[id] of each item (all qualities together, plain first) and return a function that puts it back
@@ -36,9 +37,7 @@ function withReserve(fn, self, args) {
 const reserved = f => function () { return withReserve(f, this, arguments); };
 autoTick = reserved(autoTick);
 if (typeof craneTick === 'function') craneTick = reserved(craneTick);
-// crafting from the shed (x_shedcraft.js) and the farmhand's fertiliser (x_hire.js)
-canCraft = reserved(canCraft); doCraft = reserved(doCraft); renderCraft = reserved(renderCraft);
-if (typeof jobStep === 'function') jobStep = reserved(jobStep);
+// the farmhand's fertiliser (x_hire.js); your own crafting from the shed ignores the minimums
 if (typeof fhDo === 'function') fhDo = (f => function (m, w, x, y, job) { return job === 'fert' ? withReserve(f, this, arguments) : f.apply(this, arguments); })(fhDo);
 if (typeof farmhandFrame === 'function') farmhandFrame = reserved(farmhandFrame);   // (it checks whether there's fertiliser to spread)
 if (typeof fhCatchUp === 'function') fhCatchUp = reserved(fhCatchUp);
@@ -98,7 +97,7 @@ if (typeof openLedger === 'function') openLedger = (f => function (m) {
   return r;
 })(openLedger);
 if (typeof HELP !== 'undefined') {
-  HELP.keep = ['Keep', ['Hired hands may not leave their haul here: tick it and they take it to the next storage instead.', 'Keep at least: automation (belts, cranes, crafting from the shed, the farmhand) never takes an item below the amount you set. You can still take it out yourself.']];
+  HELP.keep = ['Keep', ['Hired hands may not leave their haul here: tick it and they take it to the next storage instead.', 'Keep at least: automation (belts, cranes, the farmhand) never takes an item below the amount you set. You can still take it out yourself, and crafting at a station uses it all.']];
   helpKey = (f => function () { if (MODAL && MODAL.cur === 'keep') return 'keep'; return f.apply(this, arguments); })(helpKey);
 }
 document.head.append(el('style', null, `
