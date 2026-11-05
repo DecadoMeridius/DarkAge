@@ -178,7 +178,7 @@ function forgeGame(r) {
   const it = IT[r[0]], L = lifeL('smithing'), ti = it.ti || 0;
   const tw = Math.max(.75, Math.min(2.2, 1.5 + L * .006 - ti * .05)), rad = Math.min(15, 10 + L * .05), spd = 40 + ti * 5;
   const cats = Object.keys(CATALYST).filter(k => IT[k] && has(k) && CATALYST[k].some(t => traitOk(t, it)));
-  const A = { x0: 120, x1: 296, y0: 50, y1: 100 };   // where the mark wanders: the work on the anvil
+  const A = FORGE_BG.naturalWidth ? { x0: 160, x1: 296, y0: 30, y1: 84 } : { x0: 120, x1: 296, y0: 50, y1: 100 };   // where the mark wanders: the work on the anvil
   const G = { phase: 'prep', n: 0, good: 0, mk: null, gap: 0, flash: 0, msg: '', hits: [], cat: null, sp: [], swing: null };
   const spawn = () => { const a = Math.random() * Math.PI * 2; G.mk = { x: A.x0 + 20 + Math.random() * (A.x1 - A.x0 - 40), y: A.y0 + 10 + Math.random() * (A.y1 - A.y0 - 20), vx: Math.cos(a) * spd, vy: Math.sin(a) * spd, t: 0 }; };
   const hit = (ok, at) => { const m = G.mk || {}, hx = at ? at.x : m.x || 180, hy = at ? at.y : m.y || 80;
@@ -239,12 +239,12 @@ const FORGE_ART = {};
 function forgeWork(id, glow) {
   const key = id + '|' + (SETTINGS.artStyle || ''); let A = FORGE_ART[key];
   if (!A || A.__lost) { const ic = itemIcon(id); if (!ic) return null;
-    const hot = mk(ic.width, ic.height, x => { x.drawImage(ic, 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(255,120,30,.75)'; x.fillRect(0, 0, ic.width, ic.height); x.fillStyle = 'rgba(255,230,140,.35)'; x.fillRect(0, 0, ic.width, ic.height * .45); });
+    const hot = mk(ic.width, ic.height, x => { x.drawImage(ic, 0, 0); x.globalCompositeOperation = 'source-atop'; x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(255,110,30,.55)'; x.fillRect(0, 0, ic.width, ic.height); x.globalCompositeOperation = 'lighter'; x.globalAlpha = .35; x.drawImage(ic, 0, 0); });
     A = FORGE_ART[key] = { ic, hot }; }
   return A;
 }
 // the painted smithy (art/forge_bg.py writes public/art/ui/forge_bg.png); set FORGE_BG_FILE once it exists, else the scene is drawn in code
-const FORGE_BG_FILE = null;
+const FORGE_BG_FILE = 'art/ui/forge_bg.png';
 const FORGE_BG = new Image(); if (FORGE_BG_FILE) FORGE_BG.src = FORGE_BG_FILE;
 function forgeScene(c, id, glow, t) {
   c.imageSmoothingEnabled = false;
@@ -252,7 +252,7 @@ function forgeScene(c, id, glow, t) {
     c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high'; c.drawImage(FORGE_BG, 0, 0, 360, 150); c.imageSmoothingEnabled = false;
     const f = .16 + .06 * Math.sin(t * 7) + .04 * Math.sin(t * 13), g0 = c.createRadialGradient(44, 100, 4, 44, 100, 110);   // the fire breathes
     g0.addColorStop(0, 'rgba(255,150,60,' + f + ')'); g0.addColorStop(1, 'rgba(255,150,60,0)'); c.fillStyle = g0; c.fillRect(0, 0, 220, 150);
-    forgePiece(c, id, glow, 96); return;
+    forgePiece(c, id, glow, 76, 226); return;   // the painting's anvil top
   }
   // wall
   c.fillStyle = '#2a1e1a'; c.fillRect(0, 0, 360, 150);
@@ -277,15 +277,17 @@ function forgeScene(c, id, glow, t) {
   for (let i = 0; i < 26; i++) { c.fillStyle = '#5a5450'; c.fillRect(ax - 30 - i, ay + 1 + Math.floor(i / 3), 1, Math.max(1, 10 - Math.floor(i / 2.6))); }   // the horn
   c.fillStyle = '#4e4844'; c.fillRect(ax + 54, ay + 12, 72, 20); c.fillStyle = '#5c5652'; c.fillRect(ax + 54, ay + 12, 6, 20);
   c.fillStyle = '#5a5450'; c.fillRect(ax + 34, ay + 32, 112, 7); c.fillStyle = '#6e6864'; c.fillRect(ax + 34, ay + 32, 112, 2);
-  forgePiece(c, id, glow, ay);
+  forgePiece(c, id, glow, ay - 2);
 }
 // the piece on the anvil's face, hot and cooling
 // a weapon lies along the face, armour stands on it
-function forgePiece(c, id, glow, ay) {
-  const W = forgeWork(id, glow);
-  if (W) { const wpn = IT[id] && IT[id].t === 'weapon', sz = wpn ? 104 : 66, x = 210 - sz / 2, y = wpn ? ay - sz / 2 - 14 : ay - sz + 6;
-    c.save(); c.translate(x + sz / 2, y + sz / 2); if (wpn) c.rotate(Math.PI / 4); c.drawImage(W.ic, -sz / 2, -sz / 2, sz, sz); c.globalAlpha = glow; c.drawImage(W.hot, -sz / 2, -sz / 2, sz, sz); c.restore(); c.globalAlpha = 1;
-    const g2 = c.createRadialGradient(200, ay - 20, 4, 200, ay - 20, 70); g2.addColorStop(0, 'rgba(255,150,60,' + (.22 * glow) + ')'); g2.addColorStop(1, 'rgba(255,150,60,0)'); c.fillStyle = g2; c.fillRect(110, 20, 200, 110); }
+function forgePiece(c, id, glow, face, cx = 210) {
+  const W = forgeWork(id, glow); if (!W) return;
+  const wpn = IT[id] && IT[id].t === 'weapon', sz = wpn ? 96 : 60, cy = wpn ? face - 5 : face + 1 - sz / 2;   // a weapon lies on the face, armour stands on it
+  c.fillStyle = 'rgba(20,10,6,.45)'; c.beginPath(); c.ellipse(cx, face + 1, wpn ? 40 : 22, 3, 0, 0, Math.PI * 2); c.fill();   // contact shadow
+  c.save(); c.translate(cx, cy); if (wpn) c.rotate(Math.PI / 4); c.imageSmoothingEnabled = !!W.ic.hi;
+  c.drawImage(W.ic, -sz / 2, -sz / 2, sz, sz); c.globalAlpha = .25 + .55 * glow; c.drawImage(W.hot, -sz / 2, -sz / 2, sz, sz); c.restore(); c.globalAlpha = 1;
+  const g2 = c.createRadialGradient(cx, cy, 4, cx, cy, 60); g2.addColorStop(0, 'rgba(255,150,60,' + (.25 * glow) + ')'); g2.addColorStop(1, 'rgba(255,150,60,0)'); c.fillStyle = g2; c.fillRect(cx - 70, cy - 60, 140, 120);
 }
 function forgeHammer(c, x, y, k) {
   // raised, then down on the spot

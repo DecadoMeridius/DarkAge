@@ -17,14 +17,14 @@ import restyle
 GUIDE = ROOT / 'art' / 'src' / 'forge_guide.png'
 OUT = ROOT / 'art' / 'out'
 GAME = ROOT / 'public' / 'art' / 'ui' / 'forge_bg.png'
-PROMPT = ('Repaint this rough game layout as a beautiful hand-painted fantasy RPG scene in the style of a painted storybook: '
-          'the inside of a medieval village blacksmith\'s forge. On the left a stone forge hearth with a roaring orange fire and '
-          'glowing coals; in the middle a heavy dark iron anvil with a pointed horn on the left, standing on a sturdy base, its '
-          'flat top exactly where the grey bar is; behind it a warm brick and stone wall; on the right wall hanging tongs and '
-          'hammers; a worn wooden floor. Warm firelight from the left, deep shadows, visible oil brush strokes, rich colour. '
-          'Keep the layout exactly: the hearth, the anvil and its top surface stay where they are and the same size. '
-          'Leave the top of the anvil and the space above it clear: nothing lies on the anvil. No people, no text. '
-          'Flat straight-on view like a 2D game, no perspective tilt.')
+PROMPT = ('Paint a beautiful, richly detailed hand-painted fantasy RPG illustration in the style of a painted storybook, '
+          'with visible oil brush strokes, soft form shading and warm glowing light: the cosy inside of a medieval village '
+          "blacksmith's forge at night. On the left a big stone forge hearth with a roaring orange fire and glowing coals, lighting "
+          'the room. In the middle, in the foreground, a heavy dark iron anvil with a horn on its left, its flat top at about two '
+          'thirds of the way down the picture, standing on a thick tree stump; the top of the anvil is empty. Behind it a warm '
+          'stone and brick wall; on the right wall hanging tongs, hammers and horseshoes; a bucket of water and a barrel; a worn '
+          'plank floor. Use the layout of the picture: hearth on the left, anvil in the middle, tools on the right. '
+          'Flat straight-on side view like a 2D game background, no people, no text.')
 
 if __name__ == '__main__':
     a = sys.argv[1:]
@@ -33,4 +33,4 @@ if __name__ == '__main__':
         shutil.copy(OUT / f'forge_bg_{a[1]}.png', GAME); print('->', GAME.relative_to(ROOT)); sys.exit()
     name = restyle.upload(GUIDE)   # ComfyUI loads images by their uploaded name
     for seed in [int(x) for x in a] or [7, 21, 42]:
-        restyle.run(name, PROMPT, OUT / f'forge_bg_{seed}.png', seed=seed, mp=.6, denoise=.85, steps=8)
+        restyle.run(name, PROMPT, OUT / f'forge_bg_{seed}.png', seed=seed, mp=.6, denoise=1.0, steps=4)

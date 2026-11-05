@@ -3,10 +3,10 @@
     python restyle.py [style ...]        all styles when none are named
     scenes: docs/artstyles/src/*.png  ->  docs/artstyles/<style>/<scene>.png
 """
-import json, sys, time, uuid, urllib.request, urllib.parse
+import json, os, sys, time, uuid, urllib.request, urllib.parse
 from pathlib import Path
 
-HOST = 'http://127.0.0.1:8188'
+HOST = os.environ.get('COMFY_HOST', 'http://127.0.0.1:8188')   # set COMFY_HOST to use another server
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / 'docs' / 'artstyles' / 'src'
 
