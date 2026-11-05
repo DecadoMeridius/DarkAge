@@ -15,16 +15,16 @@ const GUIDES = [
     'Recipes you don’t know yet are bought: smithing patterns per metal from the smiths, cookbook pages from cooks (Pip and the inns), item plans from Hale. The Recipes tab (B) lists everything you know and where it’s made.',
     'Pin a recipe with 📌 and a panel on the left shows what you have and still need, counting your Storage Shed. Up to 3 at a time.']],
   ['Forging weapons and armour', [
-    'Make (one piece) at an anvil opens the forge: 10 hits on the anvil. A glowing mark moves over the work; click it before its ring runs out. A click beside it or a mark that runs out is a bad hit.',
-    'Good hits set the quality: 0-3 Crude (−10% stats), 4-6 Standard, 7-8 Fine (+8%), 9 Masterwork (+16%), 10 Legendary (+25%). Better quality also sells for more. A higher Smithing level gives each mark more time; better metals give less.',
+    'Make (one piece) at an anvil opens the forge: 10 hits on the anvil. A glowing mark moves over the work and shrinks as its ring runs out; click its centre. A centre hit counts 1, a hit elsewhere on the mark ½; a click beside it or a mark that runs out counts nothing.',
+    'The total sets the quality: under 4 Crude (−10% stats), under 6.5 Standard, under 8.5 Fine (+8%), under 9.5 Masterwork (+16%), 9.5 or more Legendary (+25%). Masterwork needs Smithing 20 and Legendary Smithing 40. Better quality also sells for more. A higher Smithing level gives each mark more time and size; better metals give less.',
     'Fine pieces get 1 trait, Masterwork 2, Legendary 3. Weapons: Keen, Balanced, Heavy, Sharp, Vampiric, Swift, Lucky, and Frostbite, Burning or Holy on some metals. Armour: Sturdy, Vital, Featherweight, Thorned, Warded, Regenerating, Lucky, and Fireproof on some metals.',
     'A catalyst steers the first trait: pick a monster part you carry (a fang for Keen or Sturdy, troll hide for Heavy, ectoplasm for Vampiric or Warded…) before you start. It’s used up on a Fine or better result.',
     'Quick forge skips the game and makes a Standard piece; so do batches and the trip and power hammers.',
     'Forge work at the anvil: Temper raises a piece one quality step (bars and gold; it can fail but the piece is kept), Reforge rerolls one trait.',
     'Pieces you forge carry your maker’s mark. Kept by your heirs they become heirlooms: +3% stats a generation, up to +30%.']],
   ['Cooking and meal buffs', [
-    'Cooking at a kitchen opens a short game for the whole batch: hold Space or the mouse to turn up the heat, let go to cool, and keep the pan in the green band for 6 seconds.',
-    'The batch comes out Plain, Tasty, Delicious or Exquisite. Better dishes restore more, sell for more, and their buff lasts 1.5×, 2× or 3× as long. Quick cook makes Plain dishes.',
+    'Cooking at a kitchen opens a short game at the hearth for the whole batch: for each ingredient a needle swings over the heat dial; click while it’s in the green band to drop the ingredient into the pot. The centre of the band counts fully, the rest of the band half.',
+    'The batch comes out Plain, Tasty, Delicious or Exquisite. Delicious needs Cooking 20 and Exquisite Cooking 40. Better dishes restore more, sell for more, and their buff lasts 1.5×, 2× or 3× as long. Quick cook makes Plain dishes.',
     'Every dish gives a buff: fish dishes easier fishing, meat attack, stews regeneration, pies better mining, cakes and sweets luck, salads speed, bread and eggs defence. Eating a dish again refreshes its buff.']],
   ['Building', [
     'Buy a building’s plans from Hale, make its blueprint at a workbench, then use the blueprint on your farm: a green ghost shows where it fits.',
@@ -40,7 +40,9 @@ const GUIDES = [
     'Your pet’s hearts (10 points of affection each) grow when you pet it and when you give it a fish or meat treat, once a day each. More hearts mean more nightly digs and rarer finds: gems, truffles, gold, even diamonds.',
     'Your horse gains stamina as you ride it: 10 levels, each 2.5% faster. The Animals tab shows both under Companions.']],
   ['Fishing', [
-    'Cast with the rod into water, wait for a bite, then keep the catch in the moving zone until the bar fills. The canoe lets you fish deep water; the harpoon catches big fish; crab traps fill overnight.',
+    'Cast with the rod into water and wait for a bite, then click: you look under the water, where the fish that live in that spot swim about (what you can catch depends on the water, the season, the time and your Fishing level). Steer the hook with the mouse to a fish’s mouth; shy fish dart away from it, easy ones come for the bait.',
+    'Once it’s hooked, hold the mouse or Space to lift the net and keep the fish inside it until the catch bar fills. Now and then a treasure chest floats in the gauge: keep the net over it too.',
+    'The canoe lets you fish deep water; the harpoon catches big fish (aim at its shadow, then keep the line’s tension in the band); crab traps fill overnight (pull when the marker is in the green).',
     'Once a season, on day 20, Saltmere holds a fishing tournament at Finn’s Fish (sign up the day before or on the day, 50g). From 8 am to 4 pm every fish you catch is weighed; your heaviest counts against four rivals. Prizes: 2,500g, the Angler’s Cup and the title Champion Angler; 1,000g; 400g.']],
   ['Money and markets', [
     'Shops buy and sell at their town’s market price: towns that are short of a good pay and charge more. Selling many at once lowers the price unit by unit.',
@@ -63,7 +65,7 @@ const GUIDES = [
 ];
 HELP.forgework = HELP.forgework || ['Forge work', []];
 // the "i" guides, up to date with the new systems
-if (HELP.station) { HELP.station[1] = HELP.station[1].filter(p => !/^Cooking opens a short minigame/.test(p)); HELP.station[1].push('At an anvil, Make forges one weapon or armour piece by hand: 10 hits on a moving mark set its quality (Crude to Legendary) and Fine or better pieces get traits. Forge work tempers and reforges.', 'At a kitchen, a short heat game sets the whole batch’s quality: Plain, Tasty, Delicious or Exquisite (longer buffs).', 'Pin a recipe (📌) to keep what it needs on screen.'); }
+if (HELP.station) { HELP.station[1] = HELP.station[1].filter(p => !/^Cooking opens a short minigame/.test(p)); HELP.station[1].push('At an anvil, Make forges one weapon or armour piece by hand: 10 hits on a moving mark (centre hits count most) set its quality (Crude to Legendary; Masterwork needs Smithing 20, Legendary 40) and Fine or better pieces get traits. Forge work tempers and reforges.', 'At a kitchen, a heat-dial game (drop each ingredient in when the needle is in the green) sets the whole batch’s quality: Plain, Tasty, Delicious or Exquisite (longer buffs).', 'Pin a recipe (📌) to keep what it needs on screen.'); }
 if (HELP.craft) HELP.craft[1].push('Pin a recipe (📌) and what you still need shows on the left, counting your Storage Shed.');
 if (HELP.animals) HELP.animals[1].push('Companions at the top: your pet’s hearts (pet it and give it a treat daily for more digs and rarer finds) and your horse’s stamina level (it rides faster as you ride it).');
 if (HELP.barracks) HELP.barracks[1].push('In Kingsbridge, the Bounties tab posts three named elites a week: take one, hunt it in the Wilds, claim gold and a fine piece of gear.');

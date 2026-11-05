@@ -25,6 +25,7 @@ function mgOpen(o) {
   MG = Object.assign({ cv, c: cv.getContext('2d'), top, acts, p, hold: false, t: 0, last: performance.now(), res }, o);
   for (const [lab, fn, cls] of o.buttons || []) acts.append(el('button', { class: 'btn' + (cls ? ' ' + cls : ''), on: () => fn(MG) }, lab));
   cv.addEventListener('mousedown', e => { e.preventDefault(); if (!MG) return; MG.hold = true; const R = cv.getBoundingClientRect(); MG.press && MG.press(MG, { x: (e.clientX - R.left) * W0 / R.width, y: (e.clientY - R.top) * H0 / R.height }); });
+  cv.addEventListener('mousemove', e => { if (!MG) return; const R = cv.getBoundingClientRect(); MG.mouse = { x: (e.clientX - R.left) * W0 / R.width, y: (e.clientY - R.top) * H0 / R.height }; });
   if (o.setup) o.setup(MG);
   PAUSED = true; INPUT.keys = {};
   // drawn at 3x resolution, in 360x150 units
@@ -49,6 +50,11 @@ document.head.append(el('style', null, `
 #mgame .mgt { font-size: 18px; } #mgame .mgtop { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; }
 #mgame .mgh { opacity: .85; text-align: center; }
 `));
+// painted scenes behind the minigames (art/minigame_bg.py); drawn to cover the panel
+const MG_BG = {};
+const mgScene = name => { let i = MG_BG[name]; if (!i) { i = MG_BG[name] = new Image(); i.src = 'art/ui/mg_' + name + '.png'; } return i.complete && i.naturalWidth ? i : null; };
+['cook', 'under', 'reel', 'harpoon', 'haul'].forEach(mgScene);
+function mgDrawScene(c, name, x = 0, y = 0, w = 360, h = 150, fb = '#1c1410') { const i = mgScene(name); if (!i) { c.fillStyle = fb; c.fillRect(x, y, w, h); return false; } const was = c.imageSmoothingEnabled; c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high'; c.drawImage(i, x, y, w, h); c.imageSmoothingEnabled = was; return true; }
 const mgBar = (c, x, y, w, h, fill, col) => { c.fillStyle = '#3a2a22'; c.fillRect(x, y, w, h); c.fillStyle = col; c.fillRect(x, y, Math.round(w * fill), h); };
 const mgText = (c, s, x, y, col, size) => { c.fillStyle = col || '#f4e8d0'; c.font = (size || 12) + 'px Fredoka, sans-serif'; c.textAlign = 'center'; c.fillText(s, x, y); };
 
@@ -173,21 +179,24 @@ hurtPlayer = (f => function (dmg, sx, sy, elem) {
 let FORGE_PASS = false;
 // 10 hits on the anvil (asked 2026-11-05): a mark moves over the work; click it before its ring runs out. Good hits set the quality.
 const FORGE_HITS = 10;
-const forgeQ = good => good <= 3 ? 0 : good <= 6 ? 1 : good <= 8 ? 2 : good === 9 ? 3 : 4;
+// a centre hit counts 1, a hit elsewhere on the mark 0.5 (asked 2026-11-05: Legendary must be rare). The sum of 10 sets the
+// quality, capped by Smithing: Masterwork from 20, Legendary from 40.
+const forgeQ = (sc, L) => Math.min(sc < 4 ? 0 : sc < 6.5 ? 1 : sc < 8.5 ? 2 : sc < 9.5 ? 3 : 4, L < 20 ? 2 : L < 40 ? 3 : 4);
+const forgeR = (rad, m, tw) => rad * (1 - .4 * Math.min(1, m.t / tw));   // the mark shrinks as its ring runs out
 function forgeGame(r) {
   const it = IT[r[0]], L = lifeL('smithing'), ti = it.ti || 0;
-  const tw = Math.max(.75, Math.min(2.2, 1.5 + L * .006 - ti * .05)), rad = Math.min(15, 10 + L * .05), spd = 40 + ti * 5;
+  const tw = Math.max(.55, Math.min(1.45, 1.05 + L * .004 - ti * .04)), rad = Math.min(12, 8 + L * .04), spd = 55 + ti * 6;
   const cats = Object.keys(CATALYST).filter(k => IT[k] && has(k) && CATALYST[k].some(t => traitOk(t, it)));
   const A = FORGE_BG.naturalWidth ? { x0: 160, x1: 296, y0: 30, y1: 84 } : { x0: 120, x1: 296, y0: 50, y1: 100 };   // where the mark wanders: the work on the anvil
   const G = { phase: 'prep', n: 0, good: 0, mk: null, gap: 0, flash: 0, msg: '', hits: [], cat: null, sp: [], swing: null };
   const spawn = () => { const a = Math.random() * Math.PI * 2; G.mk = { x: A.x0 + 20 + Math.random() * (A.x1 - A.x0 - 40), y: A.y0 + 10 + Math.random() * (A.y1 - A.y0 - 20), vx: Math.cos(a) * spd, vy: Math.sin(a) * spd, t: 0 }; };
-  const hit = (ok, at) => { const m = G.mk || {}, hx = at ? at.x : m.x || 180, hy = at ? at.y : m.y || 80;
+  const hit = (v, at) => { const ok = v > 0, m = G.mk || {}, hx = at ? at.x : m.x || 180, hy = at ? at.y : m.y || 80;
     G.swing = { x: hx, y: hy, t: 0 }; for (let i = 0; i < (ok ? 16 : 5); i++) { const a = -Math.PI / 2 + (Math.random() - .5) * 2.6, v = (ok ? 60 : 25) + Math.random() * (ok ? 90 : 30); G.sp.push({ x: hx, y: hy, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: ok ? .5 + Math.random() * .4 : .35, c: ok ? (Math.random() < .5 ? '#ffd060' : '#ff8a2a') : '#8a8078' }); }
-    G.n++; if (ok) G.good++; G.hits.push(ok ? 1 : 0); G.msg = ok ? 'Good hit!' : 'Miss'; G.flash = .4; G.mk = null; G.gap = .3;
+    G.n++; G.good += v; G.hits.push(v); G.msg = v === 1 ? 'Perfect!' : ok ? 'Off-centre' : 'Miss'; G.flash = .4; G.mk = null; G.gap = .3;
     snd(ok ? 900 : 260, .06, 'square', .05); if (ok) SHAKE = .05;
-    if (G.n >= FORGE_HITS) { G.phase = 'done'; G.q = forgeQ(G.good); G.dt = 0; } };
+    if (G.n >= FORGE_HITS) { G.phase = 'done'; G.q = forgeQ(G.good, L); G.dt = 0; } };
   const finish = q => { mgClose(); forgeDone(r, q, G.cat); };
-  mgOpen({ title: 'Forging ' + it.n, hint: 'Click the glowing mark before its ring runs out. 10 hits: the good ones decide the quality.', w: 360, h: 150,
+  mgOpen({ title: 'Forging ' + it.n, hint: 'Click the centre of the glowing mark before its ring runs out. A centre hit counts 1, an off-centre hit ½; the 10 decide the quality.', w: 360, h: 150,
     buttons: [['Quick forge (Standard)', () => finish(1), 'ghost'], ['Cancel', () => mgClose(), 'ghost']],
     setup: M => {
       M.G = G; M.A = A; M.rad = rad;
@@ -199,7 +208,7 @@ function forgeGame(r) {
     press: (M, pt) => {
       if (G.phase === 'prep') { G.phase = 'hit'; G.gap = .4; return; }
       if (G.phase !== 'hit' || !G.mk || !pt) return;
-      hit(Math.hypot(pt.x - G.mk.x, pt.y - G.mk.y) <= rad + 3, pt);
+      const d = Math.hypot(pt.x - G.mk.x, pt.y - G.mk.y), R = forgeR(rad, G.mk, tw); hit(d <= R * .4 ? 1 : d <= R + 2 ? .5 : 0, pt);
     },
     update: dt => {
       G.flash = Math.max(0, G.flash - dt);
@@ -210,28 +219,28 @@ function forgeGame(r) {
         const m = G.mk; m.t += dt; m.x += m.vx * dt; m.y += m.vy * dt;
         if (m.x < A.x0 + rad || m.x > A.x1 - rad) { m.vx = -m.vx; m.x = Math.max(A.x0 + rad, Math.min(A.x1 - rad, m.x)); }
         if (m.y < A.y0 + rad || m.y > A.y1 - rad) { m.vy = -m.vy; m.y = Math.max(A.y0 + rad, Math.min(A.y1 - rad, m.y)); }
-        if (Math.random() < dt * 1.2) { const a = Math.atan2(m.vy, m.vx) + (Math.random() - .5) * 1.6; m.vx = Math.cos(a) * spd; m.vy = Math.sin(a) * spd; }   // it changes course now and then
-        if (m.t >= tw) hit(false);
+        if (Math.random() < dt * 1.8) { const a = Math.atan2(m.vy, m.vx) + (Math.random() - .5) * 1.6; m.vx = Math.cos(a) * spd; m.vy = Math.sin(a) * spd; }   // it changes course now and then
+        if (m.t >= tw) hit(0);
       } else if (G.phase === 'done') { G.dt += dt; if (G.dt > 1.2) finish(G.q); }
     },
     draw: c => {
       const glow = G.phase === 'prep' ? 1 : Math.max(.2, 1 - G.n * .08);
       forgeScene(c, r[0], glow, MG.t);
       // hit lights
-      for (let i = 0; i < FORGE_HITS; i++) { const h = G.hits[i]; c.fillStyle = '#120c0a'; c.fillRect(104 + i * 17, 5, 14, 10); c.fillStyle = h === undefined ? '#3a2a22' : h ? '#f0b030' : '#9a3a2a'; c.fillRect(105 + i * 17, 6, 12, 8); if (h) { c.fillStyle = '#ffe8a0'; c.fillRect(105 + i * 17, 6, 12, 2); } }
-      mgText(c, G.good + ' good / ' + G.n, 330, 14, '#f4e8d0', 11);
+      for (let i = 0; i < FORGE_HITS; i++) { const h = G.hits[i]; c.fillStyle = '#120c0a'; c.fillRect(104 + i * 17, 5, 14, 10); c.fillStyle = h === undefined ? '#3a2a22' : h === 1 ? '#f0b030' : h ? '#c8a878' : '#9a3a2a'; c.fillRect(105 + i * 17, 6, 12, 8); if (h === 1) { c.fillStyle = '#ffe8a0'; c.fillRect(105 + i * 17, 6, 12, 2); } }
+      mgText(c, (Math.round(G.good * 10) / 10) + ' / ' + G.n, 336, 14, '#f4e8d0', 11);
       if (G.phase === 'prep') { c.fillStyle = 'rgba(18,12,10,.6)'; c.fillRect(70, 52, 220, 30); mgText(c, 'Click (or Space) to start, then click each mark', 180, 72, '#f4e8d0', 13); return; }
       const m = G.mk;
-      if (m) { const k = 1 - m.t / tw, R = Math.round(rad);
+      if (m) { const k = 1 - m.t / tw, R = forgeR(rad, m, tw);
         c.fillStyle = 'rgba(255,210,110,.22)'; c.beginPath(); c.arc(m.x, m.y, R + 9 * k, 0, Math.PI * 2); c.fill();
         c.strokeStyle = '#120c0a'; c.lineWidth = 5; c.beginPath(); c.arc(m.x, m.y, R + 3, 0, Math.PI * 2); c.stroke();
         c.strokeStyle = k > .35 ? '#f0b030' : '#ff5a3a'; c.lineWidth = 3; c.beginPath(); c.arc(m.x, m.y, R + 3, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k); c.stroke();
-        c.fillStyle = '#fff2c0'; c.fillRect(Math.round(m.x) - 1, Math.round(m.y) - R + 3, 2, 2 * R - 6); c.fillRect(Math.round(m.x) - R + 3, Math.round(m.y) - 1, 2 * R - 6, 2);   // a cross on the spot to strike
+        c.fillStyle = 'rgba(255,240,190,.35)'; c.beginPath(); c.arc(m.x, m.y, R, 0, Math.PI * 2); c.fill(); c.fillStyle = '#fff2c0'; c.beginPath(); c.arc(m.x, m.y, Math.max(1.5, R * .4), 0, Math.PI * 2); c.fill();   // a cross on the spot to strike
       }
       for (const q of G.sp) { c.globalAlpha = Math.min(1, q.t * 3); c.fillStyle = q.c; c.fillRect(Math.round(q.x), Math.round(q.y), 2, 2); } c.globalAlpha = 1;
       if (G.swing) forgeHammer(c, G.swing.x, G.swing.y, G.swing.t / .3);
       if (G.flash > 0) mgText(c, G.msg, 180, 140, G.msg === 'Miss' ? '#ff8a6a' : '#ffe08a', 14);
-      if (G.phase === 'done') { const Q = QUAL[G.q]; c.fillStyle = 'rgba(18,12,10,.65)'; c.fillRect(80, 56, 200, 34); mgText(c, Q.n + '! (' + G.good + ' of ' + FORGE_HITS + ')', 180, 80, Q.col, 20); }
+      if (G.phase === 'done') { const Q = QUAL[G.q]; c.fillStyle = 'rgba(18,12,10,.65)'; c.fillRect(80, 56, 200, 34); mgText(c, Q.n + '! (' + (Math.round(G.good * 10) / 10) + ' of ' + FORGE_HITS + ')', 180, 80, Q.col, 20); }
     } });
 }
 // the smithy: a brick wall, the hearth burning on the left, the anvil, and the piece glowing on it
