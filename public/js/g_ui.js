@@ -393,7 +393,7 @@ function update(dt) {
   if (fishing && (Math.abs(ix) > .3 || Math.abs(iy) > .3) && fishing.phase !== 'reel') fishing = null;
   if (fishing) ix = iy = 0;
   const h = S.mounted ? rideHorse() : null;
-  let spd = h ? 72 * (1 + h.g.spd / 100 * 1.5) : 72 * (1 + (S.eq.boots ? 0 : 0) + (PS.spd || 0));
+  let spd = h ? 72 * (1 + h.g.spd / 100 * 1.5) * (typeof horseSpd === 'function' ? horseSpd(h) : 1) : 72 * (1 + (S.eq.boots ? 0 : 0) + (PS.spd || 0));
   if (!h && S.p.st <= 0) spd *= .6; if (pl.chill > 0) spd *= .65;
   if (pl.roll > 0) { pl.roll -= dt; moveEnt(cur, p, pl.rdx * 230 * dt, pl.rdy * 230 * dt, 5); }
   const mag = Math.hypot(ix, iy); pl.moving = mag > .1 && pl.roll <= 0;
