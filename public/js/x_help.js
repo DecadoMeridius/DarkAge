@@ -279,7 +279,7 @@ function helpGen(key) {
   return null;
 }
 Object.assign(HELP, {
-  home: ['Home', ['Sleep until morning ends the day: crops grow, machines catch up overnight, the morning report comes, and the game saves.', 'Go to bed before 2:00. Past it you pass out where you stand and wake with less energy.', 'Once the cottage is built you wake beside your bed; the tent is only for the first weeks.']],
+  home: ['Home', ['Sleep until morning ends the day: crops grow, machines catch up overnight, the morning report comes, and the game saves.', 'Go to bed before 4:00. Past it you pass out where you stand and wake with less energy.', 'Once the cottage is built you wake beside your bed; the tent is only for the first weeks.']],
   bedchamber: ['Royal Bedchamber', ['Your bed in Briarholt’s keep. Sleeping here ends the day like your farm bed, and you wake in the keep.', 'Any day that ends in the castle grounds wakes you here.']],
   farewell: ['Farewell', ['Your life ends here. Choose your heir: your spouse or a grown child.', 'They keep the farm, gold, buildings, land and items, all titles and guild ranks, and take their own skills on; each generation adds 10% to all XP. The others in the family go their own ways.']],
   hammer: ['Building hammer', ['Move lifts the building and lets you set it down anywhere it fits on the farm (right click or Esc puts it back).', 'Remove takes it down: a finished building gives back half its materials, an unfinished site everything delivered and its blueprint.']],

@@ -10,7 +10,7 @@
    no longer an instant upgrade in Hale's list; a silo bought that way in an older save (no building)
    becomes free silo plans, and any hay it held is put in your bag (or the bank).
    FIELD SEEDS (Mara's Pantry tab): Meadow Grass (spring to autumn, regrows, harvests into hay) and
-   Flax (spring and summer, harvests into fibre). They aren't counted as crops in Collections.
+   Flax (spring and summer, regrows every 4 days, 5-8 fibre; it was one harvest of 3-6, a loss against free wild fibre, 2026-11-05). They aren't counted as crops in Collections.
    HOME: once the cottage is built you wake up next to your bed, and a game loaded on the farm's
    default spot starts there too. The tent is packed away when the cottage is finished. */
 
@@ -90,7 +90,7 @@ doorAction = function (act, who) { if (act === 'silo') return openSilo(); return
 /* field seeds: hidden from the crop lists (Collections, Mara's seasonal seeds) and sold in the Pantry */
 const FIELD = {
   meadowgrass: { n: 'Meadow Grass', d: 5, s: [0, 1, 2], p: 20, sh: 'leaf', c: '#7cc04a', c2: null, re: 4, y: 1, kind: 'grain', as: ['hay', 2, 4], seed: 25 },
-  flax: { n: 'Flax', d: 6, s: [0, 1], p: 30, sh: 'flower', c: '#6a8ad8', c2: null, re: 0, y: 1, kind: 'grain', as: ['fiber', 3, 6], seed: 30 },
+  flax: { n: 'Flax', d: 6, s: [0, 1], p: 30, sh: 'flower', c: '#6a8ad8', c2: null, re: 4, y: 1, kind: 'grain', as: ['fiber', 5, 8], seed: 30 },
 };
 for (const k in FIELD) {
   Object.defineProperty(CROPS, k, { value: FIELD[k], enumerable: false, writable: true, configurable: true });

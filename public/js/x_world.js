@@ -161,7 +161,8 @@ const _showDayReportW = showDayReport;
 showDayReport = function (lines) {
   if (S.pet) {
     if (Math.random() < (typeof petDigChance === 'function' ? petDigChance() : .14 + (S.pet.aff || 0) * .0012)) {
-      const pool = typeof petFinds === 'function' ? petFinds() : DIGS.filter(([id]) => id === '$' || IT[id]);   // x_companions.js: more hearts, rarer finds let r = Math.random() * pool.reduce((a, d) => a + d[3], 0), pick = pool[0];
+      const pool = typeof petFinds === 'function' ? petFinds() : DIGS.filter(([id]) => id === '$' || IT[id]);
+      let r = Math.random() * pool.reduce((a, d) => a + d[3], 0), pick = pool[0];   // x_companions.js: more hearts, rarer finds
       for (const d of pool) { r -= d[3]; if (r <= 0) { pick = d; break; } }
       if (Math.random() < .04) { const arts = Object.keys(IT).filter(k => IT[k].t === 'artifact'); if (arts.length) pick = [pickR(arts), 1, 1]; }
       const n = ri(pick[1], pick[2]); give(pick[0], n, 0, true);

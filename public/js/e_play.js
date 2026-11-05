@@ -566,7 +566,7 @@ function updateTime(dt) {
   if (PS.regen) { pl.regenT += dt; if (pl.regenT > 3) { pl.regenT = 0; S.p.hp = Math.min(maxHP(), S.p.hp + 1 + PS.regen); } }
   if (pl.burn > 0) { pl.burn -= dt; pl.burnT = (pl.burnT || 0) + dt; if (pl.burnT > .6) { pl.burnT = 0; S.p.hp -= 2; floatText(S.p.x, S.p.y - 26, '-2', '#ff8a3a'); if (S.p.hp <= 0) faint('You burned up…'); } }
   if (pl.chill > 0) pl.chill -= dt;
-  if (S.time >= 1560) faint('You collapsed from exhaustion.');
+  if (S.time >= 1680) faint('You collapsed from exhaustion.');
 }
 function endDay(fainted) {
   const report = [];

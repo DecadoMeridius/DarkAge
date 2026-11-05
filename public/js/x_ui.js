@@ -95,7 +95,7 @@ const START_STEPS = [
   ['Till some soil with the hoe', () => Object.values(MAPS.farm ? MAPS.farm.soil : {}).some(Boolean)],
   ['Plant seeds on tilled soil', () => Object.values(MAPS.farm ? MAPS.farm.soil : {}).some(s => s && s.crop)],
   ['Water your crops with the watering can', () => Object.values(MAPS.farm ? MAPS.farm.soil : {}).some(s => s && s.crop && s.wet)],
-  ['Sleep in your tent before 2 am', () => S.day > 1 || S.season > 0 || S.year > 1],
+  ['Sleep in your tent before 4 am', () => S.day > 1 || S.season > 0 || S.year > 1],
   ['Harvest a crop', () => S.stats.harvest > 0],
   ['Sell something (shipping bin or a shop)', () => Object.keys(S.stats.shipped || {}).length > 0],
 ];

@@ -334,12 +334,12 @@ exitToward = (f => function (m, map) {
   if (m.id === 'castle_up' || m.id === 'castle_down') { if (map !== m.id) { const P = KEEP_PLANS[m.id]; for (const [kk, x, y, a] of P.f) if (a === 'k_down' || a === 'k_up') return { x: x + 1, y: y + 1.2 }; } }
   return f(m, map);
 })(exitToward);
-/* a warning before the 2 am collapse (round 5: it came "with no warning") */
+/* a warning before the 4 am collapse (asked 2026-11-05: it was 2 am) (round 5: it came "with no warning") */
 EVT.on('tick', () => {
   if (!S || TITLE || typeof S.time !== 'number') return; S.flags = S.flags || {};
   const d = typeof dayIndex === 'function' ? dayIndex() : S.day;
-  if (S.time >= 1500 && S.time < 1505 && S.flags.lateWarn !== d + 'a') { S.flags.lateWarn = d + 'a'; toast('It\'s 1 am. Find a bed before 2, or you\'ll collapse where you stand.', 'bad'); }
-  if (S.time >= 1545 && S.time < 1550 && S.flags.lateWarn !== d + 'b') { S.flags.lateWarn = d + 'b'; toast('Quarter to two. You can barely keep your eyes open.', 'bad'); }
+  if (S.time >= 1620 && S.time < 1625 && S.flags.lateWarn !== d + 'a') { S.flags.lateWarn = d + 'a'; toast('It\'s 3 am. Find a bed before 4, or you\'ll collapse where you stand.', 'bad'); }
+  if (S.time >= 1665 && S.time < 1670 && S.flags.lateWarn !== d + 'b') { S.flags.lateWarn = d + 'b'; toast('Quarter to four. You can barely keep your eyes open.', 'bad'); }
 });
 /* the glasshouses inside: potted plants along the back, topiaries at the corners of the beds (round 5: "a bare grass
    rectangle"). Placed on entry where the floor is empty, so older saves get them too */

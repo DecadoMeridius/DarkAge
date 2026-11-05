@@ -7,7 +7,7 @@ const GUIDES = [
     'Cut weeds and long grass with the scythe for hay and fibre. Till soil with the hoe, plant seeds, and water them every day with the can; rain waters for you.',
     'Crops grow one day each morning they were watered, only in their seasons (the greenhouse grows anything). Vegetables, grains and field crops are cut with the scythe; fruit and flowers by hand.',
     'Fence your fields. Every morning tilled soil the open meadow can reach has a 4% chance a tile to go back to tall grass, crop and all. Fences, fence gates (2 tiles wide, you and a horse walk through), buildings, solid ground, water and water channels all close a side.',
-    'Sleep before 2:00 in your tent or bed. The day ends, crops grow, machines catch up overnight and the game saves.']],
+    'Sleep before 4:00 in your tent or bed. The day ends, crops grow, machines catch up overnight and the game saves.']],
   ['How crafting works', [
     'Things are made at stations: the workbench (fences, parts, belts, machines, blueprints), the furnace (ore to bars), the anvil (weapons, armour and tools), the kitchen (a stove, fireplace or campfire: food), and the tanning rack (leather). Only the workbench and the campfire can be made anywhere.',
     'Walk up to a station and press E. "Can make" shows what your materials cover; the chips and search filter the list. Make starts one, ×5, ×10 and ×100 a batch; it runs while the window is open or you stay close.',

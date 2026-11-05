@@ -365,13 +365,13 @@ recalc = (f => function () {
 {
   let fainted = null;
   faint = (f => function (msg) {
-    if (/exhaustion/.test(msg)) S.lives = 0; // lives are for fights: staying up past 2 am always ends the day (they refill in the morning)
+    if (/exhaustion/.test(msg)) S.lives = 0; // lives are for fights: staying up past 4 am always ends the day (they refill in the morning)
     fainted = { msg, at: S.time, t: performance.now(), lost: Math.min(2500, Math.round(S.gold * .1)) }; return f(msg);
   })(faint);
   showDayReport = (f => function (lines) {
     if (fainted && performance.now() - fainted.t < 8000) {
       const F = fainted, hm = Math.floor(F.at / 60) % 24; fainted = null;
-      lines = [['coin', (/exhaustion/.test(F.msg) ? 'You stayed up past 2 am and collapsed' : 'You were knocked out') + ' (around ' + ((hm % 12) || 12) + (hm < 12 ? ' am' : ' pm') + '). Someone carried you to bed' + (F.lost > 0 ? ' and took ' + F.lost.toLocaleString() + 'g for the trouble' : '') + (/exhaustion/.test(F.msg) ? '. Sleep ' + (typeof castleOwned === 'function' && castleOwned() ? 'in a bed' : 'in your tent') + ' before 2 am next time.' : '. Eat to heal in a fight, and dodge (Shift) the big attacks.')]].concat(lines);
+      lines = [['coin', (/exhaustion/.test(F.msg) ? 'You stayed up past 4 am and collapsed' : 'You were knocked out') + ' (around ' + ((hm % 12) || 12) + (hm < 12 ? ' am' : ' pm') + '). Someone carried you to bed' + (F.lost > 0 ? ' and took ' + F.lost.toLocaleString() + 'g for the trouble' : '') + (/exhaustion/.test(F.msg) ? '. Sleep ' + (typeof castleOwned === 'function' && castleOwned() ? 'in a bed' : 'in your tent') + ' before 2 am next time.' : '. Eat to heal in a fight, and dodge (Shift) the big attacks.')]].concat(lines);
     }
     fainted = null; return f(lines);
   })(showDayReport);

@@ -366,7 +366,10 @@ function channelSpr(cm, wet, clog) {
 }
 // masks and wetness kept fresh on the map you're on (a channel dug up or placed changes its neighbours)
 EVT.on('map', () => { if (cur && cur.o && cur.o.some(o => o && o.k === 'channel')) waterChannels(cur); });
-EVT.on('tick', n => { if (n % 3 === 0 && cur && (cur.farm || farmMaps().includes(cur)) && cur.o.some(o => o && o.k === 'channel')) waterChannels(cur); });
+// a wet channel waters the soil round it all day, on the farm and every owned plot (asked 2026-11-05: after updating, fields
+// beside channels were dry: the morning save is written before the channels water, so a game loaded from it had dry soil
+// until the next morning; channels laid, or soil sown beside them, also waited a day). A clogged piece still stops it.
+EVT.on('tick', n => { if (n % 3 !== 0) return; for (const m of farmMaps()) if (m.o && m.o.some(o => o && o.k === 'channel')) waterFromChannelsOn(m); });
 // the morning report says when a channel on the farm clogged overnight
 if (typeof showDayReport === 'function') showDayReport = (f => function (lines) {
   if (CHANNEL_NEWS && Array.isArray(lines)) lines.push(['bad', CHANNEL_NEWS === 1 ? 'Leaves and debris choked one of your water channels (marked with a red !). Clear it to get the water flowing.' : CHANNEL_NEWS + ' water channels are choked with leaves and debris (marked with a red !). Clear them to get the water flowing.']);

@@ -14,6 +14,8 @@ from PIL import Image, ImageDraw, ImageFilter
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'comfyui'))
 import restyle
+sys.path.insert(0, str(ROOT / 'art'))
+import magenta
 
 OUT, GAME, SRC = ROOT / 'art' / 'out' / 'fish', ROOT / 'public' / 'art' / 'fish', ROOT / 'art' / 'src'
 KEY = (255, 0, 255)
@@ -57,13 +59,7 @@ def keep_biggest(im):
                 for xx in range(x * k, min(W, x * k + k)): op[xx, yy] = (0, 0, 0, 0)
 
 def cut(src):
-    im = src.convert('RGB'); W, H = im.size; px = im.load()
-    a = Image.new('L', (W, H)); ap = a.load()
-    for y in range(H):
-        for x in range(W):
-            r, g, b = px[x, y]; m = min(r, b) - g   # magenta-ness
-            ap[x, y] = 0 if m > 90 else 255 if m < 35 else int(255 * (90 - m) / 55)
-    a = a.filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(.7))
+    im = src.convert('RGB'); W, H = im.size; a = magenta.alpha(im)
     out = im.convert('RGBA'); out.putalpha(a)
     # pull magenta spill at the edge back to neutral
     op = out.load()

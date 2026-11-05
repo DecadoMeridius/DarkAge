@@ -15,3 +15,12 @@ comfyui/*
 !comfyui/preview_tmpl.py
 # art-style example screenshots (large PNGs, kept locally)
 docs/artstyles/
+
+# playtest screenshots (large, kept locally)
+docs/playtest/*/shots/
+docs/playtest/art5/
+# guide pictures the painting scripts rebuild on every run (art/src keeps only the sources they start from)
+art/src/edit_*.png
+art/src/winter_*.png
+art/src/guide_*.png
+art/src/*_guide.png
