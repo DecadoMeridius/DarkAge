@@ -42,9 +42,10 @@ if (typeof pickWild === 'function') pickWild = (f => function () { BOUNTY_CTX = 
    doesn't regrow, or a withered plant cleared by hand or with the scythe), the tilled tile turns back into plain ground.
    A crop that keeps fruiting keeps its soil, since it never leaves. Checked on the tick, so every way a crop can go
    (by hand, scythe, farmhand, reaper) is covered: soil that has had a crop (`s.had`) and now has none is removed.
-   Kept: soil within reach of a seed hopper (3 tiles) or an ember golem (6), which sow it again in the morning, and the
+   Kept: soil within reach of a seed hopper (3 tiles), which sows it again in the morning (an ember golem tills its marked
+   fields again instead, x_golem.js), and the
    greenhouse beds (farmMaps doesn't include the greenhouse). */
-const SOWER_R = { seedhopper: 3, golem: 6 };
+const SOWER_R = { seedhopper: 3 };   // the golem tills its marked fields again instead (x_golem.js)
 function sownByMachine(m, x, y) {
   for (let i = 0; i < m.o.length; i++) { const o = m.o[i], r = o && SOWER_R[o.k]; if (r && Math.abs(i % m.w - x) <= r && Math.abs((i / m.w | 0) - y) <= r) return true; }
   return false;

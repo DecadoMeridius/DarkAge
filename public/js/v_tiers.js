@@ -194,11 +194,12 @@ objInteract = function (m, x, y, o) {
 };
 function openSeedBin(o, reaper) {
   openModal(IT[o.k].n, [{ id: 's', label: IT[o.k].n, render: b => {
-    b.append(el('p', { class: 'note' }, reaper ? 'Cuts one ripe crop within 3 tiles every tick while powered, and the rest overnight. Crops go onto a belt leading away, or wait here.' : o.k === 'golem' ? 'Every morning it harvests, waters and replants everything within 6 tiles. Load it with seeds; the harvest goes onto a belt leading away, or waits here.' : 'Every morning it sows its seeds into empty tilled soil within 3 tiles (in-season seeds only).'));
+    b.append(el('p', { class: 'note' }, reaper ? 'Cuts one ripe crop within 3 tiles every tick while powered, and the rest overnight. Crops go onto a belt leading away, or wait here.' : o.k === 'golem' ? 'From 7:00 to 17:00 it walks the farm like a farmhand that needs no wages: it harvests, waters, weeds, empties traps and machines, plants empty soil from its seeds, tills the fields you mark, and stores the harvest in your shed or a crate. Load it with seeds; the harvest goes onto a belt leading away, or waits here.' : 'Every morning it sows its seeds into empty tilled soil within 3 tiles (in-season seeds only).'));
+    if (o.k === 'golem' && typeof golemBreedRow === 'function') b.append(golemBreedRow(o));
     const bag = reaper ? o.out : o.inv;
     b.append(slotList(reaper ? 'Harvest' : 'Seeds', bag, k2 => { const [id, q] = parseK(k2); GIVE_NO_DROP = true; const left = give(id, bag[k2], q, true); GIVE_NO_DROP = false; if (left) bag[k2] = left; else delete bag[k2]; refresh(); }, 'Empty'));
     if (o.k === 'golem' && sum(o.out)) b.append(slotList('Harvest', o.out, k2 => { const [id, q] = parseK(k2); GIVE_NO_DROP = true; const left = give(id, o.out[k2], q, true); GIVE_NO_DROP = false; if (left) o.out[k2] = left; else delete o.out[k2]; refresh(); }, 'Empty'));
-    if (!reaper) b.append(el('h3', null, 'Seeds from your backpack'), packPicker(id => IT[id].t === 'seed', (i, s) => { const [id] = parseK(s.k); o.inv = o.inv || {}; o.inv[id] = (o.inv[id] || 0) + s.n; S.pack[i] = null; touched(); refresh(); }));
+    if (!reaper) b.append(el('h3', null, 'Seeds from your backpack'), packPicker(id => IT[id].t === 'seed' || (o.k === 'golem' && o.breed && IT[id].t === 'strainseed'), (i, s) => { const [id] = parseK(s.k); o.inv = o.inv || {}; o.inv[id] = (o.inv[id] || 0) + s.n; S.pack[i] = null; touched(); refresh(); }));
   } }]);
 }
 function openLedger(m) {

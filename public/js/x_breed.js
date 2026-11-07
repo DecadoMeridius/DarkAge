@@ -260,3 +260,66 @@ itemIcon = (f => function (id) {
 // shed "disappeared" -- it was filed under Treasure & trophies and hidden under the Farm filter)
 if (typeof TORD !== 'undefined' && !TORD.includes('strainseed')) TORD.splice(TORD.indexOf('seed') + 1, 0, 'strainseed');
 if (typeof BANK_CATS !== 'undefined') { const F = BANK_CATS.find(c => c[0] === 'farm'); if (F) { const f0 = F[2]; F[2] = (t, id) => t === 'strainseed' || f0(t, id); } }
+
+/* ---- the ember golem's Breeding mode (asked 2026-11-07: let the golem work at making strains) ----
+   A checkbox in the golem's window (o.breed). With it on:
+   - it takes strain seeds as well as plain seeds (from your backpack and from belts);
+   - it plants what it holds in a repeating pattern of different lines (`golemSow`: each crop or strain is a line; the
+     best-rated strains first), so every plant stands beside a different one and can cross at harvest;
+   - at harvest every plant still sees its neighbours as they stood that morning (`golemReap` puts back the plants it has
+     already cut while it harvests each one), so the sweep doesn't spoil the crosses;
+   - strain seeds it harvests (new crosses and a line's seeds back) stay in it and are planted the next morning instead of
+     going out with the harvest.
+   Off, it works as before. */
+function golemBreedRow(o) {
+  const cb = el('input', { type: 'checkbox' }); cb.checked = !!o.breed; cb.onchange = () => { o.breed = cb.checked; refresh(); };
+  return el('div', { class: 'note' }, el('label', { title: 'Plants its seeds in a pattern of different crops and strains so every harvest can cross, takes strain seeds, and keeps the new strain seeds it harvests to plant next' }, cb, ' Breeding mode'),
+    o.breed ? el('div', null, 'Plants its crops and strains in a mixed pattern so every plant has a different neighbour, takes strain seeds, and keeps and replants the new strain seeds it harvests. Load it with at least two kinds.') : null);
+}
+// a seed in the golem as a line: [crop, strain index or undefined]
+const lineOf = id => { const it = IT[id]; return it ? [it.crop, it.t === 'strainseed' ? it.strain : undefined] : null; };
+function golemSow(m, o, x, y, r) {
+  const inv = o.inv || {}, inSeason = it => m.id === 'greenhouse' || (it.t === 'strainseed' && S.strains[it.strain] ? cropSeasons(it.crop, strainLv(S.strains[it.strain]).h).has(S.season) : CROPOK(it.crop, m));   // a hardy strain grows on past its crop's seasons
+  const ok = id => inv[id] > 0 && IT[id] && (IT[id].t === 'seed' || IT[id].t === 'strainseed') && inSeason(IT[id]);
+  // the lines it can plant, best strains first, then plain crops
+  const lines = Object.keys(inv).filter(ok).sort((a, b) => {
+    const sa = IT[a].t === 'strainseed' ? strainScore(S.strains[IT[a].strain]) : -1, sb = IT[b].t === 'strainseed' ? strainScore(S.strains[IT[b].strain]) : -1;
+    return sb - sa || a.localeCompare(b);
+  });
+  if (!lines.length) return 0;
+  let n = 0;
+  for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
+    const tx = x + i, ty = y + j, s = m.soil[ty * m.w + tx]; if (!s || s.crop) continue;
+    const avail = lines.filter(id => inv[id] > 0); if (!avail.length) return n;
+    const want = avail[(((tx + ty) % avail.length) + avail.length) % avail.length], [k, st] = lineOf(want);
+    s.crop = st === undefined ? { k, age: 0 } : { k, age: 0, st };
+    if (--inv[want] <= 0) delete inv[want]; n++;
+  }
+  return n;
+}
+function golemReap(m, o, x, y, r) {
+  const ripe = [];
+  for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
+    const tx = x + i, ty = y + j, s = m.soil[ty * m.w + tx];
+    if (s && s.crop && !s.crop.dead && CROPS[s.crop.k] && s.crop.age >= CROPS[s.crop.k].d) ripe.push([tx, ty, ty * m.w + tx]);
+  }
+  const before = {}; for (const [, , i] of ripe) before[i] = Object.assign({}, m.soil[i].crop);
+  const done = [], after = {};
+  for (const [tx, ty, i] of ripe) {
+    for (const d of done) m.soil[d].crop = before[d];   // the neighbours as they stood this morning
+    CAPTURE = o; try { harvest(m, tx, ty); } finally { CAPTURE = null; }
+    after[i] = m.soil[i] ? m.soil[i].crop : null;
+    for (const d of done) m.soil[d].crop = after[d];
+    done.push(i);
+  }
+  // strain seeds stay to be planted: new crosses and a line's seeds back
+  o.inv = o.inv || {};
+  for (const k of Object.keys(o.out || {})) { const id = parseK(k)[0]; if (IT[id] && IT[id].t === 'strainseed') { o.inv[id] = (o.inv[id] || 0) + o.out[k]; delete o.out[k]; } }
+  return ripe.length;
+}
+reapAround = (f => function (m, o, x, y, r, max) { return o && o.k === 'golem' && o.breed ? golemReap(m, o, x, y, r) : f.apply(this, arguments); })(reapAround);
+sowAround = (f => function (m, o, x, y, r) { return o && o.k === 'golem' && o.breed ? golemSow(m, o, x, y, r) : f.apply(this, arguments); })(sowAround);
+if (typeof ACCEPT !== 'undefined' && ACCEPT.golem) ACCEPT.golem = (f => function (o, id, n, dry) {
+  if (o && o.breed && IT[id] && IT[id].t === 'strainseed') { if (sum(o.inv || {}) + n > 200) return false; if (!dry) { o.inv = o.inv || {}; o.inv[id] = (o.inv[id] || 0) + n; } return true; }
+  return f.apply(this, arguments);
+})(ACCEPT.golem);
