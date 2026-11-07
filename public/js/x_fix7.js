@@ -37,3 +37,30 @@ objInteract = (f => function (m, x, y, o) {
   return r;
 })(objInteract);
 if (typeof pickWild === 'function') pickWild = (f => function () { BOUNTY_CTX = 'forage'; try { return f.apply(this, arguments); } finally { if (BOUNTY_CTX === 'forage') BOUNTY_CTX = null; } })(pickWild);
+
+/* Spent fields go back to ground (asked 2026-11-07): once a crop is gone from its soil (the last harvest of a crop that
+   doesn't regrow, or a withered plant cleared by hand or with the scythe), the tilled tile turns back into plain ground.
+   A crop that keeps fruiting keeps its soil, since it never leaves. Checked on the tick, so every way a crop can go
+   (by hand, scythe, farmhand, reaper) is covered: soil that has had a crop (`s.had`) and now has none is removed.
+   Kept: soil within reach of a seed hopper (3 tiles) or an ember golem (6), which sow it again in the morning, and the
+   greenhouse beds (farmMaps doesn't include the greenhouse). */
+const SOWER_R = { seedhopper: 3, golem: 6 };
+function sownByMachine(m, x, y) {
+  for (let i = 0; i < m.o.length; i++) { const o = m.o[i], r = o && SOWER_R[o.k]; if (r && Math.abs(i % m.w - x) <= r && Math.abs((i / m.w | 0) - y) <= r) return true; }
+  return false;
+}
+EVT.on('tick', () => {
+  if (!S || typeof farmMaps !== 'function') return;
+  for (const m of farmMaps()) {
+    if (!m.soil) continue; let sowers = null;
+    for (const key in m.soil) {
+      const s = m.soil[key]; if (!s) continue;
+      if (s.crop) { s.had = 1; continue; }
+      if (!s.had) continue;
+      const i = +key, x = i % m.w, y = i / m.w | 0;
+      if (sowers === null) sowers = m.o.some(o => o && SOWER_R[o.k]);
+      if (sowers && sownByMachine(m, x, y)) { s.had = 0; continue; }
+      delete m.soil[key];
+    }
+  }
+});
