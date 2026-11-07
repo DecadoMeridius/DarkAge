@@ -26,6 +26,7 @@ const ri2 = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
    miner goes from stone, clay, copper and coal up to mythril, adamant, regional ores and gems; the woodcutter from wood
    and hardwood up to frostwood and charwood; the forager and fisher reach further afield; the farmhand does more jobs a
    day. Amounts are per resource, as before. ---- */
+// every level brings stone (asked 2026-11-07: levels 3 and 4 brought none)
 const allOf = list => Object.fromEntries(list.filter(([id]) => IT[id]).map(([id, a, b]) => [id, ri2(a, b)]));
 const some = (o, p, ids, a, b) => { const pool = [].concat(ids).filter(id => IT[id]); if (pool.length && Math.random() < p) { const id = pickR(pool); o[id] = (o[id] || 0) + ri2(a, b); } return o; };
 // picks from [id, weight] pairs (a plain id weighs 1)
@@ -49,11 +50,11 @@ const HIRE = {
       : allOf([['hardwood', 10, 14], ['mangrove_wood', 6, 8], ['frostwood_log', 4, 6], ['charwood_log', 3, 5]]),
     look: { shirt: '#7a3a2a', pants: '#4a3a2a', hs: 'short', hair: '#5a3a1a' } },
   miner: { n: 'Miner', g: 'gh_guild', where: 'breaks rock in the Wilds',
-    levels: ['stone, clay, copper ore and coal, about as much of each, sometimes salt', 'stone, iron and silver ore and coal, now and then a gem', 'iron, gold and mythril ore, cobalt ore and coal, often a gem', 'mythril and adamant ore, frost ore or obsidian, a regional ore and gems, now and then starmetal'],
+    levels: ['stone, clay, copper ore and coal, about as much of each, sometimes salt', 'stone, iron and silver ore and coal, now and then a gem', 'stone, iron, gold and mythril ore, cobalt ore and coal, often a gem', 'stone, mythril and adamant ore, frost ore or obsidian, a regional ore and gems, now and then starmetal'],
     haul: lv => lv === 1 ? some(allOf([['stone', 10, 15], ['clay', 10, 15], ['copper_ore', 10, 15], ['coal', 10, 15]]), .35, 'salt', 3, 6)
       : lv === 2 ? some(allOf([['stone', 10, 14], ['iron_ore', 8, 11], ['silver_ore', 5, 8], ['coal', 8, 11]]), .25, ['amethyst', 'topaz'], 1, 1)
-      : lv === 3 ? some(allOf([['iron_ore', 8, 11], ['gold_ore', 5, 7], ['mythril_ore', 3, 5], ['cobalt_ore', 3, 5], ['coal', 8, 11]]), .4, ['amethyst', 'topaz', 'aquamarine'], 1, 1)
-      : some(some(some(some(allOf([['mythril_ore', 4, 6], ['adamant_ore', 2, 4]]), 1, ['frost_ore', 'obsidian'], 3, 5), 1, ['cobalt_ore', 'tide_ore', 'rime_ore', 'cinder_ore'], 2, 4), .5, ['emerald', 'ruby', 'garnet'], 1, 1), .08, 'starmetal', 1, 1),
+      : lv === 3 ? some(allOf([['stone', 10, 14], ['iron_ore', 8, 11], ['gold_ore', 5, 7], ['mythril_ore', 3, 5], ['cobalt_ore', 3, 5], ['coal', 8, 11]]), .4, ['amethyst', 'topaz', 'aquamarine'], 1, 1)
+      : some(some(some(some(allOf([['stone', 10, 14], ['mythril_ore', 4, 6], ['adamant_ore', 2, 4]]), 1, ['frost_ore', 'obsidian'], 3, 5), 1, ['cobalt_ore', 'tide_ore', 'rime_ore', 'cinder_ore'], 2, 4), .5, ['emerald', 'ruby', 'garnet'], 1, 1), .08, 'starmetal', 1, 1),
     look: { shirt: '#5a5a62', pants: '#3a3a3a', hs: 'bald', hair: '#2a1a10' } },
   forager: { n: 'Forager', g: 'af_guild', where: 'gathers in the Wilds',
     levels: ['what grows wild in the meadows and woods this season', 'that, plus mushrooms and highland herbs', 'that, plus what grows on the coast and in the frost and ash lands', 'that, plus the far regions\' forage and rare finds'],
@@ -121,16 +122,7 @@ function renderHireLog(b) {
   b.append(el('div', { class: 'chips' }, el('button', { class: 'chip' + (fk === 'all' ? ' on' : ''), on: () => { MODAL.opts.hk = 'all'; refresh(); } }, 'Everyone'),
     ...kinds.map(k => el('button', { class: 'chip' + (fk === k ? ' on' : ''), on: () => { MODAL.opts.hk = k; refresh(); } }, HIRE[k].n))));
   const L = all.filter(e => fk === 'all' || e.k === fk);
-  // per worker: days worked and everything they brought
-  const per = {}; for (const e of L) { const key = e.k + '|' + e.nm, P = per[key] = per[key] || { k: e.k, nm: e.nm, e: e.e, days: 0, it: {}, j: 0, last: 0 }; P.days++; P.last = Math.max(P.last, e.d); P.j += e.j || 0; for (const id in e.it) P.it[id] = (P.it[id] || 0) + e.it[id]; }
-  const sumBox = el('div', { class: 'list' });
-  for (const P of Object.values(per).sort((a, c) => c.last - a.last)) {
-    const tot = Object.entries(P.it).sort((a, c) => c[1] - a[1]), top = tot[0] && parseK(tot[0][0]);
-    sumBox.append(el('div', { class: 'rrow' }, top ? icon(top[0], 24) : null, el('div', { class: 'rtxt' },
-      el('b', null, P.nm + ' the ' + HIRE[P.k].n.toLowerCase() + (P.k !== 'farmhand' && P.e ? ' (' + P.e + ')' : '') + ': ' + P.days + ' day' + (P.days === 1 ? '' : 's')),
-      el('small', null, (P.k === 'farmhand' ? P.j + ' jobs · ' : '') + (tot.length ? haulText(Object.fromEntries(tot)) : 'nothing brought') + (P.days > 1 && tot.length ? ' · per day about ' + haulText(Object.fromEntries(tot.map(([id, n]) => [id, Math.round(n / P.days)]))) : '')))));
-  }
-  b.append(el('h3', null, 'Per worker'), sumBox);
+  // only the day logs (asked 2026-11-07: the per-worker totals are gone)
   const days = [...new Set(L.map(e => e.d))].sort((a, c) => c - a), shown = MODAL.opts.hlogN || 14;
   for (const d of days.slice(0, shown)) {
     b.append(el('h3', null, (d === today ? 'Today, ' : d === today - 1 ? 'Yesterday, ' : '') + dayName(d)));
@@ -420,7 +412,7 @@ HELP.hire = ['Hired hands', [
   'They walk in from the village at 7:00. The others head out to the Wilds and are back at 17:00; the farmhand works your fields all day. The day’s haul goes to your Storage Shed, else a storage crate, else this board.',
   'Each hand comes in levels 1 to 4: level 1 when you join their guild, each higher level at the guild’s next rank. Higher levels cost more and bring rarer goods (the miner up to mythril, adamant and gems, the woodcutter up to frostwood and charwood), fewer of them than the common ones. The farmhand does more at each level: weeds and tall grass at 2, crab traps at 3, emptying your stations into storage at 4.',
   'Let go pays back the days not yet worked.',
-  'The Workers’ log tab lists what each of them brought back every day, with totals per worker.']];
+  'The Workers’ log tab lists what each of them brought back, day by day.']];
 helpKey = (f => function () { if (MODAL && MODAL.title === 'Farm notices' && (MODAL.cur === 'hire' || MODAL.cur === 'hlog')) return 'hire'; return f.apply(this, arguments); })(helpKey);
 
 document.head.append(el('style', null, `

@@ -106,8 +106,9 @@ const _drawEntW = drawEnt;
 drawEnt = function (e) {
   if (e.type !== 'pet') return _drawEntW(e);
   // walking: the two frames at trot speed, a little bounce and a stretch on each step (two near-identical frames read stiff)
-  const fr = e.sit > 1.2 ? 2 : (e.moving ? Math.floor(e.t * 7) % 2 : 0), spr = PIX.get('pet_' + S.pet.kind + '_' + fr); if (!spr) return;
-  const ph = e.t * 14, bob = e.moving ? Math.abs(Math.sin(ph)) * 1.4 : (e.sit > 1.2 ? 0 : Math.sin(e.t * 2) * .3), sx = e.moving ? 1 + Math.sin(ph) * .04 : 1, sy = e.moving ? 1 - Math.sin(ph) * .04 : 1;
+  const fr = e.sit > 1.2 ? 2 : (e.moving ? Math.floor(e.t * 7) % 2 : 0), spr = (window.PET_WALK = !!e.moving, PIX.get('pet_' + S.pet.kind + '_' + fr)); window.PET_WALK = false; if (!spr) return;
+  const pz = SETTINGS.artStyle !== 'pixel' ? 0 : 1;   // painted pets bob in their own frames (x_artfix.js), so no bounce or stretch on top
+  const ph = e.t * 14, bob = e.moving ? Math.abs(Math.sin(ph)) * 1.4 * pz : (e.sit > 1.2 ? 0 : Math.sin(e.t * 2) * .3), sx = e.moving ? 1 + Math.sin(ph) * .04 * pz : 1, sy = e.moving ? 1 - Math.sin(ph) * .04 * pz : 1;
   shadow(e.x, e.y, 5);
   g.save(); g.translate(e.x, e.y + 1); if (e.flip) g.scale(-1, 1); g.scale(sx, sy); D(spr, -8, -16 - bob, 16, 16); g.restore();
   if (e.heart > 0) { e.heart -= 1 / 60; g.fillStyle = '#e84a6a'; g.fillRect(e.x - 1, e.y - 20 - (1 - e.heart) * 6, 3, 2); g.fillRect(e.x - 2, e.y - 21 - (1 - e.heart) * 6, 2, 1); g.fillRect(e.x + 1, e.y - 21 - (1 - e.heart) * 6, 2, 1); }

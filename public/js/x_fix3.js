@@ -226,12 +226,23 @@ genFarm = function () {
 };
 
 /* ---------- 7 building and animals ---------- */
-// building sites take materials from the bank too
+// building sites can take materials from the bank, but only when you press the button (asked 2026-11-05: opening a site
+// took the missing materials from the storage shed without asking)
 const _openSiteF3 = openSite;
 openSite = function (b) {
-  const s = b.struct, B = BP[s.k];
-  if (S.bank) for (const [i, n] of Object.entries(B.cost)) { const need = n - (s.delivered[i] || 0); if (need <= 0) continue; const fromBag = Math.min(cnt(i), need), fromBank = Math.min(S.bank[i] || 0, need - fromBag); if (fromBank > 0) { S.bank[i] -= fromBank; if (S.bank[i] <= 0) delete S.bank[i]; s.delivered[i] = (s.delivered[i] || 0) + fromBank; toast('Took ' + fromBank + ' ' + IT[i].n.toLowerCase() + ' from your storage.'); } }
-  return _openSiteF3(b);
+  const r = _openSiteF3(b); const s = b.struct, B = BP[s.k], t = MODAL && MODAL.tabs && MODAL.tabs[0]; if (!t || !S.bank) return r;
+  const r0 = t.render;
+  t.render = body => {
+    r0(body);
+    const can = Object.entries(B.cost).map(([i, n]) => [i, Math.min(S.bank[i] || 0, n - (s.delivered[i] || 0))]).filter(([, k]) => k > 0);
+    if (!can.length) return;
+    body.append(el('div', { class: 'acts' }, el('small', null, 'In your storage: ' + can.map(([i, k]) => k + ' ' + IT[i].n.toLowerCase()).join(', ')), el('span', { style: 'flex:1' }),
+      el('button', { class: 'btn', on: () => {
+        for (const [i, k] of can) { S.bank[i] -= k; if (S.bank[i] <= 0) delete S.bank[i]; s.delivered[i] = (s.delivered[i] || 0) + k; }
+        toast('Took ' + can.map(([i, k]) => k + ' ' + IT[i].n.toLowerCase()).join(', ') + ' from your storage.', 'good'); SFX.ok(); refresh();
+      } }, 'Take from storage')));
+  };
+  drawModal(); return r;
 };
 // a used-up blueprint leaves the hotbar; blueprints get a Place button in the bag
 const _hudTickF3 = hudTick;

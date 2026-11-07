@@ -56,7 +56,26 @@ function alphaBox(c) {
   let y0 = H, y1 = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 40) { if (y < y0) y0 = y; y1 = y; break; }
   return { h: y1 >= y0 ? y1 - y0 + 1 : H };
 }
-function paintedFrame(img, base, f, fly, key) {
+/* Walking legs for a painting (asked 2026-11-07: "can't we put in actual animations"): the leg band at the bottom of the
+   painting is cut into a back half and a front half that swing in turn (a horizontal shear pivoting at the hips), like a
+   cut-out puppet, so a wolf trots instead of hopping. Four-legged creatures swing fully, upright ones a little; fliers,
+   slimes, ghosts and crabs (LEGS none) only lift gently. */
+const LEGS_QUAD = new Set(['wolf', 'boar', 'warg', 'bear', 'icewarg', 'mammoth', 'hound', 'salamander', 'drake', 'dragon', 'rat', 'bigrat', 'ratking', 'griffin', 'roach']);
+const LEGS_UP = new Set(['goblin', 'yeti', 'imp', 'golem', 'troll', 'shardling', 'basalt', 'tyrant', 'forgeking', 'glacierheart', 'ogre', 'harpy', 'human', 'zombie', 'skeleton', 'brute']);
+const LEGS_ANIMAL_UP = new Set(['chicken', 'duck']);
+function legsOfEnemy(k) { const a = (EN[k] || {}).art || k; return LEGS_QUAD.has(a) ? 'quad' : LEGS_UP.has(a) ? 'up' : 'none'; }
+const LEGBOX = new WeakMap();
+function legCut(img, ph, kind) {
+  let b = LEGBOX.get(img);
+  if (!b) { const W = img.width, H = img.height, d = mkCPU(W, H, x => x.drawImage(img, 0, 0)).getContext('2d').getImageData(0, 0, W, H).data; let y0 = H, y1 = 0, x0 = W, x1 = 0;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 60) { if (y < y0) y0 = y; y1 = y; if (x < x0) x0 = x; if (x > x1) x1 = x; }
+    LEGBOX.set(img, b = { y0, y1, mid: (x0 + x1) / 2 }); }
+  const W = img.width, H = img.height, top = Math.round(b.y1 - (b.y1 - b.y0) * (kind === 'quad' ? .34 : .3)), sw = (kind === 'quad' ? .32 : .14) * Math.sin(ph);
+  return mk(W, H, x => { x.drawImage(img, 0, 0, W, top + 2, 0, 0, W, top + 2);   // the body (2 px of overlap hide the cut)
+    const band = (a, z, k) => { x.save(); x.beginPath(); x.rect(a, top, z - a, H - top); x.clip(); x.translate(0, top); x.transform(1, 0, k, 1, 0, 0); x.translate(0, -top); x.drawImage(img, 0, 0); x.restore(); };
+    band(0, b.mid, -sw); band(b.mid, W, sw); });
+}
+function paintedFrame(img, base, f, fly, key, legs) {
   const ck = key + '|' + f; const hit = PFRAME[ck]; if (hit && !hit.__lost) return hit;
   const W = base.width, H = base.height, bb = PBOX[key] || (PBOX[key] = alphaBox(base));   // the creature's drawn size, measured once
   const s = Math.min(W * .98 / img.width, Math.max(bb.h, H * .5) * 1.04 / img.height), w = img.width * s, h = img.height * s;
@@ -64,7 +83,9 @@ function paintedFrame(img, base, f, fly, key) {
   if (f === 'a0') { rot = -.09; sx = .95; sy = 1.04; dx = -W * .04; }   // wind-up: leaning back
   else if (f === 'a1') { rot = .11; sx = 1.07; sy = .96; dx = W * .06; }   // strike: lunging in
   else if (f === 'sit') { sy = .86; sx = 1.05; }
-  else { const ph = (+f || 0) / 4 * Math.PI * 2; dy = -Math.abs(Math.sin(ph)) * H * (fly ? .07 : .03); rot = Math.sin(ph) * (fly ? .05 : .03); sx = 1 + .02 * Math.cos(ph * 2); sy = 1 - .02 * Math.cos(ph * 2); }
+  // walking: one gentle lift on the step, no rocking or squash (asked 2026-11-07: a rigid painting that hopped, tilted and
+  // squashed, on top of the game's own walk bob, looked ridiculous); flyers drift a little more
+  else { const ph = (+f || 0) / 4 * Math.PI * 2; if (legs && legs !== 'none' && !fly) { img = legCut(img, ph, legs); dy = -(1 - Math.abs(Math.sin(ph))) * H * .01; } else dy = -Math.abs(Math.sin(ph)) * H * (fly ? .03 : .012); }
   const c = mk(W, H, x => { x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.translate(W / 2 + dx, H * .99 + dy); x.rotate(rot); x.scale(sx, sy); x.drawImage(img, -w / 2, -h, w, h); });
   for (const p of ['ww', 'wh', 'hi', 'off', 'ax', 'ay', 'meta', 'cast']) if (base[p] !== undefined) c[p] = base[p];
   if (!c.hi) c.hi = Math.max(1, Math.round(W / ((base.ww || W / 2) * 2)));
@@ -74,20 +95,20 @@ enemySpr = (f => function (k, fr) {
   const base = f.apply(this, arguments);   // the feathered atlas frame: the box, and the fallback
   if (!base || !base.width || SETTINGS.artStyle === 'pixel') return base;
   const img = paintedImg('creatures', k); if (!img) return base;
-  const E = EN[k] || {}; return paintedFrame(img, base, fr, E.ai === 'fly' || E.ai === 'swoop', 'cr|' + k + '|' + SETTINGS.artStyle);
+  const E = EN[k] || {}; return paintedFrame(img, base, fr, E.ai === 'fly' || E.ai === 'swoop', 'cr|' + k + '|' + SETTINGS.artStyle, legsOfEnemy(k));
 })(enemySpr);
 animalSpr = (f => function (sp, coat, fr) {
   const base = f.apply(this, arguments);
   if (!base || !base.width || SETTINGS.artStyle === 'pixel') return base;
   const img = paintedImg('animals', sp + '_' + coat) || paintedImg('animals', sp + '_' + Object.keys(COATS[sp] || {})[0]); if (!img) return base;
-  return paintedFrame(img, base, fr, false, 'an|' + sp + '|' + coat + '|' + SETTINGS.artStyle);
+  return paintedFrame(img, base, fr, false, 'an|' + sp + '|' + coat + '|' + SETTINGS.artStyle, LEGS_ANIMAL_UP.has(sp) ? 'up' : 'quad');
 })(animalSpr);
 // pets are drawn from pet_<kind>_<frame> (0-1 walk, 2 sit)
 PIX.get = (f => function (n) {
   const r = f.apply(this, arguments), m = /^pet_(dog|cat)_(\d)$/.exec(n || '');
   if (!m || !r || !r.width || SETTINGS.artStyle === 'pixel') return r;
   const img = paintedImg('animals', 'pet_' + m[1]); if (!img) return r;
-  return paintedFrame(img, r, m[2] === '2' ? 'sit' : +m[2] * 2, false, 'pet|' + m[1] + '|' + SETTINGS.artStyle);
+  return paintedFrame(img, r, m[2] === '2' ? 'sit' : window.PET_WALK ? 1 + +m[2] * 2 : 0, false, 'pet|' + m[1] + '|' + SETTINGS.artStyle, 'quad');   // the two walk frames are the two strides
 })(PIX.get);
 
 /* - Repainted single sprites (art/object_paint.py): lamp posts, rugs, the sailboat, sprinklers, the barn, coop and stable

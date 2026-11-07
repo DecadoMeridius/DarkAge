@@ -59,6 +59,16 @@ function cropSeasons(k, h) {
   for (let i = 0; i < h; i++) { q = (q + 1) % 4; set.add(q); }
   return set;
 }
+// what a strain's seed does in the field (asked 2026-11-07): the seasons it grows in (its crop's own, plus the hardy
+// trait's), the days to grow, the harvest and the price, each against the plain crop
+const STRAIN_SEASONS = ['Spring', 'Summer', 'Fall', 'Winter'];
+function strainGrowText(T) {
+  const L = strainLv(T), C = CROPS[T.k] || {}, own = C.s || [], all = [...cropSeasons(T.k, L.h)].sort((a, b) => a - b), list = a => a.map(q => STRAIN_SEASONS[q]).join(', ');
+  const d = C.d ? Math.max(1, Math.round(C.d * (1 - Math.min(.6, .2 * L.g)))) : 0, base = IT[T.k] || {};
+  return 'Grows in ' + (all.length >= 4 ? 'every season' : list(all)) + (all.length > own.length ? ' (plain ' + (base.n || T.k) + ': ' + list(own) + ')' : '') + '. '
+    + (d ? 'Ripe in ' + d + ' day' + (d === 1 ? '' : 's') + (d < C.d ? ' (plain ' + C.d + ')' : '') + (C.re ? ', then every ' + C.re + ' days' : '') + '. ' : '')
+    + (L.y ? 'Yields ' + L.y + ' more a harvest. ' : '') + (L.v ? 'Sells for ' + (100 + 10 * L.v) + '% of the plain crop.' : '');
+}
 function traitText(T) {
   const L = strainLv(T), p = [];
   if (L.g) p.push('grows ' + L.g * 20 + '% faster');
@@ -87,7 +97,7 @@ function registerStrain(i) {
   const seed = IT[k + '_seed'] || {}, vid = k + '~' + i, sid = k + '_seed~' + i;
   const about = strainStars(T) + ', generation ' + (T.gen || 1) + '. ' + traitText(T) + '. (' + geneText(T) + ')';
   IT[vid] = Object.assign({}, base, { id: vid, n: T.name, p: Math.max(1, Math.round((base.p || 1) * T.v)), c: T.col, strain: i, desc: 'A strain you bred: ' + about });
-  IT[sid] = Object.assign({}, seed, { id: sid, n: T.name + ' Seeds', t: 'strainseed', crop: k, strain: i, p: Math.max(10, Math.round((seed.p || 20) * 3)), c: T.col, desc: 'Plant by hand. ' + about });
+  IT[sid] = Object.assign({}, seed, { id: sid, n: T.name + ' Seeds', t: 'strainseed', crop: k, strain: i, p: Math.max(10, Math.round((seed.p || 20) * 3)), c: T.col, desc: 'Plant by hand. ' + strainGrowText(T) + ' ' + about });
   if (typeof ICACHE !== 'undefined') { delete ICACHE[vid]; delete ICACHE[sid]; }
 }
 initMaps = (f => function () { const r = f.apply(this, arguments); try { if (S && S.strains) S.strains.forEach((_, i) => registerStrain(i)); } catch (e) { console.error(e); } return r; })(initMaps);
@@ -245,3 +255,8 @@ itemIcon = (f => function (id) {
   }
   STRAIN_IC.set(key, out); return out;
 })(itemIcon);
+
+// strain seeds are seeds: filed with them in storage and sorted beside them (asked 2026-11-07: a strain seed put in the
+// shed "disappeared" -- it was filed under Treasure & trophies and hidden under the Farm filter)
+if (typeof TORD !== 'undefined' && !TORD.includes('strainseed')) TORD.splice(TORD.indexOf('seed') + 1, 0, 'strainseed');
+if (typeof BANK_CATS !== 'undefined') { const F = BANK_CATS.find(c => c[0] === 'farm'); if (F) { const f0 = F[2]; F[2] = (t, id) => t === 'strainseed' || f0(t, id); } }

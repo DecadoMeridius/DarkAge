@@ -172,7 +172,7 @@ function enemyAnim(e, E) {
   const o = { x: 0, y: 0, sx: 1, sy: 1 }, now = gameT, dt = Math.min(.1, now - (e._at || now)); e._at = now;
   const moved = e._ax !== undefined && Math.hypot(e.x - e._ax, e.y - e._ay) > .05; e._ax = e.x; e._ay = e.y;
   const fly = E.ai === 'fly' || E.ai === 'swoop' || E.ai === 'ghost';
-  if (moved && !fly && E.art !== 'slime') o.y -= Math.abs(Math.sin(now * 10 + (e.hx || 0))) * 1.2;
+  if (moved && !fly && E.art !== 'slime' && SETTINGS.artStyle === 'pixel') o.y -= Math.abs(Math.sin(now * 10 + (e.hx || 0))) * 1.2;   // painted creatures bob in their own frames (x_artfix.js paintedFrame)
   if (e.lunge > 0) { e.lunge -= dt; const k = Math.sin(Math.PI * clamp(1 - e.lunge / .3, 0, 1)), d = Math.hypot(S.p.x - e.x, S.p.y - e.y) || 1; o.x += (S.p.x - e.x) / d * k * 5; o.y += (S.p.y - e.y) / d * k * 3; o.sx *= 1 + k * .1; }
   if (e.flash > 0 && !e.dead) { const k = e.flash / .12, d = Math.hypot(e.x - S.p.x, e.y - S.p.y) || 1; o.x += (e.x - S.p.x) / d * 2 * k; o.sx *= 1 + .15 * k; o.sy *= 1 - .12 * k; }
   if (e.tele > 0) { o.sx *= 1 + e.tele * .14; o.sy *= 1 - e.tele * .18; }
