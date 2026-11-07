@@ -288,6 +288,11 @@ const stallPace = mul => { const c = stallChance(mul); return c >= .9 ? 'sells f
 openStall = function () {
   S.stall = S.stall || { goods: {}, earned: 0 }; S.stall.mul = S.stall.mul || {}; stallClean();
   openModal('Market Stall', [{ id: 's', label: 'Stall', render: b => {
+    stallAutoPrice();
+    const auto = el('input', { type: 'checkbox' }); auto.checked = !!S.stall.autoTrader;
+    auto.onchange = () => { S.stall.autoTrader = auto.checked; S.stall.autoDay = {}; stallAutoPrice(); refresh(); };
+    b.append(el('label', { class: 'note', title: 'Each morning, after the markets move, every good on display is priced at the most a trader would pay. Goods you put out later are priced at once.' }, auto,
+      ' Match the trader price every day' + (S.stall.autoTrader && !intelOn() ? ' (paused: needs market analysis from the Market news tab)' : !intelOn() ? ' (needs market analysis)' : '')));
     b.append(el('p', { class: 'note' }, 'Open 8:00 to 18:00. Set each price against what the village pays: the cheaper, the faster it sells. Traders call in the morning, at midday and in the evening (9:00, 13:00, 17:00) and buy anything a town pays more for than your price (after their 15%). Earned so far: ' + S.stall.earned.toLocaleString() + 'g.'));
     const on = el('div', { class: 'stallgrid' });
     for (const k in S.stall.goods) {
@@ -749,3 +754,16 @@ doorAction = (f => function (act, who) {
   }
   return r;
 })(doorAction);
+
+/* Match the trader price every day (asked 2026-11-07): a checkbox on the stall (S.stall.autoTrader). Each morning after
+   the markets move (mktDaily), and whenever the stall window is drawn, every good on display that hasn't been priced
+   today is set to the most a trader would pay (stallTraderMul), so new goods are priced at once and your − / + changes
+   hold for the rest of the day (S.stall.autoDay[k] = the day it was set). Like the Trader button it needs market analysis
+   (intelOn); goods no trader buys keep their price. */
+function stallAutoPrice() {
+  const st = S && S.stall; if (!st || !st.autoTrader || !intelOn() || !st.goods) return;
+  st.mul = st.mul || {}; st.autoDay = st.autoDay || {}; const d = dayIndex();
+  for (const k in st.goods) { if (st.autoDay[k] === d) continue; const m = stallTraderMul(k); if (m) st.mul[k] = m; st.autoDay[k] = d; }
+  for (const k in st.autoDay) if (!st.goods[k]) delete st.autoDay[k];
+}
+mktDaily = (f => function () { const r = f.apply(this, arguments); try { if (S && S.stall) S.stall.autoDay = {}; stallAutoPrice(); } catch (e) { console.error(e); } return r; })(mktDaily);

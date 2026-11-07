@@ -9,6 +9,7 @@ const HELP = {
     'Passers-by are villagers, so they compare your price with the village price.',
     'A travelling trader may call three times a day: at 9:00, 13:00 and 17:00. He buys anything some town pays more for than your price, after his 15% cut. Towns that are badly short can pay two or three times the usual price.',
     'Market news: hire Odo Fenn for a month (400g) to get the trade news, every town’s market (click a town for its full lists), and on each row the best town and the most a trader would pay, with a Trader price button that sets your price to it.',
+    'With market news hired, tick "Match the trader price every day" and every good on display is set to the most a trader would pay each morning, after the markets move; goods you put out later are priced at once, and a − / + change holds until the next morning.',
     'Take back returns unsold goods to your backpack.',
     'Buy orders: name an item, your top price and how many. The same traders buy it in a town whose shop sells it under your price and bring it on one of those visits; you pay when it arrives, and it waits in the stall until you take it.',
     'The Log tab lists every sale and every delivered order of the last year, by day, with totals.']],
