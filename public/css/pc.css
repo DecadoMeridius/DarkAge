@@ -263,3 +263,14 @@ body:has(#modal:not([hidden])) #ctpanel { display: none; }
 
 /* the skills (Z / X / C) and Focus sit centred just above the hotbar, where the eye already is (asked 2026-10-31) */
 #abil { left: 50% !important; right: auto !important; transform: translateX(-50%) !important; bottom: 104px !important; }
+
+/* the selected hotbar slot stands out (asked 2026-11-07: "very hard to see what we have selected"): it rises and grows a
+   little, gets a thick bright gold rim with a glow and a marker above it, and the other slots dim slightly. Same in the
+   pixel and painted styles (body.styled rules are matched by specificity below). */
+#hotbar { overflow: visible !important; }
+#hotbar .slot { transition: transform .12s ease-out, filter .12s ease-out, opacity .12s; position: relative; }
+#hotbar .slot:not(.on) { filter: saturate(.8) brightness(.86); }
+#hotbar .slot.on, body.styled #hotbar .slot.on { transform: translateY(-7px) scale(1.12); z-index: 2; filter: none;
+  box-shadow: 0 0 0 3px #ffe27a, 0 0 0 5px #6a3a0a, 0 0 16px 4px rgba(255, 214, 90, .85) !important; }
+#hotbar .slot.on::before { content: ''; position: absolute; left: 50%; top: -15px; transform: translateX(-50%);
+  border: 7px solid transparent; border-top: 9px solid #ffe27a; filter: drop-shadow(0 1px 0 #6a3a0a) drop-shadow(0 0 4px rgba(255, 214, 90, .9)); pointer-events: none; }

@@ -137,11 +137,13 @@ function renderHireLog(b) {
   }
   if (days.length > shown) b.append(el('div', { class: 'acts' }, el('button', { class: 'btn ghost', on: () => { MODAL.opts.hlogN = shown + 28; refresh(); } }, 'Show older days (' + (days.length - shown) + ' more)')));
 }
-function deliver(k, w) {
+function deliver(k, w, midday) {   // midday: the farmhand's drop-off between jobs; the day's log entry comes at 17:00 with it all
   const items = Object.entries(w.carry || {}).filter(([, n]) => n > 0); w.carry = {};
   const d = dropSpot(), H = hireState();
-  hireLog(k, w, items, d ? d.kind : 'board');
-  if (!items.length) return '';
+  if (midday) { w.dropped = w.dropped || {}; for (const [id, n] of items) w.dropped[id] = (w.dropped[id] || 0) + n; }
+  let earlier = false;
+  if (!midday) { const all = Object.assign({}, w.dropped || {}); earlier = Object.keys(all).length > 0; for (const [id, n] of items) all[id] = (all[id] || 0) + n; w.dropped = {}; hireLog(k, w, Object.entries(all), d ? d.kind : 'board'); }
+  if (!items.length) return earlier ? 'the harvest in storage, put away during the day' : '';
   // hay goes to the silos first while they have room (asked 2026-11-04); everything else, and hay they can't hold, as below
   let silo = 0;
   const hay = items.find(([id]) => id === 'hay');
@@ -266,6 +268,11 @@ function farmhandFrame(dt) {
   const m = MAPS.farm, nx = Math.floor(H.n.x / 16), ny = Math.floor((H.n.y - 2) / 16), hasF = !!fhFert();
   const jobs = fhJobs(m, w.lv).filter(j => j[2] !== 'fert' || hasF);
   if (!jobs.length) {   // the fields are done: the greenhouse, if it needs anything
+    // first the haul goes to storage (asked 2026-11-07: it carried everything until 17:00), the shed, a crate or the board
+    if (Object.values(w.carry || {}).some(n => n > 0) && gameT - (w.dropT || -1e9) > 20) {
+      const d = dropSpot(); w.dropT = gameT;
+      if (d && d.at) { hwGo('farmhand', d.at, () => { const what = deliver('farmhand', w, true); if (what) toast(w.name + ' the farmhand put ' + what + '.'); if (HW.farmhand) HW.farmhand.wait = 1; }); return; }
+    }
     const G = MAPS.greenhouse, door = m.bGH && m.bGH.door;
     if (ghOpen() && door && gameT - (w.ghT || -1e9) > 60 && fhJobs(G, w.lv).some(j => j[2] !== 'fert' || hasF)) {
       w.ghT = gameT;
