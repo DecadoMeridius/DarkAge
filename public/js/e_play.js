@@ -481,7 +481,7 @@ function chooseFish(locs) {
 function fishAct() {
   if (fishing.phase === 'wait') { fishing = null; toast('You reel in early. Nothing.'); return; }
   if (fishing.phase === 'bite' && S.flags && !S.flags.fishTip) { S.flags.fishTip = 1; toast('Reeling in: hold the mouse button to lift the green bar, let go to let it fall. Keep the fish inside it until the catch bar fills.', 'lvl'); } // the first time, say how
-  if (fishing.phase === 'bite') { const id = chooseFish(fishing.locs); fishing = { phase: 'reel', id, diff: IT[id].fish.diff, mot: IT[id].fish.mot, pos: .5, v: 0, tgt: .5, zone: .5, zv: 0, prog: .3, t: 0, treasure: Math.random() < .05 + (hasPerk('diver') ? .15 : 0) + PS.luck * .02, tp: .2 + Math.random() * .6, tprog: 0 }; showFishUI(true); }
+  if (fishing.phase === 'bite') { const id = chooseFish(fishing.locs); fishing = { phase: 'reel', id, diff: IT[id].fish.diff, mot: IT[id].fish.mot, pos: .5, v: 0, tgt: .5, zone: .5, zv: 0, prog: .3, t: 0, treasure: Math.random() < .12 + (hasPerk('diver') ? .15 : 0) + PS.luck * .02, tp: .2 + Math.random() * .6, tprog: 0 }; showFishUI(true); }
 }
 function updateFishing(dt) {
   const f = fishing; if (!f) return;
@@ -497,7 +497,7 @@ function updateFishing(dt) {
   f.v += (f.tgt - f.pos) * dt * (2 + D * 1.6); f.v *= .9; f.pos = clamp(f.pos + f.v * dt * 3, 0, 1);
   f.zv += (INPUT.act ? 2.7 : -2.3) * dt; f.zv *= .9; f.zone = clamp(f.zone + f.zv * dt * 2, zs / 2, 1 - zs / 2); if (f.zone <= zs / 2 || f.zone >= 1 - zs / 2) f.zv *= -.3;
   const inZ = Math.abs(f.pos - f.zone) < zs / 2; f.prog = clamp(f.prog + (inZ ? .3 : -.2 - D * .025) * dt, 0, 1); f.zs = zs; f.inZ = inZ;
-  if (f.treasure && f.tprog < 1) { if (Math.abs(f.tp - f.zone) < zs / 2) f.tprog = Math.min(1, f.tprog + dt * .5); }
+  if (f.treasure && f.tprog < 1) { if (Math.abs(f.tp - f.zone) < zs / 2) f.tprog = Math.min(1, f.tprog + dt * .8); }
   if (f.prog >= 1) {
     const q = typeof fishQ === 'function' ? fishQ() : 0; // Phase 9: one quality curve (t_balance.js)
     give(f.id, 1, q); S.stats.fish++; addXP('fishing', 8 + D * 9); toast('You caught a ' + IT[f.id].n + '!' + (IT[f.id].fish.legend ? ' A legend!' : ''), 'lvl'); SFX.lvl();

@@ -503,21 +503,29 @@ doorAction = (f => function (act, who) {
   storyDialog([[who, pickR(['Fresh from your own fields? Lovely.', 'Mara never has these. I\'ll take a few.', 'Your prices are fair. Mostly.'])]], { title: 'Villager' });
 })(doorAction);
 // a trader looks for goods some town is short of, and buys them if your price leaves them a margin there
+// what a trader buys at the stall (asked 2026-11-08: "traders can buy large quantities and different goods; sometimes they buy
+// almost nothing"): for every good on display, the town that pays most (your price must not be above what it pays after
+// the trader's 15% cut); the amount is what that town lacks, else a third of its usual stock, at least 5 while you have them;
+// up to TRADER_GOODS different goods, the best gains first, within a purse of TRADER_PURSE gold. It used to take one good,
+// and only what the town lacked or 15% of its usual stock, often a unit or two.
+const TRADER_GOODS = 5, TRADER_PURSE = 6000;
 function stallTraderDeal() {
-  let deal = null;
+  const best = [];
   for (const k in S.stall.goods) {
-    const [id] = parseK(k); if (!mktTracks(id)) continue;
-    const each = stallEach(k);
+    const [id] = parseK(k); if (!mktTracks(id) || !(S.stall.goods[k] > 0)) continue;
+    const each = stallEach(k); let deal = null;
     for (const m in MARKETS) {
       const s = mktStock(m, id), T = mktT(m, id);
       const pays = Math.round(valBase(k) * mktF(m, id) * .85); if (each > pays) continue;
-      // any town that pays more than your price after the trader's cut (asked 2026-11-04: dear goods in a city sold slowly at
-      // the stall): a short town takes what it lacks, any other some 15% of its usual stock
-      const q = Math.min(S.stall.goods[k], Math.max(Math.ceil(T - s), Math.ceil(T * .15))), gain = (pays - each) * q;
-      if (q > 0 && (!deal || gain > deal.gain)) deal = { k, id, m, q, each, gain };
+      const q = Math.min(S.stall.goods[k], Math.max(Math.ceil(T - s), Math.ceil(T / 3), 5)), gain = (pays - each) * q;
+      if (q > 0 && (!deal || gain > deal.gain || (gain === deal.gain && T - s > deal.short))) deal = { k, id, m, q, each, gain, short: T - s };
     }
+    if (deal) best.push(deal);
   }
-  return deal;
+  best.sort((a, b) => b.gain - a.gain || b.each * b.q - a.each * a.q);
+  const out = []; let purse = TRADER_PURSE;
+  for (const d of best) { if (out.length >= TRADER_GOODS || purse < d.each) break; d.q = Math.min(d.q, Math.floor(purse / d.each)); if (d.q <= 0) continue; purse -= d.q * d.each; out.push(d); }
+  return out.length ? out : null;
 }
 const TRADER_HRS = [9, 13, 17];   // when traders call at the stall: morning, midday, evening (asked 2026-11-04; it was every two hours, and 10:00 and 15:00 before that)
 function stallTrader() {
@@ -529,11 +537,14 @@ function stallTrader() {
 }
 function stallTraderBuy(v) {
   if (v.orders && v.orders.length) stallOrdersFill(v.orders);
-  const d = v.sell; if (!d || !S.stall.goods[d.k]) return;
-  const g = stallSell(d.k, d.q, d.each, 'trader', d.m), n = Math.round(g / d.each); if (!g) return;
-  const L = LINKS.find(([a, b]) => (a === 'village' && b === d.m) || (b === 'village' && a === d.m));
-  mktShip(d.id, n, 'village', d.m, L ? L[2] : 600);
-  toast('A trader bound for ' + mktName(d.m) + ' bought ' + n + ' ' + IT[d.id].n.toLowerCase() + ' at your stall for ' + g.toLocaleString() + 'g. ' + mktName(d.m) + ' is short of them.', 'lvl'); SFX.coin();
+  const deals = Array.isArray(v.sell) ? v.sell : v.sell ? [v.sell] : [], bought = []; let total = 0;
+  for (const d of deals) {
+    if (!S.stall.goods[d.k]) continue;
+    const g = stallSell(d.k, Math.min(d.q, S.stall.goods[d.k]), d.each, 'trader', d.m), n = Math.round(g / d.each); if (!g) continue;
+    const L = LINKS.find(([a, b]) => (a === 'village' && b === d.m) || (b === 'village' && a === d.m));
+    mktShip(d.id, n, 'village', d.m, L ? L[2] : 600); total += g; bought.push(n + ' ' + IT[d.id].n.toLowerCase() + ' (for ' + mktName(d.m) + ')');
+  }
+  if (bought.length) { toast('A trader bought ' + bought.join(', ') + ' at your stall for ' + total.toLocaleString() + 'g.', 'lvl'); SFX.coin(); }
 }
 // on the farm you see the trader walk up the road to the stall, buy, and leave
 Object.defineProperty(NPCS, 'mkt_trader', { value: { n: 'Travelling trader', role: 'Trader', shop: 'k_trader', P: HP(0, { skin: '#d8a880', hair: '#4a3020', hs: 'short', shirt: '#6a4a8a', pants: '#3a3028', hat: '#5a3a20', beard: '#4a3020' }), love: [], like: [], hate: [], lines: [[]], gifts: [] }, enumerable: false, writable: true, configurable: true });

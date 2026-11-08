@@ -54,12 +54,15 @@ useItem = (f => function (id) {
   return f(id);
 })(useItem);
 
+const HARP_BAND = [.25, .82];   // the harpoon fight's safe tension (was .3-.78)
 function trapReady(o) {
   if (o.catch === undefined || o.catch === null) {
     if (o.t >= dayIndex()) return false;
     const pool = SHELLFISH.filter(s => s[3].includes(o.loc)); const pl2 = pool.length ? pool : SHELLFISH.filter(s => s[3].includes('pond'));
     const n = 1 + (Math.random() < .5 ? 1 : 0) + (Math.random() < .2 ? 1 : 0);
     o.catch = []; for (let i = 0; i < n; i++) o.catch.push(wpick(pl2.map(s => [s[0], s[4]])));
+    // now and then something else is caught in the trap (asked 2026-11-08): a small treasure, better with Fishing
+    if (Math.random() < .08 + (PS ? PS.luck * .02 : 0) + (hasPerk('treasure') ? .1 : 0)) o.trez = lootTable(1 + Math.floor(S.sk.fishing.l / 3), 1);
   }
   return o.catch.length > 0;
 }
@@ -113,17 +116,21 @@ function startHarpoon(b) {
           else { this.throws--; SFX.splash(); this.flash = -.3; this.msg = Math.abs(off) < .2 ? (off < 0 ? 'Just short, to the left' : 'Just past, to the right') : 'Missed'; this.msgT = 1; if (this.throws <= 0) { toast('The ' + IT[id].n.toLowerCase() + ' dives out of reach.', 'bad'); fgClose(); } }
         }
       } else {
-        this.runT -= dt; if (this.runT <= 0) { this.run = !this.run; this.runT = this.run ? .6 + Math.random() * (.6 + d * .2) : 1 + Math.random() * 1.4; }
+        // fairer pulls (asked 2026-11-08: when the fish pulled, the tension fell all the way and the fish got away): a run is
+        // shown half a second ahead (this.warn), letting go during a run holds the line taut (tension settles toward the
+        // middle of the band), and after it the tension falls slowly and reeling brings it back quickly
+        this.runT -= dt; if (this.runT <= 0) { this.run = !this.run; this.runT = this.run ? .5 + Math.random() * (.4 + d * .15) : 1.4 + Math.random() * 1.6; }
+        this.warn = !this.run && this.runT < .5;
         const reel = this.hold;
-        this.tension += (reel ? (this.run ? .95 + d * .08 : .28) : (this.run ? .1 : -.45)) * dt;
-        const inBand = this.tension > .3 && this.tension < .78;
+        this.tension += (reel ? (this.run ? .7 + d * .05 : .4) : (this.run ? (.55 - this.tension) * 1.2 : -.25)) * dt;
+        const inBand = this.tension > HARP_BAND[0] && this.tension < HARP_BAND[1];
         if (reel && inBand && !this.run) this.prog += (.34 - d * .025) * dt;
-        if (this.run && !reel) this.prog -= (.05 + d * .01) * dt;
+        if (this.run && !reel) this.prog -= (.025 + d * .005) * dt;
         this.tension = clamp(this.tension, 0, 1); this.prog = clamp(this.prog, 0, 1);
-        this.slack = this.tension < .08 ? this.slack + dt : 0;
-        fgHint(this.run ? 'It runs! Let the line go.' : 'Hold to reel it in. Keep the tension in the band.');
+        this.slack = this.tension < .06 ? this.slack + dt : 0;
+        fgHint(this.run ? 'It runs! Let the line go.' : this.warn ? 'About to run! Get ready to let go.' : 'Hold to reel it in. Keep the tension in the band.');
         if (this.tension >= 1) { toast('The line snaps!', 'bad'); SFX.bad(); fgClose(); return; }
-        if (this.slack > 2.4) { toast('It shakes the harpoon loose.', 'bad'); fgClose(); return; }
+        if (this.slack > 3.5) { toast('It shakes the harpoon loose.', 'bad'); fgClose(); return; }
         if (this.prog >= 1) {
           const q = typeof fishQ === 'function' ? fishQ() : 0; give(id, 1, q); S.stats.fish++; S.stats.caught = S.stats.caught || {}; S.stats.caught[id] = (S.stats.caught[id] || 0) + 1;
           addXP('fishing', 30 + d * 12); toast('You landed a ' + IT[id].n + '!', 'lvl'); SFX.lvl(); fgClose();
@@ -144,8 +151,8 @@ function startHarpoon(b) {
       } else {
         if (ic) { const wob = this.run ? Math.sin(gameT * 30) * 4 : 0; x.drawImage(ic, 230 + wob - this.prog * 160, 40, 64, 64); }
         x.fillStyle = '#10202e'; x.fillRect(16, 118, 288, 14);
-        x.fillStyle = '#3a8a4a'; x.fillRect(16 + .3 * 288, 118, .48 * 288, 14);
-        x.fillStyle = this.tension > .78 ? '#ff5a4a' : '#ffe08a'; x.fillRect(16 + this.tension * 284, 114, 4, 22);
+        x.fillStyle = '#3a8a4a'; x.fillRect(16 + HARP_BAND[0] * 288, 118, (HARP_BAND[1] - HARP_BAND[0]) * 288, 14);
+        x.fillStyle = this.tension > HARP_BAND[1] ? '#ff5a4a' : '#ffe08a'; x.fillRect(16 + this.tension * 284, 114, 4, 22);
         x.fillStyle = '#10202e'; x.fillRect(16, 8, 288, 8); x.fillStyle = '#7affd8'; x.fillRect(16, 8, 288 * this.prog, 8);
         x.fillStyle = '#e8dcc0'; x.font = '10px Fredoka, sans-serif'; x.fillText('tension', 16, 112); x.fillText('landed', 16, 28);
       }
@@ -171,6 +178,7 @@ function startHaul(o) {
         this.band = .2 + Math.random() * .6;
         if (this.done >= this.pulls) {
           const got = {}; for (const k of o.catch) { give(k, 1); got[k] = (got[k] || 0) + 1; addXP('fishing', 6); }
+          if (o.trez) { o.trez.forEach(([id, n]) => give(id, n)); toast('Something else was in the trap: ' + o.trez.map(([id, n]) => id === '$' ? n + 'g' : n + ' ' + IT[id].n).join(', ') + '!', 'lvl'); SFX.secret(); o.trez = null; }
           toast(Object.keys(got).length ? 'In the trap: ' + Object.entries(got).map(([k, n]) => n + ' ' + IT[k].n).join(', ') + '.' : 'The trap came up empty.', Object.keys(got).length ? 'lvl' : '');
           o.catch = null; o.t = dayIndex(); fgClose();
         }

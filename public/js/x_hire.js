@@ -236,7 +236,7 @@ function fhDo(m, w, x, y, job) {
   }
   if (job === 'water') { if (!s || !s.crop || s.wet) return false; s.wet = true; return true; }
   if (job === 'weed') { const o = getO(m, x, y); if (!o || (o.k !== 'weed' && o.k !== 'tgrass')) return false; setO(m, x, y, null); w.carry.fiber = (w.carry.fiber || 0) + 1; if (o.k === 'tgrass' || Math.random() < .5) w.carry.hay = (w.carry.hay || 0) + 1; return true; }
-  if (job === 'trap') { const o = getO(m, x, y); if (!o || o.k !== 'crabtrap' || !trapReady(o)) return false; for (const c of o.catch) w.carry[c] = (w.carry[c] || 0) + 1; o.catch = null; o.t = dayIndex(); return true; }
+  if (job === 'trap') { const o = getO(m, x, y); if (!o || o.k !== 'crabtrap' || !trapReady(o)) return false; for (const c of o.catch) w.carry[c] = (w.carry[c] || 0) + 1; if (o.trez) { for (const [id, n] of o.trez) { if (id === '$') S.gold += n; else w.carry[id] = (w.carry[id] || 0) + n; } o.trez = null; } o.catch = null; o.t = dayIndex(); return true; }
   if (job === 'empty') {
     const [, , o] = mainOf(m, x, y); if (!o || !fhHasOut(o)) return false;
     if (isMach(o) && typeof o.out === 'string') { w.carry[o.out] = (w.carry[o.out] || 0) + 1; o.out = null; o.item = null; o.left = 0; }

@@ -64,8 +64,9 @@ function fishGame(locs) {
   function hookFish(F) {
     const id = F.id, D = F.d;
     G.phase = 'reel'; G.hooked = F; SFX.bite(); G.msg = 'Hooked: ' + IT[id].n + '!'; G.flash = 1.2;
-    G.f = { id, diff: D, mot: F.mot, pos: .5, v: 0, tgt: .5, zone: .5, zv: 0, prog: .3, t: 0, treasure: Math.random() < .05 + (hasPerk('diver') ? .15 : 0) + PS.luck * .02, tp: .2 + Math.random() * .6, tprog: 0 };
-    MG.p.querySelector('.mgh').textContent = 'Hold the mouse or Space to lift the net; keep the fish inside it until the catch bar fills.';
+    G.f = { id, diff: D, mot: F.mot, pos: .5, v: 0, tgt: .5, zone: .5, zv: 0, prog: .3, t: 0, treasure: Math.random() < .12 + (hasPerk('diver') ? .15 : 0) + PS.luck * .02, tp: .2 + Math.random() * .6, tprog: 0 };   // was 5% (asked 2026-11-08: chests were hardly ever seen)
+    MG.p.querySelector('.mgh').textContent = 'Hold the mouse or Space to lift the net; keep the fish inside it until the catch bar fills.' + (G.f.treasure ? ' A treasure chest! Hold the net over it until its bar fills, before the fish is landed.' : '');
+    if (G.f.treasure) { G.msg = 'Hooked: ' + IT[id].n + ', and a treasure chest!'; SFX.secret(); }
   }
   function reelStep(dt, M) {
     const f = G.f; f.t += dt;
@@ -77,7 +78,7 @@ function fishGame(locs) {
     f.v += (f.tgt - f.pos) * dt * (2 + D * 1.6); f.v *= .9; f.pos = clamp(f.pos + f.v * dt * 3, 0, 1);
     f.zv += (M.hold ? 2.7 : -2.3) * dt; f.zv *= .9; f.zone = clamp(f.zone + f.zv * dt * 2, zs / 2, 1 - zs / 2); if (f.zone <= zs / 2 || f.zone >= 1 - zs / 2) f.zv *= -.3;
     const inZ = Math.abs(f.pos - f.zone) < zs / 2; f.prog = clamp(f.prog + (inZ ? .3 : -.2 - D * .025) * dt, 0, 1); f.zs = zs; f.inZ = inZ;
-    if (f.treasure && f.tprog < 1 && Math.abs(f.tp - f.zone) < zs / 2) f.tprog = Math.min(1, f.tprog + dt * .5);
+    if (f.treasure && f.tprog < 1 && Math.abs(f.tp - f.zone) < zs / 2) f.tprog = Math.min(1, f.tprog + dt * .8);
     if (f.prog >= 1) {
       const q = typeof fishQ === 'function' ? fishQ() : 0;
       give(f.id, 1, q); S.stats.fish++; addXP('fishing', 8 + D * 9); toast('You caught a ' + IT[f.id].n + '!' + (IT[f.id].fish.legend ? ' A legend!' : ''), 'lvl'); SFX.lvl();
@@ -150,10 +151,11 @@ startHarpoon = (f => function (b) {
       x.fillStyle = 'rgba(20,12,8,.6)'; x.fillRect(8, 8, 74, 12); x.font = '9px Fredoka, sans-serif'; x.fillStyle = '#f4e8d0'; x.textAlign = 'left'; x.fillText('Throws left: ' + this.throws, 12, 17);
     } else {
       const fx = 230 - this.prog * 150, fy = 70 + Math.sin(gameT * 3) * 4, wob = this.run ? Math.sin(gameT * 30) * 4 : 0;
-      x.strokeStyle = this.tension > .78 ? '#ff8a6a' : 'rgba(240,235,220,.85)'; x.lineWidth = 1; x.beginPath(); x.moveTo(160, 150); x.quadraticCurveTo(160 + (fx - 160) * .5, 110 - this.tension * 40, fx, fy); x.stroke();
+      x.strokeStyle = this.tension > HARP_BAND[1] ? '#ff8a6a' : 'rgba(240,235,220,.85)'; x.lineWidth = 1; x.beginPath(); x.moveTo(160, 150); x.quadraticCurveTo(160 + (fx - 160) * .5, 110 - this.tension * 40, fx, fy); x.stroke();
       if (this.run) for (let i = 0; i < 6; i++) { x.fillStyle = 'rgba(255,255,255,.7)'; x.fillRect(fx + (Math.random() - .5) * 40, fy + 10 + Math.random() * 6, 2, 2); }
       if (!drawFishArt(x, id, fx + wob, fy, 80, -1, this.run ? Math.sin(gameT * 20) * .25 : -.15, gameT * (this.run ? 22 : 9)) && ic) { x.save(); x.translate(fx + wob, fy); x.rotate(-Math.PI / 4 + (this.run ? Math.sin(gameT * 20) * .2 : 0)); x.imageSmoothingEnabled = !!ic.hi; x.drawImage(ic, -30, -30, 60, 60); x.restore(); }
-      fgGauge(x, 40, 128, 240, 10, null, null, [.3, .78]); x.fillStyle = this.tension > .78 ? '#ff5a4a' : '#ffe08a'; x.fillRect(40 + this.tension * 238, 124, 3, 18);
+      fgGauge(x, 40, 128, 240, 10, null, null, HARP_BAND); x.fillStyle = this.tension > HARP_BAND[1] ? '#ff5a4a' : '#ffe08a'; x.fillRect(40 + this.tension * 238, 124, 3, 18);
+      if (this.warn || this.run) { x.font = '700 18px Fredoka, sans-serif'; x.textAlign = 'center'; x.lineWidth = 3; x.strokeStyle = '#10202e'; x.strokeText('!', fx, fy - 30); x.fillStyle = this.run ? '#ff5a4a' : '#ffd040'; x.fillText('!', fx, fy - 30); x.textAlign = 'left'; }
       fgGauge(x, 40, 10, 240, 6, this.prog, '#7affd8');
       x.font = '8px Fredoka, sans-serif'; x.fillStyle = '#f4e8d0'; x.textAlign = 'left'; x.fillText('tension', 42, 124); x.fillText('landed', 42, 24);
     }
