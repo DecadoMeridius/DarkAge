@@ -65,13 +65,14 @@ function golemDo(m, o, x, y, job) {
   const w = { lv: 4, carry: gw.carry }, r = fhDo(m, w, x, y, job); gw.carry = w.carry; return r;
 }
 // the rest of the day's jobs at once, best first
-function golemWorkAll(m, o, gx, gy) {
-  const gw = o.gw; let fertOut = false;
+function golemWorkAll(m, o, gx, gy, max) {   // max: at most this many jobs (a step of the day while you're away)
+  const gw = o.gw; let fertOut = false, done = 0;
   for (let pass = 0; pass < 3; pass++) {   // tilling makes planting jobs, harvesting makes tilling jobs once the soil goes
     const jobs = golemJobs(m, o, gx, gy).sort((a, b) => GOLEM_PRI[a[2]] - GOLEM_PRI[b[2]]); let n = 0;
-    for (const [x, y, j] of jobs) { if (gw.jobs >= GOLEM_CAP) return; if (j === 'fert' && fertOut) continue; if (golemDo(m, o, x, y, j)) { gw.jobs++; n++; } else if (j === 'fert') fertOut = true; }
-    if (!n) return;
+    for (const [x, y, j] of jobs) { if (gw.jobs >= GOLEM_CAP || (max && done >= max)) return done; if (j === 'fert' && fertOut) continue; if (golemDo(m, o, x, y, j)) { gw.jobs++; n++; done++; } else if (j === 'fert') fertOut = true; }
+    if (!n) return done;
   }
+  return done;
 }
 const golemHas = gw => Object.values(gw.carry || {}).some(n => n > 0);
 function golemStore(o) { const w = { carry: o.gw.carry }, what = deliver('golem', w, true); o.gw.carry = {}; return what; }
@@ -165,3 +166,21 @@ pcCursorDraw = (f => function (m) {
   if (GMARK && GMARK.a && GMARK.b) { const [a, b] = [GMARK.a, GMARK.b], x0 = Math.min(a[0], b[0]), y0 = Math.min(a[1], b[1]); g.fillStyle = GMARK.rem ? 'rgba(220,60,40,.3)' : 'rgba(255,210,90,.35)'; g.fillRect(x0 * 16, y0 * 16, (Math.abs(a[0] - b[0]) + 1) * 16, (Math.abs(a[1] - b[1]) + 1) * 16); }
   g.restore();
 })(pcCursorDraw);
+
+/* ---- while you're away (asked 2026-11-08: the work all waited for 17:00): every half hour of its day the golem does a
+   step of it, a share of the jobs left spread over the hours left (at least GOLEM_STEP), and stores the haul at once in the
+   shed or a crate, so the fields are kept and the harvest is put away while you're out. On a farm you're on it walks. */
+const GOLEM_STEP = 120;
+EVT.on('tick', () => {
+  if (!S || TITLE || S.time < GOLEM_T[0] || S.time >= GOLEM_T[1]) return;
+  const slot = Math.floor(S.time / 30);
+  for (const m of farmMaps()) {
+    if (cur === m && m.id === 'farm') continue;   // seen: it walks (golemFrame)
+    for (const [i, o] of golemsOn(m)) {
+      const gw = o.gw; if (!gw || gw.day !== dayIndex() || gw.phase !== 'work' || gw.slot === slot) continue;
+      gw.slot = slot; const left = Math.max(1, Math.ceil((GOLEM_T[1] - S.time) / 30));
+      golemWorkAll(m, o, i % m.w, i / m.w | 0, Math.max(GOLEM_STEP, Math.ceil((GOLEM_CAP - gw.jobs) / left)));
+      if (golemHas(gw)) golemStore(o);
+    }
+  }
+});

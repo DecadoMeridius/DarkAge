@@ -309,6 +309,19 @@ function hireTick() {
   }
 }
 EVT.on('tick', () => { if (S && !PAUSED) try { hireTick(); } catch (e) { console.error(e); } });
+/* the farmhand while you're away (asked 2026-11-08: the work all waited for 17:00): every half hour of the working day a step
+   of it (a share of the day's jobs left spread over the hours left, at least FH_STEP), on the farm and then the greenhouse,
+   and the haul goes straight to the shed or a crate (deliver in midday mode, so the 17:00 log still shows the whole day) */
+const FH_STEP = 40;
+function fhAwayStep() {
+  const H = hireState(), w = H.w.farmhand, t = S.time; if (!w || w.phase !== 'work' || w.arr !== dayIndex() || w.del === dayIndex()) return;
+  if (onFarm() || w.inGH || t < HIRE_T.arrive || t >= HIRE_T.back) return;
+  const slot = Math.floor(t / 30); if (w.slot === slot) return; w.slot = slot;
+  const left = Math.max(1, Math.ceil((HIRE_T.back - t) / 30)), n = Math.max(FH_STEP, Math.ceil((fhCap(w) - (w.jobs || 0)) / left));
+  const done = fhWorkMap(MAPS.farm, w, n); if (ghOpen() && done < n) fhWorkMap(MAPS.greenhouse, w, n - done);
+  if (Object.values(w.carry || {}).some(k => k > 0)) deliver('farmhand', w, true);
+}
+EVT.on('tick', () => { if (S && !PAUSED && !TITLE) try { fhAwayStep(); } catch (e) { console.error(e); } });
 function walkIn(k, w) {
   const east = farmWarp('village'); if (!hwSpawn(k, east)) return;
   if (k === 'farmhand') hwGo(k, hireSpot(k), () => { HW[k].wait = 1; });
